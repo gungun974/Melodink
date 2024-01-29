@@ -1,0 +1,47 @@
+---
+run:
+  deadline: "5m"
+  tests: true
+  skip-dirs:
+    - "build"
+    - "mocks"
+  skip-files:
+    - ".*_templ.go$"
+
+output:
+  format: "colored-line-number"
+
+linters:
+  disable-all: true
+  enable:
+    # Visit https://golangci-lint.run/usage/linters/
+    
+    # Default linters
+    - "errcheck"  # Detect unchecked errors
+    - "gosimple"  # Suggest code simplifications
+    - "govet"  # Reports suspicious constructs
+    - "ineffassign"  # Detects unused variable assignments
+    - "staticcheck"  # go vet on steroids
+    - "unused"  # Detect unused constants, variables, functions and types
+
+    - "gocyclo"  # or "cyclop", # Detect cyclomatic complexity
+    - "gofumpt"  # Or "gofmt", # Enforce standard formatting
+    - "goimports"  # Ensure standard import formatting/ordering
+    - "revive"  # General purpose linter    
+    - "unconvert"  # Detect unnecessary type conversions
+    - "unparam"  # Detect unused function parameters
+
+    - "bodyclose"  # Check whether HTTP response bodies are closed
+    - "errorlint"  # Find code that will cause problems with Go's error wrapping scheme 
+    - "nakedret"  # Detect naked returns
+    - "sqlclosecheck"  # Ensure sql.Rows and sql.Stmt are closed
+
+
+linters-settings:
+  gocyclo:
+    min-complexity: 30
+  revive:
+    rules:
+      - name: var-naming
+        disabled: true
+
