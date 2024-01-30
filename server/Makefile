@@ -6,11 +6,13 @@ GOFLAGS=
 
 DEST=build/
 
+DATABASE_URL=sqlite3://./data/melodink.db
+
 all: build
 
 prebuild:
 
-build: prebild
+build: prebuild 
 	$(GO) build $(GOFLAGS) -o ${DEST}$(SERVER_BINARY) ./cmd/api/.
 
 debug: prebuild
@@ -32,4 +34,27 @@ clean-build:
 lint:
 	golangci-lint run ./...
 
-.PHONY: all clean prebuild build run watch lint
+migrate: 
+	migrate -database $(DATABASE_URL) \
+		-path ./internal/database/migrations up
+
+migrate-down: 
+	migrate -database $(DATABASE_URL) \
+		-path ./internal/database/migrations down
+
+migrate-create: 
+	@echo -n "Name for migration to create : "
+	@read name; \
+	migrate create -ext sql -dir ./internal/database/migrations -tz UTC $$name
+
+migrate-force: 
+	@echo -n "Version to migrate force : "
+	@read version; \
+	migrate -database $(DATABASE_URL) \
+		-path ./internal/database/migrations force $$version
+
+migrate-drop: 
+	migrate -database $(DATABASE_URL) \
+		-path ./internal/database/migrations drop
+
+.PHONY: all clean prebuild build run watch lint migrate migrate-down migrate-create migrate-force migrate-drop

@@ -40,8 +40,11 @@
           name = "melodink-server";
           src = gitignore.lib.gitignoreSource ./server;
           subPackages = ["cmd/api"];
-          vendorHash = "sha256-0HDZ3llIgLMxRLNei93XrcYliBzjajU6ZPllo3/IZVY=";
-          CGO_ENABLED = 0;
+          vendorHash = "sha256-v6u7kqFZq4ZZlVxtkjUwKFnW+2uocv93tk6CVkW/Ltc=";
+          CGO_ENABLED = 1;
+
+          buildInputs = [pkgs.pkg-config pkgs.gcc pkgs.glibc.static];
+
           flags = [
             "-trimpath"
           ];
@@ -75,6 +78,10 @@
           flutter
           androidSdk
           jdk17
+          (go-migrate.overrideAttrs (finalAttrs: previousAttrs: {
+            tags = ["sqlite3" "sqlite"];
+          }))
+          sqlite
         ];
       };
     });

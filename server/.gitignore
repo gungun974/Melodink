@@ -1,6 +1,7 @@
 # App specific files
 
 build
+/data
 
 # Binaries for programs and plugins
 *.exe
