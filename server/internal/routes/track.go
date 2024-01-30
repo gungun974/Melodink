@@ -12,7 +12,7 @@ import (
 )
 
 type trackServer struct {
-	pb.UnimplementedTrackServer
+	pb.UnimplementedTrackServiceServer
 
 	Container internal.Container
 }
@@ -28,8 +28,32 @@ func (s *trackServer) ScanNewTracks(context.Context, *emptypb.Empty) (*emptypb.E
 	return &emptypb.Empty{}, nil
 }
 
+func (s *trackServer) ListAllTracks(_ *emptypb.Empty, stream pb.TrackService_ListAllTracksServer) error {
+	tracks, err := s.Container.TrackController.GetAll()
+	if err != nil {
+		return status.Error(
+			codes.Unknown, err.Error(),
+		)
+	}
+
+	for {
+		select {
+		case <-stream.Context().Done():
+			return status.Error(codes.Canceled, "Stream has ended")
+		default:
+			for _, track := range tracks.Tracks {
+				err := stream.SendMsg(track)
+				if err != nil {
+					return status.Error(codes.Canceled, "Stream has ended")
+				}
+			}
+			return nil
+		}
+	}
+}
+
 func TrackRouter(c internal.Container, s *grpc.Server) {
-	pb.RegisterTrackServer(s, &trackServer{
+	pb.RegisterTrackServiceServer(s, &trackServer{
 		Container: c,
 	})
 }

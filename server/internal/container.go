@@ -6,6 +6,7 @@ import (
 	storage_impl "gungun974.com/melodink-server/internal/layers/data/storage"
 	track_usecase "gungun974.com/melodink-server/internal/layers/domain/usecases/track"
 	"gungun974.com/melodink-server/internal/layers/presentation/controllers"
+	presenter_impl "gungun974.com/melodink-server/internal/layers/presentation/presenters"
 )
 
 type Container struct {
@@ -23,11 +24,16 @@ func NewContainer(db *sqlx.DB) Container {
 
 	trackStorage := storage_impl.NewTrackStorage()
 
+	//! Presenter
+
+	trackPresenter := presenter_impl.NewTrackPresenterImpl()
+
 	//! Usecase
 
 	trackUsecase := track_usecase.NewTrackUsecase(
 		trackRepository,
 		trackStorage,
+		trackPresenter,
 	)
 
 	//! Controller

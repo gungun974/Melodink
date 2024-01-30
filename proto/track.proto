@@ -5,6 +5,52 @@ import "google/protobuf/empty.proto";
 
 option go_package = "./pb";
 
-service Track {
+service TrackService {
   rpc ScanNewTracks(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+
+  rpc ListAllTracks(google.protobuf.Empty) returns (stream Track) {}
+}
+
+message Track {
+  int32 id = 1;
+
+  string title = 2;
+  string album = 3;
+  int32 duration = 4;
+
+  string tags_format = 5;
+  string file_type = 6;
+
+  string path = 7;
+  string file_signature = 8;
+
+  TrackMetadata metadata = 9;
+}
+
+message TrackMetadata {
+  int32 track_number = 1;
+  int32 total_tracks = 2;
+
+  int32 disc_number = 3;
+  int32 total_discs = 4;
+
+  string date = 5;
+  int32 year = 6;
+
+  string genre = 7;
+  string lyrics = 8;
+  string comment = 9;
+
+  string acoust_id = 10;
+  string acoust_id_fingerprint = 11;
+
+  string artist = 12;
+  string album_artist = 13;
+  string composer = 14;
+
+  string copyright = 15;
+}
+
+message TrackList {
+  repeated Track tracks = 1;
 }
