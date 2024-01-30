@@ -5,10 +5,11 @@ import (
 	repository_impl "gungun974.com/melodink-server/internal/layers/data/repository"
 	storage_impl "gungun974.com/melodink-server/internal/layers/data/storage"
 	track_usecase "gungun974.com/melodink-server/internal/layers/domain/usecases/track"
+	"gungun974.com/melodink-server/internal/layers/presentation/controllers"
 )
 
 type Container struct {
-	TrackUsecase track_usecase.TrackUsecase
+	TrackController controllers.TrackController
 }
 
 func NewContainer(db *sqlx.DB) Container {
@@ -24,10 +25,14 @@ func NewContainer(db *sqlx.DB) Container {
 
 	//! Usecase
 
-	container.TrackUsecase = track_usecase.NewTrackUsecase(
+	trackUsecase := track_usecase.NewTrackUsecase(
 		trackRepository,
 		trackStorage,
 	)
+
+	//! Controller
+
+	container.TrackController = controllers.NewTrackController(trackUsecase)
 
 	return container
 }

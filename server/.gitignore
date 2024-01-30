@@ -2,6 +2,7 @@
 
 build
 /data
+/pb
 
 # Binaries for programs and plugins
 *.exe

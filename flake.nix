@@ -36,14 +36,23 @@
       androidSdk = androidComposition.androidsdk;
     in {
       packages = {
-        melodink-server = pkgs.buildGo121Module {
+        melodink-server = pkgs.buildGo121Module rec {
           name = "melodink-server";
-          src = gitignore.lib.gitignoreSource ./server;
+          src = gitignore.lib.gitignoreSource ./.;
           subPackages = ["cmd/api"];
-          vendorHash = "sha256-v6u7kqFZq4ZZlVxtkjUwKFnW+2uocv93tk6CVkW/Ltc=";
+          vendorHash = "sha256-3GLl34qxOOTeL841F/VzO0NvrLP+uUhMZnyGofw3goY=";
           CGO_ENABLED = 1;
 
-          buildInputs = [pkgs.pkg-config pkgs.gcc pkgs.glibc.static];
+          buildInputs = with pkgs; [
+            pkg-config
+            gcc
+            glibc.static
+            protobuf
+            protoc-gen-go
+            protoc-gen-go-grpc
+          ];
+
+          nativeBuildInputs = buildInputs;
 
           flags = [
             "-trimpath"
@@ -54,6 +63,7 @@
             "-extldflags -static"
           ];
           preBuild = ''
+            cd server
             make prebuild
           '';
         };
@@ -82,6 +92,9 @@
             tags = ["sqlite3" "sqlite"];
           }))
           sqlite
+          protobuf
+          protoc-gen-go
+          protoc-gen-go-grpc
         ];
       };
     });

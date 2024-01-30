@@ -1,0 +1,10 @@
+syntax = "proto3";
+package track;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "./pb";
+
+service Track {
+  rpc ScanNewTracks(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
