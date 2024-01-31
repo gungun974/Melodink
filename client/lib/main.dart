@@ -1,6 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:melodink_client/core/widgets/gradient_background.dart';
+import 'package:melodink_client/features/tracks/presentation/pages/tracks_page.dart';
+import 'package:window_manager/window_manager.dart';
 
-void main() {
+import 'features/player/presentation/widgets/player_widget.dart';
+import 'features/playlist/presentation/widgets/playlist_list_sidebar.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await windowManager.ensureInitialized();
+
+  WindowOptions windowOptions = const WindowOptions(
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.hidden,
+  );
+
+  windowManager.waitUntilReadyToShow(windowOptions);
+
   runApp(const MyApp());
 }
 
@@ -11,15 +29,34 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Melodink Client',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: false,
+        brightness: Brightness.dark,
+        appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
+        primaryColor: Colors.black,
+        iconTheme: const IconThemeData().copyWith(color: Colors.white),
       ),
-      home: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          title: const Text("Melodink Client"),
-        ),
+      home: const Scaffold(
+        body: Column(children: [
+          Expanded(
+            child: Stack(
+              children: [
+                GradientBackground(),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PlaylistListSidebar(),
+                    Expanded(
+                      child: TracksPage(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          AudioPlayerWidget()
+        ]),
       ),
     );
   }
