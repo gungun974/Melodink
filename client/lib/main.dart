@@ -6,8 +6,12 @@ import 'package:window_manager/window_manager.dart';
 import 'features/player/presentation/widgets/player_widget.dart';
 import 'features/playlist/presentation/widgets/playlist_list_sidebar.dart';
 
+import 'injection_container.dart' as di;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  di.setup();
 
   await windowManager.ensureInitialized();
 

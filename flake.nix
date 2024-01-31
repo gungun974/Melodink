@@ -68,11 +68,27 @@
           '';
         };
 
-        melodink-client = pkgs.flutter.buildFlutterApplication {
+        melodink-client = pkgs.flutter.buildFlutterApplication rec {
           pname = "melodink-client";
           version = "1.0.0";
 
+          buildInputs = with pkgs; [
+            protobuf
+            protoc-gen-dart
+            which
+          ];
+
+          nativeBuildInputs = buildInputs;
+
           src = gitignore.lib.gitignoreSource ./client;
+
+          patchPhase = ''
+            cp -r ${./proto} ../proto
+          '';
+
+          preBuild = ''
+            make prebuild
+          '';
 
           autoPubspecLock = ./client/pubspec.lock;
         };
@@ -95,6 +111,7 @@
           protobuf
           protoc-gen-go
           protoc-gen-go-grpc
+          protoc-gen-dart
         ];
       };
     });

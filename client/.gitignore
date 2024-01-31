@@ -1,3 +1,7 @@
+# App specific files
+
+/lib/generated
+
 ### ------------------------- Flutter.gitignore ------------------------ ###
 
 # Miscellaneous

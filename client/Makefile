@@ -1,0 +1,14 @@
+prebuild:
+	mkdir -p lib/generated/pb
+	protoc --dart_out=grpc:lib/generated/pb -I../proto -I$$(dirname $$(which protoc))/../include ../proto/*.proto $$(dirname $$(which protoc))/../include/google/protobuf/*.proto
+
+dev: prebuild
+	flutter run
+
+build-apk: prebuild
+	flutter build apk
+
+build-ios: prebuild
+	flutter build ios
+
+.PHONY: prebuild dev build-apk build-ios
