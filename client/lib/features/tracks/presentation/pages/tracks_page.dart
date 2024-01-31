@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:melodink_client/features/tracks/presentation/cubit/tracks_cubit.dart';
+import 'package:melodink_client/features/tracks/presentation/widgets/tracks_info_header.dart';
+import 'package:melodink_client/features/tracks/presentation/widgets/tracks_list.dart';
 import 'package:melodink_client/injection_container.dart';
+import 'package:sliver_tools/sliver_tools.dart';
 
 class TracksPage extends StatefulWidget {
   const TracksPage({
@@ -41,7 +45,28 @@ class _TracksPageState extends State<TracksPage> {
           tracks = state.tracks;
         }
 
-        return Text("${tracks.length}");
+        return CustomScrollView(
+          slivers: [
+            SliverContainer(
+              maxWidth: 1200,
+              padding: 32,
+              sliver: SliverPadding(
+                padding: const EdgeInsets.only(top: 48),
+                sliver: SliverToBoxAdapter(
+                  child: TracksInfoHeader(tracks: tracks),
+                ),
+              ),
+            ),
+            SliverContainer(
+              maxWidth: 1200,
+              padding: 32,
+              sliver: SliverPadding(
+                padding: const EdgeInsets.only(top: 32, bottom: 48),
+                sliver: TracksList(tracks: tracks),
+              ),
+            ),
+          ],
+        );
       },
     );
   }
