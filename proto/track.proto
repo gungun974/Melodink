@@ -2,6 +2,7 @@ syntax = "proto3";
 package track;
 
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "./pb";
 
@@ -25,6 +26,8 @@ message Track {
   string file_signature = 8;
 
   TrackMetadata metadata = 9;
+
+  google.protobuf.Timestamp date_added = 10;
 }
 
 message TrackMetadata {

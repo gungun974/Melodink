@@ -71,6 +71,8 @@ func (m *TrackModel) ToTrack() entities.Track {
 		Path:          m.Path,
 		FileSignature: m.FileSignature,
 
+		DateAdded: m.CreatedAt,
+
 		Metadata: entities.TrackMetadata{
 			TrackNumber: m.MetadataTrackNumber,
 			TotalTracks: m.MetadataTotalTracks,

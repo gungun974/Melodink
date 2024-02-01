@@ -1,5 +1,7 @@
 package entities
 
+import "time"
+
 type Track struct {
 	Id int
 
@@ -14,6 +16,8 @@ type Track struct {
 	FileSignature string
 
 	Metadata TrackMetadata
+
+	DateAdded time.Time
 }
 
 type TrackMetadata struct {

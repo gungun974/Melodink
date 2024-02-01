@@ -1,6 +1,7 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:melodink_client/config.dart';
+import 'package:melodink_client/core/helpers/timeago.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
@@ -175,7 +176,11 @@ Widget buildTableRow(Track track, int index) {
         const SizedBox(width: 16),
         Expanded(
             flex: 3,
-            child: Text(track.id.toString(), textAlign: TextAlign.left)),
+            child: Text(
+                formatTimeago(
+                  track.dateAdded,
+                ),
+                textAlign: TextAlign.left)),
         const SizedBox(width: 16),
         Expanded(
             flex: 1,

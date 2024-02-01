@@ -19,7 +19,9 @@ class TrackRepositoryImpl implements TrackRepository {
     try {
       final stream = trackServiceClient.listAllTracks(Empty());
 
-      return Either.of(stream.map((track) => Track(
+      return Either.of(
+        stream.map(
+          (track) => Track(
             id: track.id,
             title: track.title,
             album: track.album,
@@ -29,22 +31,26 @@ class TrackRepositoryImpl implements TrackRepository {
             path: track.path,
             fileSignature: track.fileSignature,
             metadata: TrackMetadata(
-                trackNumber: track.metadata.trackNumber,
-                totalTracks: track.metadata.totalTracks,
-                discNumber: track.metadata.discNumber,
-                totalDiscs: track.metadata.totalDiscs,
-                date: track.metadata.date,
-                year: track.metadata.year,
-                genre: track.metadata.genre,
-                lyrics: track.metadata.lyrics,
-                comment: track.metadata.comment,
-                acoustID: track.metadata.acoustId,
-                acoustIDFingerprint: track.metadata.acoustIdFingerprint,
-                artist: track.metadata.artist,
-                albumArtist: track.metadata.albumArtist,
-                composer: track.metadata.composer,
-                copyright: track.metadata.copyright),
-          )));
+              trackNumber: track.metadata.trackNumber,
+              totalTracks: track.metadata.totalTracks,
+              discNumber: track.metadata.discNumber,
+              totalDiscs: track.metadata.totalDiscs,
+              date: track.metadata.date,
+              year: track.metadata.year,
+              genre: track.metadata.genre,
+              lyrics: track.metadata.lyrics,
+              comment: track.metadata.comment,
+              acoustID: track.metadata.acoustId,
+              acoustIDFingerprint: track.metadata.acoustIdFingerprint,
+              artist: track.metadata.artist,
+              albumArtist: track.metadata.albumArtist,
+              composer: track.metadata.composer,
+              copyright: track.metadata.copyright,
+            ),
+            dateAdded: track.dateAdded.toDateTime(),
+          ),
+        ),
+      );
     } catch (e) {
       print('Caught error: $e');
     }

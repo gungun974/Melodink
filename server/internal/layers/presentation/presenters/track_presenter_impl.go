@@ -1,6 +1,7 @@
 package presenter_impl
 
 import (
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gungun974.com/melodink-server/internal/layers/domain/entities"
 	presenter "gungun974.com/melodink-server/internal/layers/domain/presenters"
 	"gungun974.com/melodink-server/pb"
@@ -41,6 +42,8 @@ func (p *TrackPresenterImpl) ShowTrack(
 
 		Path:          track.Path,
 		FileSignature: track.FileSignature,
+
+		DateAdded: timestamppb.New(track.DateAdded),
 
 		Metadata: &pb.TrackMetadata{
 			TrackNumber: int32(track.Metadata.TrackNumber),

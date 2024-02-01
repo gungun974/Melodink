@@ -10,6 +10,7 @@ class Track extends Equatable {
   final String path;
   final String fileSignature;
   final TrackMetadata metadata;
+  final DateTime dateAdded;
 
   const Track({
     required this.id,
@@ -21,6 +22,7 @@ class Track extends Equatable {
     required this.path,
     required this.fileSignature,
     required this.metadata,
+    required this.dateAdded,
   });
 
   @override
@@ -34,6 +36,7 @@ class Track extends Equatable {
         path,
         fileSignature,
         metadata,
+        dateAdded,
       ];
 }
 
