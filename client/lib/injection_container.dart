@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
-import 'package:grpc/grpc.dart';
-import 'package:melodink_client/config.dart';
+import 'package:grpc/grpc_connection_interface.dart';
+import 'package:melodink_client/core/network/grpc_client.dart'
+    if (dart.library.html) 'package:melodink_client/core/network/grpc_web_client.dart';
 import 'package:melodink_client/features/tracks/data/repositories/track_repository_impl.dart';
 import 'package:melodink_client/features/tracks/domain/repositories/track_repository.dart';
 import 'package:melodink_client/features/tracks/domain/usecases/get_all_tracks.dart';
@@ -27,11 +28,7 @@ void setup() {
   );
 
   //! External
-  sl.registerLazySingleton(
-    () => ClientChannel(
-      appHost,
-      port: appPort,
-      options: const ChannelOptions(credentials: ChannelCredentials.insecure()),
-    ),
+  sl.registerLazySingleton<ClientChannelBase>(
+    createGrpcClient,
   );
 }

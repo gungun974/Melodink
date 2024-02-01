@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/tracks/presentation/pages/tracks_page.dart';
@@ -13,15 +16,17 @@ void main() async {
 
   di.setup();
 
-  await windowManager.ensureInitialized();
+  if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
+    await windowManager.ensureInitialized();
 
-  WindowOptions windowOptions = const WindowOptions(
-    backgroundColor: Colors.transparent,
-    skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.hidden,
-  );
+    WindowOptions windowOptions = const WindowOptions(
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.hidden,
+    );
 
-  windowManager.waitUntilReadyToShow(windowOptions);
+    windowManager.waitUntilReadyToShow(windowOptions);
+  }
 
   runApp(const MyApp());
 }

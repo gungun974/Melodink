@@ -1,5 +1,5 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:grpc/grpc.dart';
+import 'package:grpc/grpc_connection_interface.dart';
 import 'package:melodink_client/core/error/failures.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:melodink_client/features/tracks/domain/repositories/track_repository.dart';
@@ -7,7 +7,7 @@ import 'package:melodink_client/generated/pb/google/protobuf/empty.pb.dart';
 import 'package:melodink_client/generated/pb/track.pbgrpc.dart' as pb;
 
 class TrackRepositoryImpl implements TrackRepository {
-  final ClientChannel grpcClient;
+  final ClientChannelBase grpcClient;
 
   final pb.TrackServiceClient trackServiceClient;
 
