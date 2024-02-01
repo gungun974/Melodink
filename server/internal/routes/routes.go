@@ -22,7 +22,8 @@ func MainRouter(container internal.Container) http.Handler {
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Logger)
 
-	TrackRouter(container, grpcServer)
+	TrackGRPCRouter(container, grpcServer)
+	router.Mount("/api/track", TrackHTTPRouter(container))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {

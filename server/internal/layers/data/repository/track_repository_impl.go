@@ -1,6 +1,9 @@
 package repository_impl
 
 import (
+	"database/sql"
+	"errors"
+
 	"github.com/jmoiron/sqlx"
 	data_models "gungun974.com/melodink-server/internal/layers/data/models"
 	"gungun974.com/melodink-server/internal/layers/domain/entities"
@@ -30,6 +33,29 @@ func (r *TrackRepositoryImpl) GetAllTracks() ([]entities.Track, error) {
 	}
 
 	return m.ToTracks(), nil
+}
+
+func (r *TrackRepositoryImpl) GetTrack(
+	id int,
+) (*entities.Track, error) {
+	m := data_models.TrackModel{}
+
+	err := r.Database.Get(&m, `
+    SELECT *
+    FROM tracks
+    WHERE id = $1
+  `, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, repository.TrackNotFoundError
+		}
+		logger.DatabaseLogger.Error(err)
+		return nil, err
+	}
+
+	track := m.ToTrack()
+
+	return &track, nil
 }
 
 func (r *TrackRepositoryImpl) CreateTrack(track *entities.Track) error {

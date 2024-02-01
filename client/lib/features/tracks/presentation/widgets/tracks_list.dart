@@ -1,5 +1,6 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:melodink_client/config.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
@@ -120,9 +121,20 @@ Widget buildTableRow(Track track, int index) {
           flex: 6,
           child: Row(
             children: [
-              Image.network(
-                  "https://i.scdn.co/image/ab67616d00001e027723a365cb5b70c6f37fabe3",
-                  height: 40),
+              FadeInImage(
+                height: 40,
+                placeholder: const AssetImage(
+                  "assets/melodink_track_cover_not_found.png",
+                ),
+                image: NetworkImage("$appUrl/api/track/${track.id}/image"),
+                imageErrorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    "assets/melodink_track_cover_not_found.png",
+                    width: 40,
+                    height: 40,
+                  );
+                },
+              ),
               const SizedBox(width: 12),
               Flexible(
                 child: Column(

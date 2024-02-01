@@ -2,7 +2,9 @@ package routes
 
 import (
 	"context"
+	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -52,8 +54,26 @@ func (s *trackServer) ListAllTracks(_ *emptypb.Empty, stream pb.TrackService_Lis
 	}
 }
 
-func TrackRouter(c internal.Container, s *grpc.Server) {
+func TrackGRPCRouter(c internal.Container, s *grpc.Server) {
 	pb.RegisterTrackServiceServer(s, &trackServer{
 		Container: c,
 	})
+}
+
+func TrackHTTPRouter(c internal.Container) http.Handler {
+	router := chi.NewRouter()
+
+	router.Get("/{id}/image", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		response, err := c.TrackController.GetCover(id)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	return router
 }
