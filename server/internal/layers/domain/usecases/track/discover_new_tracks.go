@@ -12,12 +12,12 @@ import (
 func (u *TrackUsecase) DiscoverNewTracks() error {
 	tracks, err := u.trackRepository.GetAllTracks()
 	if err != nil {
-		return err
+		return entities.NewInternalError(err)
 	}
 
 	files, err := u.trackStorage.ListAllAudios()
 	if err != nil {
-		return err
+		return entities.NewInternalError(err)
 	}
 
 	jobs := make(chan string)

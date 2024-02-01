@@ -67,3 +67,5 @@ func init() {
 var MainLogger = log.WithField("logger", "MainLogger")
 
 var DatabaseLogger = log.WithField("logger", "DatabaseLogger")
+
+var HTTPLogger = log.WithField("logger", "HTTPLogger")

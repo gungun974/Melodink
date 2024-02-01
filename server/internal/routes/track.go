@@ -22,9 +22,7 @@ type trackServer struct {
 func (s *trackServer) ScanNewTracks(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 	err := s.Container.TrackController.DiscoverNewTracks()
 	if err != nil {
-		return nil, status.Error(
-			codes.Unknown, err.Error(),
-		)
+		return nil, handleGRPCError(err)
 	}
 
 	return &emptypb.Empty{}, nil
@@ -33,9 +31,7 @@ func (s *trackServer) ScanNewTracks(context.Context, *emptypb.Empty) (*emptypb.E
 func (s *trackServer) ListAllTracks(_ *emptypb.Empty, stream pb.TrackService_ListAllTracksServer) error {
 	tracks, err := s.Container.TrackController.GetAll()
 	if err != nil {
-		return status.Error(
-			codes.Unknown, err.Error(),
-		)
+		return handleGRPCError(err)
 	}
 
 	for {
@@ -68,7 +64,7 @@ func TrackHTTPRouter(c internal.Container) http.Handler {
 
 		response, err := c.TrackController.GetCover(id)
 		if err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			handleHTTPError(err, w)
 			return
 		}
 
