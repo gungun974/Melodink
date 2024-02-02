@@ -3,12 +3,13 @@ package track_usecase
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"path"
 
 	"gungun974.com/melodink-server/internal/layers/domain/entities"
 	"gungun974.com/melodink-server/internal/layers/domain/repository"
-	"gungun974.com/melodink-server/pb"
+	"gungun974.com/melodink-server/internal/models"
 )
 
 type FetchAudioStreamParams struct {
@@ -17,7 +18,7 @@ type FetchAudioStreamParams struct {
 	StreamQuality entities.AudioStreamQuality
 }
 
-func (u *TrackUsecase) FetchAudioStream(params FetchAudioStreamParams) (*pb.TrackFetchAudioStreamResponse, error) {
+func (u *TrackUsecase) FetchAudioStream(params FetchAudioStreamParams) (models.APIResponse, error) {
 	track, err := u.trackRepository.GetTrack(params.TrackId)
 	if err != nil {
 		if errors.Is(err, repository.TrackNotFoundError) {
@@ -58,7 +59,8 @@ func (u *TrackUsecase) FetchAudioStream(params FetchAudioStreamParams) (*pb.Trac
 		}
 	}
 
-	return &pb.TrackFetchAudioStreamResponse{
-		Url: path.Join(targetFolder, playableFile),
+	return models.RedirectAPIResponse{
+		Status: http.StatusSeeOther,
+		Url:    "/api/audio/cache/" + path.Join(targetFolder, playableFile),
 	}, nil
 }

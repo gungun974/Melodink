@@ -3,9 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:melodink_client/config.dart';
-import 'package:melodink_client/features/player/domain/usecases/fetch_audio_stream.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
-import 'package:rxdart/rxdart.dart';
 
 abstract class PlayerState extends Equatable {
   const PlayerState();
@@ -32,8 +30,6 @@ class PlayerPlaying extends PlayerState {
 const numberOfPreloadTrack = 15;
 
 class PlayerCubit extends Cubit<PlayerState> {
-  final FetchAudioStream fetchAudioStream;
-
   final player = AudioPlayer();
 
   final _playerPlaylist = ConcatenatingAudioSource(
@@ -82,9 +78,7 @@ class PlayerCubit extends Cubit<PlayerState> {
     return trackIndex;
   }
 
-  PlayerCubit({
-    required this.fetchAudioStream,
-  }) : super(PlayerStandby()) {
+  PlayerCubit() : super(PlayerStandby()) {
     player.setAudioSource(_playerPlaylist);
 
     player.currentIndexStream.listen((_) {
@@ -159,9 +153,9 @@ class PlayerCubit extends Cubit<PlayerState> {
     final nextTrackIndex = getTrackIndexBaseOnPlayerPlaylist(currentIndex + 1);
 
     if (nextTrackIndex == null) {
-      final source = await _getTrackAudioSource(nextWantedTrack);
+      final source = _getTrackAudioSource(nextWantedTrack);
 
-      if (source == null || currentPrepareDate != lastPrepareNextTrack) {
+      if (currentPrepareDate != lastPrepareNextTrack) {
         return;
       }
 
@@ -172,9 +166,9 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     if (_trackPlaylist[nextTrackIndex].id != nextWantedTrack.id) {
       await _playerPlaylist.removeAt(currentIndex + 1);
-      final source = await _getTrackAudioSource(nextWantedTrack);
+      final source = _getTrackAudioSource(nextWantedTrack);
 
-      if (source == null || currentPrepareDate != lastPrepareNextTrack) {
+      if (currentPrepareDate != lastPrepareNextTrack) {
         return;
       }
       return _prepareNextTrack(currentIndex + 1, preLoad - 1);
@@ -205,11 +199,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       return;
     }
 
-    final source = await _getTrackAudioSource(_trackPlaylist[0]);
-
-    if (source == null) {
-      return;
-    }
+    final source = _getTrackAudioSource(_trackPlaylist[0]);
 
     await _playerPlaylist.add(source);
 
@@ -221,32 +211,21 @@ class PlayerCubit extends Cubit<PlayerState> {
     await _prepareNextTrack(0, 5);
   }
 
-  Future<AudioSource?> _getTrackAudioSource(Track track) async {
-    final response = await fetchAudioStream(
-      Params(
-        trackId: track.id,
+  AudioSource _getTrackAudioSource(Track track) {
+    return AudioSource.uri(
+      Uri.parse(
+        "$appUrl/api/track/${track.id}/audio/$audioFormat/$audioQuality",
       ),
-    );
-
-    return await response.match(
-      (_) async {
-        return null;
-      },
-      (url) async {
-        return AudioSource.uri(
-          Uri.parse(url),
-          tag: MediaItem(
-            id: track.id.toString(),
-            title: track.title,
-            artist: track.metadata.artist,
-            album: track.album,
-            genre: track.metadata.genre,
-            artUri: Uri.parse(
-              "$appUrl/api/track/${track.id}/image",
-            ),
-          ),
-        );
-      },
+      tag: MediaItem(
+        id: track.id.toString(),
+        title: track.title,
+        artist: track.metadata.artist,
+        album: track.album,
+        genre: track.metadata.genre,
+        artUri: Uri.parse(
+          "$appUrl/api/track/${track.id}/image",
+        ),
+      ),
     );
   }
 

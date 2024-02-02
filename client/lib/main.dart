@@ -13,7 +13,6 @@ import 'features/player/presentation/widgets/player_widget.dart';
 import 'features/playlist/presentation/widgets/playlist_list_sidebar.dart';
 
 import 'injection_container.dart' as di;
-import 'injection_container.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,7 +57,7 @@ class MyApp extends StatelessWidget {
       ),
       home: Scaffold(
         body: BlocProvider(
-          create: (_) => PlayerCubit(fetchAudioStream: sl()),
+          create: (_) => PlayerCubit(),
           child: const Column(children: [
             Expanded(
               child: Stack(

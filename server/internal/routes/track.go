@@ -50,19 +50,6 @@ func (s *trackServer) ListAllTracks(_ *emptypb.Empty, stream pb.TrackService_Lis
 	}
 }
 
-func (s *trackServer) FetchAudioStream(_ context.Context, req *pb.TrackFetchAudioStreamRequest) (*pb.TrackFetchAudioStreamResponse, error) {
-	res, err := s.Container.TrackController.FetchAudioStream(
-		int(req.TrackId),
-		req.StreamFormat,
-		req.StreamQuality,
-	)
-	if err != nil {
-		return nil, handleGRPCError(err)
-	}
-
-	return res, nil
-}
-
 func TrackGRPCRouter(c internal.Container, s *grpc.Server) {
 	pb.RegisterTrackServiceServer(s, &trackServer{
 		Container: c,
@@ -76,6 +63,20 @@ func TrackHTTPRouter(c internal.Container) http.Handler {
 		id := chi.URLParam(r, "id")
 
 		response, err := c.TrackController.GetCover(id)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Get("/{id}/audio/{format}/{quality}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		format := chi.URLParam(r, "format")
+		quality := chi.URLParam(r, "quality")
+
+		response, err := c.TrackController.FetchAudioStream(id, format, quality)
 		if err != nil {
 			handleHTTPError(err, w)
 			return

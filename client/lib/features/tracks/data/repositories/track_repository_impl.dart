@@ -1,6 +1,5 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:grpc/grpc_connection_interface.dart';
-import 'package:melodink_client/config.dart';
 import 'package:melodink_client/core/error/failures.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:melodink_client/features/tracks/domain/repositories/track_repository.dart';
@@ -52,25 +51,6 @@ class TrackRepositoryImpl implements TrackRepository {
           ),
         ),
       );
-    } catch (e) {
-      print('Caught error: $e');
-    }
-
-    return Either.left(ServerFailure());
-  }
-
-  @override
-  Future<Either<Failure, String>> fetchAudioStream(int trackId) async {
-    try {
-      final response = await trackServiceClient.fetchAudioStream(
-        pb.TrackFetchAudioStreamRequest(
-          trackId: trackId,
-          streamFormat: audioFormat,
-          streamQuality: audioQuality,
-        ),
-      );
-
-      return Either.of("$appUrl/api/audio/cache/${response.url}");
     } catch (e) {
       print('Caught error: $e');
     }
