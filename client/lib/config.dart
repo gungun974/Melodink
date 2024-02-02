@@ -5,4 +5,4 @@ const appPort = 8000;
 const appUrl = "http://$appHost:$appPort";
 
 const audioQuality = pb.AudioStreamQuality.MAX;
-const audioFormat = pb.AudioStreamFormat.DASH;
+const audioFormat = pb.AudioStreamFormat.HLS;

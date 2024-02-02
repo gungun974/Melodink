@@ -21,13 +21,19 @@ class PlayerControls extends StatelessWidget {
                   padding: const EdgeInsets.only(),
                   icon: const AdwaitaIcon(AdwaitaIcons.media_playlist_shuffle),
                   iconSize: 20.0,
-                  onPressed: () {},
+                  onPressed: () async {
+                    BlocProvider.of<PlayerCubit>(context).startPlaylist();
+                  },
                 ),
                 IconButton(
                   padding: const EdgeInsets.only(),
                   icon: const AdwaitaIcon(AdwaitaIcons.media_skip_backward),
                   iconSize: 20.0,
-                  onPressed: () {},
+                  onPressed: () async {
+                    BlocProvider.of<PlayerCubit>(context)
+                        .player
+                        .seekToPrevious();
+                  },
                 ),
                 StreamBuilder<bool>(
                     stream: BlocProvider.of<PlayerCubit>(context)
@@ -51,7 +57,9 @@ class PlayerControls extends StatelessWidget {
                   padding: const EdgeInsets.only(),
                   icon: const AdwaitaIcon(AdwaitaIcons.media_skip_forward),
                   iconSize: 20.0,
-                  onPressed: () {},
+                  onPressed: () async {
+                    BlocProvider.of<PlayerCubit>(context).player.seekToNext();
+                  },
                 ),
                 IconButton(
                   padding: const EdgeInsets.only(),

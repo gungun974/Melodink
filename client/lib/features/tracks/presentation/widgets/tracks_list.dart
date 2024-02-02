@@ -91,7 +91,7 @@ Widget buildTableHeader() {
 Widget buildTableRow(BuildContext context, Track track, int index) {
   return GestureDetector(
     onTap: () {
-      BlocProvider.of<PlayerCubit>(context).loadTrack(track);
+      BlocProvider.of<PlayerCubit>(context).addTrackToPlaylist(track);
     },
     child: Container(
       color: const Color.fromRGBO(0, 0, 0, 0.08),
