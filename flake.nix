@@ -11,6 +11,15 @@
       url = "github:hercules-ci/gitignore.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    android-nixpkgs = {
+      url = "github:tadfisher/android-nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    flutter-nix = {
+      url = "github:maximoffua/flutter.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -18,6 +27,8 @@
     nixpkgs,
     gitignore,
     flake-utils,
+    android-nixpkgs,
+    flutter-nix,
   }:
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {
@@ -27,13 +38,21 @@
           allowUnfree = true;
         };
       };
-      buildToolsVersion = "34.0.0";
-      androidComposition = pkgs.androidenv.composeAndroidPackages {
-        buildToolsVersions = [buildToolsVersion "28.0.3"];
-        platformVersions = ["34" "28"];
-        abiVersions = ["armeabi-v7a" "arm64-v8a"];
-      };
-      androidSdk = androidComposition.androidsdk;
+      flutter-sdk = flutter-nix.packages.${system};
+      sdk = android-nixpkgs.sdk.${system} (sdkPkgs:
+        with sdkPkgs; [
+          build-tools-30-0-3
+          build-tools-34-0-0
+          cmdline-tools-latest
+          emulator
+          platform-tools
+          platforms-android-34
+          platforms-android-33
+          platforms-android-31
+          platforms-android-28
+          system-images-android-34-google-apis-playstore-x86-64
+        ]);
+      pinnedJDK = pkgs.jdk17;
     in {
       packages = {
         melodink-server = pkgs.buildGo121Module rec {
@@ -95,15 +114,22 @@
       };
 
       devShell = pkgs.mkShell {
-        ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = "${sdk}/share/android-sdk";
+        ANDROID_HOME = "${sdk}/share/android-sdk";
+        CHROME_EXECUTABLE = "chromium";
+        FLUTTER_SDK = "${pkgs.flutter}";
+        GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
+
         GOROOT = "${pkgs.go_1_21}/share/go";
+
         buildInputs = with pkgs; [
           (golangci-lint.override {buildGoModule = buildGo121Module;})
           go_1_21
           air
-          flutter
-          androidSdk
-          jdk17
+          flutter-sdk.flutter
+          flutter-sdk.dart
+          pinnedJDK
+          sdk
           (go-migrate.overrideAttrs (finalAttrs: previousAttrs: {
             tags = ["sqlite3" "sqlite"];
           }))
