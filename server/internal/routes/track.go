@@ -50,6 +50,19 @@ func (s *trackServer) ListAllTracks(_ *emptypb.Empty, stream pb.TrackService_Lis
 	}
 }
 
+func (s *trackServer) FetchAudioStream(_ context.Context, req *pb.TrackFetchAudioStreamRequest) (*pb.TrackFetchAudioStreamResponse, error) {
+	res, err := s.Container.TrackController.FetchAudioStream(
+		int(req.TrackId),
+		req.StreamFormat,
+		req.StreamQuality,
+	)
+	if err != nil {
+		return nil, handleGRPCError(err)
+	}
+
+	return res, nil
+}
+
 func TrackGRPCRouter(c internal.Container, s *grpc.Server) {
 	pb.RegisterTrackServiceServer(s, &trackServer{
 		Container: c,

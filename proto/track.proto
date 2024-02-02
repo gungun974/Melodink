@@ -10,6 +10,18 @@ service TrackService {
   rpc ScanNewTracks(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 
   rpc ListAllTracks(google.protobuf.Empty) returns (stream Track) {}
+
+  rpc FetchAudioStream(TrackFetchAudioStreamRequest) returns (TrackFetchAudioStreamResponse) {}
+}
+
+message TrackFetchAudioStreamRequest {
+  int32 track_id = 1;
+  AudioStreamFormat stream_format = 2;
+  AudioStreamQuality stream_quality = 3;
+}
+
+message TrackFetchAudioStreamResponse {
+  string url = 1;
 }
 
 message Track {
@@ -52,6 +64,19 @@ message TrackMetadata {
   string composer = 14;
 
   string copyright = 15;
+}
+
+enum AudioStreamFormat {
+  FILE = 0;
+  HLS = 1;
+  DASH = 2;
+}
+
+enum AudioStreamQuality {
+  LOW = 0;
+  MEDIUM = 1;
+  HIGH = 2;
+  MAX = 3;
 }
 
 message TrackList {

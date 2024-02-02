@@ -29,6 +29,8 @@ func MainRouter(container internal.Container) http.Handler {
 	TrackGRPCRouter(container, grpcServer)
 	router.Mount("/api/track", TrackHTTPRouter(container))
 
+	FileRouter(router)
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 
