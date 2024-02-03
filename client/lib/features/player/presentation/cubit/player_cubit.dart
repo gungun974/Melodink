@@ -1,9 +1,10 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import 'package:melodink_client/config.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
+import 'package:melodink_client/injection_container.dart';
+import 'package:path/path.dart' as p;
 
 abstract class PlayerState extends Equatable {
   const PlayerState();
@@ -27,219 +28,119 @@ class PlayerPlaying extends PlayerState {
       ];
 }
 
-const numberOfPreloadTrack = 15;
+class IndexedTrack {
+  final Track track;
+  final int index;
+
+  IndexedTrack({required this.track, required this.index});
+}
 
 class PlayerCubit extends Cubit<PlayerState> {
-  final player = AudioPlayer();
+  List<Track> _playlistTracks = [];
 
-  final _playerPlaylist = ConcatenatingAudioSource(
-    useLazyPreparation: true,
-    children: [],
-  );
+  List<IndexedTrack> _previousTracks = [];
 
-  final List<Track> _trackPlaylist = [];
+  List<IndexedTrack> _queueTracks = [];
 
-  int? getTrackIndexBaseOnPlayerPlaylist(int playerIndex) {
-    if (playerIndex >= _playerPlaylist.length || playerIndex < 0) {
-      return null;
+  List<IndexedTrack> _nextTracks = [];
+
+  List<IndexedTrack> get _allTracks => [
+        ..._previousTracks,
+        ..._queueTracks,
+        ..._nextTracks,
+      ];
+
+  PlayerCubit() : super(PlayerStandby()) {
+    _audioHandler.playbackState.listen(_updatePlaybackInfo);
+  }
+
+  int lastIndex = 0;
+
+  final _audioHandler = sl<AudioHandler>();
+
+  loadTracksPlaylist(List<Track> tracks, int startAt) async {
+    _playlistTracks = tracks;
+
+    _previousTracks = [];
+
+    _queueTracks = [];
+
+    _nextTracks = [];
+
+    for (int i = 0; i < _playlistTracks.length; i++) {
+      if (i < startAt) {
+        _previousTracks.add(IndexedTrack(
+          track: _playlistTracks[i],
+          index: lastIndex++,
+        ));
+        continue;
+      }
+
+      _nextTracks.add(IndexedTrack(
+        track: _playlistTracks[i],
+        index: lastIndex++,
+      ));
     }
 
-    final playlistTrack = _playerPlaylist[playerIndex];
+    await _audioHandler.updateQueue(
+      _allTracks.map((e) => _getTrackMediaItem(e.track, e.index)).toList(),
+    );
 
-    if (playlistTrack is! IndexedAudioSource) {
-      return null;
+    await _audioHandler.skipToQueueItem(startAt);
+
+    await _audioHandler.play();
+  }
+
+  MediaItem _getTrackMediaItem(Track track, int index) {
+    String filename = "audio${p.extension(track.path)}";
+
+    if (audioFormat == "hls") {
+      filename = "audio.m3u8";
     }
 
-    final tag = playlistTrack.tag;
-
-    if (tag is! MediaItem) {
-      return null;
+    if (audioFormat == "dash") {
+      filename = "audio.mpd";
     }
 
-    final trackId = int.tryParse(tag.id);
+    return MediaItem(
+      id: track.id.toString(),
+      title: track.title,
+      artist: track.metadata.artist,
+      album: track.album,
+      genre: track.metadata.genre,
+      artUri: Uri.parse(
+        "$appUrl/api/track/${track.id}/image",
+      ),
+      extras: {
+        'url':
+            "$appUrl/api/track/${track.id}/audio/$audioFormat/$audioQuality/$filename",
+      },
+    );
+  }
+
+  _updatePlaybackInfo(PlaybackState state) {
+    final index = state.queueIndex;
+    if (index == null) {
+      return;
+    }
+
+    final trackId = int.tryParse(_audioHandler.queue.value[index].id);
 
     if (trackId == null) {
-      return null;
-    }
-
-    if (playerIndex < _trackPlaylist.length) {
-      if (_trackPlaylist[playerIndex].id == trackId) {
-        return playerIndex;
-      }
+      return;
     }
 
     final trackIndex =
-        _trackPlaylist.lastIndexWhere((track) => track.id == trackId);
+        _playlistTracks.indexWhere((track) => track.id == trackId);
 
     if (trackIndex < 0) {
-      return null;
-    }
-
-    return trackIndex;
-  }
-
-  PlayerCubit() : super(PlayerStandby()) {
-    player.setAudioSource(_playerPlaylist);
-
-    player.currentIndexStream.listen((_) {
-      _updateCurrentTrackInfo();
-
-      _prepareNextTrackFromCurrent(numberOfPreloadTrack);
-    });
-  }
-
-  _updateCurrentTrackInfo() {
-    final index = player.currentIndex;
-
-    if (index == null) {
       return;
     }
-
-    final trackIndex = getTrackIndexBaseOnPlayerPlaylist(index);
-
-    if (trackIndex == null) {
-      return;
-    }
-
-    final track = _trackPlaylist[trackIndex];
 
     emit(
       PlayerPlaying(
-        currentTrack: track,
+        currentTrack: _playlistTracks[trackIndex],
       ),
     );
-  }
-
-  _prepareNextTrackFromCurrent(int preLoad) async {
-    final index = player.currentIndex;
-
-    if (index == null) {
-      return;
-    }
-
-    return _prepareNextTrack(index, preLoad);
-  }
-
-  DateTime lastPrepareNextTrack = DateTime.now();
-
-  _prepareNextTrack(int currentIndex, int preLoad) async {
-    final currentTime = DateTime.now();
-
-    lastPrepareNextTrack = currentTime;
-
-    return _prepareNextTrackWithInvalated(currentIndex, preLoad, currentTime);
-  }
-
-  _prepareNextTrackWithInvalated(
-      int currentIndex, int preLoad, DateTime currentPrepareDate) async {
-    if (preLoad <= 0) {
-      return;
-    }
-
-    final currentTrackIndex = getTrackIndexBaseOnPlayerPlaylist(currentIndex);
-
-    if (currentTrackIndex == null) {
-      return;
-    }
-
-    if (currentTrackIndex + 1 >= _trackPlaylist.length) {
-      await _playerPlaylist.removeRange(
-          currentIndex + 1, _playerPlaylist.length);
-      return;
-    }
-
-    final nextWantedTrack = _trackPlaylist[currentTrackIndex + 1];
-
-    final nextTrackIndex = getTrackIndexBaseOnPlayerPlaylist(currentIndex + 1);
-
-    if (nextTrackIndex == null) {
-      final source = _getTrackAudioSource(nextWantedTrack);
-
-      if (currentPrepareDate != lastPrepareNextTrack) {
-        return;
-      }
-
-      await _playerPlaylist.add(source);
-
-      return _prepareNextTrack(currentIndex + 1, preLoad - 1);
-    }
-
-    if (_trackPlaylist[nextTrackIndex].id != nextWantedTrack.id) {
-      await _playerPlaylist.removeAt(currentIndex + 1);
-      final source = _getTrackAudioSource(nextWantedTrack);
-
-      if (currentPrepareDate != lastPrepareNextTrack) {
-        return;
-      }
-      return _prepareNextTrack(currentIndex + 1, preLoad - 1);
-    }
-
-    if (currentPrepareDate != lastPrepareNextTrack) {
-      return;
-    }
-
-    return _prepareNextTrackWithInvalated(
-        currentIndex + 1, preLoad - 1, currentPrepareDate);
-  }
-
-  void addTrackToPlaylist(Track track) async {
-    _trackPlaylist.add(track);
-
-    _prepareNextTrackFromCurrent(numberOfPreloadTrack);
-  }
-
-  void startPlaylist() async {
-    if (player.playing) {
-      await player.stop();
-    }
-
-    await _playerPlaylist.clear();
-
-    if (_trackPlaylist.isEmpty) {
-      return;
-    }
-
-    final source = _getTrackAudioSource(_trackPlaylist[0]);
-
-    await _playerPlaylist.add(source);
-
-    player.play();
-
-    await player.seek(Duration.zero, index: 0);
-
-    _updateCurrentTrackInfo();
-    await _prepareNextTrack(0, 5);
-  }
-
-  AudioSource _getTrackAudioSource(Track track) {
-    return AudioSource.uri(
-      Uri.parse(
-        "$appUrl/api/track/${track.id}/audio/$audioFormat/$audioQuality",
-      ),
-      tag: MediaItem(
-        id: track.id.toString(),
-        title: track.title,
-        artist: track.metadata.artist,
-        album: track.album,
-        genre: track.metadata.genre,
-        artUri: Uri.parse(
-          "$appUrl/api/track/${track.id}/image",
-        ),
-      ),
-    );
-  }
-
-  playOrPause() {
-    final currentState = state;
-
-    if (currentState is! PlayerPlaying) {
-      return;
-    }
-
-    if (player.playing) {
-      player.pause();
-      return;
-    }
-    player.play();
   }
 }

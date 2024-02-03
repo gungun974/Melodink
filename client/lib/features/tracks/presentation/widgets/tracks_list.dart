@@ -26,7 +26,10 @@ class TracksList extends StatelessWidget {
         itemExtent: 56,
         delegate: SliverChildBuilderDelegate(
           (context, index) {
-            return buildTableRow(context, tracks[index], index + 1);
+            return buildTableRow(context, tracks[index], index + 1, () {
+              BlocProvider.of<PlayerCubit>(context)
+                  .loadTracksPlaylist(tracks, index);
+            });
           },
           childCount: tracks.length,
         ),
@@ -88,11 +91,10 @@ Widget buildTableHeader() {
   );
 }
 
-Widget buildTableRow(BuildContext context, Track track, int index) {
+Widget buildTableRow(
+    BuildContext context, Track track, int index, VoidCallback playCallback) {
   return GestureDetector(
-    onTap: () {
-      BlocProvider.of<PlayerCubit>(context).addTrackToPlaylist(track);
-    },
+    onTap: playCallback,
     child: Container(
       color: const Color.fromRGBO(0, 0, 0, 0.08),
       child: Row(

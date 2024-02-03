@@ -1,12 +1,20 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
-import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:melodink_client/features/player/presentation/cubit/player_cubit.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_seeker.dart';
+import 'package:melodink_client/injection_container.dart';
 
-class PlayerControls extends StatelessWidget {
+class PlayerControls extends StatefulWidget {
   const PlayerControls({super.key});
+
+  @override
+  State<PlayerControls> createState() => _PlayerControlsState();
+}
+
+class _PlayerControlsState extends State<PlayerControls> {
+  final _audioHandler = sl<AudioHandler>();
 
   @override
   Widget build(BuildContext context) {
@@ -21,35 +29,34 @@ class PlayerControls extends StatelessWidget {
                   padding: const EdgeInsets.only(),
                   icon: const AdwaitaIcon(AdwaitaIcons.media_playlist_shuffle),
                   iconSize: 20.0,
-                  onPressed: () async {
-                    BlocProvider.of<PlayerCubit>(context).startPlaylist();
-                  },
+                  onPressed: () {},
                 ),
                 IconButton(
                   padding: const EdgeInsets.only(),
                   icon: const AdwaitaIcon(AdwaitaIcons.media_skip_backward),
                   iconSize: 20.0,
                   onPressed: () async {
-                    BlocProvider.of<PlayerCubit>(context)
-                        .player
-                        .seekToPrevious();
+                    _audioHandler.skipToPrevious();
                   },
                 ),
-                StreamBuilder<bool>(
-                    stream: BlocProvider.of<PlayerCubit>(context)
-                        .player
-                        .playingStream,
+                StreamBuilder<PlaybackState>(
+                    stream: _audioHandler.playbackState,
                     builder: (context, snapshot) {
+                      final isPlaying = snapshot.data?.playing ?? false;
                       return IconButton(
                         padding: const EdgeInsets.only(),
-                        icon: snapshot.data ?? false
+                        icon: isPlaying
                             ? const AdwaitaIcon(
                                 AdwaitaIcons.media_playback_pause)
                             : const AdwaitaIcon(
                                 AdwaitaIcons.media_playback_start),
                         iconSize: 34.0,
                         onPressed: () async {
-                          BlocProvider.of<PlayerCubit>(context).playOrPause();
+                          if (isPlaying) {
+                            _audioHandler.pause();
+                            return;
+                          }
+                          _audioHandler.play();
                         },
                       );
                     }),
@@ -58,7 +65,7 @@ class PlayerControls extends StatelessWidget {
                   icon: const AdwaitaIcon(AdwaitaIcons.media_skip_forward),
                   iconSize: 20.0,
                   onPressed: () async {
-                    BlocProvider.of<PlayerCubit>(context).player.seekToNext();
+                    _audioHandler.skipToNext();
                   },
                 ),
                 IconButton(
@@ -70,9 +77,7 @@ class PlayerControls extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4.0),
-            PlayerSeeker(
-              player: BlocProvider.of<PlayerCubit>(context).player,
-            )
+            const PlayerSeeker(),
           ],
         );
       },

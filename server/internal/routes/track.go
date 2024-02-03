@@ -71,7 +71,7 @@ func TrackHTTPRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
-	router.Get("/{id}/audio/{format}/{quality}", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/{id}/audio/{format}/{quality}/*", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 		format := chi.URLParam(r, "format")
 		quality := chi.URLParam(r, "quality")

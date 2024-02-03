@@ -1,28 +1,31 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/features/player/presentation/cubit/player_cubit.dart';
+import 'package:melodink_client/injection_container.dart';
 import 'package:rxdart/rxdart.dart';
 
-class PlayerSeeker extends StatelessWidget {
-  final AudioPlayer player;
+class PlayerSeeker extends StatefulWidget {
+  const PlayerSeeker({super.key});
 
-  const PlayerSeeker({
-    super.key,
-    required this.player,
-  });
+  @override
+  State<PlayerSeeker> createState() => _PlayerSeekerState();
+}
+
+class _PlayerSeekerState extends State<PlayerSeeker> {
+  final _audioHandler = sl<AudioHandler>();
 
   Stream<PositionData> get positionDataStream =>
-      Rx.combineLatest3<Duration, Duration, Duration?, PositionData>(
-        player.positionStream,
-        player.bufferedPositionStream,
-        player.durationStream,
+      Rx.combineLatest3<Duration, PlaybackState, MediaItem?, PositionData>(
+        AudioService.position,
+        _audioHandler.playbackState,
+        _audioHandler.mediaItem,
         (position, bufferedPosition, duration) => PositionData(
           position: position,
-          bufferedPosition: bufferedPosition,
-          duration: duration ?? Duration.zero,
+          bufferedPosition: bufferedPosition.bufferedPosition,
+          duration: duration?.duration ?? Duration.zero,
         ),
       );
 
@@ -70,16 +73,10 @@ class PlayerSeeker extends StatelessWidget {
                   thumbColor: Colors.white,
                   baseBarColor: Colors.grey[800],
                   progressBarColor: Colors.white,
-                  progress: positionData?.position ?? Duration.zero,
-                  total: positionData?.duration ?? Duration.zero,
+                  progress: position,
+                  total: duration,
                   timeLabelLocation: TimeLabelLocation.none,
-                  onSeek: (duration) async {
-                    await player.seek(duration);
-                    if (!player.playing) {
-                      await player.pause();
-                      await player.pause();
-                    }
-                  },
+                  onSeek: _audioHandler.seek,
                 ),
               ),
               const SizedBox(width: 8.0),

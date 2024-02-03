@@ -1,5 +1,7 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:grpc/grpc_connection_interface.dart';
+import 'package:melodink_client/core/audio_controller.dart';
 import 'package:melodink_client/core/network/grpc_client.dart'
     if (dart.library.html) 'package:melodink_client/core/network/grpc_web_client.dart';
 import 'package:melodink_client/features/tracks/data/repositories/track_repository_impl.dart';
@@ -9,7 +11,7 @@ import 'package:melodink_client/features/tracks/presentation/cubit/tracks_cubit.
 
 final sl = GetIt.instance;
 
-void setup() {
+Future<void> setup() async {
   //! Track
 
   // Cubit
@@ -31,4 +33,6 @@ void setup() {
   sl.registerLazySingleton<ClientChannelBase>(
     createGrpcClient,
   );
+
+  sl.registerSingleton<AudioHandler>(await initAudioService());
 }
