@@ -190,11 +190,11 @@ class MyAudioHandler extends BaseAudioHandler {
   int? getTrackIndexFromPlayer() {
     final currentIndex = _player.state.playlist.index;
 
-    if (currentIndex >= _playlist.medias.length) {
+    if (currentIndex >= _player.state.playlist.medias.length) {
       return null;
     }
 
-    final mediaItem = _playlist.medias[currentIndex];
+    final mediaItem = _player.state.playlist.medias[currentIndex];
 
     final uniqueIndex = mediaItem.extras?["index"];
 
