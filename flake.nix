@@ -95,6 +95,8 @@
             protobuf
             protoc-gen-dart
             which
+            mpv
+            wrapGAppsHook
           ];
 
           nativeBuildInputs = buildInputs;
@@ -103,10 +105,23 @@
 
           patchPhase = ''
             cp -r ${./proto} ../proto
+
+            mkdir -p /build/source/build/linux/x64/release/
+            cp ${pkgs.fetchurl {
+              url = "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz";
+              hash = "sha256-Kxv/b3F/lyXHC/jXnkeG2hPeiicAWeS6C90mKue+Rus=";
+            }} /build/source/build/linux/x64/release/mimalloc-2.1.2.tar.gz
           '';
 
           preBuild = ''
             make prebuild
+          '';
+
+          postFixup = ''
+            rm $out/bin/melodink_client
+            makeWrapper $out/app/melodink_client $out/bin/melodink_client \
+                "''${gappsWrapperArgs[@]}" \
+                --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped]}
           '';
 
           autoPubspecLock = ./client/pubspec.lock;
@@ -121,6 +136,10 @@
         GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
 
         GOROOT = "${pkgs.go_1_21}/share/go";
+
+        shellHook = ''
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped]}
+        '';
 
         buildInputs = with pkgs; [
           (golangci-lint.override {buildGoModule = buildGo121Module;})
@@ -138,6 +157,10 @@
           protoc-gen-go
           protoc-gen-go-grpc
           protoc-gen-dart
+
+          mpv
+          pkg-config
+          gtk3
         ];
       };
     });

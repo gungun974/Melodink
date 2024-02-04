@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:media_kit/media_kit.dart';
 
 Future<AudioHandler> initAudioService() async {
   return await AudioService.init(
@@ -18,8 +18,10 @@ Future<AudioHandler> initAudioService() async {
 const numberOfPreloadTrack = 50;
 
 class MyAudioHandler extends BaseAudioHandler {
-  final _player = AudioPlayer();
-  final _playlist = ConcatenatingAudioSource(children: []);
+  late final _player = Player();
+
+  // ignore: prefer_const_constructors
+  final _playlist = Playlist([]);
 
   MyAudioHandler() {
     _loadEmptyPlaylist();
@@ -29,11 +31,13 @@ class MyAudioHandler extends BaseAudioHandler {
     _listenForDurationChanges();
 
     _listenForCurrentSongIndexChanges();
+
+    _listenForProcessingState();
   }
 
   Future<void> _loadEmptyPlaylist() async {
     try {
-      await _player.setAudioSource(_playlist);
+      await _player.open(_playlist, play: false);
     } catch (e) {
       print("Error: $e");
     }
@@ -184,27 +188,13 @@ class MyAudioHandler extends BaseAudioHandler {
   }
 
   int? getTrackIndexFromPlayer() {
-    final currentIndex = _player.currentIndex;
+    final currentIndex = _player.state.playlist.index;
 
-    if (currentIndex == null) {
+    if (currentIndex >= _playlist.medias.length) {
       return null;
     }
 
-    if (currentIndex >= _playlist.length) {
-      return null;
-    }
-
-    final source = _playlist[currentIndex];
-
-    if (source is! IndexedAudioSource) {
-      return null;
-    }
-
-    final mediaItem = source.tag;
-
-    if (mediaItem is! MediaItem) {
-      return null;
-    }
+    final mediaItem = _playlist.medias[currentIndex];
 
     final uniqueIndex = mediaItem.extras?["index"];
 
@@ -236,40 +226,24 @@ class MyAudioHandler extends BaseAudioHandler {
       final currentMediaItem = queue.value[trackIndex + j];
       k++;
 
-      final i = (_player.currentIndex ?? 0) + k;
+      final i = _player.state.playlist.index + k;
 
-      if (i >= _playlist.length) {
-        await _playlist.add(_createAudioSource(currentMediaItem));
+      if (i >= _playlist.medias.length) {
+        _playlist.medias.add(_createAudioSource(currentMediaItem));
+        await _player.add(_createAudioSource(currentMediaItem));
       }
 
-      final playlistTrack = _playlist[i];
+      final playlistTrack = _playlist.medias[i];
 
-      if (playlistTrack is! IndexedAudioSource) {
-        await _playlist.removeAt(i);
-        await _playlist.insert(
+      if (playlistTrack.extras?["index"] != currentMediaItem.extras?["index"]) {
+        _playlist.medias.removeAt(i);
+        _playlist.medias.insert(
           i,
           _createAudioSource(currentMediaItem),
         );
-        continue;
-      }
 
-      final tag = playlistTrack.tag;
-
-      if (tag is! MediaItem) {
-        await _playlist.removeAt(i);
-        await _playlist.insert(
-          i,
-          _createAudioSource(currentMediaItem),
-        );
-        continue;
-      }
-
-      if (tag.extras?["index"] != currentMediaItem.extras?["index"]) {
-        await _playlist.removeAt(i);
-        await _playlist.insert(
-          i,
-          _createAudioSource(currentMediaItem),
-        );
+        await _player.add(_createAudioSource(currentMediaItem));
+        await _player.move(_player.state.playlist.medias.length, i);
         continue;
       }
     }
@@ -283,19 +257,26 @@ class MyAudioHandler extends BaseAudioHandler {
       final currentMediaItem = queue.value[trackIndex - j];
       k++;
 
-      final i = (_player.currentIndex ?? 0) - k;
+      final i = _player.state.playlist.index - k;
 
       if (i < 0) {
-        await _playlist.insert(0, _createAudioSource(currentMediaItem));
+        _playlist.medias.insert(0, _createAudioSource(currentMediaItem));
+
+        await _player.add(_createAudioSource(currentMediaItem));
+        await _player.move(_player.state.playlist.medias.length, 0);
         continue;
       }
     }
+
+    if (!_player.state.playing) {
+      await _player.open(_playlist, play: false);
+    }
   }
 
-  UriAudioSource _createAudioSource(MediaItem mediaItem) {
-    return AudioSource.uri(
-      Uri.parse(mediaItem.extras!['url'] as String),
-      tag: mediaItem,
+  Media _createAudioSource(MediaItem mediaItem) {
+    return Media(
+      mediaItem.extras!['url'] as String,
+      extras: mediaItem.extras,
     );
   }
 
@@ -311,22 +292,17 @@ class MyAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> seek(Duration position) async {
-    final isPlaying = _player.playing;
     await _player.seek(position);
-    if (!isPlaying) {
-      await _player.pause();
-      await _player.pause();
-    }
   }
 
   @override
   Future<void> skipToNext() async {
-    await _player.seekToNext();
+    await _player.next();
   }
 
   @override
   Future<void> skipToPrevious() async {
-    await _player.seekToPrevious();
+    await _player.previous();
   }
 
   @override
@@ -338,25 +314,16 @@ class MyAudioHandler extends BaseAudioHandler {
     try {
       await _listenForCurrentSongIndexChangesStream?.cancel();
 
-      await _playlist.clear();
+      _playlist.medias.clear();
+      await _player.open(_playlist, play: false);
 
       await preloadPlaylistToIndex(index);
 
-      for (int i = 0; i < _playlist.length; i++) {
-        final source = _playlist[i];
-
-        if (source is! IndexedAudioSource) {
-          continue;
-        }
-
-        final mediaItem = source.tag;
-
-        if (mediaItem is! MediaItem) {
-          continue;
-        }
+      for (int i = 0; i < _playlist.medias.length; i++) {
+        final mediaItem = _playlist.medias[i];
 
         if (mediaItem.extras?["index"] == queue.value[index].extras?["index"]) {
-          await _player.seek(Duration.zero, index: i);
+          await _player.jump(i);
         }
       }
       _refreshPlaybackState();
@@ -368,64 +335,94 @@ class MyAudioHandler extends BaseAudioHandler {
 
   StreamSubscription? _listenForCurrentSongIndexChangesStream;
 
+  int? _lastTrackIndexFromPlayer;
+
   Future<void> _listenForCurrentSongIndexChanges() async {
-    await _listenForCurrentSongIndexChangesStream?.cancel();
-
     _listenForCurrentSongIndexChangesStream =
-        _player.currentIndexStream.listen((advertisedIndex) async {
-      if (advertisedIndex == null) {
-        return;
-      }
-
+        _player.stream.position.listen((advertisedIndex) async {
       final trackIndexFromPlayer = getTrackIndexFromPlayer();
-      if (trackIndexFromPlayer != null) {
+
+      if (trackIndexFromPlayer != null &&
+          _lastTrackIndexFromPlayer != trackIndexFromPlayer) {
         await preloadPlaylistToIndex(trackIndexFromPlayer);
       }
+
+      _lastTrackIndexFromPlayer = trackIndexFromPlayer;
     });
   }
 
   void _notifyAudioHandlerAboutPlaybackEvents() {
-    _player.playbackEventStream.listen((_) => _refreshPlaybackState());
+    _player.stream.position.listen((_) => _refreshPlaybackState());
+    _player.stream.buffer.listen((_) => _refreshPlaybackState());
+    _player.stream.playing.listen((_) => _refreshPlaybackState());
   }
 
   void _refreshPlaybackState() {
-    final playing = _player.playing;
+    final playing = _player.state.playing;
     playbackState.add(playbackState.value.copyWith(
       controls: [
         MediaControl.skipToPrevious,
         if (playing) MediaControl.pause else MediaControl.play,
-        MediaControl.stop,
         MediaControl.skipToNext,
       ],
       systemActions: const {
         MediaAction.seek,
       },
-      androidCompactActionIndices: const [0, 1, 3],
-      processingState: const {
-        ProcessingState.idle: AudioProcessingState.idle,
-        ProcessingState.loading: AudioProcessingState.loading,
-        ProcessingState.buffering: AudioProcessingState.buffering,
-        ProcessingState.ready: AudioProcessingState.ready,
-        ProcessingState.completed: AudioProcessingState.completed,
-      }[_player.processingState]!,
+      androidCompactActionIndices: const [0, 1, 2],
       playing: playing,
-      updatePosition: _player.position,
-      bufferedPosition: _player.bufferedPosition,
-      speed: _player.speed,
+      updatePosition: _player.state.position,
+      bufferedPosition: _player.state.buffer,
+      speed: _player.state.rate,
       queueIndex: realCurrentTrackIndex,
     ));
   }
 
   void _listenForDurationChanges() {
-    _player.durationStream.listen((duration) {
+    _player.stream.duration.listen((duration) {
       final index = realCurrentTrackIndex;
       final newQueue = queue.value;
-      if (index == null || newQueue.isEmpty) return;
+      if (newQueue.isEmpty) return;
       final oldMediaItem = newQueue[index];
       final newMediaItem = oldMediaItem.copyWith(duration: duration);
       newQueue[index] = newMediaItem;
       queue.add(newQueue);
       mediaItem.add(newMediaItem);
+    });
+  }
+
+  void _listenForProcessingState() {
+    _player.stream.duration.listen((_) {
+      playbackState.add(playbackState.value.copyWith(
+        processingState: AudioProcessingState.idle,
+      ));
+    });
+
+    _player.stream.buffering.listen((isBuffering) {
+      playbackState.add(playbackState.value.copyWith(
+        processingState: isBuffering
+            ? AudioProcessingState.buffering
+            : AudioProcessingState.ready,
+      ));
+    });
+
+    _player.stream.playing.listen((_) {
+      playbackState.add(playbackState.value.copyWith(
+        processingState: AudioProcessingState.ready,
+      ));
+    });
+
+    _player.stream.completed.listen((completed) {
+      playbackState.add(playbackState.value.copyWith(
+        processingState: completed
+            ? AudioProcessingState.completed
+            : AudioProcessingState.ready,
+      ));
+    });
+
+    _player.stream.error.listen((_) {
+      playbackState.add(playbackState.value.copyWith(
+        processingState: AudioProcessingState.idle,
+      ));
     });
   }
 }

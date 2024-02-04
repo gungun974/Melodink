@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/player/presentation/cubit/player_cubit.dart';
 import 'package:melodink_client/features/tracks/presentation/pages/tracks_page.dart';
@@ -15,6 +16,8 @@ import 'injection_container.dart' as di;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  MediaKit.ensureInitialized();
 
   await di.setup();
 
