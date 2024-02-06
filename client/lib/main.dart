@@ -44,6 +44,10 @@ class MyApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
         primaryColor: Colors.black,
         iconTheme: const IconThemeData().copyWith(color: Colors.white),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color.fromRGBO(196, 126, 208, 1),
+          brightness: Brightness.dark,
+        ),
       ),
       routerConfig: appRouter,
     );

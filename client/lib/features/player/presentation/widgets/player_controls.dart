@@ -20,6 +20,12 @@ class _PlayerControlsState extends State<PlayerControls> {
   Widget build(BuildContext context) {
     return BlocBuilder<PlayerCubit, PlayerState>(
       builder: (context, state) {
+        bool isShuffled = false;
+
+        if (state is PlayerPlaying) {
+          isShuffled = state.isShuffled;
+        }
+
         return Column(
           children: [
             Row(
@@ -27,9 +33,16 @@ class _PlayerControlsState extends State<PlayerControls> {
               children: [
                 IconButton(
                   padding: const EdgeInsets.only(),
-                  icon: const AdwaitaIcon(AdwaitaIcons.media_playlist_shuffle),
+                  icon: AdwaitaIcon(
+                    AdwaitaIcons.media_playlist_shuffle,
+                    color: isShuffled
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.white,
+                  ),
                   iconSize: 20.0,
-                  onPressed: () {},
+                  onPressed: () {
+                    BlocProvider.of<PlayerCubit>(context).toogleShufle();
+                  },
                 ),
                 IconButton(
                   padding: const EdgeInsets.only(),
