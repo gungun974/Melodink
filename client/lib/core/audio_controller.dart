@@ -246,12 +246,12 @@ class MyAudioHandler extends BaseAudioHandler {
       medias.insert(0, _createAudioSource(currentMediaItem));
     }
 
-    if (!_player.state.playing) {
-      await _player.open(Playlist(medias), play: false);
-    } else {
-      final l = ListTransformer(_player);
-      await l.transform(medias);
-    }
+    final l = ListTransformer(_player);
+    await l.transform(medias);
+
+    playbackState.add(playbackState.value.copyWith(
+      queueIndex: realCurrentTrackIndex,
+    ));
 
     m.release();
 
@@ -420,18 +420,47 @@ class ListTransformer {
     return a.extras?["index"] == b.extras?["index"];
   }
 
+  Future<void> add(Media media, List<Media> current) async {
+    await player.add(media);
+    current.add(media);
+  }
+
+  Future<void> remove(int index, List<Media> current) async {
+    await player.remove(index);
+    current.removeAt(index);
+  }
+
+  Future<void> move(int from, int to, List<Media> current) async {
+    await player.move(from, to);
+    if (from < to) {
+      to--;
+    }
+    current.insert(to, current.removeAt(from));
+  }
+
   Future<void> transform(List<Media> target) async {
     final List<Media> current = List.from(player.state.playlist.medias);
+
+    if (current.isEmpty) {
+      for (int i = 0; i < target.length; i++) {
+        await add(target[i], current);
+      }
+      return;
+    }
+
+    final dontMoveThisItem = current[player.state.playlist.index];
 
     outerloop:
     for (int i = current.length - 1; i >= 0; i--) {
       for (final targetTrack in target) {
         if (isSameItem(current[i], targetTrack)) {
+          if (!isSameItem(current[i], dontMoveThisItem)) {
+            await move(i, current.length - 1, current);
+          }
           continue outerloop;
         }
       }
-      await player.remove(i);
-      current.removeAt(i);
+      await remove(i, current);
     }
 
     outerloop:
@@ -441,19 +470,16 @@ class ListTransformer {
           continue outerloop;
         }
       }
-      await player.add(target[i]);
-      current.add(target[i]);
+      await add(target[i], current);
     }
 
     for (int j = 0; j < target.length; j++) {
       for (int i = 0; i < current.length; i++) {
         if (isSameItem(current[i], target[j])) {
-          await player.move(i, j);
-          int k = j;
-          if (i < j) {
-            k--;
+          if (isSameItem(target[j], dontMoveThisItem)) {
+            continue;
           }
-          current.insert(k, current.removeAt(i));
+          await move(i, j, current);
           break;
         }
       }
