@@ -249,7 +249,6 @@ class MyAudioHandler extends BaseAudioHandler {
     if (!_player.state.playing) {
       await _player.open(Playlist(medias), play: false);
     } else {
-      //
       final l = ListTransformer(_player);
       await l.transform(medias);
     }
@@ -446,10 +445,15 @@ class ListTransformer {
       current.add(target[i]);
     }
 
-    for (int i = 0; i < current.length; i++) {
-      for (final (j, targetTrack) in target.indexed) {
-        if (isSameItem(current[i], targetTrack)) {
+    for (int j = 0; j < target.length; j++) {
+      for (int i = 0; i < current.length; i++) {
+        if (isSameItem(current[i], target[j])) {
           await player.move(i, j);
+          int k = j;
+          if (i < j) {
+            k--;
+          }
+          current.insert(k, current.removeAt(i));
           break;
         }
       }
