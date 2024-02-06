@@ -95,6 +95,9 @@ Widget buildTableRow(
     BuildContext context, Track track, int index, VoidCallback playCallback) {
   return GestureDetector(
     onTap: playCallback,
+    onSecondaryTap: () {
+      BlocProvider.of<PlayerCubit>(context).addTrackToQueue(track);
+    },
     child: Container(
       color: const Color.fromRGBO(0, 0, 0, 0.08),
       child: Row(

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:melodink_client/core/helpers/generate_unique_id.dart';
+import 'package:mutex/mutex.dart';
 
 Future<AudioHandler> initAudioService() async {
   return await AudioService.init(
@@ -20,9 +22,6 @@ const numberOfPreloadTrack = 50;
 class MyAudioHandler extends BaseAudioHandler {
   late final _player = Player();
 
-  // ignore: prefer_const_constructors
-  final _playlist = Playlist([]);
-
   MyAudioHandler() {
     _loadEmptyPlaylist();
 
@@ -37,13 +36,11 @@ class MyAudioHandler extends BaseAudioHandler {
 
   Future<void> _loadEmptyPlaylist() async {
     try {
-      await _player.open(_playlist, play: false);
+      await _player.open(const Playlist([]), play: false);
     } catch (e) {
       print("Error: $e");
     }
   }
-
-  int lastIndex = 0;
 
   @override
   Future<void> addQueueItem(MediaItem mediaItem) async {
@@ -65,7 +62,9 @@ class MyAudioHandler extends BaseAudioHandler {
           rating: mediaItem.rating,
           extras: {
             ...(mediaItem.extras ?? {}),
-            "index": lastIndex++,
+            "index": mediaItem.extras?.containsKey("index") == true
+                ? mediaItem.extras!["index"]
+                : generateUniqueID(),
           },
         ),
       );
@@ -99,7 +98,9 @@ class MyAudioHandler extends BaseAudioHandler {
                 rating: mediaItem.rating,
                 extras: {
                   ...(mediaItem.extras ?? {}),
-                  "index": lastIndex++,
+                  "index": mediaItem.extras?.containsKey("index") == true
+                      ? mediaItem.extras!["index"]
+                      : generateUniqueID(),
                 },
               ),
             )
@@ -134,7 +135,9 @@ class MyAudioHandler extends BaseAudioHandler {
           rating: mediaItem.rating,
           extras: {
             ...(mediaItem.extras ?? {}),
-            "index": lastIndex++,
+            "index": mediaItem.extras?.containsKey("index") == true
+                ? mediaItem.extras!["index"]
+                : generateUniqueID(),
           },
         ),
       );
@@ -169,7 +172,9 @@ class MyAudioHandler extends BaseAudioHandler {
               rating: mediaItem.rating,
               extras: {
                 ...(mediaItem.extras ?? {}),
-                "index": lastIndex++,
+                "index": mediaItem.extras?.containsKey("index") == true
+                    ? mediaItem.extras!["index"]
+                    : generateUniqueID(),
               },
             ),
           )
@@ -214,68 +219,49 @@ class MyAudioHandler extends BaseAudioHandler {
 
   int realCurrentTrackIndex = 0;
 
-  preloadPlaylistToIndex(int trackIndex) async {
+  final m = Mutex();
+
+  Future<List<Media>> preloadPlaylistToIndex(int trackIndex) async {
+    await m.acquire();
     realCurrentTrackIndex = trackIndex;
 
-    int k = -1;
+    final List<Media> medias = [];
+
     for (int j = 0; j < numberOfPreloadTrack - 1; j++) {
       if (trackIndex + j < 0 || trackIndex + j >= queue.value.length) {
         continue;
       }
 
       final currentMediaItem = queue.value[trackIndex + j];
-      k++;
 
-      final i = _player.state.playlist.index + k;
-
-      if (i >= _playlist.medias.length) {
-        _playlist.medias.add(_createAudioSource(currentMediaItem));
-        await _player.add(_createAudioSource(currentMediaItem));
-      }
-
-      final playlistTrack = _playlist.medias[i];
-
-      if (playlistTrack.extras?["index"] != currentMediaItem.extras?["index"]) {
-        _playlist.medias.removeAt(i);
-        _playlist.medias.insert(
-          i,
-          _createAudioSource(currentMediaItem),
-        );
-
-        await _player.add(_createAudioSource(currentMediaItem));
-        await _player.move(_player.state.playlist.medias.length, i);
-        continue;
-      }
+      medias.add(_createAudioSource(currentMediaItem));
     }
 
-    k = 0;
     for (int j = 1; j < numberOfPreloadTrack - 1; j++) {
       if (trackIndex - j < 0 || trackIndex - j >= queue.value.length) {
         continue;
       }
 
       final currentMediaItem = queue.value[trackIndex - j];
-      k++;
-
-      final i = _player.state.playlist.index - k;
-
-      if (i < 0) {
-        _playlist.medias.insert(0, _createAudioSource(currentMediaItem));
-
-        await _player.add(_createAudioSource(currentMediaItem));
-        await _player.move(_player.state.playlist.medias.length, 0);
-        continue;
-      }
+      medias.insert(0, _createAudioSource(currentMediaItem));
     }
 
     if (!_player.state.playing) {
-      await _player.open(_playlist, play: false);
+      await _player.open(Playlist(medias), play: false);
+    } else {
+      //
+      final l = ListTransformer(_player);
+      await l.transform(medias);
     }
+
+    m.release();
+
+    return medias;
   }
 
   Media _createAudioSource(MediaItem mediaItem) {
     return Media(
-      mediaItem.extras!['url'] as String,
+      "${mediaItem.extras!['url'] as String}?rn=${mediaItem.extras?["index"]}",
       extras: mediaItem.extras,
     );
   }
@@ -314,13 +300,12 @@ class MyAudioHandler extends BaseAudioHandler {
     try {
       await _listenForCurrentSongIndexChangesStream?.cancel();
 
-      _playlist.medias.clear();
-      await _player.open(_playlist, play: false);
+      await _player.open(const Playlist([]), play: false);
 
-      await preloadPlaylistToIndex(index);
+      final medias = await preloadPlaylistToIndex(index);
 
-      for (int i = 0; i < _playlist.medias.length; i++) {
-        final mediaItem = _playlist.medias[i];
+      for (int i = 0; i < medias.length; i++) {
+        final mediaItem = medias[i];
 
         if (mediaItem.extras?["index"] == queue.value[index].extras?["index"]) {
           await _player.jump(i);
@@ -424,5 +409,50 @@ class MyAudioHandler extends BaseAudioHandler {
         processingState: AudioProcessingState.idle,
       ));
     });
+  }
+}
+
+class ListTransformer {
+  Player player;
+
+  ListTransformer(this.player);
+
+  bool isSameItem(Media a, Media b) {
+    return a.extras?["index"] == b.extras?["index"];
+  }
+
+  Future<void> transform(List<Media> target) async {
+    final List<Media> current = List.from(player.state.playlist.medias);
+
+    outerloop:
+    for (int i = current.length - 1; i >= 0; i--) {
+      for (final targetTrack in target) {
+        if (isSameItem(current[i], targetTrack)) {
+          continue outerloop;
+        }
+      }
+      await player.remove(i);
+      current.removeAt(i);
+    }
+
+    outerloop:
+    for (int i = 0; i < target.length; i++) {
+      for (final track in current) {
+        if (isSameItem(target[i], track)) {
+          continue outerloop;
+        }
+      }
+      await player.add(target[i]);
+      current.add(target[i]);
+    }
+
+    for (int i = 0; i < current.length; i++) {
+      for (final (j, targetTrack) in target.indexed) {
+        if (isSameItem(current[i], targetTrack)) {
+          await player.move(i, j);
+          break;
+        }
+      }
+    }
   }
 }

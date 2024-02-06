@@ -2,6 +2,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/config.dart';
+import 'package:melodink_client/core/helpers/generate_unique_id.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:melodink_client/injection_container.dart';
 import 'package:path/path.dart' as p;
@@ -18,19 +19,31 @@ class PlayerStandby extends PlayerState {}
 class PlayerPlaying extends PlayerState {
   final Track currentTrack;
 
+  final List<Track> previousTrack;
+
+  final List<Track> queueTracks;
+
+  final List<Track> nextTracks;
+
   const PlayerPlaying({
     required this.currentTrack,
+    required this.previousTrack,
+    required this.queueTracks,
+    required this.nextTracks,
   });
 
   @override
   List<Object> get props => [
         currentTrack,
+        previousTrack,
+        queueTracks,
+        nextTracks,
       ];
 }
 
 class IndexedTrack {
   final Track track;
-  final int index;
+  final String index;
 
   IndexedTrack({required this.track, required this.index});
 }
@@ -50,15 +63,46 @@ class PlayerCubit extends Cubit<PlayerState> {
         ..._nextTracks,
       ];
 
+  _updatePlaylistTracks(int currentTrackIndex) {
+    for (int j = _queueTracks.length - 1; j >= 0; j--) {
+      final i = j + _previousTracks.length;
+
+      if (i > currentTrackIndex) {
+        continue;
+      }
+
+      _previousTracks.add(_queueTracks.removeAt(j));
+    }
+
+    for (int j = _nextTracks.length - 1; j >= 0; j--) {
+      final i = j + _previousTracks.length + _queueTracks.length;
+
+      if (i > currentTrackIndex) {
+        continue;
+      }
+
+      _previousTracks.add(_nextTracks.removeAt(j));
+    }
+
+    for (int i = _previousTracks.length - 1; i >= 0; i--) {
+      if (i <= currentTrackIndex) {
+        continue;
+      }
+
+      _nextTracks.insert(0, _previousTracks.removeAt(i));
+    }
+  }
+
   PlayerCubit() : super(PlayerStandby()) {
     _audioHandler.playbackState.listen(_updatePlaybackInfo);
   }
 
-  int lastIndex = 0;
-
   final _audioHandler = sl<AudioHandler>();
 
+  bool _isLoadingPlaylist = false;
+
   loadTracksPlaylist(List<Track> tracks, int startAt) async {
+    _isLoadingPlaylist = true;
     _playlistTracks = tracks;
 
     _previousTracks = [];
@@ -68,30 +112,96 @@ class PlayerCubit extends Cubit<PlayerState> {
     _nextTracks = [];
 
     for (int i = 0; i < _playlistTracks.length; i++) {
-      if (i < startAt) {
+      if (i <= startAt) {
         _previousTracks.add(IndexedTrack(
           track: _playlistTracks[i],
-          index: lastIndex++,
+          index: generateUniqueID(),
         ));
         continue;
       }
 
       _nextTracks.add(IndexedTrack(
         track: _playlistTracks[i],
-        index: lastIndex++,
+        index: generateUniqueID(),
       ));
     }
+
+    _updatePlaylistTracks(startAt);
 
     await _audioHandler.updateQueue(
       _allTracks.map((e) => _getTrackMediaItem(e.track, e.index)).toList(),
     );
 
+    _lastQueueIndex = null;
+
     await _audioHandler.skipToQueueItem(startAt);
 
     await _audioHandler.play();
+
+    _isLoadingPlaylist = false;
   }
 
-  MediaItem _getTrackMediaItem(Track track, int index) {
+  _debugTracks() {
+    print("PREV ------------------------");
+
+    for (final (index, track) in _previousTracks.indexed) {
+      print("$index : ${track.track.title}");
+    }
+
+    print("QUEUE ------------------------");
+
+    for (final (index, track) in _queueTracks.indexed) {
+      print("$index : ${track.track.title}");
+    }
+
+    print("NEXT ------------------------");
+
+    for (final (index, track) in _nextTracks.indexed) {
+      print("$index : ${track.track.title}");
+    }
+
+    print("ALL ------------------------");
+
+    for (final (index, track) in _allTracks.indexed) {
+      print("$index : ${track.track.title}");
+    }
+
+    print("\n---------------------------------------------\n");
+  }
+
+  addTrackToQueue(Track track) async {
+    _isLoadingPlaylist = true;
+
+    _queueTracks.add(IndexedTrack(
+      track: track,
+      index: generateUniqueID(),
+    ));
+
+    final trackIndex = _getCurrentTrackIndex();
+
+    if (trackIndex == null) {
+      return;
+    }
+
+    _updatePlaylistTracks(trackIndex);
+
+    await _audioHandler.updateQueue(
+      _allTracks.map((e) => _getTrackMediaItem(e.track, e.index)).toList(),
+    );
+
+    emit(
+      PlayerPlaying(
+        currentTrack: _allTracks[trackIndex].track,
+        previousTrack: _previousTracks.map((e) => e.track).toList(),
+        queueTracks: _queueTracks.map((e) => e.track).toList(),
+        nextTracks: _nextTracks.map((e) => e.track).toList(),
+      ),
+    );
+
+    _isLoadingPlaylist = false;
+  }
+
+  MediaItem _getTrackMediaItem(Track track, String index) {
     String filename = "audio${p.extension(track.path)}";
 
     if (audioFormat == "hls") {
@@ -114,32 +224,64 @@ class PlayerCubit extends Cubit<PlayerState> {
       extras: {
         'url':
             "$appUrl/api/track/${track.id}/audio/$audioFormat/$audioQuality/$filename",
+        "index": index,
       },
     );
   }
 
-  _updatePlaybackInfo(PlaybackState state) {
+  int? _getCurrentTrackIndex() {
+    final state = _audioHandler.playbackState.value;
     final index = state.queueIndex;
+
     if (index == null) {
-      return;
+      return null;
     }
 
-    final trackId = int.tryParse(_audioHandler.queue.value[index].id);
+    final extraIndex = _audioHandler.queue.value[index].extras?["index"];
 
-    if (trackId == null) {
-      return;
+    if (extraIndex == null) {
+      return null;
     }
 
     final trackIndex =
-        _playlistTracks.indexWhere((track) => track.id == trackId);
+        _allTracks.indexWhere((track) => track.index == extraIndex);
 
     if (trackIndex < 0) {
+      return null;
+    }
+
+    return trackIndex;
+  }
+
+  int? _lastQueueIndex;
+
+  _updatePlaybackInfo(state) {
+    final index = state.queueIndex;
+    if (index == null) {
+      return null;
+    }
+
+    if (index == _lastQueueIndex) {
+      return null;
+    }
+    _lastQueueIndex = index;
+
+    final trackIndex = _getCurrentTrackIndex();
+
+    if (trackIndex == null) {
       return;
+    }
+
+    if (!_isLoadingPlaylist) {
+      _updatePlaylistTracks(trackIndex);
     }
 
     emit(
       PlayerPlaying(
-        currentTrack: _playlistTracks[trackIndex],
+        currentTrack: _allTracks[trackIndex].track,
+        previousTrack: _previousTracks.map((e) => e.track).toList(),
+        queueTracks: _queueTracks.map((e) => e.track).toList(),
+        nextTracks: _nextTracks.map((e) => e.track).toList(),
       ),
     );
   }
