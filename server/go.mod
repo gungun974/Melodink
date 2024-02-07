@@ -5,6 +5,7 @@ go 1.21.6
 replace github.com/dhowden/tag => github.com/gungun974/tag v0.0.0-20240130062032-bec28d57f978
 
 require (
+	github.com/alfg/mp4 v0.0.0-20210728035756-55ea58c08aeb
 	github.com/dhowden/tag v0.0.0-20240122214204-713ab0e94639
 	github.com/go-chi/chi/v5 v5.0.11
 	github.com/golang-migrate/migrate/v4 v4.17.0

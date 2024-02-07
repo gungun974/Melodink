@@ -16,7 +16,7 @@ type TrackStorageImpl struct{}
 
 func isAudioFile(path string) bool {
 	ext := strings.ToLower(filepath.Ext(path))
-	return ext == ".mp3" || ext == ".ogg" || ext == ".flac"
+	return ext == ".mp3" || ext == ".m4a" || ext == ".ogg" || ext == ".flac"
 }
 
 func (s *TrackStorageImpl) ListAllAudios() ([]string, error) {

@@ -3,6 +3,7 @@ package audiolength
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/dhowden/tag"
@@ -27,11 +28,19 @@ func GetAudioDuration(path string) (int, error) {
 
 	duration := time.Duration(0)
 
+	if filepath.Ext(path) == ".m4a" {
+		fileType = tag.M4A
+	}
+
+	logger.DatabaseLogger.Info(fileType)
+
 	switch fileType {
 	case tag.MP3:
 		duration, err = getMp3Duration(path)
 	case tag.OGG:
 		duration, err = getOggDuration(path)
+	case tag.M4A:
+		duration, err = getM4aDuration(path)
 	case tag.FLAC:
 		duration, err = getFlacDuration(path)
 	default:
