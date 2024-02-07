@@ -81,12 +81,43 @@ class _PlayerControlsState extends State<PlayerControls> {
                     _audioHandler.skipToNext();
                   },
                 ),
-                IconButton(
-                  padding: const EdgeInsets.only(),
-                  icon: const AdwaitaIcon(AdwaitaIcons.media_playlist_repeat),
-                  iconSize: 20.0,
-                  onPressed: () {},
-                ),
+                StreamBuilder<PlaybackState>(
+                    stream: _audioHandler.playbackState,
+                    builder: (context, snapshot) {
+                      final repeatMode = snapshot.data?.repeatMode ??
+                          AudioServiceRepeatMode.none;
+                      return IconButton(
+                        padding: const EdgeInsets.only(),
+                        icon: repeatMode == AudioServiceRepeatMode.one
+                            ? const AdwaitaIcon(
+                                AdwaitaIcons.media_playlist_repeat_song,
+                              )
+                            : const AdwaitaIcon(
+                                AdwaitaIcons.media_playlist_repeat,
+                              ),
+                        iconSize: 20.0,
+                        color: repeatMode != AudioServiceRepeatMode.none
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.white,
+                        onPressed: () async {
+                          switch (repeatMode) {
+                            case AudioServiceRepeatMode.none:
+                              _audioHandler
+                                  .setRepeatMode(AudioServiceRepeatMode.all);
+                              break;
+                            case AudioServiceRepeatMode.all:
+                              _audioHandler
+                                  .setRepeatMode(AudioServiceRepeatMode.one);
+                              break;
+                            case AudioServiceRepeatMode.one:
+                              _audioHandler
+                                  .setRepeatMode(AudioServiceRepeatMode.none);
+                              break;
+                            default:
+                          }
+                        },
+                      );
+                    }),
               ],
             ),
             const SizedBox(height: 4.0),

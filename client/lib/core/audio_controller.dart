@@ -246,6 +246,24 @@ class MyAudioHandler extends BaseAudioHandler {
       medias.insert(0, _createAudioSource(currentMediaItem));
     }
 
+    if (_player.state.playlistMode == PlaylistMode.loop) {
+      for (int i = 0; i < numberOfPreloadTrack - 1; i++) {
+        if (i < 0 || i >= queue.value.length) {
+          continue;
+        }
+
+        final currentMediaItem = queue.value[i];
+
+        if (i < medias.length) {
+          if (currentMediaItem.extras?["index"] == medias[i].extras?["index"]) {
+            continue;
+          }
+        }
+
+        medias.insert(i, _createAudioSource(currentMediaItem));
+      }
+    }
+
     final l = ListTransformer(_player);
     await l.transform(medias);
 
@@ -287,7 +305,40 @@ class MyAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> skipToPrevious() async {
+    final trackIndexFromPlayer = getTrackIndexFromPlayer();
+
+    if (trackIndexFromPlayer == 0) {
+      await _player.seek(const Duration());
+      return;
+    }
+
     await _player.previous();
+  }
+
+  @override
+  Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    switch (repeatMode) {
+      case AudioServiceRepeatMode.none:
+        await _player.setPlaylistMode(PlaylistMode.none);
+        break;
+      case AudioServiceRepeatMode.all:
+        await _player.setPlaylistMode(PlaylistMode.loop);
+        break;
+      case AudioServiceRepeatMode.one:
+        await _player.setPlaylistMode(PlaylistMode.single);
+        break;
+      default:
+        return;
+    }
+
+    final trackIndexFromPlayer = getTrackIndexFromPlayer();
+    if (trackIndexFromPlayer != null) {
+      await preloadPlaylistToIndex(trackIndexFromPlayer);
+    }
+
+    playbackState.add(playbackState.value.copyWith(
+      repeatMode: repeatMode,
+    ));
   }
 
   @override
@@ -343,6 +394,21 @@ class MyAudioHandler extends BaseAudioHandler {
 
   void _refreshPlaybackState() {
     final playing = _player.state.playing;
+
+    AudioServiceRepeatMode repeatMode = AudioServiceRepeatMode.none;
+
+    switch (_player.state.playlistMode) {
+      case PlaylistMode.none:
+        repeatMode = AudioServiceRepeatMode.none;
+        break;
+      case PlaylistMode.loop:
+        repeatMode = AudioServiceRepeatMode.all;
+        break;
+      case PlaylistMode.single:
+        repeatMode = AudioServiceRepeatMode.one;
+        break;
+    }
+
     playbackState.add(playbackState.value.copyWith(
       controls: [
         MediaControl.skipToPrevious,
@@ -358,6 +424,7 @@ class MyAudioHandler extends BaseAudioHandler {
       bufferedPosition: _player.state.buffer,
       speed: _player.state.rate,
       queueIndex: realCurrentTrackIndex,
+      repeatMode: repeatMode,
     ));
   }
 
