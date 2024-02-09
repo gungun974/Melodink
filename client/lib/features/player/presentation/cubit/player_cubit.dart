@@ -232,15 +232,7 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     _lastQueueIndex = null;
 
-    emit(
-      PlayerPlaying(
-        currentTrack: _allTracks[0].track,
-        previousTrack: _previousTracks.map((e) => e.track).toList(),
-        queueTracks: _queueTracks.map((e) => e.track).toList(),
-        nextTracks: _nextTracks.map((e) => e.track).toList(),
-        isShuffled: isShuffled,
-      ),
-    );
+    _updatePlaybackInfo(_audioHandler.playbackState.value);
   }
 
   unshuffle(String extraIndex) async {
@@ -274,15 +266,7 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     _lastQueueIndex = null;
 
-    emit(
-      PlayerPlaying(
-        currentTrack: _allTracks[startAt].track,
-        previousTrack: _previousTracks.map((e) => e.track).toList(),
-        queueTracks: _queueTracks.map((e) => e.track).toList(),
-        nextTracks: _nextTracks.map((e) => e.track).toList(),
-        isShuffled: isShuffled,
-      ),
-    );
+    _updatePlaybackInfo(_audioHandler.playbackState.value);
   }
 
   MediaItem _getTrackMediaItem(Track track, String index) {
@@ -339,17 +323,7 @@ class PlayerCubit extends Cubit<PlayerState> {
 
   int? _lastQueueIndex;
 
-  _updatePlaybackInfo(state) {
-    final index = state.queueIndex;
-    if (index == null) {
-      return null;
-    }
-
-    if (index == _lastQueueIndex) {
-      return null;
-    }
-    _lastQueueIndex = index;
-
+  _updatePlaybackInfo(_) {
     final trackIndex = _getCurrentTrackIndex();
 
     if (trackIndex == null) {
@@ -359,6 +333,12 @@ class PlayerCubit extends Cubit<PlayerState> {
     if (!_isLoadingPlaylist) {
       _updatePlaylistTracks(trackIndex);
     }
+
+    if (trackIndex == _lastQueueIndex) {
+      return;
+    }
+
+    _lastQueueIndex = trackIndex;
 
     emit(
       PlayerPlaying(

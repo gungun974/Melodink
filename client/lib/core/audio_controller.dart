@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
-import 'package:media_kit/media_kit.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:melodink_client/core/helpers/generate_unique_id.dart';
 import 'package:mutex/mutex.dart';
 
@@ -20,7 +20,12 @@ Future<AudioHandler> initAudioService() async {
 const numberOfPreloadTrack = 50;
 
 class MyAudioHandler extends BaseAudioHandler {
-  late final _player = Player();
+  late final _player = AudioPlayer();
+
+  final _playlist = ConcatenatingAudioSource(
+    useLazyPreparation: true,
+    children: [],
+  );
 
   MyAudioHandler() {
     _loadEmptyPlaylist();
@@ -30,256 +35,170 @@ class MyAudioHandler extends BaseAudioHandler {
     _listenForDurationChanges();
 
     _listenForCurrentSongIndexChanges();
-
-    _listenForProcessingState();
   }
 
   Future<void> _loadEmptyPlaylist() async {
     try {
-      await _player.open(const Playlist([]), play: false);
+      await _player.setAudioSource(
+        _playlist,
+        initialIndex: 0,
+        initialPosition: Duration.zero,
+      );
     } catch (e) {
       print("Error: $e");
     }
   }
 
   @override
-  Future<void> addQueueItem(MediaItem mediaItem) async {
-    final newQueue = queue.value
-      ..add(
-        MediaItem(
-          id: mediaItem.id,
-          title: mediaItem.title,
-          album: mediaItem.album,
-          artist: mediaItem.artist,
-          genre: mediaItem.genre,
-          duration: mediaItem.duration,
-          artUri: mediaItem.artUri,
-          artHeaders: mediaItem.artHeaders,
-          playable: mediaItem.playable,
-          displayTitle: mediaItem.displayTitle,
-          displaySubtitle: mediaItem.displaySubtitle,
-          displayDescription: mediaItem.displayDescription,
-          rating: mediaItem.rating,
-          extras: {
-            ...(mediaItem.extras ?? {}),
-            "index": mediaItem.extras?.containsKey("index") == true
-                ? mediaItem.extras!["index"]
-                : generateUniqueID(),
-          },
-        ),
-      );
-    queue.add(newQueue);
-
-    final trackIndexFromPlayer = getTrackIndexFromPlayer();
-    if (trackIndexFromPlayer != null) {
-      await preloadPlaylistToIndex(trackIndexFromPlayer);
-    }
-  }
-
-  @override
-  Future<void> addQueueItems(List<MediaItem> mediaItems) async {
-    final newQueue = queue.value
-      ..addAll(
-        mediaItems
-            .map(
-              (mediaItem) => MediaItem(
-                id: mediaItem.id,
-                title: mediaItem.title,
-                album: mediaItem.album,
-                artist: mediaItem.artist,
-                genre: mediaItem.genre,
-                duration: mediaItem.duration,
-                artUri: mediaItem.artUri,
-                artHeaders: mediaItem.artHeaders,
-                playable: mediaItem.playable,
-                displayTitle: mediaItem.displayTitle,
-                displaySubtitle: mediaItem.displaySubtitle,
-                displayDescription: mediaItem.displayDescription,
-                rating: mediaItem.rating,
-                extras: {
-                  ...(mediaItem.extras ?? {}),
-                  "index": mediaItem.extras?.containsKey("index") == true
-                      ? mediaItem.extras!["index"]
-                      : generateUniqueID(),
-                },
-              ),
-            )
-            .toList(),
-      );
-    queue.add(newQueue);
-
-    final trackIndexFromPlayer = getTrackIndexFromPlayer();
-    if (trackIndexFromPlayer != null) {
-      await preloadPlaylistToIndex(trackIndexFromPlayer);
-    }
-  }
-
-  @override
-  Future<void> insertQueueItem(int index, MediaItem mediaItem) async {
-    final newQueue = queue.value
-      ..insert(
-        index,
-        MediaItem(
-          id: mediaItem.id,
-          title: mediaItem.title,
-          album: mediaItem.album,
-          artist: mediaItem.artist,
-          genre: mediaItem.genre,
-          duration: mediaItem.duration,
-          artUri: mediaItem.artUri,
-          artHeaders: mediaItem.artHeaders,
-          playable: mediaItem.playable,
-          displayTitle: mediaItem.displayTitle,
-          displaySubtitle: mediaItem.displaySubtitle,
-          displayDescription: mediaItem.displayDescription,
-          rating: mediaItem.rating,
-          extras: {
-            ...(mediaItem.extras ?? {}),
-            "index": mediaItem.extras?.containsKey("index") == true
-                ? mediaItem.extras!["index"]
-                : generateUniqueID(),
-          },
-        ),
-      );
-    queue.add(newQueue);
-
-    final trackIndexFromPlayer = getTrackIndexFromPlayer();
-    if (trackIndexFromPlayer != null) {
-      await preloadPlaylistToIndex(trackIndexFromPlayer);
-    }
-  }
-
-  @override
   Future<void> updateQueue(List<MediaItem> queue) async {
-    try {
-      await _listenForCurrentSongIndexChangesStream?.cancel();
+    final newQueue = queue
+        .map(
+          (mediaItem) => MediaItem(
+            id: mediaItem.id,
+            title: mediaItem.title,
+            album: mediaItem.album,
+            artist: mediaItem.artist,
+            genre: mediaItem.genre,
+            duration: mediaItem.duration,
+            artUri: mediaItem.artUri,
+            artHeaders: mediaItem.artHeaders,
+            playable: mediaItem.playable,
+            displayTitle: mediaItem.displayTitle,
+            displaySubtitle: mediaItem.displaySubtitle,
+            displayDescription: mediaItem.displayDescription,
+            rating: mediaItem.rating,
+            extras: {
+              ...(mediaItem.extras ?? {}),
+              "index": mediaItem.extras?.containsKey("index") == true
+                  ? mediaItem.extras!["index"]
+                  : generateUniqueID(),
+            },
+          ),
+        )
+        .toList();
 
-      final newQueue = queue
-          .map(
-            (mediaItem) => MediaItem(
-              id: mediaItem.id,
-              title: mediaItem.title,
-              album: mediaItem.album,
-              artist: mediaItem.artist,
-              genre: mediaItem.genre,
-              duration: mediaItem.duration,
-              artUri: mediaItem.artUri,
-              artHeaders: mediaItem.artHeaders,
-              playable: mediaItem.playable,
-              displayTitle: mediaItem.displayTitle,
-              displaySubtitle: mediaItem.displaySubtitle,
-              displayDescription: mediaItem.displayDescription,
-              rating: mediaItem.rating,
-              extras: {
-                ...(mediaItem.extras ?? {}),
-                "index": mediaItem.extras?.containsKey("index") == true
-                    ? mediaItem.extras!["index"]
-                    : generateUniqueID(),
-              },
-            ),
-          )
-          .toList();
+    this.queue.add(newQueue);
 
-      this.queue.add(newQueue);
-
-      final trackIndexFromPlayer = getTrackIndexFromPlayer();
-      if (trackIndexFromPlayer != null) {
-        await preloadPlaylistToIndex(trackIndexFromPlayer);
-      }
-    } finally {
-      await Future(() {});
-      await _listenForCurrentSongIndexChanges();
-    }
+    _updateLazyLoad();
   }
 
-  int? getTrackIndexFromPlayer() {
-    final currentIndex = _player.state.playlist.index;
+  int? _getCurrentTrackIndex() {
+    final currentPlayerIndex = _player.currentIndex;
 
-    if (currentIndex >= _player.state.playlist.medias.length) {
+    if (currentPlayerIndex == null) {
       return null;
     }
 
-    final mediaItem = _player.state.playlist.medias[currentIndex];
-
-    final uniqueIndex = mediaItem.extras?["index"];
-
-    if (uniqueIndex == null) {
+    if (currentPlayerIndex < 0 || currentPlayerIndex >= _playlist.length) {
       return null;
     }
 
-    final index = queue.value
-        .indexWhere((media) => media.extras?["index"] == uniqueIndex);
+    final currentAudio = _playlist[currentPlayerIndex];
 
-    if (index < 0) {
+    if (currentAudio is! IndexedAudioSource) {
       return null;
     }
 
-    return index;
+    final mediaItem = currentAudio.tag;
+
+    if (mediaItem is! MediaItem) {
+      return null;
+    }
+
+    final trackIndex = queue.value.indexWhere(
+        (track) => track.extras?["index"] == mediaItem.extras?["index"]);
+
+    if (trackIndex < 0) {
+      return null;
+    }
+
+    return trackIndex;
   }
-
-  int realCurrentTrackIndex = 0;
 
   final m = Mutex();
 
-  Future<List<Media>> preloadPlaylistToIndex(int trackIndex) async {
-    await m.acquire();
-    realCurrentTrackIndex = trackIndex;
+  Future<void> _updateLazyLoad({int? forceTrackIndex}) async {
+    await m.protect(() async {
+      final List<AudioSource> medias = [];
 
-    final List<Media> medias = [];
+      int? trackIndex = _getCurrentTrackIndex();
 
-    for (int j = 0; j < numberOfPreloadTrack - 1; j++) {
-      if (trackIndex + j < 0 || trackIndex + j >= queue.value.length) {
-        continue;
+      if (forceTrackIndex != null) {
+        trackIndex = forceTrackIndex;
       }
 
-      final currentMediaItem = queue.value[trackIndex + j];
-
-      medias.add(_createAudioSource(currentMediaItem));
-    }
-
-    for (int j = 1; j < numberOfPreloadTrack - 1; j++) {
-      if (trackIndex - j < 0 || trackIndex - j >= queue.value.length) {
-        continue;
+      if (trackIndex == null) {
+        return;
       }
 
-      final currentMediaItem = queue.value[trackIndex - j];
-      medias.insert(0, _createAudioSource(currentMediaItem));
-    }
-
-    if (_player.state.playlistMode == PlaylistMode.loop) {
-      for (int i = 0; i < numberOfPreloadTrack - 1; i++) {
-        if (i < 0 || i >= queue.value.length) {
+      for (int j = 0; j < numberOfPreloadTrack - 1; j++) {
+        if (trackIndex + j < 0 || trackIndex + j >= queue.value.length) {
           continue;
         }
 
-        final currentMediaItem = queue.value[i];
+        final currentMediaItem = queue.value[trackIndex + j];
 
-        if (i < medias.length) {
-          if (currentMediaItem.extras?["index"] == medias[i].extras?["index"]) {
-            continue;
-          }
+        medias.add(_createAudioSource(currentMediaItem));
+      }
+
+      for (int j = 1; j < numberOfPreloadTrack - 1; j++) {
+        if (trackIndex - j < 0 || trackIndex - j >= queue.value.length) {
+          continue;
         }
 
-        medias.insert(i, _createAudioSource(currentMediaItem));
+        final currentMediaItem = queue.value[trackIndex - j];
+        medias.insert(0, _createAudioSource(currentMediaItem));
       }
-    }
 
-    final l = ListTransformer(_player);
-    await l.transform(medias);
+      if (_player.loopMode == LoopMode.all) {
+        for (int i = 0; i < numberOfPreloadTrack - 1; i++) {
+          if (i < 0 || i >= queue.value.length) {
+            continue;
+          }
 
-    playbackState.add(playbackState.value.copyWith(
-      queueIndex: realCurrentTrackIndex,
-    ));
+          final currentMediaItem = queue.value[i];
 
-    m.release();
+          if (i < medias.length) {
+            final mediaItem = medias[i];
 
-    return medias;
+            if (mediaItem is! IndexedAudioSource) {
+              continue;
+            }
+
+            final tag = mediaItem.tag;
+
+            if (tag is! MediaItem) {
+              continue;
+            }
+
+            if (currentMediaItem.extras?["index"] == tag.extras?["index"]) {
+              continue;
+            }
+          }
+
+          medias.insert(i, _createAudioSource(currentMediaItem));
+        }
+      }
+
+      try {
+        final l = ListTransformer(playlist: _playlist, player: _player);
+        await l.transform(medias);
+      } catch (e) {
+        print("List Transformer Error : $e");
+      }
+
+      playbackState.add(playbackState.value.copyWith(
+        queueIndex: _getCurrentTrackIndex(),
+      ));
+    });
   }
 
-  Media _createAudioSource(MediaItem mediaItem) {
-    return Media(
-      "${mediaItem.extras!['url'] as String}?rn=${mediaItem.extras?["index"]}",
-      extras: mediaItem.extras,
+  UriAudioSource _createAudioSource(MediaItem mediaItem) {
+    return AudioSource.uri(
+      Uri.parse(
+        "${mediaItem.extras!['url'] as String}?rn=${mediaItem.extras?["index"]}",
+      ),
+      tag: mediaItem,
     );
   }
 
@@ -300,40 +219,33 @@ class MyAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> skipToNext() async {
-    await _player.next();
+    await _player.seekToNext();
   }
 
   @override
   Future<void> skipToPrevious() async {
-    final trackIndexFromPlayer = getTrackIndexFromPlayer();
-
-    if (trackIndexFromPlayer == 0) {
+    if (_player.currentIndex == 0) {
       await _player.seek(const Duration());
       return;
     }
 
-    await _player.previous();
+    await _player.seekToPrevious();
   }
 
   @override
   Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
     switch (repeatMode) {
       case AudioServiceRepeatMode.none:
-        await _player.setPlaylistMode(PlaylistMode.none);
+        await _player.setLoopMode(LoopMode.off);
         break;
       case AudioServiceRepeatMode.all:
-        await _player.setPlaylistMode(PlaylistMode.loop);
+        await _player.setLoopMode(LoopMode.all);
         break;
       case AudioServiceRepeatMode.one:
-        await _player.setPlaylistMode(PlaylistMode.single);
+        await _player.setLoopMode(LoopMode.one);
         break;
       default:
         return;
-    }
-
-    final trackIndexFromPlayer = getTrackIndexFromPlayer();
-    if (trackIndexFromPlayer != null) {
-      await preloadPlaylistToIndex(trackIndexFromPlayer);
     }
 
     playbackState.add(playbackState.value.copyWith(
@@ -347,64 +259,62 @@ class MyAudioHandler extends BaseAudioHandler {
       return;
     }
 
-    try {
-      await _listenForCurrentSongIndexChangesStream?.cancel();
+    await _updateLazyLoad(forceTrackIndex: index);
 
-      await _player.open(const Playlist([]), play: false);
+    for (int i = 0; i < _playlist.length; i++) {
+      final mediaItem = _playlist[i];
 
-      final medias = await preloadPlaylistToIndex(index);
-
-      for (int i = 0; i < medias.length; i++) {
-        final mediaItem = medias[i];
-
-        if (mediaItem.extras?["index"] == queue.value[index].extras?["index"]) {
-          await _player.jump(i);
-        }
+      if (mediaItem is! IndexedAudioSource) {
+        continue;
       }
-      _refreshPlaybackState();
-    } finally {
-      await Future(() {});
-      await _listenForCurrentSongIndexChanges();
+
+      final tag = mediaItem.tag;
+
+      if (tag is! MediaItem) {
+        continue;
+      }
+
+      if (tag.extras?["index"] == queue.value[index].extras?["index"]) {
+        await _player.seek(Duration.zero, index: i);
+      }
     }
   }
 
-  StreamSubscription? _listenForCurrentSongIndexChangesStream;
-
-  int? _lastTrackIndexFromPlayer;
+  int? _lastCurrentTrackIndex;
 
   Future<void> _listenForCurrentSongIndexChanges() async {
-    _listenForCurrentSongIndexChangesStream =
-        _player.stream.position.listen((advertisedIndex) async {
-      final trackIndexFromPlayer = getTrackIndexFromPlayer();
+    _player.currentIndexStream.listen((_) async {
+      final currentTrackIndex = _getCurrentTrackIndex();
 
-      if (trackIndexFromPlayer != null &&
-          _lastTrackIndexFromPlayer != trackIndexFromPlayer) {
-        await preloadPlaylistToIndex(trackIndexFromPlayer);
+      if (_lastCurrentTrackIndex != currentTrackIndex) {
+        await _updateLazyLoad();
       }
 
-      _lastTrackIndexFromPlayer = trackIndexFromPlayer;
+      playbackState.add(playbackState.value.copyWith(
+        queueIndex: _getCurrentTrackIndex(),
+      ));
+
+      _lastCurrentTrackIndex = currentTrackIndex;
     });
   }
 
   void _notifyAudioHandlerAboutPlaybackEvents() {
-    _player.stream.position.listen((_) => _refreshPlaybackState());
-    _player.stream.buffer.listen((_) => _refreshPlaybackState());
-    _player.stream.playing.listen((_) => _refreshPlaybackState());
+    _player.playbackEventStream.listen((_) => _refreshPlaybackState());
   }
 
   void _refreshPlaybackState() {
-    final playing = _player.state.playing;
+    final playing = _player.playing;
 
     AudioServiceRepeatMode repeatMode = AudioServiceRepeatMode.none;
 
-    switch (_player.state.playlistMode) {
-      case PlaylistMode.none:
+    switch (_player.loopMode) {
+      case LoopMode.off:
         repeatMode = AudioServiceRepeatMode.none;
         break;
-      case PlaylistMode.loop:
+      case LoopMode.all:
         repeatMode = AudioServiceRepeatMode.all;
         break;
-      case PlaylistMode.single:
+      case LoopMode.one:
         repeatMode = AudioServiceRepeatMode.one;
         break;
     }
@@ -419,20 +329,26 @@ class MyAudioHandler extends BaseAudioHandler {
         MediaAction.seek,
       },
       androidCompactActionIndices: const [0, 1, 2],
+      processingState: const {
+        ProcessingState.idle: AudioProcessingState.idle,
+        ProcessingState.loading: AudioProcessingState.loading,
+        ProcessingState.buffering: AudioProcessingState.buffering,
+        ProcessingState.ready: AudioProcessingState.ready,
+        ProcessingState.completed: AudioProcessingState.completed,
+      }[_player.processingState]!,
       playing: playing,
-      updatePosition: _player.state.position,
-      bufferedPosition: _player.state.buffer,
-      speed: _player.state.rate,
-      queueIndex: realCurrentTrackIndex,
+      updatePosition: _player.position,
+      bufferedPosition: _player.bufferedPosition,
+      speed: _player.speed,
       repeatMode: repeatMode,
     ));
   }
 
   void _listenForDurationChanges() {
-    _player.stream.duration.listen((duration) {
-      final index = realCurrentTrackIndex;
+    _player.durationStream.listen((duration) {
+      final index = _getCurrentTrackIndex();
       final newQueue = queue.value;
-      if (newQueue.isEmpty) return;
+      if (index == null || newQueue.isEmpty) return;
       final oldMediaItem = newQueue[index];
       final newMediaItem = oldMediaItem.copyWith(duration: duration);
       newQueue[index] = newMediaItem;
@@ -440,114 +356,68 @@ class MyAudioHandler extends BaseAudioHandler {
       mediaItem.add(newMediaItem);
     });
   }
-
-  void _listenForProcessingState() {
-    _player.stream.duration.listen((_) {
-      playbackState.add(playbackState.value.copyWith(
-        processingState: AudioProcessingState.idle,
-      ));
-    });
-
-    _player.stream.buffering.listen((isBuffering) {
-      playbackState.add(playbackState.value.copyWith(
-        processingState: isBuffering
-            ? AudioProcessingState.buffering
-            : AudioProcessingState.ready,
-      ));
-    });
-
-    _player.stream.playing.listen((_) {
-      playbackState.add(playbackState.value.copyWith(
-        processingState: AudioProcessingState.ready,
-      ));
-    });
-
-    _player.stream.completed.listen((completed) {
-      playbackState.add(playbackState.value.copyWith(
-        processingState: completed
-            ? AudioProcessingState.completed
-            : AudioProcessingState.ready,
-      ));
-    });
-
-    _player.stream.error.listen((_) {
-      playbackState.add(playbackState.value.copyWith(
-        processingState: AudioProcessingState.idle,
-      ));
-    });
-  }
 }
 
 class ListTransformer {
-  Player player;
+  ConcatenatingAudioSource playlist;
 
-  ListTransformer(this.player);
+  AudioPlayer player;
 
-  bool isSameItem(Media a, Media b) {
-    return a.extras?["index"] == b.extras?["index"];
-  }
+  ListTransformer({required this.player, required this.playlist});
 
-  Future<void> add(Media media, List<Media> current) async {
-    await player.add(media);
-    current.add(media);
-  }
-
-  Future<void> remove(int index, List<Media> current) async {
-    await player.remove(index);
-    current.removeAt(index);
-  }
-
-  Future<void> move(int from, int to, List<Media> current) async {
-    await player.move(from, to);
-    if (from < to) {
-      to--;
-    }
-    current.insert(to, current.removeAt(from));
-  }
-
-  Future<void> transform(List<Media> target) async {
-    final List<Media> current = List.from(player.state.playlist.medias);
-
-    if (current.isEmpty) {
-      for (int i = 0; i < target.length; i++) {
-        await add(target[i], current);
-      }
-      return;
+  bool isSameItem(AudioSource a, AudioSource b) {
+    if (a is! IndexedAudioSource) {
+      return false;
     }
 
-    final dontMoveThisItem = current[player.state.playlist.index];
+    final mediaItemA = a.tag;
 
+    if (mediaItemA is! MediaItem) {
+      return false;
+    }
+
+    if (b is! IndexedAudioSource) {
+      return false;
+    }
+
+    final mediaItemB = b.tag;
+
+    if (mediaItemB is! MediaItem) {
+      return false;
+    }
+
+    return mediaItemA.extras?["index"] == mediaItemB.extras?["index"];
+  }
+
+  Future<void> transform(List<AudioSource> target) async {
     outerloop:
-    for (int i = current.length - 1; i >= 0; i--) {
+    for (int i = playlist.length - 1; i >= 0; i--) {
       for (final targetTrack in target) {
-        if (isSameItem(current[i], targetTrack)) {
-          if (!isSameItem(current[i], dontMoveThisItem)) {
-            await move(i, current.length - 1, current);
-          }
+        if (isSameItem(playlist[i], targetTrack)) {
           continue outerloop;
         }
       }
-      await remove(i, current);
+      await playlist.removeAt(i);
     }
 
     outerloop:
-    for (int i = 0; i < target.length; i++) {
-      for (final track in current) {
-        if (isSameItem(target[i], track)) {
+    for (final targetTrack in target) {
+      for (int i = 0; i < playlist.length; i++) {
+        final playlistItem = playlist[i];
+        if (isSameItem(playlistItem, targetTrack)) {
           continue outerloop;
         }
       }
-      await add(target[i], current);
+      await playlist.add(targetTrack);
     }
 
     for (int j = 0; j < target.length; j++) {
-      for (int i = 0; i < current.length; i++) {
-        if (isSameItem(current[i], target[j])) {
-          if (isSameItem(target[j], dontMoveThisItem)) {
-            continue;
+      for (int i = 0; i < playlist.length; i++) {
+        if (isSameItem(playlist[i], target[j])) {
+          if (i != j) {
+            await playlist.move(i, j);
+            break;
           }
-          await move(i, j, current);
-          break;
         }
       }
     }

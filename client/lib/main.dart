@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:melodink_client/routes.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -10,8 +9,6 @@ import 'injection_container.dart' as di;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  MediaKit.ensureInitialized();
 
   await di.setup();
 
