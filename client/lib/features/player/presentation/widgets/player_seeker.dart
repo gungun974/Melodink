@@ -29,6 +29,8 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
         ),
       );
 
+  Duration? newSeekFuture;
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<PositionData>(
@@ -55,6 +57,10 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
             duration = trackDuration;
           }
 
+          if (newSeekFuture != null) {
+            position = newSeekFuture ?? position;
+          }
+
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -77,6 +83,21 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
                   total: duration,
                   timeLabelLocation: TimeLabelLocation.none,
                   onSeek: _audioHandler.seek,
+                  onDragStart: (thumbValue) {
+                    setState(() {
+                      newSeekFuture = thumbValue.timeStamp;
+                    });
+                  },
+                  onDragUpdate: (thumbValue) {
+                    setState(() {
+                      newSeekFuture = thumbValue.timeStamp;
+                    });
+                  },
+                  onDragEnd: () {
+                    setState(() {
+                      newSeekFuture = null;
+                    });
+                  },
                 ),
               ),
               const SizedBox(width: 8.0),
