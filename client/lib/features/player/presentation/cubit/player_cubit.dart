@@ -3,6 +3,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/config.dart';
 import 'package:melodink_client/core/helpers/generate_unique_id.dart';
+import 'package:melodink_client/features/player/domain/usecases/register_played_track.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:melodink_client/injection_container.dart';
 import 'package:path/path.dart' as p;
@@ -98,11 +99,18 @@ class PlayerCubit extends Cubit<PlayerState> {
     }
   }
 
-  PlayerCubit() : super(PlayerStandby()) {
-    _audioHandler.playbackState.listen(_updatePlaybackInfo);
-  }
+  final RegisterPlayedTrack _registerPlayedTrack;
+  final AudioHandler _audioHandler;
 
-  final _audioHandler = sl<AudioHandler>();
+  PlayerCubit({
+    required RegisterPlayedTrack registerPlayedTrack,
+    required AudioHandler audioHandler,
+  })  : _registerPlayedTrack = registerPlayedTrack,
+        _audioHandler = audioHandler,
+        super(PlayerStandby()) {
+    _audioHandler.playbackState.listen(_updatePlaybackInfo);
+    _audioHandler.playbackState.listen((_) => _watchPlayedTrack());
+  }
 
   bool _isLoadingPlaylist = false;
 
@@ -349,5 +357,139 @@ class PlayerCubit extends Cubit<PlayerState> {
         isShuffled: isShuffled,
       ),
     );
+  }
+
+  seek(Duration newPosition) async {
+    _finishTrackTracking(false);
+    _lastTrackDuration = const Duration();
+    await _audioHandler.seek(newPosition);
+    _startTrackTracking();
+  }
+
+  bool? _lastPlayingState;
+  Track? _curentPlayedTrack;
+  Duration _lastTrackDuration = const Duration();
+
+  _watchPlayedTrack() async {
+    final playingState = _audioHandler.playbackState.value.playing;
+
+    if (_lastTrackDuration < _audioHandler.playbackState.value.position) {
+      _lastTrackDuration = _audioHandler.playbackState.value.position;
+    }
+
+    if (_curentPlayedTrack != null && playingState != _lastPlayingState) {
+      _lastPlayingState = playingState;
+
+      if (playingState) {
+        _startTrackTracking();
+      } else {
+        _finishTrackTracking(
+          (_curentPlayedTrack?.duration ?? Duration.zero) -
+                  _audioHandler.playbackState.value.position <
+              const Duration(milliseconds: 750),
+        );
+        _lastTrackDuration = const Duration();
+      }
+    }
+
+    final trackIndex = _getCurrentTrackIndex();
+
+    if (trackIndex == null) {
+      return;
+    }
+
+    if (_curentPlayedTrack?.id == _allTracks[trackIndex].track.id) {
+      return;
+    }
+
+    if (_curentPlayedTrack != null) {
+      _finishTrackTracking(true);
+      _lastTrackDuration = const Duration();
+    }
+
+    _curentPlayedTrack = _allTracks[trackIndex].track;
+
+    await Future.delayed(const Duration(milliseconds: 10));
+    _startTrackTracking();
+  }
+
+  DateTime? trackedStartAt;
+  DateTime? trackedFinishAt;
+
+  Duration? trackedBeginAt;
+  Duration? trackedEndedAt;
+
+  _startTrackTracking() {
+    final state = _audioHandler.playbackState.value;
+
+    trackedStartAt = DateTime.now();
+    trackedFinishAt = null;
+
+    trackedBeginAt = state.position;
+    trackedEndedAt = null;
+  }
+
+  _finishTrackTracking(bool hasTrackChanges) {
+    trackedFinishAt = DateTime.now();
+
+    trackedEndedAt = _lastTrackDuration;
+
+    _registerTrackTracking(hasTrackChanges);
+  }
+
+  _registerTrackTracking(bool hasTrackChanges) {
+    final currentTrack = _curentPlayedTrack;
+    if (currentTrack == null) {
+      return;
+    }
+
+    final startAt = trackedStartAt;
+    final finishAt = trackedFinishAt;
+    final beginAt = trackedBeginAt;
+    final endedAt = trackedEndedAt;
+
+    if (startAt == null) {
+      return;
+    }
+    if (finishAt == null) {
+      return;
+    }
+    if (beginAt == null) {
+      return;
+    }
+    if (endedAt == null) {
+      return;
+    }
+
+    if (finishAt.difference(startAt).inMilliseconds < 300) {
+      return;
+    }
+
+    bool skipped = false;
+    bool trackEnded = false;
+
+    if (hasTrackChanges) {
+      if (currentTrack.duration - endedAt > const Duration(seconds: 5)) {
+        skipped = true;
+      } else {
+        trackEnded = true;
+      }
+    }
+
+    _registerPlayedTrack(RegisterPlayedTrackParams(
+      trackId: currentTrack.id,
+      startAt: startAt,
+      finishAt: finishAt,
+      beginAt: beginAt,
+      endedAt: endedAt,
+      shuffle: isShuffled,
+      skipped: skipped,
+      trackEnded: trackEnded,
+    ));
+
+    trackedStartAt = null;
+    trackedFinishAt = null;
+    trackedBeginAt = null;
+    trackedEndedAt = null;
   }
 }

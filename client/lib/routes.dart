@@ -7,6 +7,7 @@ import 'package:melodink_client/features/player/presentation/pages/queue_page.da
 import 'package:melodink_client/features/player/presentation/widgets/player_widget.dart';
 import 'package:melodink_client/features/playlist/presentation/widgets/playlist_list_sidebar.dart';
 import 'package:melodink_client/features/tracks/presentation/pages/tracks_page.dart';
+import 'package:melodink_client/injection_container.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -21,7 +22,7 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state, child) {
         return Scaffold(
           body: BlocProvider(
-            create: (_) => PlayerCubit(),
+            create: (_) => sl<PlayerCubit>(),
             child: Column(children: [
               Expanded(
                 child: Stack(

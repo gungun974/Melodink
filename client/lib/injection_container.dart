@@ -4,6 +4,10 @@ import 'package:grpc/grpc_connection_interface.dart';
 import 'package:melodink_client/core/audio_controller.dart';
 import 'package:melodink_client/core/network/grpc_client.dart'
     if (dart.library.html) 'package:melodink_client/core/network/grpc_web_client.dart';
+import 'package:melodink_client/features/player/data/repositories/played_track_repository_impl.dart';
+import 'package:melodink_client/features/player/domain/repositories/played_track_repository.dart';
+import 'package:melodink_client/features/player/domain/usecases/register_played_track.dart';
+import 'package:melodink_client/features/player/presentation/cubit/player_cubit.dart';
 import 'package:melodink_client/features/tracks/data/repositories/track_repository_impl.dart';
 import 'package:melodink_client/features/tracks/domain/repositories/track_repository.dart';
 import 'package:melodink_client/features/tracks/domain/usecases/get_all_tracks.dart';
@@ -27,6 +31,24 @@ Future<void> setup() async {
   // Repository
   sl.registerLazySingleton<TrackRepository>(
     () => TrackRepositoryImpl(grpcClient: sl()),
+  );
+
+  //! Player
+
+  // Cubit
+  sl.registerFactory(
+    () => PlayerCubit(
+      registerPlayedTrack: sl(),
+      audioHandler: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => RegisterPlayedTrack(sl()));
+
+  // Repository
+  sl.registerLazySingleton<PlayedTrackRepository>(
+    () => PlayedTrackRepositoryImpl(),
   );
 
   //! External

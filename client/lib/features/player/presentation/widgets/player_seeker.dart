@@ -82,7 +82,7 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
                   progress: position,
                   total: duration,
                   timeLabelLocation: TimeLabelLocation.none,
-                  onSeek: _audioHandler.seek,
+                  onSeek: BlocProvider.of<PlayerCubit>(context).seek,
                   onDragStart: (thumbValue) {
                     setState(() {
                       newSeekFuture = thumbValue.timeStamp;
