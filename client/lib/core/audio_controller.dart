@@ -44,6 +44,7 @@ class MyAudioHandler extends BaseAudioHandler {
         initialIndex: 0,
         initialPosition: Duration.zero,
       );
+      await _player.stop();
     } catch (e) {
       print("Error: $e");
     }
