@@ -1,11 +1,11 @@
 {
-    "name": "melodink_client",
-    "short_name": "melodink_client",
+    "name": "Melodink",
+    "short_name": "Melodink",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "A self hosted Local Streaming Music App since I'm bored.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
