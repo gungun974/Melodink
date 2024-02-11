@@ -70,7 +70,7 @@ class PlayerCubit extends Cubit<PlayerState> {
   bool isShuffled = false;
 
   _updatePlaylistTracks(int currentTrackIndex) {
-    for (int j = _queueTracks.length - 1; j >= 0; j--) {
+    for (int j = 0; j < _queueTracks.length; j++) {
       final i = j + _previousTracks.length;
 
       if (i > currentTrackIndex) {
@@ -80,7 +80,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       _previousTracks.add(_queueTracks.removeAt(j));
     }
 
-    for (int j = _nextTracks.length - 1; j >= 0; j--) {
+    for (int j = 0; j < _nextTracks.length; j++) {
       final i = j + _previousTracks.length + _queueTracks.length;
 
       if (i > currentTrackIndex) {
