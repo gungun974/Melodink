@@ -361,7 +361,6 @@ class PlayerCubit extends Cubit<PlayerState> {
 
   seek(Duration newPosition) async {
     _finishTrackTracking(false);
-    _lastTrackDuration = const Duration();
     await _audioHandler.seek(newPosition);
     _startTrackTracking();
   }
@@ -388,7 +387,6 @@ class PlayerCubit extends Cubit<PlayerState> {
                   _audioHandler.playbackState.value.position <
               const Duration(milliseconds: 750),
         );
-        _lastTrackDuration = const Duration();
       }
     }
 
@@ -404,12 +402,11 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     if (_curentPlayedTrack != null) {
       _finishTrackTracking(true);
-      _lastTrackDuration = const Duration();
     }
 
     _curentPlayedTrack = _allTracks[trackIndex].track;
 
-    await Future.delayed(const Duration(milliseconds: 10));
+    await Future.delayed(const Duration(milliseconds: 65));
     _startTrackTracking();
   }
 
@@ -434,6 +431,8 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     trackedEndedAt = _lastTrackDuration;
 
+    _lastTrackDuration = const Duration();
+
     _registerTrackTracking(hasTrackChanges);
   }
 
@@ -445,7 +444,7 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     final startAt = trackedStartAt;
     final finishAt = trackedFinishAt;
-    final beginAt = trackedBeginAt;
+    Duration? beginAt = trackedBeginAt;
     final endedAt = trackedEndedAt;
 
     if (startAt == null) {
@@ -462,6 +461,14 @@ class PlayerCubit extends Cubit<PlayerState> {
     }
 
     if (finishAt.difference(startAt).inMilliseconds < 300) {
+      return;
+    }
+
+    if (beginAt.inMilliseconds < 0) {
+      beginAt = const Duration();
+    }
+
+    if ((endedAt - beginAt).inMilliseconds < 10) {
       return;
     }
 
