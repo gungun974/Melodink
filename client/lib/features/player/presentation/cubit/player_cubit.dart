@@ -416,6 +416,8 @@ class PlayerCubit extends Cubit<PlayerState> {
   Duration? trackedBeginAt;
   Duration? trackedEndedAt;
 
+  bool startTrackingTrack = false;
+
   _startTrackTracking() {
     final state = _audioHandler.playbackState.value;
 
@@ -424,9 +426,19 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     trackedBeginAt = state.position;
     trackedEndedAt = null;
+
+    _lastTrackDuration = const Duration();
+
+    startTrackingTrack = true;
   }
 
   _finishTrackTracking(bool hasTrackChanges) {
+    if (!startTrackingTrack) {
+      return;
+    }
+
+    startTrackingTrack = false;
+
     trackedFinishAt = DateTime.now();
 
     trackedEndedAt = _lastTrackDuration;
