@@ -35,6 +35,8 @@ dependencies:
       path: just_audio
       ref: feature/treadmill
   just_audio_media_kit: ^1.0.0
+  sqflite: ^2.3.2
+  sqflite_common_ffi: ^2.3.2+1
 
 dev_dependencies:
   flutter_test:
@@ -46,4 +48,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/melodink_track_cover_not_found.png
+    - lib/core/database/migrations/
 

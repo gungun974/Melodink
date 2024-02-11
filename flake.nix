@@ -121,7 +121,7 @@
             rm $out/bin/melodink_client
             makeWrapper $out/app/melodink_client $out/bin/melodink_client \
                 "''${gappsWrapperArgs[@]}" \
-                --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped]}
+                --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped pkgs.sqlite]}
           '';
 
           autoPubspecLock = ./client/pubspec.lock;
@@ -142,7 +142,7 @@
         GOROOT = "${pkgs.go_1_21}/share/go";
 
         shellHook = ''
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped]}
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped pkgs.sqlite]}
         '';
 
         buildInputs = with pkgs; [

@@ -2,13 +2,23 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/routes.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'injection_container.dart' as di;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
+    // Initialize FFI
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
+  await DatabaseService.getDatabase();
 
   await di.setup();
 
