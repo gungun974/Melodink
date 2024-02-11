@@ -125,6 +125,10 @@
           '';
 
           autoPubspecLock = ./client/pubspec.lock;
+
+          gitHashes = {
+            just_audio = "sha256-ATr743tguD2WVUAAX02lEG2UewmT9sdF6xhXjjhyocU=";
+          };
         };
       };
 
