@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseMigrationFile {
@@ -21,8 +21,10 @@ class DatabaseService {
       return _database!;
     }
 
+    final appDir = await getApplicationSupportDirectory();
+
     final database = await openDatabase(
-      "melodink.db",
+      join(appDir.path, "databases", "melodink.db"),
       version: 1,
       onCreate: (Database db, int version) async {
         var batch = db.batch();
