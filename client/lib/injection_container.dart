@@ -1,7 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:get_it/get_it.dart';
 import 'package:grpc/grpc_connection_interface.dart';
-import 'package:melodink_client/core/audio_controller.dart';
+import 'package:melodink_client/core/audio/audio_controller.dart';
 import 'package:melodink_client/core/network/grpc_client.dart'
     if (dart.library.html) 'package:melodink_client/core/network/grpc_web_client.dart';
 import 'package:melodink_client/features/player/data/repositories/played_track_repository_impl.dart';

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:melodink_client/core/audio/audio_mpris.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/routes.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -21,6 +22,10 @@ void main() async {
   await DatabaseService.getDatabase();
 
   await di.setup();
+
+  if (!kIsWeb && Platform.isLinux) {
+    await initAudioMPRIS();
+  }
 
   if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
     await windowManager.ensureInitialized();
