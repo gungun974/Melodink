@@ -251,6 +251,7 @@ class MyAudioHandler extends BaseAudioHandler {
 
     playbackState.add(playbackState.value.copyWith(
       repeatMode: repeatMode,
+      updatePosition: _player.position,
     ));
   }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +10,14 @@ import 'package:melodink_client/injection_container.dart';
 import 'package:rxdart/rxdart.dart';
 
 class PlayerSeeker extends StatefulWidget {
-  const PlayerSeeker({super.key});
+  final bool autoMaxWidth;
+  final bool showBottomDurations;
+
+  const PlayerSeeker({
+    super.key,
+    this.autoMaxWidth = true,
+    this.showBottomDurations = false,
+  });
 
   @override
   State<PlayerSeeker> createState() => _PlayerSeekerState();
@@ -17,19 +26,48 @@ class PlayerSeeker extends StatefulWidget {
 class _PlayerSeekerState extends State<PlayerSeeker> {
   final _audioHandler = sl<AudioHandler>();
 
+  late final audioServiceDurationStreamController =
+      StreamController<Duration>();
+  late final audioServiceDurationStream =
+      audioServiceDurationStreamController.stream.asBroadcastStream();
+
   Stream<PositionData> get positionDataStream =>
       Rx.combineLatest3<Duration, PlaybackState, MediaItem?, PositionData>(
-        AudioService.position,
+        audioServiceDurationStream,
         _audioHandler.playbackState,
         _audioHandler.mediaItem,
-        (position, bufferedPosition, duration) => PositionData(
+        (position, playerState, duration) => PositionData(
           position: position,
-          bufferedPosition: bufferedPosition.bufferedPosition,
+          bufferedPosition: playerState.bufferedPosition,
           duration: duration?.duration ?? Duration.zero,
         ),
       );
 
   Duration? newSeekFuture;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (!_audioHandler.playbackState.value.playing) {
+      audioServiceDurationStreamController
+          .add(_audioHandler.playbackState.value.position);
+    }
+
+    AudioService.position.listen(
+      (duration) {
+        audioServiceDurationStreamController.add(
+          _audioHandler.playbackState.value.position,
+        );
+      },
+      onError: (error) {
+        audioServiceDurationStreamController.addError(error);
+      },
+      onDone: () {
+        audioServiceDurationStreamController.close();
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +99,72 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
             position = newSeekFuture ?? position;
           }
 
+          final progressBar = ProgressBar(
+            barHeight: 5.0,
+            thumbRadius: 7.0,
+            thumbColor: Colors.white,
+            baseBarColor: Colors.grey[800],
+            progressBarColor: Colors.white,
+            progress: position,
+            total: duration,
+            timeLabelLocation: TimeLabelLocation.none,
+            onSeek: BlocProvider.of<PlayerCubit>(context).seek,
+            onDragStart: (thumbValue) {
+              setState(() {
+                newSeekFuture = thumbValue.timeStamp;
+              });
+            },
+            onDragUpdate: (thumbValue) {
+              setState(() {
+                newSeekFuture = thumbValue.timeStamp;
+              });
+            },
+            onDragEnd: () {
+              setState(() {
+                newSeekFuture = null;
+              });
+            },
+          );
+
+          final progressBarContainer = widget.autoMaxWidth
+              ? SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.325,
+                  child: progressBar,
+                )
+              : Expanded(
+                  child: progressBar,
+                );
+
+          if (widget.showBottomDurations) {
+            return Column(
+              children: [
+                Row(
+                  children: [
+                    progressBarContainer,
+                  ],
+                ),
+                const SizedBox(height: 4.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      durationToTime(position),
+                      style: const TextStyle(
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      durationToTime(duration),
+                      style: const TextStyle(
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            );
+          }
+
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -71,35 +175,7 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
                 ),
               ),
               const SizedBox(width: 8.0),
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.325,
-                child: ProgressBar(
-                  barHeight: 5.0,
-                  thumbRadius: 7.0,
-                  thumbColor: Colors.white,
-                  baseBarColor: Colors.grey[800],
-                  progressBarColor: Colors.white,
-                  progress: position,
-                  total: duration,
-                  timeLabelLocation: TimeLabelLocation.none,
-                  onSeek: BlocProvider.of<PlayerCubit>(context).seek,
-                  onDragStart: (thumbValue) {
-                    setState(() {
-                      newSeekFuture = thumbValue.timeStamp;
-                    });
-                  },
-                  onDragUpdate: (thumbValue) {
-                    setState(() {
-                      newSeekFuture = thumbValue.timeStamp;
-                    });
-                  },
-                  onDragEnd: () {
-                    setState(() {
-                      newSeekFuture = null;
-                    });
-                  },
-                ),
-              ),
+              progressBarContainer,
               const SizedBox(width: 8.0),
               Text(
                 durationToTime(duration),

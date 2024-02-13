@@ -34,6 +34,7 @@ void main() async {
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.hidden,
+      minimumSize: Size(300, 534),
     );
 
     windowManager.waitUntilReadyToShow(windowOptions);

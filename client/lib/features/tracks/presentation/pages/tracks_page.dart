@@ -6,7 +6,7 @@ import 'package:melodink_client/features/tracks/presentation/cubit/tracks_cubit.
 import 'package:melodink_client/features/tracks/presentation/widgets/tracks_info_header.dart';
 import 'package:melodink_client/features/tracks/presentation/widgets/tracks_list.dart';
 import 'package:melodink_client/injection_container.dart';
-import 'package:sliver_tools/sliver_tools.dart';
+import 'package:responsive_builder/responsive_builder.dart';
 
 class TracksPage extends StatefulWidget {
   const TracksPage({
@@ -45,27 +45,50 @@ class _TracksPageState extends State<TracksPage> {
           tracks = state.tracks;
         }
 
-        return CustomScrollView(
-          slivers: [
-            SliverContainer(
-              maxWidth: 1200,
-              padding: 32,
-              sliver: SliverPadding(
-                padding: const EdgeInsets.only(top: 48),
-                sliver: SliverToBoxAdapter(
-                  child: TracksInfoHeader(tracks: tracks),
+        return ResponsiveBuilder(
+          builder: (
+            context,
+            sizingInformation,
+          ) {
+            if (sizingInformation.deviceScreenType !=
+                DeviceScreenType.desktop) {
+              return CustomScrollView(
+                slivers: [
+                  SliverContainer(
+                    maxWidth: 1200,
+                    padding: 0,
+                    sliver: SliverPadding(
+                      padding: const EdgeInsets.only(top: 16, bottom: 16),
+                      sliver: TracksList(tracks: tracks),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            return CustomScrollView(
+              slivers: [
+                SliverContainer(
+                  maxWidth: 1200,
+                  padding: 32,
+                  sliver: SliverPadding(
+                    padding: const EdgeInsets.only(top: 48),
+                    sliver: SliverToBoxAdapter(
+                      child: TracksInfoHeader(tracks: tracks),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            SliverContainer(
-              maxWidth: 1200,
-              padding: 32,
-              sliver: SliverPadding(
-                padding: const EdgeInsets.only(top: 32, bottom: 48),
-                sliver: TracksList(tracks: tracks),
-              ),
-            ),
-          ],
+                SliverContainer(
+                  maxWidth: 1200,
+                  padding: 32,
+                  sliver: SliverPadding(
+                    padding: const EdgeInsets.only(top: 32, bottom: 48),
+                    sliver: TracksList(tracks: tracks),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );

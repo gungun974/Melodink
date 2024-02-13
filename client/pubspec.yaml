@@ -42,6 +42,7 @@ dependencies:
     git:
       url: https://github.com/alexmercerind/mpris_service
       ref: 3a4a72140087d3df130271c9213e61fa413d5740
+  responsive_builder: ^0.7.0
 
 dev_dependencies:
   flutter_test:
