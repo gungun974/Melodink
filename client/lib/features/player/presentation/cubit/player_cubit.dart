@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -5,7 +7,6 @@ import 'package:melodink_client/config.dart';
 import 'package:melodink_client/core/helpers/generate_unique_id.dart';
 import 'package:melodink_client/features/player/domain/usecases/register_played_track.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
-import 'package:melodink_client/injection_container.dart';
 import 'package:path/path.dart' as p;
 
 abstract class PlayerState extends Equatable {
@@ -108,8 +109,9 @@ class PlayerCubit extends Cubit<PlayerState> {
   })  : _registerPlayedTrack = registerPlayedTrack,
         _audioHandler = audioHandler,
         super(PlayerStandby()) {
-    _audioHandler.playbackState.listen(_updatePlaybackInfo);
-    _audioHandler.playbackState.listen((_) => _watchPlayedTrack());
+    _audioHandler.customEvent.listen(_updatePlaybackInfo);
+    _audioHandler.customEvent.listen(_watchPlayedTrack2);
+    _audioHandler.playbackState.listen((_) => _watchPlayedTrack1());
   }
 
   bool _isLoadingPlaylist = false;
@@ -124,6 +126,8 @@ class PlayerCubit extends Cubit<PlayerState> {
           ),
         )
         .toList();
+
+    await _audioHandler.stop();
 
     if (isShuffled) {
       await shuffle(_playlistTracks[startAt].index);
@@ -175,7 +179,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       index: generateUniqueID(),
     ));
 
-    final trackIndex = _getCurrentTrackIndex();
+    final trackIndex = _manualGetCurrentTrackIndex();
 
     if (trackIndex == null) {
       return;
@@ -201,7 +205,7 @@ class PlayerCubit extends Cubit<PlayerState> {
   }
 
   toogleShufle() async {
-    final trackIndex = _getCurrentTrackIndex();
+    final trackIndex = _manualGetCurrentTrackIndex();
 
     if (trackIndex == null) {
       return;
@@ -239,8 +243,6 @@ class PlayerCubit extends Cubit<PlayerState> {
     );
 
     _lastQueueIndex = null;
-
-    _updatePlaybackInfo(_audioHandler.playbackState.value);
   }
 
   unshuffle(String extraIndex) async {
@@ -273,8 +275,6 @@ class PlayerCubit extends Cubit<PlayerState> {
     );
 
     _lastQueueIndex = null;
-
-    _updatePlaybackInfo(_audioHandler.playbackState.value);
   }
 
   MediaItem _getTrackMediaItem(Track track, String index) {
@@ -305,7 +305,7 @@ class PlayerCubit extends Cubit<PlayerState> {
     );
   }
 
-  int? _getCurrentTrackIndex() {
+  int? _manualGetCurrentTrackIndex() {
     final state = _audioHandler.playbackState.value;
     final index = state.queueIndex;
 
@@ -329,10 +329,34 @@ class PlayerCubit extends Cubit<PlayerState> {
     return trackIndex;
   }
 
+  int? _getCurrentTrackIndex(int index) {
+    final extraIndex = _audioHandler.queue.value[index].extras?["index"];
+
+    if (extraIndex == null) {
+      return null;
+    }
+
+    final trackIndex =
+        _allTracks.indexWhere((track) => track.index == extraIndex);
+
+    if (trackIndex < 0) {
+      return null;
+    }
+
+    return trackIndex;
+  }
+
   int? _lastQueueIndex;
 
-  _updatePlaybackInfo(_) {
-    final trackIndex = _getCurrentTrackIndex();
+  _updatePlaybackInfo(dynamic event) {
+    if (event is! Map) {
+      return;
+    }
+
+    if (event["type"] != "trackIndex") {
+      return;
+    }
+    final trackIndex = _getCurrentTrackIndex(event["trackIndex"]);
 
     if (trackIndex == null) {
       return;
@@ -369,7 +393,7 @@ class PlayerCubit extends Cubit<PlayerState> {
   Track? _curentPlayedTrack;
   Duration _lastTrackDuration = const Duration();
 
-  _watchPlayedTrack() async {
+  _watchPlayedTrack1() async {
     final playingState = _audioHandler.playbackState.value.playing;
 
     if (_lastTrackDuration < _audioHandler.playbackState.value.position) {
@@ -379,18 +403,30 @@ class PlayerCubit extends Cubit<PlayerState> {
     if (_curentPlayedTrack != null && playingState != _lastPlayingState) {
       _lastPlayingState = playingState;
 
+      if ((_curentPlayedTrack?.duration ?? Duration.zero) -
+              _audioHandler.playbackState.value.position <
+          const Duration(milliseconds: 750)) {
+        return;
+      }
+
       if (playingState) {
         _startTrackTracking();
       } else {
-        _finishTrackTracking(
-          (_curentPlayedTrack?.duration ?? Duration.zero) -
-                  _audioHandler.playbackState.value.position <
-              const Duration(milliseconds: 750),
-        );
+        _finishTrackTracking(false);
       }
     }
+  }
 
-    final trackIndex = _getCurrentTrackIndex();
+  _watchPlayedTrack2(dynamic event) async {
+    if (event is! Map) {
+      return;
+    }
+
+    if (event["type"] != "trackIndex") {
+      return;
+    }
+
+    final trackIndex = _getCurrentTrackIndex(event["trackIndex"]);
 
     if (trackIndex == null) {
       return;
@@ -472,16 +508,8 @@ class PlayerCubit extends Cubit<PlayerState> {
       return;
     }
 
-    if (finishAt.difference(startAt).inMilliseconds < 300) {
-      return;
-    }
-
     if (beginAt.inMilliseconds < 0) {
       beginAt = const Duration();
-    }
-
-    if ((endedAt - beginAt).inMilliseconds < 10) {
-      return;
     }
 
     bool skipped = false;

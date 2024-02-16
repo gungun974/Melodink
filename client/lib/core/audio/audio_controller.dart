@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:melodink_client/core/helpers/debouncer.dart';
 import 'package:melodink_client/core/helpers/generate_unique_id.dart';
 import 'package:mutex/mutex.dart';
 
@@ -17,7 +18,7 @@ Future<AudioHandler> initAudioService() async {
   );
 }
 
-const numberOfPreloadTrack = 50;
+const numberOfPreloadTrack = 15;
 
 class MyAudioHandler extends BaseAudioHandler {
   late final _player = AudioPlayer();
@@ -31,8 +32,6 @@ class MyAudioHandler extends BaseAudioHandler {
     _loadEmptyPlaylist();
 
     _notifyAudioHandlerAboutPlaybackEvents();
-
-    _listenForDurationChanges();
 
     _listenForCurrentSongIndexChanges();
   }
@@ -122,6 +121,9 @@ class MyAudioHandler extends BaseAudioHandler {
     await m.protect(() async {
       final List<AudioSource> medias = [];
 
+      // Wait at least 1ms to be sure playlist object is up to date
+      await Future.delayed(const Duration(milliseconds: 1));
+
       int? trackIndex = _getCurrentTrackIndex();
 
       if (forceTrackIndex != null) {
@@ -188,11 +190,21 @@ class MyAudioHandler extends BaseAudioHandler {
         print("List Transformer Error : $e");
       }
 
-      playbackState.add(playbackState.value.copyWith(
-        queueIndex: _getCurrentTrackIndex(),
-      ));
+      notifyPlayerQueueUpdateDebouncer(() {
+        playbackState.add(playbackState.value.copyWith(
+          queueIndex: _getCurrentTrackIndex(),
+        ));
+
+        customEvent.add({
+          "type": "trackIndex",
+          "trackIndex": _getCurrentTrackIndex(),
+        });
+      });
     });
   }
+
+  final notifyPlayerQueueUpdateDebouncer =
+      Debouncer(delay: const Duration(milliseconds: 35));
 
   UriAudioSource _createAudioSource(MediaItem mediaItem) {
     return AudioSource.uri(
@@ -211,6 +223,11 @@ class MyAudioHandler extends BaseAudioHandler {
   @override
   Future<void> pause() async {
     await _player.pause();
+  }
+
+  @override
+  Future<void> stop() async {
+    await _player.stop();
   }
 
   @override
@@ -292,10 +309,6 @@ class MyAudioHandler extends BaseAudioHandler {
         await _updateLazyLoad();
       }
 
-      playbackState.add(playbackState.value.copyWith(
-        queueIndex: _getCurrentTrackIndex(),
-      ));
-
       _lastCurrentTrackIndex = currentTrackIndex;
     });
   }
@@ -345,19 +358,6 @@ class MyAudioHandler extends BaseAudioHandler {
       repeatMode: repeatMode,
     ));
   }
-
-  void _listenForDurationChanges() {
-    _player.durationStream.listen((duration) {
-      final index = _getCurrentTrackIndex();
-      final newQueue = queue.value;
-      if (index == null || newQueue.isEmpty) return;
-      final oldMediaItem = newQueue[index];
-      final newMediaItem = oldMediaItem.copyWith(duration: duration);
-      newQueue[index] = newMediaItem;
-      queue.add(newQueue);
-      mediaItem.add(newMediaItem);
-    });
-  }
 }
 
 class ListTransformer {
@@ -392,6 +392,9 @@ class ListTransformer {
   }
 
   Future<void> transform(List<AudioSource> target) async {
+    // Wait at least 1ms to be sure playlist object is up to date
+    await Future.delayed(const Duration(milliseconds: 1));
+
     outerloop:
     for (int i = playlist.length - 1; i >= 0; i--) {
       for (final targetTrack in target) {
@@ -423,5 +426,8 @@ class ListTransformer {
         }
       }
     }
+
+    // Wait at least 1ms to be sure playlist object is up to date
+    await Future.delayed(const Duration(milliseconds: 1));
   }
 }
