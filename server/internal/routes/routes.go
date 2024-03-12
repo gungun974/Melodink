@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/reflection"
 	"gungun974.com/melodink-server/internal"
 	"gungun974.com/melodink-server/internal/logger"
+	"gungun974.com/melodink-server/internal/middlewares"
 )
 
 func MainRouter(container internal.Container) http.Handler {
@@ -24,7 +25,9 @@ func MainRouter(container internal.Container) http.Handler {
 	router.Use(middleware.StripSlashes)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
-	router.Use(middleware.Logger)
+	router.Use(middlewares.AdvancedConditionalLogger([]string{
+		"/api/track/[0-9]+/image",
+	}))
 
 	TrackGRPCRouter(container, grpcServer)
 	router.Mount("/api/track", TrackHTTPRouter(container))
