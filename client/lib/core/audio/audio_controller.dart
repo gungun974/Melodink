@@ -33,6 +33,8 @@ class MyAudioHandler extends BaseAudioHandler {
 
     _notifyAudioHandlerAboutPlaybackEvents();
 
+    _listenForDurationChanges();
+
     _listenForCurrentSongIndexChanges();
   }
 
@@ -357,6 +359,17 @@ class MyAudioHandler extends BaseAudioHandler {
       speed: _player.speed,
       repeatMode: repeatMode,
     ));
+  }
+
+  void _listenForDurationChanges() {
+    _player.durationStream.listen((duration) {
+      final index = _getCurrentTrackIndex();
+      final currentQueue = queue.value;
+      if (index == null || currentQueue.isEmpty) return;
+      final oldMediaItem = currentQueue[index];
+      final newMediaItem = oldMediaItem.copyWith(duration: duration);
+      mediaItem.add(newMediaItem);
+    });
   }
 }
 
