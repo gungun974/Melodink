@@ -8,6 +8,9 @@ import 'package:melodink_client/features/player/data/repositories/played_track_r
 import 'package:melodink_client/features/player/domain/repositories/played_track_repository.dart';
 import 'package:melodink_client/features/player/domain/usecases/register_played_track.dart';
 import 'package:melodink_client/features/player/presentation/cubit/player_cubit.dart';
+import 'package:melodink_client/features/playlist/data/repositories/playlist_repository_impl.dart';
+import 'package:melodink_client/features/playlist/domain/repositories/playlist_repository.dart';
+import 'package:melodink_client/features/playlist/presentation/cubit/playlist_manager_cubit.dart';
 import 'package:melodink_client/features/tracks/data/repositories/track_repository_impl.dart';
 import 'package:melodink_client/features/tracks/domain/repositories/track_repository.dart';
 import 'package:melodink_client/features/tracks/domain/usecases/get_all_tracks.dart';
@@ -49,6 +52,20 @@ Future<void> setup() async {
   // Repository
   sl.registerLazySingleton<PlayedTrackRepository>(
     () => PlayedTrackRepositoryImpl(),
+  );
+
+  //! Playlist
+
+  // Cubit
+  sl.registerFactory(
+    () => PlaylistManagerCubit(
+      playerRepository: sl(),
+    ),
+  );
+
+  // Repository
+  sl.registerLazySingleton<PlaylistRepository>(
+    () => PlaylistRepositoryImpl(grpcClient: sl()),
   );
 
   //! External

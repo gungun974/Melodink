@@ -14,6 +14,37 @@ class TrackRepositoryImpl implements TrackRepository {
   TrackRepositoryImpl({required this.grpcClient})
       : trackServiceClient = pb.TrackServiceClient(grpcClient);
 
+  static Track decodeGRPCTrack(pb.Track track) {
+    return Track(
+      id: track.id,
+      title: track.title,
+      album: track.album,
+      duration: Duration(milliseconds: track.duration),
+      tagsFormat: track.tagsFormat,
+      fileType: track.fileType,
+      path: track.path,
+      fileSignature: track.fileSignature,
+      metadata: TrackMetadata(
+        trackNumber: track.metadata.trackNumber,
+        totalTracks: track.metadata.totalTracks,
+        discNumber: track.metadata.discNumber,
+        totalDiscs: track.metadata.totalDiscs,
+        date: track.metadata.date,
+        year: track.metadata.year,
+        genre: track.metadata.genre,
+        lyrics: track.metadata.lyrics,
+        comment: track.metadata.comment,
+        acoustID: track.metadata.acoustId,
+        acoustIDFingerprint: track.metadata.acoustIdFingerprint,
+        artist: track.metadata.artist,
+        albumArtist: track.metadata.albumArtist,
+        composer: track.metadata.composer,
+        copyright: track.metadata.copyright,
+      ),
+      dateAdded: track.dateAdded.toDateTime(),
+    );
+  }
+
   @override
   Future<Either<Failure, Stream<Track>>> getAllTracks() async {
     try {
@@ -21,34 +52,7 @@ class TrackRepositoryImpl implements TrackRepository {
 
       return Either.of(
         stream.map(
-          (track) => Track(
-            id: track.id,
-            title: track.title,
-            album: track.album,
-            duration: Duration(milliseconds: track.duration),
-            tagsFormat: track.tagsFormat,
-            fileType: track.fileType,
-            path: track.path,
-            fileSignature: track.fileSignature,
-            metadata: TrackMetadata(
-              trackNumber: track.metadata.trackNumber,
-              totalTracks: track.metadata.totalTracks,
-              discNumber: track.metadata.discNumber,
-              totalDiscs: track.metadata.totalDiscs,
-              date: track.metadata.date,
-              year: track.metadata.year,
-              genre: track.metadata.genre,
-              lyrics: track.metadata.lyrics,
-              comment: track.metadata.comment,
-              acoustID: track.metadata.acoustId,
-              acoustIDFingerprint: track.metadata.acoustIdFingerprint,
-              artist: track.metadata.artist,
-              albumArtist: track.metadata.albumArtist,
-              composer: track.metadata.composer,
-              copyright: track.metadata.copyright,
-            ),
-            dateAdded: track.dateAdded.toDateTime(),
-          ),
+          decodeGRPCTrack,
         ),
       );
     } catch (e) {

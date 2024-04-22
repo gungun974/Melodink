@@ -32,6 +32,8 @@ func MainRouter(container internal.Container) http.Handler {
 	TrackGRPCRouter(container, grpcServer)
 	router.Mount("/api/track", TrackHTTPRouter(container))
 
+	PlaylistGRPCRouter(container, grpcServer)
+
 	FileRouter(router)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

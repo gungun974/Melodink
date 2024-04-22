@@ -5,13 +5,15 @@ import (
 	processor_impl "gungun974.com/melodink-server/internal/layers/data/processors"
 	repository_impl "gungun974.com/melodink-server/internal/layers/data/repository"
 	storage_impl "gungun974.com/melodink-server/internal/layers/data/storage"
+	playlist_usecase "gungun974.com/melodink-server/internal/layers/domain/usecases/playlist"
 	track_usecase "gungun974.com/melodink-server/internal/layers/domain/usecases/track"
 	"gungun974.com/melodink-server/internal/layers/presentation/controllers"
 	presenter_impl "gungun974.com/melodink-server/internal/layers/presentation/presenters"
 )
 
 type Container struct {
-	TrackController controllers.TrackController
+	TrackController    controllers.TrackController
+	PlaylistController controllers.PlaylistController
 }
 
 func NewContainer(db *sqlx.DB) Container {
@@ -32,6 +34,7 @@ func NewContainer(db *sqlx.DB) Container {
 	//! Presenter
 
 	trackPresenter := presenter_impl.NewTrackPresenterImpl()
+	playlistPresenter := presenter_impl.NewPlaylistPresenterImpl()
 
 	//! Usecase
 
@@ -42,9 +45,16 @@ func NewContainer(db *sqlx.DB) Container {
 		trackPresenter,
 	)
 
+	playlistUsecase := playlist_usecase.NewPlaylistUsecase(
+		trackRepository,
+		playlistPresenter,
+	)
+
 	//! Controller
 
 	container.TrackController = controllers.NewTrackController(trackUsecase)
+
+	container.PlaylistController = controllers.NewPlaylistController(playlistUsecase)
 
 	return container
 }
