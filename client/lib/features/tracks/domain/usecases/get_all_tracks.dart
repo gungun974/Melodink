@@ -4,13 +4,13 @@ import 'package:melodink_client/core/usecases/usecase.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:melodink_client/features/tracks/domain/repositories/track_repository.dart';
 
-class GetAllTracks implements UseCase<Stream<Track>, NoParams> {
+class GetAllTracks implements UseCase<List<Track>, NoParams> {
   final TrackRepository repository;
 
   GetAllTracks(this.repository);
 
   @override
-  Future<Either<Failure, Stream<Track>>> call(_) async {
+  Future<Either<Failure, List<Track>>> call(_) async {
     return await repository.getAllTracks();
   }
 }

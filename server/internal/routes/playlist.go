@@ -1,31 +1,24 @@
 package routes
 
 import (
-	"context"
+	"net/http"
 
-	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/emptypb"
+	"github.com/go-chi/chi/v5"
 	"gungun974.com/melodink-server/internal"
-	"gungun974.com/melodink-server/pb"
 )
 
-type playlistServer struct {
-	pb.UnimplementedPlaylistServiceServer
+func PlaylistRouter(c internal.Container) http.Handler {
+	router := chi.NewRouter()
 
-	Container internal.Container
-}
+	router.Get("/albums", func(w http.ResponseWriter, r *http.Request) {
+		response, err := c.PlaylistController.ListAllAlbums()
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
 
-func (s *playlistServer) ListAllAlbums(context.Context, *emptypb.Empty) (*pb.PlaylistList, error) {
-	playlists, err := s.Container.PlaylistController.ListAllAlbums()
-	if err != nil {
-		return nil, handleGRPCError(err)
-	}
-
-	return playlists, nil
-}
-
-func PlaylistGRPCRouter(c internal.Container, s *grpc.Server) {
-	pb.RegisterPlaylistServiceServer(s, &playlistServer{
-		Container: c,
+		response.WriteResponse(w, r)
 	})
+
+	return router
 }

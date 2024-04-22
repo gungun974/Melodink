@@ -2,7 +2,7 @@ package controllers
 
 import (
 	playlist_usecase "gungun974.com/melodink-server/internal/layers/domain/usecases/playlist"
-	"gungun974.com/melodink-server/pb"
+	"gungun974.com/melodink-server/internal/models"
 )
 
 type PlaylistController struct {
@@ -17,6 +17,6 @@ func NewPlaylistController(
 	}
 }
 
-func (c *PlaylistController) ListAllAlbums() (*pb.PlaylistList, error) {
+func (c *PlaylistController) ListAllAlbums() (models.APIResponse, error) {
 	return c.playlistUsecase.ListAllAlbums()
 }

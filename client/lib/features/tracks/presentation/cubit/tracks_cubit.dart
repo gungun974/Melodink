@@ -40,26 +40,16 @@ class TracksCubit extends Cubit<TracksState> {
   }) : super(TracksInitial());
 
   void loadAllTracks() async {
-    final List<Track> tracks = [];
-
     final result = await getAllTracks(NoParams());
 
-    final stream = result.match(
+    final tracks = result.match(
       (left) {
         return null;
       },
       (right) => right,
     );
 
-    if (stream == null) return;
-
-    await for (final track in stream) {
-      tracks.add(track);
-
-      emit(TracksLoading(tracks: [...tracks]));
-
-      await Future.delayed(const Duration(milliseconds: 0));
-    }
+    if (tracks == null) return;
 
     emit(TracksLoaded(tracks: tracks));
   }

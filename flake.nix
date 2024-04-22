@@ -66,9 +66,6 @@
             pkg-config
             gcc
             glibc.static
-            protobuf
-            protoc-gen-go
-            protoc-gen-go-grpc
           ];
 
           nativeBuildInputs = buildInputs;
@@ -92,8 +89,6 @@
           version = "1.0.0";
 
           buildInputs = with pkgs; [
-            protobuf
-            protoc-gen-dart
             which
             mpv
             wrapGAppsHook
@@ -104,8 +99,6 @@
           src = gitignore.lib.gitignoreSource ./client;
 
           patchPhase = ''
-            cp -r ${./proto} ../proto
-
             mkdir -p /build/source/build/linux/x64/release/
             cp ${pkgs.fetchurl {
               url = "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz";
@@ -158,10 +151,6 @@
             tags = ["sqlite3" "sqlite"];
           }))
           sqlite
-          protobuf
-          protoc-gen-go
-          protoc-gen-go-grpc
-          protoc-gen-dart
 
           mpv
           pkg-config

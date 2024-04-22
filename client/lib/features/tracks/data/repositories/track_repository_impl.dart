@@ -1,62 +1,38 @@
+import 'dart:convert';
+
 import 'package:fpdart/fpdart.dart';
-import 'package:grpc/grpc_connection_interface.dart';
+import 'package:http/http.dart' as http;
+import 'package:melodink_client/config.dart';
 import 'package:melodink_client/core/error/failures.dart';
+import 'package:melodink_client/features/tracks/data/models/track.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:melodink_client/features/tracks/domain/repositories/track_repository.dart';
-import 'package:melodink_client/generated/pb/google/protobuf/empty.pb.dart';
-import 'package:melodink_client/generated/pb/track.pbgrpc.dart' as pb;
 
 class TrackRepositoryImpl implements TrackRepository {
-  final ClientChannelBase grpcClient;
+  final http.Client client;
 
-  final pb.TrackServiceClient trackServiceClient;
-
-  TrackRepositoryImpl({required this.grpcClient})
-      : trackServiceClient = pb.TrackServiceClient(grpcClient);
-
-  static Track decodeGRPCTrack(pb.Track track) {
-    return Track(
-      id: track.id,
-      title: track.title,
-      album: track.album,
-      duration: Duration(milliseconds: track.duration),
-      tagsFormat: track.tagsFormat,
-      fileType: track.fileType,
-      path: track.path,
-      fileSignature: track.fileSignature,
-      metadata: TrackMetadata(
-        trackNumber: track.metadata.trackNumber,
-        totalTracks: track.metadata.totalTracks,
-        discNumber: track.metadata.discNumber,
-        totalDiscs: track.metadata.totalDiscs,
-        date: track.metadata.date,
-        year: track.metadata.year,
-        genre: track.metadata.genre,
-        lyrics: track.metadata.lyrics,
-        comment: track.metadata.comment,
-        acoustID: track.metadata.acoustId,
-        acoustIDFingerprint: track.metadata.acoustIdFingerprint,
-        artist: track.metadata.artist,
-        albumArtist: track.metadata.albumArtist,
-        composer: track.metadata.composer,
-        copyright: track.metadata.copyright,
-      ),
-      dateAdded: track.dateAdded.toDateTime(),
-    );
-  }
+  TrackRepositoryImpl({required this.client});
 
   @override
-  Future<Either<Failure, Stream<Track>>> getAllTracks() async {
-    try {
-      final stream = trackServiceClient.listAllTracks(Empty());
+  Future<Either<Failure, List<Track>>> getAllTracks() async {
+    final response = await client.get(Uri.parse('$appUrl/api/track'));
 
-      return Either.of(
-        stream.map(
-          decodeGRPCTrack,
-        ),
-      );
-    } catch (e) {
-      print('Caught error: $e');
+    if (response.statusCode == 200) {
+      try {
+        final tracks = (json.decode(response.body) as List)
+            .map(
+              (track) => TrackJson.fromJson(
+                track,
+              ).toTrack(),
+            )
+            .toList();
+
+        return Either.of(
+          tracks,
+        );
+      } catch (e) {
+        return Either.left(ServerFailure());
+      }
     }
 
     return Either.left(ServerFailure());

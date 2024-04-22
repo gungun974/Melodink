@@ -7,7 +7,6 @@ import (
 	"gungun974.com/melodink-server/internal/layers/domain/entities"
 	track_usecase "gungun974.com/melodink-server/internal/layers/domain/usecases/track"
 	"gungun974.com/melodink-server/internal/models"
-	"gungun974.com/melodink-server/pb"
 )
 
 type TrackController struct {
@@ -26,7 +25,7 @@ func (c *TrackController) DiscoverNewTracks() error {
 	return c.trackUsecase.DiscoverNewTracks()
 }
 
-func (c *TrackController) GetAll() (*pb.TrackList, error) {
+func (c *TrackController) GetAll() (models.APIResponse, error) {
 	return c.trackUsecase.GetAllTracks()
 }
 
@@ -49,7 +48,11 @@ func (c *TrackController) GetCover(rawId string) (models.APIResponse, error) {
 	return c.trackUsecase.GetTrackCover(id)
 }
 
-func (c *TrackController) FetchAudioStream(rawId string, rawFormat string, rawQuality string) (models.APIResponse, error) {
+func (c *TrackController) FetchAudioStream(
+	rawId string,
+	rawFormat string,
+	rawQuality string,
+) (models.APIResponse, error) {
 	aid, err := strconv.Atoi(rawId)
 	if err != nil {
 		return nil, entities.NewValidationError(err.Error())

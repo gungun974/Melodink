@@ -4,10 +4,10 @@ import (
 	"strings"
 
 	"gungun974.com/melodink-server/internal/layers/domain/entities"
-	"gungun974.com/melodink-server/pb"
+	"gungun974.com/melodink-server/internal/models"
 )
 
-func (u *PlaylistUsecase) ListAllAlbums() (*pb.PlaylistList, error) {
+func (u *PlaylistUsecase) ListAllAlbums() (models.APIResponse, error) {
 	tracks, err := u.trackRepository.GetAllTracks()
 	if err != nil {
 		return nil, entities.NewInternalError(err)

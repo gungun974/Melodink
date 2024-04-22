@@ -1,9 +1,9 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:get_it/get_it.dart';
-import 'package:grpc/grpc_connection_interface.dart';
 import 'package:melodink_client/core/audio/audio_controller.dart';
-import 'package:melodink_client/core/network/grpc_client.dart'
-    if (dart.library.html) 'package:melodink_client/core/network/grpc_web_client.dart';
+
+import 'package:http/http.dart' as http;
+
 import 'package:melodink_client/features/player/data/repositories/played_track_repository_impl.dart';
 import 'package:melodink_client/features/player/domain/repositories/played_track_repository.dart';
 import 'package:melodink_client/features/player/domain/usecases/register_played_track.dart';
@@ -33,7 +33,7 @@ Future<void> setup() async {
 
   // Repository
   sl.registerLazySingleton<TrackRepository>(
-    () => TrackRepositoryImpl(grpcClient: sl()),
+    () => TrackRepositoryImpl(client: sl()),
   );
 
   //! Player
@@ -65,13 +65,11 @@ Future<void> setup() async {
 
   // Repository
   sl.registerLazySingleton<PlaylistRepository>(
-    () => PlaylistRepositoryImpl(grpcClient: sl()),
+    () => PlaylistRepositoryImpl(client: sl()),
   );
 
   //! External
-  sl.registerLazySingleton<ClientChannelBase>(
-    createGrpcClient,
-  );
+  sl.registerLazySingleton(() => http.Client());
 
   sl.registerSingleton<AudioHandler>(await initAudioService());
 }

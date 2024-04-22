@@ -3,7 +3,8 @@ package presenter_impl
 import (
 	"gungun974.com/melodink-server/internal/layers/domain/entities"
 	presenter "gungun974.com/melodink-server/internal/layers/domain/presenters"
-	"gungun974.com/melodink-server/pb"
+	view_models "gungun974.com/melodink-server/internal/layers/presentation/models"
+	"gungun974.com/melodink-server/internal/models"
 )
 
 type PlaylistPresenterImpl struct{}
@@ -14,31 +15,16 @@ func NewPlaylistPresenterImpl() presenter.PlaylistPresenter {
 
 func (p *PlaylistPresenterImpl) ShowAllPlaylists(
 	playlists []entities.Playlist,
-) *pb.PlaylistList {
-	pbPlaylists := make([]*pb.Playlist, len(playlists))
+) models.APIResponse {
+	view_playlists := make([]view_models.PlaylistJson, len(playlists))
 
 	for i, playlist := range playlists {
-		var playlistType pb.PlaylistType
+		playlist.Tracks = make([]entities.Track, 0)
 
-		switch playlist.Type {
-		case entities.CustomPlaylistType:
-			playlistType = pb.PlaylistType_CUSTOM
-		case entities.AlbumPlaylistType:
-			playlistType = pb.PlaylistType_ALBUM
-		case entities.ArtistPlaylistType:
-			playlistType = pb.PlaylistType_ARTIST
-		}
-
-		pbPlaylists[i] = &pb.Playlist{
-			Id:          int32(playlist.Id),
-			Name:        playlist.Name,
-			Description: playlist.Description,
-			Type:        playlistType,
-			AlbumArtist: playlist.AlbumArtist,
-		}
+		view_playlists[i] = view_models.ConvertToPlaylistJson(playlist)
 	}
 
-	return &pb.PlaylistList{
-		Playlists: pbPlaylists,
+	return models.JsonAPIResponse{
+		Data: view_playlists,
 	}
 }

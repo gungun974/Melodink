@@ -11,7 +11,6 @@ DATABASE_URL=sqlite3://./data/melodink.db
 all: build
 
 prebuild:
-	protoc --proto_path=../proto ../proto/*.proto --go_out=. --go-grpc_out=.
 
 build: prebuild 
 	$(GO) build $(GOFLAGS) -o ${DEST}$(SERVER_BINARY) ./cmd/api/.
