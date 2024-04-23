@@ -79,6 +79,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       }
 
       _previousTracks.add(_queueTracks.removeAt(j));
+      j--;
     }
 
     for (int j = 0; j < _nextTracks.length; j++) {
@@ -89,6 +90,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       }
 
       _previousTracks.add(_nextTracks.removeAt(j));
+      j--;
     }
 
     for (int i = _previousTracks.length - 1; i >= 0; i--) {

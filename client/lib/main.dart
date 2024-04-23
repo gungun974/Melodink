@@ -2,11 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio_media_kit/just_audio_media_kit.dart';
+import 'package:melodink_client/core/audio/audio_media_kit.dart'
+    if (dart.library.html) 'package:melodink_client/core/audio/audio_media_kit_web.dart';
 import 'package:melodink_client/core/audio/audio_mpris.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/routes.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'injection_container.dart' as di;
@@ -20,11 +22,14 @@ void main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
+  if (kIsWeb) {
+    // Initialize FFI
+    databaseFactoryOrNull = databaseFactoryFfiWeb;
+  }
+
   await DatabaseService.getDatabase();
 
-  JustAudioMediaKit.ensureInitialized();
-
-  JustAudioMediaKit.title = 'Melodink';
+  setupMediaKit();
 
   await di.setup();
 

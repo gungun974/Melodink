@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -21,10 +22,18 @@ class DatabaseService {
       return _database!;
     }
 
-    final appDir = await getApplicationSupportDirectory();
+    final String databasePath;
+
+    if (!kIsWeb) {
+      final appDir = await getApplicationSupportDirectory();
+
+      databasePath = join(appDir.path, "databases", "melodink.db");
+    } else {
+      databasePath = "melodink-web.db";
+    }
 
     final database = await openDatabase(
-      join(appDir.path, "databases", "melodink.db"),
+      databasePath,
       version: 1,
       onCreate: (Database db, int version) async {
         var batch = db.batch();
