@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:melodink_client/core/audio/audio_mpris.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/routes.dart';
@@ -21,6 +22,10 @@ void main() async {
 
   await DatabaseService.getDatabase();
 
+  JustAudioMediaKit.ensureInitialized();
+
+  JustAudioMediaKit.title = 'Melodink';
+
   await di.setup();
 
   if (!kIsWeb && Platform.isLinux) {
@@ -35,6 +40,7 @@ void main() async {
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.hidden,
       minimumSize: Size(300, 534),
+      fullScreen: false,
     );
 
     windowManager.waitUntilReadyToShow(windowOptions);

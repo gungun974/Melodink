@@ -91,15 +91,16 @@ class MyAudioHandler extends BaseAudioHandler {
       return null;
     }
 
-    if (currentPlayerIndex < 0 || currentPlayerIndex >= _playlist.length) {
+    if (currentPlayerIndex < 0 ||
+        currentPlayerIndex >= (_player.sequence?.length ?? -1)) {
       return null;
     }
 
-    final currentAudio = _playlist[currentPlayerIndex];
+    final currentAudio = _player.sequence![currentPlayerIndex];
 
-    if (currentAudio is! IndexedAudioSource) {
-      return null;
-    }
+    // if (currentAudio is! IndexedAudioSource) {
+    //   return null;
+    // }
 
     final mediaItem = currentAudio.tag;
 
@@ -415,7 +416,9 @@ class ListTransformer {
           continue outerloop;
         }
       }
-      await playlist.removeAt(i);
+      final lastIndex = playlist.length - 1;
+      await playlist.move(i, lastIndex);
+      await playlist.removeAt(lastIndex);
     }
 
     outerloop:

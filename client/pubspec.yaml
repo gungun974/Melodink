@@ -27,12 +27,8 @@ dependencies:
   path: ^1.8.3
   go_router: ^13.1.0
   mutex: ^3.1.0
-  just_audio:
-    git:
-      url: https://github.com/ryanheise/just_audio.git
-      path: just_audio
-      ref: feature/treadmill
-  just_audio_media_kit: ^1.0.0
+  just_audio: ^0.9.37
+  just_audio_media_kit: ^2.0.0
   sqflite: ^2.3.2
   sqflite_common_ffi: ^2.3.2+1
   path_provider: ^2.1.2
@@ -42,6 +38,8 @@ dependencies:
       ref: 3a4a72140087d3df130271c9213e61fa413d5740
   responsive_builder: ^0.7.0
   http: ^1.2.0
+  media_kit_libs_linux: ^1.1.3
+  media_kit_libs_windows_audio: ^1.0.9
 
 dev_dependencies:
   flutter_test:
