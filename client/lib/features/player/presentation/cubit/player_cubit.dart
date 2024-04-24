@@ -7,6 +7,7 @@ import 'package:melodink_client/config.dart';
 import 'package:melodink_client/core/helpers/generate_unique_id.dart';
 import 'package:melodink_client/features/player/domain/usecases/register_played_track.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
+import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
 
 abstract class PlayerState extends Equatable {
@@ -116,32 +117,31 @@ class PlayerCubit extends Cubit<PlayerState> {
     _audioHandler.playbackState.listen((_) => _watchPlayedTrack1());
   }
 
-  bool _isLoadingPlaylist = false;
+  final _isLoadingPlaylist = Mutex();
 
   loadTracksPlaylist(List<Track> tracks, int startAt) async {
-    _isLoadingPlaylist = true;
-    _playlistTracks = tracks
-        .map(
-          (track) => IndexedTrack(
-            track: track,
-            index: generateUniqueID(),
-          ),
-        )
-        .toList();
+    await _isLoadingPlaylist.protect(() async {
+      _playlistTracks = tracks
+          .map(
+            (track) => IndexedTrack(
+              track: track,
+              index: generateUniqueID(),
+            ),
+          )
+          .toList();
 
-    await _audioHandler.stop();
+      await _audioHandler.stop();
 
-    if (isShuffled) {
-      await shuffle(_playlistTracks[startAt].index);
-      await _audioHandler.skipToQueueItem(0);
-    } else {
-      await unshuffle(_playlistTracks[startAt].index);
-      await _audioHandler.skipToQueueItem(startAt);
-    }
+      if (isShuffled) {
+        await shuffle(_playlistTracks[startAt].index);
+        await _audioHandler.skipToQueueItem(0);
+      } else {
+        await unshuffle(_playlistTracks[startAt].index);
+        await _audioHandler.skipToQueueItem(startAt);
+      }
 
-    await _audioHandler.play();
-
-    _isLoadingPlaylist = false;
+      _audioHandler.play();
+    });
   }
 
   // ignore: unused_element
@@ -174,36 +174,34 @@ class PlayerCubit extends Cubit<PlayerState> {
   }
 
   addTrackToQueue(Track track) async {
-    _isLoadingPlaylist = true;
+    await _isLoadingPlaylist.protect(() async {
+      _queueTracks.add(IndexedTrack(
+        track: track,
+        index: generateUniqueID(),
+      ));
 
-    _queueTracks.add(IndexedTrack(
-      track: track,
-      index: generateUniqueID(),
-    ));
+      final trackIndex = _manualGetCurrentTrackIndex();
 
-    final trackIndex = _manualGetCurrentTrackIndex();
+      if (trackIndex == null) {
+        return;
+      }
 
-    if (trackIndex == null) {
-      return;
-    }
+      _updatePlaylistTracks(trackIndex);
 
-    _updatePlaylistTracks(trackIndex);
+      await _audioHandler.updateQueue(
+        _allTracks.map((e) => _getTrackMediaItem(e.track, e.index)).toList(),
+      );
 
-    await _audioHandler.updateQueue(
-      _allTracks.map((e) => _getTrackMediaItem(e.track, e.index)).toList(),
-    );
-
-    emit(
-      PlayerPlaying(
-        currentTrack: _allTracks[trackIndex].track,
-        previousTrack: _previousTracks.map((e) => e.track).toList(),
-        queueTracks: _queueTracks.map((e) => e.track).toList(),
-        nextTracks: _nextTracks.map((e) => e.track).toList(),
-        isShuffled: isShuffled,
-      ),
-    );
-
-    _isLoadingPlaylist = false;
+      emit(
+        PlayerPlaying(
+          currentTrack: _allTracks[trackIndex].track,
+          previousTrack: _previousTracks.map((e) => e.track).toList(),
+          queueTracks: _queueTracks.map((e) => e.track).toList(),
+          nextTracks: _nextTracks.map((e) => e.track).toList(),
+          isShuffled: isShuffled,
+        ),
+      );
+    });
   }
 
   toogleShufle() async {
@@ -213,15 +211,13 @@ class PlayerCubit extends Cubit<PlayerState> {
       return;
     }
 
-    _isLoadingPlaylist = true;
-
-    if (isShuffled) {
-      await unshuffle(_allTracks[trackIndex].index);
-      _isLoadingPlaylist = false;
-      return;
-    }
-    await shuffle(_allTracks[trackIndex].index);
-    _isLoadingPlaylist = false;
+    await _isLoadingPlaylist.protect(() async {
+      if (isShuffled) {
+        await unshuffle(_allTracks[trackIndex].index);
+        return;
+      }
+      await shuffle(_allTracks[trackIndex].index);
+    });
   }
 
   shuffle(String extraIndex) async {
@@ -364,7 +360,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       return;
     }
 
-    if (!_isLoadingPlaylist) {
+    if (!_isLoadingPlaylist.isLocked) {
       _updatePlaylistTracks(trackIndex);
     }
 
