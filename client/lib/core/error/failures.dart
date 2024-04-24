@@ -1,16 +1,25 @@
-import 'package:equatable/equatable.dart';
+import 'package:rust_core/result.dart' as base;
+import 'package:thiserror/thiserror.dart';
 
-abstract class Failure extends Equatable {
-  @override
-  List<Object> get props => [];
+export 'package:rust_core/result.dart' hide Result;
+export 'package:rust_core/panic.dart';
+export 'package:rust_core/typedefs.dart';
+
+sealed class Error extends ThisError<Error> {
+  const Error([super.stringifiable]);
 }
 
-// Failures message
-
-const String SERVER_FAILURE_MESSAGE = 'server_failure_message';
-const String NO_INTERNET_FAILURE_MESSAGE = 'no_internet_failure_message';
-
 // General failures
-class ServerFailure extends Failure {}
+class UnknowFailure extends Error {
+  UnknowFailure() : super(() => "An unknown error occurred.");
+}
 
-class NoInternetFailure extends Failure {}
+class ServerFailure extends Error {
+  ServerFailure() : super(() => "The server respond with an unknown error.");
+}
+
+class NoInternetFailure extends Error {
+  NoInternetFailure() : super(() => "Failed to reach the Internet.");
+}
+
+typedef Result<S> = base.Result<S, Error>;

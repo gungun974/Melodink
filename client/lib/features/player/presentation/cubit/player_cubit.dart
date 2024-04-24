@@ -5,7 +5,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/config.dart';
 import 'package:melodink_client/core/helpers/generate_unique_id.dart';
-import 'package:melodink_client/features/player/domain/usecases/register_played_track.dart';
+import 'package:melodink_client/features/player/domain/repositories/played_track_repository.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart' as p;
@@ -103,13 +103,13 @@ class PlayerCubit extends Cubit<PlayerState> {
     }
   }
 
-  final RegisterPlayedTrack _registerPlayedTrack;
+  final PlayedTrackRepository _playedTrackRepository;
   final AudioHandler _audioHandler;
 
   PlayerCubit({
-    required RegisterPlayedTrack registerPlayedTrack,
+    required PlayedTrackRepository playedTrackRepository,
     required AudioHandler audioHandler,
-  })  : _registerPlayedTrack = registerPlayedTrack,
+  })  : _playedTrackRepository = playedTrackRepository,
         _audioHandler = audioHandler,
         super(PlayerStandby()) {
     _audioHandler.customEvent.listen(_updatePlaybackInfo);
@@ -521,7 +521,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       }
     }
 
-    _registerPlayedTrack(RegisterPlayedTrackParams(
+    _playedTrackRepository.addPlayedTrack(
       trackId: currentTrack.id,
       startAt: startAt,
       finishAt: finishAt,
@@ -530,7 +530,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       shuffle: isShuffled,
       skipped: skipped,
       trackEnded: trackEnded,
-    ));
+    );
 
     trackedStartAt = null;
     trackedFinishAt = null;

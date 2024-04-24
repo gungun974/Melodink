@@ -6,14 +6,12 @@ import 'package:http/http.dart' as http;
 
 import 'package:melodink_client/features/player/data/repositories/played_track_repository_impl.dart';
 import 'package:melodink_client/features/player/domain/repositories/played_track_repository.dart';
-import 'package:melodink_client/features/player/domain/usecases/register_played_track.dart';
 import 'package:melodink_client/features/player/presentation/cubit/player_cubit.dart';
 import 'package:melodink_client/features/playlist/data/repositories/playlist_repository_impl.dart';
 import 'package:melodink_client/features/playlist/domain/repositories/playlist_repository.dart';
 import 'package:melodink_client/features/playlist/presentation/cubit/playlist_manager_cubit.dart';
 import 'package:melodink_client/features/tracks/data/repositories/track_repository_impl.dart';
 import 'package:melodink_client/features/tracks/domain/repositories/track_repository.dart';
-import 'package:melodink_client/features/tracks/domain/usecases/get_all_tracks.dart';
 import 'package:melodink_client/features/tracks/presentation/cubit/tracks_cubit.dart';
 
 final sl = GetIt.instance;
@@ -24,12 +22,9 @@ Future<void> setup() async {
   // Cubit
   sl.registerFactory(
     () => TracksCubit(
-      getAllTracks: sl(),
+      trackRepository: sl(),
     ),
   );
-
-  // Use cases
-  sl.registerLazySingleton(() => GetAllTracks(sl()));
 
   // Repository
   sl.registerLazySingleton<TrackRepository>(
@@ -41,13 +36,10 @@ Future<void> setup() async {
   // Cubit
   sl.registerFactory(
     () => PlayerCubit(
-      registerPlayedTrack: sl(),
+      playedTrackRepository: sl(),
       audioHandler: sl(),
     ),
   );
-
-  // Use cases
-  sl.registerLazySingleton(() => RegisterPlayedTrack(sl()));
 
   // Repository
   sl.registerLazySingleton<PlayedTrackRepository>(

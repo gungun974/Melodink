@@ -1,4 +1,3 @@
-import 'package:fpdart/fpdart.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/failures.dart';
 import 'package:melodink_client/features/player/domain/entities/played_track.dart';
@@ -21,23 +20,23 @@ class PlayedTrackRepositoryImpl implements PlayedTrackRepository {
     );
   }
 
-  Future<Either<Failure, PlayedTrack>> getPlayedTrackById(int id) async {
+  Future<Result<PlayedTrack>> getPlayedTrackById(int id) async {
     final db = await DatabaseService.getDatabase();
 
     final data =
         await db.rawQuery("SELECT * FROM played_tracks WHERE id = ?", [id]);
 
     try {
-      return Either.right(
+      return Ok(
         PlayedTrackRepositoryImpl.decodePlayedTrack(data.first),
       );
     } catch (_) {
-      return Either.left(ServerFailure());
+      return Err(ServerFailure());
     }
   }
 
   @override
-  Future<Either<Failure, PlayedTrack>> addPlayedTrack({
+  Future<Result<PlayedTrack>> addPlayedTrack({
     required int trackId,
     required DateTime startAt,
     required DateTime finishAt,

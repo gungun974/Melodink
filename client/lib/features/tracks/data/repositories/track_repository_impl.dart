@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
 import 'package:melodink_client/config.dart';
 import 'package:melodink_client/core/error/failures.dart';
@@ -14,7 +13,7 @@ class TrackRepositoryImpl implements TrackRepository {
   TrackRepositoryImpl({required this.client});
 
   @override
-  Future<Either<Failure, List<Track>>> getAllTracks() async {
+  Future<Result<List<Track>>> getAllTracks() async {
     final response = await client.get(Uri.parse('$appUrl/api/track'));
 
     if (response.statusCode == 200) {
@@ -27,14 +26,14 @@ class TrackRepositoryImpl implements TrackRepository {
             )
             .toList();
 
-        return Either.of(
+        return Ok(
           tracks,
         );
       } catch (e) {
-        return Either.left(ServerFailure());
+        return Err(ServerFailure());
       }
     }
 
-    return Either.left(ServerFailure());
+    return Err(ServerFailure());
   }
 }

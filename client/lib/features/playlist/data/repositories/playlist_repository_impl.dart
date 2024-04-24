@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:fpdart/fpdart.dart';
 import 'package:http/http.dart' as http;
 import 'package:melodink_client/config.dart';
 import 'package:melodink_client/core/error/failures.dart';
@@ -14,7 +13,7 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   PlaylistRepositoryImpl({required this.client});
 
   @override
-  Future<Either<Failure, List<Playlist>>> getAllAlbums() async {
+  Future<Result<List<Playlist>>> getAllAlbums() async {
     final response = await client.get(Uri.parse('$appUrl/api/playlist/albums'));
 
     if (response.statusCode == 200) {
@@ -27,14 +26,14 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
             )
             .toList();
 
-        return Either.of(
+        return Ok(
           albums,
         );
       } catch (e) {
-        return Either.left(ServerFailure());
+        return Err(ServerFailure());
       }
     }
 
-    return Either.left(ServerFailure());
+    return Err(ServerFailure());
   }
 }

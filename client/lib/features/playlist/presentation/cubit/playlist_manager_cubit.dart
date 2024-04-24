@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:melodink_client/core/error/failures.dart';
 import 'package:melodink_client/features/playlist/domain/entities/playlist.dart';
 import 'package:melodink_client/features/playlist/domain/repositories/playlist_repository.dart';
 
@@ -35,15 +36,8 @@ class PlaylistManagerCubit extends Cubit<PlaylistManagerState> {
 
     final result = await playerRepository.getAllAlbums();
 
-    final albums = result.match(
-      (left) {
-        return null;
-      },
-      (right) => right,
-    );
-
-    if (albums == null) return;
-
-    emit(PlaylistManagerLoaded(albums: albums));
+    if (result case Ok(ok: final albums)) {
+      emit(PlaylistManagerLoaded(albums: albums));
+    }
   }
 }

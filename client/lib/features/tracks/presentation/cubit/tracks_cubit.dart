@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:melodink_client/core/usecases/usecase.dart';
-import 'package:melodink_client/features/tracks/domain/usecases/get_all_tracks.dart';
+import 'package:melodink_client/core/error/failures.dart';
+import 'package:melodink_client/features/tracks/domain/repositories/track_repository.dart';
 
 import '../../domain/entities/track.dart';
 
@@ -33,24 +33,17 @@ class TracksLoaded extends TracksState {
 }
 
 class TracksCubit extends Cubit<TracksState> {
-  final GetAllTracks getAllTracks;
+  final TrackRepository trackRepository;
 
   TracksCubit({
-    required this.getAllTracks,
+    required this.trackRepository,
   }) : super(TracksInitial());
 
   void loadAllTracks() async {
-    final result = await getAllTracks(NoParams());
+    final result = await trackRepository.getAllTracks();
 
-    final tracks = result.match(
-      (left) {
-        return null;
-      },
-      (right) => right,
-    );
-
-    if (tracks == null) return;
-
-    emit(TracksLoaded(tracks: tracks));
+    if (result case Ok(ok: final tracks)) {
+      emit(TracksLoaded(tracks: tracks));
+    }
   }
 }
