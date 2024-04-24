@@ -13,7 +13,7 @@ type JsonAPIResponse struct {
 }
 
 func (r JsonAPIResponse) WriteResponse(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if r.Status > 0 {
 		w.WriteHeader(r.Status)
