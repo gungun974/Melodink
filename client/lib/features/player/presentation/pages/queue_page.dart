@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/player/presentation/cubit/player_cubit.dart';
+import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:melodink_client/features/tracks/presentation/widgets/tracks_list.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 
@@ -93,6 +94,12 @@ class QueuePage extends StatelessWidget {
                               tracks: [
                                 state.previousTrack.last,
                               ],
+                              playCallback: (int index, _) {
+                                BlocProvider.of<PlayerCubit>(context)
+                                    .skipToTrack(
+                                  index + state.previousTrack.length - 1,
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -125,6 +132,12 @@ class QueuePage extends StatelessWidget {
                             sliver: TracksList(
                               tracks: state.queueTracks,
                               numberOffset: 1,
+                              playCallback: (int index, _) {
+                                BlocProvider.of<PlayerCubit>(context)
+                                    .skipToTrack(
+                                  index + state.previousTrack.length,
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -159,6 +172,13 @@ class QueuePage extends StatelessWidget {
                           sliver: TracksList(
                             tracks: state.nextTracks,
                             numberOffset: 1 + state.queueTracks.length,
+                            playCallback: (int index, _) {
+                              BlocProvider.of<PlayerCubit>(context).skipToTrack(
+                                index +
+                                    state.previousTrack.length +
+                                    state.queueTracks.length,
+                              );
+                            },
                           ),
                         ),
                       ),

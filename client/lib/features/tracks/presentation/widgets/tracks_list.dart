@@ -16,9 +16,12 @@ class TracksList extends StatelessWidget {
 
   final int numberOffset;
 
+  final void Function(int index, List<Track> tracks) playCallback;
+
   const TracksList({
     super.key,
     required this.tracks,
+    required this.playCallback,
     this.withHeader = true,
     this.numberOffset = 0,
   });
@@ -49,8 +52,7 @@ class TracksList extends StatelessWidget {
                   tracks[index],
                   index + 1 + numberOffset,
                   () {
-                    BlocProvider.of<PlayerCubit>(context)
-                        .loadTracksPlaylist(tracks, index);
+                    playCallback(index, tracks);
                   },
                   minimal: sizingInformation.deviceScreenType !=
                       DeviceScreenType.desktop,

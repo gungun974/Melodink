@@ -63,6 +63,8 @@ class PlayerCubit extends Cubit<PlayerState> {
 
   List<IndexedTrack> _nextTracks = [];
 
+  List<IndexedTrack> _oldAllTracks = [];
+
   List<IndexedTrack> get _allTracks => [
         ..._previousTracks,
         ..._queueTracks,
@@ -71,7 +73,7 @@ class PlayerCubit extends Cubit<PlayerState> {
 
   bool isShuffled = false;
 
-  _updatePlaylistTracks(int currentTrackIndex) {
+  _updatePlaylistTracks(int currentTrackIndex) async {
     for (int j = 0; j < _queueTracks.length; j++) {
       final i = j + _previousTracks.length;
 
@@ -100,6 +102,26 @@ class PlayerCubit extends Cubit<PlayerState> {
       }
 
       _nextTracks.insert(0, _previousTracks.removeAt(i));
+    }
+
+    bool hasChange = false;
+
+    if (_oldAllTracks.length == _allTracks.length) {
+      for (int i = 0; i < _allTracks.length; i++) {
+        if (_allTracks[i].index != _oldAllTracks[i].index) {
+          hasChange = true;
+        }
+      }
+    } else {
+      hasChange = true;
+    }
+
+    if (hasChange) {
+      await _audioHandler.updateQueue(
+        _allTracks.map((e) => _getTrackMediaItem(e.track, e.index)).toList(),
+      );
+
+      _oldAllTracks = [..._allTracks];
     }
   }
 
@@ -139,6 +161,18 @@ class PlayerCubit extends Cubit<PlayerState> {
         await unshuffle(_playlistTracks[startAt].index);
         await _audioHandler.skipToQueueItem(startAt);
       }
+
+      _audioHandler.play();
+    });
+  }
+
+  skipToTrack(int startAt) async {
+    await _isLoadingPlaylist.protect(() async {
+      await _audioHandler.stop();
+
+      await _audioHandler.skipToQueueItem(startAt);
+
+      await _updatePlaylistTracks(startAt);
 
       _audioHandler.play();
     });
@@ -186,11 +220,7 @@ class PlayerCubit extends Cubit<PlayerState> {
         return;
       }
 
-      _updatePlaylistTracks(trackIndex);
-
-      await _audioHandler.updateQueue(
-        _allTracks.map((e) => _getTrackMediaItem(e.track, e.index)).toList(),
-      );
+      await _updatePlaylistTracks(trackIndex);
 
       emit(
         PlayerPlaying(
@@ -234,11 +264,7 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     _nextTracks.shuffle();
 
-    _updatePlaylistTracks(0);
-
-    await _audioHandler.updateQueue(
-      _allTracks.map((e) => _getTrackMediaItem(e.track, e.index)).toList(),
-    );
+    await _updatePlaylistTracks(0);
 
     _lastQueueIndex = null;
   }
@@ -266,11 +292,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       _nextTracks.add(_playlistTracks[i]);
     }
 
-    _updatePlaylistTracks(startAt);
-
-    await _audioHandler.updateQueue(
-      _allTracks.map((e) => _getTrackMediaItem(e.track, e.index)).toList(),
-    );
+    await _updatePlaylistTracks(startAt);
 
     _lastQueueIndex = null;
   }
@@ -346,7 +368,7 @@ class PlayerCubit extends Cubit<PlayerState> {
 
   int? _lastQueueIndex;
 
-  _updatePlaybackInfo(dynamic event) {
+  _updatePlaybackInfo(dynamic event) async {
     if (event is! Map) {
       return;
     }
@@ -361,7 +383,7 @@ class PlayerCubit extends Cubit<PlayerState> {
     }
 
     if (!_isLoadingPlaylist.isLocked) {
-      _updatePlaylistTracks(trackIndex);
+      await _updatePlaylistTracks(trackIndex);
     }
 
     if (trackIndex == _lastQueueIndex) {

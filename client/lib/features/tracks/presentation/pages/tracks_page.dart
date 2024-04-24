@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
+import 'package:melodink_client/features/player/presentation/cubit/player_cubit.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
 import 'package:melodink_client/features/tracks/presentation/cubit/tracks_cubit.dart';
 import 'package:melodink_client/features/tracks/presentation/widgets/tracks_info_header.dart';
@@ -45,6 +46,11 @@ class _TracksPageState extends State<TracksPage> {
           tracks = state.tracks;
         }
 
+        void playTrack(int index, List<Track> tracks) {
+          BlocProvider.of<PlayerCubit>(context)
+              .loadTracksPlaylist(tracks, index);
+        }
+
         return ResponsiveBuilder(
           builder: (
             context,
@@ -59,7 +65,10 @@ class _TracksPageState extends State<TracksPage> {
                     padding: 0,
                     sliver: SliverPadding(
                       padding: const EdgeInsets.only(top: 16, bottom: 16),
-                      sliver: TracksList(tracks: tracks),
+                      sliver: TracksList(
+                        tracks: tracks,
+                        playCallback: playTrack,
+                      ),
                     ),
                   ),
                 ],
@@ -83,7 +92,10 @@ class _TracksPageState extends State<TracksPage> {
                   padding: 32,
                   sliver: SliverPadding(
                     padding: const EdgeInsets.only(top: 32, bottom: 48),
-                    sliver: TracksList(tracks: tracks),
+                    sliver: TracksList(
+                      tracks: tracks,
+                      playCallback: playTrack,
+                    ),
                   ),
                 ),
               ],
