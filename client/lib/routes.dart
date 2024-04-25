@@ -8,6 +8,7 @@ import 'package:melodink_client/features/player/presentation/cubit/player_cubit.
 import 'package:melodink_client/features/player/presentation/pages/player_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_page.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_widget.dart';
+import 'package:melodink_client/features/playlist/presentation/pages/library_page.dart';
 import 'package:melodink_client/features/tracks/presentation/pages/all_tracks_page.dart';
 import 'package:melodink_client/injection_container.dart';
 import 'package:responsive_builder/responsive_builder.dart';
@@ -158,12 +159,7 @@ final GoRouter appRouter = GoRouter(
                   path: '/library',
                   name: "/library",
                   builder: (BuildContext context, GoRouterState state) {
-                    return const Text(
-                      "Library",
-                      style: TextStyle(
-                        fontSize: 40,
-                      ),
-                    );
+                    return const LibraryPage();
                   },
                 ),
               ],
