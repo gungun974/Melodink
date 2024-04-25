@@ -5,6 +5,7 @@ enum PlaylistType {
   album,
   artist,
   custom,
+  allTracks,
 }
 
 class Playlist extends Equatable {

@@ -1,6 +1,7 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:melodink_client/routes.dart';
 
 class PlayerMoreControls extends StatelessWidget {
   final String location;
@@ -27,11 +28,10 @@ class PlayerMoreControls extends StatelessWidget {
           color: Colors.white,
           onPressed: () {
             if (location == "/queue") {
-              GoRouter.of(context).goNamed("/");
-              return;
-            }
-            if (location == "/player/queue") {
-              GoRouter.of(context).goNamed("/");
+              GoRouter.of(context).pop();
+              while (GoRouter.of(context).location.startsWith("/player")) {
+                GoRouter.of(context).pop();
+              }
               return;
             }
             GoRouter.of(context).push("/queue");
