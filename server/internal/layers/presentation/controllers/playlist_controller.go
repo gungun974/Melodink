@@ -36,3 +36,17 @@ func (c *PlaylistController) GetAlbum(rawId string) (models.APIResponse, error) 
 
 	return c.playlistUsecase.GetAlbumById(id)
 }
+
+func (c *PlaylistController) GetAlbumCover(rawId string) (models.APIResponse, error) {
+	id, err := validator.ValidateString(
+		rawId,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.playlistUsecase.GetAlbumCover(id)
+}

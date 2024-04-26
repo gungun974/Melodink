@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:melodink_client/features/playlist/domain/entities/playlist.dart';
+import 'package:melodink_client/features/playlist/presentation/widgets/playlist_artwork.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
 class PlaylistCollectionsGrid extends StatefulWidget {
@@ -93,11 +94,8 @@ class _PlaylistCollectionsGridState extends State<PlaylistCollectionsGrid> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      AspectRatio(
-                        aspectRatio: 1,
-                        child: Image.asset(
-                          "assets/melodink_track_cover_not_found.png",
-                        ),
+                      PlaylistArtwork(
+                        playlist: playlist,
                       ),
                       const SizedBox(height: 8),
                       Tooltip(

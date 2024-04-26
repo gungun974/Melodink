@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:melodink_client/core/helpers/duration_to_human.dart';
 import 'package:melodink_client/features/playlist/domain/entities/playlist.dart';
+import 'package:melodink_client/features/playlist/presentation/widgets/playlist_artwork.dart';
 
 class TracksInfoHeader extends StatelessWidget {
   final Playlist playlist;
@@ -36,8 +37,8 @@ class TracksInfoHeader extends StatelessWidget {
     return IntrinsicHeight(
       child: Row(
         children: [
-          Image.network(
-            "https://misc.scdn.co/liked-songs/liked-songs-300.png",
+          PlaylistArtwork(
+            playlist: playlist,
             height: 150.0,
             width: 150.0,
             fit: BoxFit.cover,
