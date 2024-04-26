@@ -180,19 +180,25 @@ Widget buildTableRow(
                         child: Text(
                           track.title,
                           textAlign: TextAlign.left,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 16,
                           ),
                         ),
                       ),
-                      Text(
-                        track.metadata.artist,
-                        textAlign: TextAlign.left,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 14,
+                      Tooltip(
+                        message: track.metadata.artist,
+                        waitDuration: const Duration(milliseconds: 800),
+                        child: Text(
+                          track.metadata.artist,
+                          textAlign: TextAlign.left,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ],
@@ -204,8 +210,18 @@ Widget buildTableRow(
           if (!minimal) ...[
             const SizedBox(width: 16),
             Expanded(
-                flex: 4,
-                child: Text(track.metadata.artist, textAlign: TextAlign.left)),
+              flex: 4,
+              child: Tooltip(
+                message: track.album,
+                waitDuration: const Duration(milliseconds: 800),
+                child: Text(
+                  track.album,
+                  textAlign: TextAlign.left,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
             const SizedBox(width: 16),
             Expanded(
               flex: 3,
