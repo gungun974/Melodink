@@ -13,6 +13,18 @@ class MobileNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final location = GoRouter.of(context).location;
+
+    int currentIndex = 0;
+
+    if (location == "/tracks") {
+      currentIndex = 0;
+    } else if (location == "/search") {
+      currentIndex = 1;
+    } else if (location.startsWith("/library")) {
+      currentIndex = 2;
+    }
+
     return BottomNavigationBar(
       items: const <BottomNavigationBarItem>[
         BottomNavigationBarItem(
@@ -36,12 +48,7 @@ class MobileNavbar extends StatelessWidget {
           label: 'Library',
         ),
       ],
-      currentIndex: switch (GoRouter.of(context).location) {
-        "/tracks" => 0,
-        "/search" => 1,
-        "/library" => 2,
-        _ => 0,
-      },
+      currentIndex: currentIndex,
       selectedFontSize: 13.0,
       selectedItemColor: Theme.of(context).colorScheme.primary,
       unselectedFontSize: 13.0,

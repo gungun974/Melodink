@@ -3,7 +3,7 @@ package view_models
 import "gungun974.com/melodink-server/internal/layers/domain/entities"
 
 type PlaylistJson struct {
-	Id          int    `json:"id"`
+	Id          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 

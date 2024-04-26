@@ -6,16 +6,16 @@ import (
 )
 
 type PlaylistUsecase struct {
-	trackRepository   repository.TrackRepository
-	playlistPresenter presenter.PlaylistPresenter
+	playlistRepository repository.PlaylistRepository
+	playlistPresenter  presenter.PlaylistPresenter
 }
 
 func NewPlaylistUsecase(
-	trackRepository repository.TrackRepository,
+	playlistRepository repository.PlaylistRepository,
 	playlistPresenter presenter.PlaylistPresenter,
 ) PlaylistUsecase {
 	return PlaylistUsecase{
-		trackRepository,
+		playlistRepository,
 		playlistPresenter,
 	}
 }

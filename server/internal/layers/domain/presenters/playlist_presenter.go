@@ -7,4 +7,6 @@ import (
 
 type PlaylistPresenter interface {
 	ShowAllPlaylists(playlists []entities.Playlist) models.APIResponse
+
+	ShowPlaylist(playlist entities.Playlist) models.APIResponse
 }

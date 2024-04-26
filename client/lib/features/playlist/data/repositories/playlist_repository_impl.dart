@@ -14,7 +14,9 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
 
   @override
   Future<Result<List<Playlist>>> getAllAlbums() async {
-    final response = await client.get(Uri.parse('$appUrl/api/playlist/albums'));
+    final response = await client.get(
+      Uri.parse('$appUrl/api/playlist/album'),
+    );
 
     if (response.statusCode == 200) {
       try {
@@ -35,5 +37,29 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     }
 
     return Err(ServerFailure());
+  }
+
+  @override
+  Future<Result<Playlist>> getAlbumById(String id) async {
+    final response = await client.get(
+      Uri.parse('$appUrl/api/playlist/album/$id'),
+    );
+
+    switch (response.statusCode) {
+      case 200:
+        try {
+          final album = json.decode(response.body);
+
+          return Ok(PlaylistJson.fromJson(
+            album,
+          ).toPlaylist());
+        } catch (e) {
+          return Err(ServerFailure());
+        }
+      case 404:
+        return Err(PlaylistNotFoundFailure());
+      default:
+        return Err(ServerFailure());
+    }
   }
 }

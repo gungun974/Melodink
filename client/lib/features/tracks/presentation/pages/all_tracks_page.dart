@@ -45,7 +45,7 @@ class _AllTracksPageState extends State<AllTracksPage> {
 
         return PlaylistPage(
           playlist: Playlist(
-            id: -1,
+            id: "",
             name: "All tracks",
             description: "All tracks",
             albumArtist: "",

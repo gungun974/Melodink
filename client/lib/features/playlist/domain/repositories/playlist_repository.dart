@@ -3,4 +3,6 @@ import 'package:melodink_client/features/playlist/domain/entities/playlist.dart'
 
 abstract class PlaylistRepository {
   Future<Result<List<Playlist>>> getAllAlbums();
+
+  Future<Result<Playlist>> getAlbumById(String id);
 }

@@ -2,7 +2,7 @@ import 'package:melodink_client/features/playlist/domain/entities/playlist.dart'
 import 'package:melodink_client/features/tracks/data/models/track.dart';
 
 class PlaylistJson {
-  final int id;
+  final String id;
   final String name;
   final String description;
   final String albumArtist;

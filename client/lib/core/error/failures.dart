@@ -22,4 +22,9 @@ class NoInternetFailure extends Error {
   NoInternetFailure() : super(() => "Failed to reach the Internet.");
 }
 
+// Playlist
+class PlaylistNotFoundFailure extends Error {
+  PlaylistNotFoundFailure() : super(() => "Failded to find Playlist.");
+}
+
 typedef Result<S> = base.Result<S, Error>;

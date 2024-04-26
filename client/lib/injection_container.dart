@@ -9,6 +9,7 @@ import 'package:melodink_client/features/player/domain/repositories/played_track
 import 'package:melodink_client/features/player/presentation/cubit/player_cubit.dart';
 import 'package:melodink_client/features/playlist/data/repositories/playlist_repository_impl.dart';
 import 'package:melodink_client/features/playlist/domain/repositories/playlist_repository.dart';
+import 'package:melodink_client/features/playlist/presentation/cubit/album_page_cubit.dart';
 import 'package:melodink_client/features/playlist/presentation/cubit/playlist_manager_cubit.dart';
 import 'package:melodink_client/features/tracks/data/repositories/track_repository_impl.dart';
 import 'package:melodink_client/features/tracks/domain/repositories/track_repository.dart';
@@ -52,6 +53,12 @@ Future<void> setup() async {
   sl.registerFactory(
     () => PlaylistManagerCubit(
       playerRepository: sl(),
+    ),
+  );
+
+  sl.registerFactory(
+    () => AlbumPageCubit(
+      playlistRepository: sl(),
     ),
   );
 

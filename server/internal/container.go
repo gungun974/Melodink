@@ -22,6 +22,7 @@ func NewContainer(db *sqlx.DB) Container {
 	//! Repository
 
 	trackRepository := repository_impl.NewTrackRepository(db)
+	playlistRepository := repository_impl.NewPlaylistRepository(db, trackRepository)
 
 	//! Storage
 
@@ -46,7 +47,7 @@ func NewContainer(db *sqlx.DB) Container {
 	)
 
 	playlistUsecase := playlist_usecase.NewPlaylistUsecase(
-		trackRepository,
+		playlistRepository,
 		playlistPresenter,
 	)
 

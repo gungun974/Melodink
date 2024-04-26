@@ -28,3 +28,11 @@ func (p *PlaylistPresenterImpl) ShowAllPlaylists(
 		Data: view_playlists,
 	}
 }
+
+func (p *PlaylistPresenterImpl) ShowPlaylist(
+	playlist entities.Playlist,
+) models.APIResponse {
+	return models.JsonAPIResponse{
+		Data: view_models.ConvertToPlaylistJson(playlist),
+	}
+}

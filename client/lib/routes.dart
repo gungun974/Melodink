@@ -8,6 +8,7 @@ import 'package:melodink_client/features/player/presentation/cubit/player_cubit.
 import 'package:melodink_client/features/player/presentation/pages/player_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_page.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_widget.dart';
+import 'package:melodink_client/features/playlist/presentation/pages/album_page.dart';
 import 'package:melodink_client/features/playlist/presentation/pages/library_page.dart';
 import 'package:melodink_client/features/tracks/presentation/pages/all_tracks_page.dart';
 import 'package:melodink_client/injection_container.dart';
@@ -16,6 +17,9 @@ import 'package:responsive_builder/responsive_builder.dart';
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final GlobalKey<NavigatorState> _globalShellNavigatorKey =
+    GlobalKey<NavigatorState>();
+
+final GlobalKey<NavigatorState> _shellNavigatorKey =
     GlobalKey<NavigatorState>();
 
 Widget slideUpTransitionBuilder(
@@ -72,8 +76,8 @@ final GoRouter appRouter = GoRouter(
         );
       },
       routes: [
-        StatefulShellRoute.indexedStack(
-          // navigatorKey: _shellNavigatorKey,
+        ShellRoute(
+          navigatorKey: _shellNavigatorKey,
           builder: (context, state, child) {
             return ScreenTypeLayout.builder(
               mobile: (BuildContext context) {
@@ -125,44 +129,60 @@ final GoRouter appRouter = GoRouter(
               },
             );
           },
-          branches: [
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: '/tracks',
-                  name: "/tracks",
-                  builder: (BuildContext context, GoRouterState state) {
-                    return const AllTracksPage();
-                  },
+          routes: [
+            StatefulShellRoute.indexedStack(
+              builder: (context, state, child) {
+                return child;
+              },
+              branches: [
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/tracks',
+                      name: "/tracks",
+                      builder: (BuildContext context, GoRouterState state) {
+                        return const AllTracksPage();
+                      },
+                    ),
+                  ],
+                ),
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/search',
+                      name: "/search",
+                      builder: (BuildContext context, GoRouterState state) {
+                        return const Text(
+                          "Search",
+                          style: TextStyle(
+                            fontSize: 40,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/library',
+                      name: "/library",
+                      builder: (BuildContext context, GoRouterState state) {
+                        return const LibraryPage();
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: '/search',
-                  name: "/search",
-                  builder: (BuildContext context, GoRouterState state) {
-                    return const Text(
-                      "Search",
-                      style: TextStyle(
-                        fontSize: 40,
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: '/library',
-                  name: "/library",
-                  builder: (BuildContext context, GoRouterState state) {
-                    return const LibraryPage();
-                  },
-                ),
-              ],
+            GoRoute(
+              path: '/library/album/:albumId',
+              name: "/library/album",
+              builder: (BuildContext context, GoRouterState state) {
+                return AlbumPage(
+                  id: state.pathParameters["albumId"]!,
+                );
+              },
             ),
           ],
         ),

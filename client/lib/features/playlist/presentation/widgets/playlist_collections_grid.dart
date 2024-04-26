@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:melodink_client/features/playlist/domain/entities/playlist.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
@@ -81,41 +82,50 @@ class _PlaylistCollectionsGridState extends State<PlaylistCollectionsGrid> {
               (context, index) {
                 final playlist = widget.playlists[index];
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AspectRatio(
-                      aspectRatio: 1,
-                      child: Image.asset(
-                        "assets/melodink_track_cover_not_found.png",
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Tooltip(
-                      message: playlist.name,
-                      waitDuration: const Duration(milliseconds: 800),
-                      child: Text(
-                        playlist.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
+                return InkWell(
+                  onTap: () {
+                    if (playlist.type == PlaylistType.album) {
+                      GoRouter.of(context).push(
+                        "/library/album/${playlist.id}",
+                      );
+                    }
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 1,
+                        child: Image.asset(
+                          "assets/melodink_track_cover_not_found.png",
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    if (playlist.type == PlaylistType.album)
-                      Text(
-                        playlist.albumArtist,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[400],
+                      const SizedBox(height: 8),
+                      Tooltip(
+                        message: playlist.name,
+                        waitDuration: const Duration(milliseconds: 800),
+                        child: Text(
+                          playlist.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
-                  ],
+                      const SizedBox(height: 4),
+                      if (playlist.type == PlaylistType.album)
+                        Text(
+                          playlist.albumArtist,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                    ],
+                  ),
                 );
               },
               childCount: showAll ? widget.playlists.length : crossAxisCount,

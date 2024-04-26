@@ -49,7 +49,7 @@ class DesktopSideNavbar extends StatelessWidget {
             onTap: () {
               GoRouter.of(context).go("/library");
             },
-            active: location == "/library",
+            active: location.startsWith("/library"),
           ),
           // Text("Search"),
           // Text("Library"),
