@@ -155,10 +155,10 @@ class PlayerCubit extends Cubit<PlayerState> {
       await _audioHandler.stop();
 
       if (isShuffled) {
-        await shuffle(_playlistTracks[startAt].index);
+        await shuffle(_playlistTracks[startAt]);
         await _audioHandler.skipToQueueItem(0);
       } else {
-        await unshuffle(_playlistTracks[startAt].index);
+        await unshuffle(_playlistTracks[startAt]);
         await _audioHandler.skipToQueueItem(startAt);
       }
 
@@ -243,16 +243,16 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     await _isLoadingPlaylist.protect(() async {
       if (isShuffled) {
-        await unshuffle(_allTracks[trackIndex].index);
+        await unshuffle(_allTracks[trackIndex]);
         return;
       }
-      await shuffle(_allTracks[trackIndex].index);
+      await shuffle(_allTracks[trackIndex]);
     });
   }
 
-  shuffle(String extraIndex) async {
+  shuffle(IndexedTrack startTrack) async {
     final startAt =
-        _playlistTracks.indexWhere((track) => track.index == extraIndex);
+        _playlistTracks.indexWhere((track) => track.index == startTrack.index);
 
     isShuffled = true;
 
@@ -260,7 +260,11 @@ class PlayerCubit extends Cubit<PlayerState> {
 
     _nextTracks = [..._playlistTracks];
 
-    _previousTracks.add(_nextTracks.removeAt(startAt));
+    if (startAt >= 0) {
+      _previousTracks.add(_nextTracks.removeAt(startAt));
+    } else {
+      _previousTracks.add(startTrack);
+    }
 
     _nextTracks.shuffle();
 
@@ -269,19 +273,15 @@ class PlayerCubit extends Cubit<PlayerState> {
     _lastQueueIndex = null;
   }
 
-  unshuffle(String extraIndex) async {
+  unshuffle(IndexedTrack startTrack) async {
     final startAt =
-        _playlistTracks.indexWhere((track) => track.index == extraIndex);
+        _playlistTracks.indexWhere((track) => track.index == startTrack.index);
 
     isShuffled = false;
 
     _previousTracks = [];
 
     _nextTracks = [];
-
-    if (startAt < 0) {
-      return;
-    }
 
     for (int i = 0; i < _playlistTracks.length; i++) {
       if (i <= startAt) {
@@ -292,7 +292,13 @@ class PlayerCubit extends Cubit<PlayerState> {
       _nextTracks.add(_playlistTracks[i]);
     }
 
-    await _updatePlaylistTracks(startAt);
+    if (startAt >= 0) {
+      await _updatePlaylistTracks(startAt);
+    } else {
+      _previousTracks.add(startTrack);
+
+      await _updatePlaylistTracks(0);
+    }
 
     _lastQueueIndex = null;
   }
