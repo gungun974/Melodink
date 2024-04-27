@@ -1,96 +1,41 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter/foundation.dart';
 
-class Track extends Equatable {
-  final int id;
-  final String title;
-  final String album;
-  final Duration duration;
-  final String tagsFormat;
-  final String fileType;
-  final String path;
-  final String fileSignature;
-  final TrackMetadata metadata;
-  final DateTime dateAdded;
+part 'track.freezed.dart';
 
-  const Track({
-    required this.id,
-    required this.title,
-    required this.album,
-    required this.duration,
-    required this.tagsFormat,
-    required this.fileType,
-    required this.path,
-    required this.fileSignature,
-    required this.metadata,
-    required this.dateAdded,
-  });
-
-  @override
-  List<Object> get props => [
-        id,
-        title,
-        album,
-        duration,
-        tagsFormat,
-        fileType,
-        path,
-        fileSignature,
-        metadata,
-        dateAdded,
-      ];
+@freezed
+class Track with _$Track {
+  const factory Track({
+    required int id,
+    required String title,
+    required String album,
+    required Duration duration,
+    required String tagsFormat,
+    required String fileType,
+    required String path,
+    required String fileSignature,
+    required TrackMetadata metadata,
+    required DateTime dateAdded,
+  }) = _Track;
 }
 
-class TrackMetadata extends Equatable {
-  final int trackNumber;
-  final int totalTracks;
-  final int discNumber;
-  final int totalDiscs;
-  final String date;
-  final int year;
-  final String genre;
-  final String lyrics;
-  final String comment;
-  final String acoustID;
-  final String acoustIDFingerprint;
-  final String artist;
-  final String albumArtist;
-  final String composer;
-  final String copyright;
-
-  const TrackMetadata({
-    required this.trackNumber,
-    required this.totalTracks,
-    required this.discNumber,
-    required this.totalDiscs,
-    required this.date,
-    required this.year,
-    required this.genre,
-    required this.lyrics,
-    required this.comment,
-    required this.acoustID,
-    required this.acoustIDFingerprint,
-    required this.artist,
-    required this.albumArtist,
-    required this.composer,
-    required this.copyright,
-  });
-
-  @override
-  List<Object> get props => [
-        trackNumber,
-        totalTracks,
-        discNumber,
-        totalDiscs,
-        date,
-        year,
-        genre,
-        lyrics,
-        comment,
-        acoustID,
-        acoustIDFingerprint,
-        artist,
-        albumArtist,
-        composer,
-        copyright,
-      ];
+@freezed
+class TrackMetadata with _$TrackMetadata {
+  const factory TrackMetadata({
+    required int trackNumber,
+    required int totalTracks,
+    required int discNumber,
+    required int totalDiscs,
+    required String date,
+    required int year,
+    required String genre,
+    required String lyrics,
+    required String comment,
+    required String acoustID,
+    required String acoustIDFingerprint,
+    required String artist,
+    required String albumArtist,
+    required String composer,
+    required String copyright,
+  }) = _TrackMetadata;
 }

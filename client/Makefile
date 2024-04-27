@@ -1,7 +1,14 @@
 prebuild:
+ifndef NIX
+	dart run build_runner build --delete-conflicting-outputs
+endif
 
-dev: prebuild
+watch-code-generation: 
+	@dart run build_runner watch --delete-conflicting-outputs 1>/dev/null &
+
+dev: prebuild watch-code-generation
 	flutter run
+
 
 build-apk: prebuild
 	flutter build apk
@@ -14,4 +21,4 @@ migrate-create:
 	@read name; \
 	migrate create -ext sql -dir ./lib/core/database/migrations -tz UTC $$name
 
-.PHONY: prebuild dev build-apk build-ios migrate-create
+.PHONY: prebuild dev watch-code-generation build-apk build-ios migrate-create

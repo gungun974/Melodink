@@ -107,7 +107,10 @@
             }} /build/source/build/linux/x64/release/mimalloc-2.1.2.tar.gz
           '';
 
+          NIX = "true";
+
           preBuild = ''
+            packageRun build_runner build --delete-conflicting-outputs
             make prebuild
           '';
 

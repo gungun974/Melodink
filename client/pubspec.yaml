@@ -42,6 +42,7 @@ dependencies:
   sqflite_common_ffi_web: '>=0.1.0-dev.1'
   rust_core: ^0.3.6
   thiserror: ^0.3.2
+  freezed_annotation: ^2.4.1
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +50,8 @@ dev_dependencies:
 
   flutter_lints: ^3.0.1
   flutter_launcher_icons: "^0.13.1"
+  build_runner: ^2.4.9
+  freezed: ^2.5.2
 
 flutter:
   uses-material-design: true

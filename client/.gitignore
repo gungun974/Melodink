@@ -1,6 +1,7 @@
 # App specific files
 
 /lib/generated
+*.freezed.dart
 
 ### ------------------------- Flutter.gitignore ------------------------ ###
 
