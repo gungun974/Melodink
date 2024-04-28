@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:flutter/foundation.dart';
+import 'package:melodink_client/features/tracks/domain/entities/track_file.dart';
 
 part 'track.freezed.dart';
 
@@ -10,6 +11,7 @@ class Track with _$Track {
     required String title,
     required String album,
     required Duration duration,
+    required TrackFile? cacheFile,
     required String tagsFormat,
     required String fileType,
     required String path,

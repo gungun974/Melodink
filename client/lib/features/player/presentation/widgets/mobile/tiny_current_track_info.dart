@@ -52,8 +52,11 @@ class _TinyCurrentTrackInfoState extends State<TinyCurrentTrackInfo> {
                           placeholder: const AssetImage(
                             "assets/melodink_track_cover_not_found.png",
                           ),
-                          image: NetworkImage(
-                              "$appUrl/api/track/${state.currentTrack.id}/image"),
+                          image: state.currentTrack.cacheFile
+                                  ?.getImageProvider() ??
+                              NetworkImage(
+                                "$appUrl/api/track/${state.currentTrack.id}/image",
+                              ),
                           imageErrorBuilder: (context, error, stackTrace) {
                             return Image.asset(
                               "assets/melodink_track_cover_not_found.png",

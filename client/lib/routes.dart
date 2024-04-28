@@ -22,6 +22,8 @@ final GlobalKey<NavigatorState> _globalShellNavigatorKey =
 final GlobalKey<NavigatorState> _shellNavigatorKey =
     GlobalKey<NavigatorState>();
 
+Duration pageTransitonDuration = const Duration(milliseconds: 450);
+
 Widget slideUpTransitionBuilder(
   BuildContext context,
   Animation<double> animation,
@@ -192,7 +194,7 @@ final GoRouter appRouter = GoRouter(
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
             child: const PlayerPage(),
-            transitionDuration: const Duration(milliseconds: 450),
+            transitionDuration: pageTransitonDuration,
             transitionsBuilder: slideUpTransitionBuilder,
           ),
         ),
@@ -202,7 +204,7 @@ final GoRouter appRouter = GoRouter(
           pageBuilder: (context, state) => CustomTransitionPage<void>(
             key: state.pageKey,
             child: const QueuePage(),
-            transitionDuration: const Duration(milliseconds: 450),
+            transitionDuration: pageTransitonDuration,
             transitionsBuilder: slideUpTransitionBuilder,
           ),
         ),

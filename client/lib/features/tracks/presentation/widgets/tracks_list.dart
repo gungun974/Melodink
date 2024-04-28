@@ -134,6 +134,7 @@ Widget buildTableRow(
   bool minimal = false,
 }) {
   return GestureDetector(
+    key: Key("trackRow[$displayNumber]"),
     onTap: playCallback,
     onSecondaryTap: () {
       BlocProvider.of<PlayerCubit>(context).addTrackToQueue(track);
@@ -146,9 +147,13 @@ Widget buildTableRow(
         children: <Widget>[
           if (!minimal)
             SizedBox(
-                width: 32,
-                child:
-                    Text(displayNumber.toString(), textAlign: TextAlign.right)),
+              width: 32,
+              child: Text(
+                key: const Key("numberText"),
+                displayNumber.toString(),
+                textAlign: TextAlign.right,
+              ),
+            ),
           const SizedBox(width: 16),
           Expanded(
             flex: 6,
@@ -159,7 +164,8 @@ Widget buildTableRow(
                   placeholder: const AssetImage(
                     "assets/melodink_track_cover_not_found.png",
                   ),
-                  image: NetworkImage("$appUrl/api/track/${track.id}/image"),
+                  image: track.cacheFile?.getImageProvider() ??
+                      NetworkImage("$appUrl/api/track/${track.id}/image"),
                   imageErrorBuilder: (context, error, stackTrace) {
                     return Image.asset(
                       "assets/melodink_track_cover_not_found.png",
@@ -178,6 +184,7 @@ Widget buildTableRow(
                         message: track.title,
                         waitDuration: const Duration(milliseconds: 800),
                         child: Text(
+                          key: const Key("titleText"),
                           track.title,
                           textAlign: TextAlign.left,
                           maxLines: 1,
@@ -191,6 +198,7 @@ Widget buildTableRow(
                         message: track.metadata.artist,
                         waitDuration: const Duration(milliseconds: 800),
                         child: Text(
+                          key: const Key("artistText"),
                           track.metadata.artist,
                           textAlign: TextAlign.left,
                           maxLines: 1,
@@ -215,6 +223,7 @@ Widget buildTableRow(
                 message: track.album,
                 waitDuration: const Duration(milliseconds: 800),
                 child: Text(
+                  key: const Key("albumText"),
                   track.album,
                   textAlign: TextAlign.left,
                   maxLines: 1,
@@ -226,19 +235,23 @@ Widget buildTableRow(
             Expanded(
               flex: 3,
               child: Text(
-                  formatTimeago(
-                    track.dateAdded,
-                  ),
-                  textAlign: TextAlign.left),
+                key: const Key("dateAddedText"),
+                formatTimeago(
+                  track.dateAdded,
+                ),
+                textAlign: TextAlign.left,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
               flex: 1,
               child: Text(
-                  durationToTime(
-                    track.duration,
-                  ),
-                  textAlign: TextAlign.center),
+                key: const Key("durationText"),
+                durationToTime(
+                  track.duration,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
           ],
           const SizedBox(width: 16),

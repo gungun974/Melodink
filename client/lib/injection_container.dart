@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:melodink_client/features/player/data/repositories/played_track_repository_impl.dart';
 import 'package:melodink_client/features/player/domain/repositories/played_track_repository.dart';
 import 'package:melodink_client/features/player/presentation/cubit/player_cubit.dart';
+import 'package:melodink_client/features/player/presentation/cubit/player_shuffler.dart';
 import 'package:melodink_client/features/playlist/data/repositories/playlist_repository_impl.dart';
 import 'package:melodink_client/features/playlist/domain/repositories/playlist_repository.dart';
 import 'package:melodink_client/features/playlist/presentation/cubit/album_page_cubit.dart';
@@ -35,11 +36,16 @@ Future<void> setup() async {
   //! Player
 
   // Cubit
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => PlayerCubit(
       playedTrackRepository: sl(),
       audioHandler: sl(),
+      shuffler: sl(),
     ),
+  );
+
+  sl.registerLazySingleton<TrackShuffler>(
+    () => NormalTrackShuffler(),
   );
 
   // Repository

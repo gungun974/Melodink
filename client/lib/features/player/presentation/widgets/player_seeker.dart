@@ -36,11 +36,13 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
         audioServiceDurationStream,
         _audioHandler.playbackState,
         _audioHandler.mediaItem,
-        (position, playerState, duration) => PositionData(
-          position: position,
-          bufferedPosition: playerState.bufferedPosition,
-          duration: duration?.duration ?? Duration.zero,
-        ),
+        (position, playerState, duration) {
+          return PositionData(
+            position: position,
+            bufferedPosition: playerState.bufferedPosition,
+            duration: duration?.duration ?? Duration.zero,
+          );
+        },
       );
 
   Duration? newSeekFuture;
@@ -56,6 +58,20 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
 
     AudioService.position.listen(
       (duration) {
+        audioServiceDurationStreamController.add(
+          _audioHandler.playbackState.value.position,
+        );
+      },
+      onError: (error) {
+        audioServiceDurationStreamController.addError(error);
+      },
+      onDone: () {
+        audioServiceDurationStreamController.close();
+      },
+    );
+
+    _audioHandler.playbackState.listen(
+      (_) {
         audioServiceDurationStreamController.add(
           _audioHandler.playbackState.value.position,
         );
@@ -93,6 +109,11 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
 
           if (duration.inHours >= 8760 || duration.inMilliseconds == 0) {
             duration = trackDuration;
+          }
+
+          if ((position - duration).inMilliseconds.abs() < 800 &&
+              _audioHandler.playbackState.value.playing == false) {
+            position = duration;
           }
 
           if (newSeekFuture != null) {
@@ -148,12 +169,14 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
+                      key: const Key("positionText"),
                       durationToTime(position),
                       style: const TextStyle(
                         fontSize: 12,
                       ),
                     ),
                     Text(
+                      key: const Key("durationText"),
                       durationToTime(duration),
                       style: const TextStyle(
                         fontSize: 12,
@@ -169,6 +192,7 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
+                key: const Key("positionText"),
                 durationToTime(position),
                 style: const TextStyle(
                   fontSize: 12,
@@ -178,6 +202,7 @@ class _PlayerSeekerState extends State<PlayerSeeker> {
               progressBarContainer,
               const SizedBox(width: 8.0),
               Text(
+                key: const Key("durationText"),
                 durationToTime(duration),
                 style: const TextStyle(
                   fontSize: 12,

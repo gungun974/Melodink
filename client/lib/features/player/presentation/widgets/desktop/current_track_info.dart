@@ -20,8 +20,10 @@ class CurrentTrackInfo extends StatelessWidget {
               placeholder: const AssetImage(
                 "assets/melodink_track_cover_not_found.png",
               ),
-              image: NetworkImage(
-                  "$appUrl/api/track/${state.currentTrack.id}/image"),
+              image: state.currentTrack.cacheFile?.getImageProvider() ??
+                  NetworkImage(
+                    "$appUrl/api/track/${state.currentTrack.id}/image",
+                  ),
               imageErrorBuilder: (context, error, stackTrace) {
                 return Image.asset(
                   "assets/melodink_track_cover_not_found.png",
@@ -35,6 +37,7 @@ class CurrentTrackInfo extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+                  key: const Key("titleText"),
                   state.currentTrack.title,
                   style: const TextStyle(
                     fontWeight: FontWeight.w500,
@@ -42,6 +45,7 @@ class CurrentTrackInfo extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
+                  key: const Key("artistText"),
                   state.currentTrack.metadata.artist,
                   style: const TextStyle(
                     fontSize: 12,

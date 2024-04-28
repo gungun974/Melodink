@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:melodink_client/features/playlist/domain/entities/playlist.dart';
@@ -126,7 +128,9 @@ class _PlaylistCollectionsGridState extends State<PlaylistCollectionsGrid> {
                   ),
                 );
               },
-              childCount: showAll ? widget.playlists.length : crossAxisCount,
+              childCount: showAll
+                  ? widget.playlists.length
+                  : min(crossAxisCount, widget.playlists.length),
             ),
           );
         }),

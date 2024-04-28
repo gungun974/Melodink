@@ -31,8 +31,24 @@ class PlayerPage extends StatelessWidget {
               Expanded(
                 child: BlocBuilder<PlayerCubit, PlayerState>(
                   builder: (BuildContext context, PlayerState state) {
-                    if (state is! PlayerPlaying) {
-                      return Container();
+                    String title = "";
+
+                    String artist = "";
+
+                    ImageProvider<Object> image = const AssetImage(
+                      "assets/melodink_track_cover_not_found.png",
+                    );
+
+                    if (state is PlayerPlaying) {
+                      title = state.currentTrack.title;
+
+                      artist = state.currentTrack.metadata.artist;
+
+                      image =
+                          state.currentTrack.cacheFile?.getImageProvider() ??
+                              NetworkImage(
+                                "$appUrl/api/track/${state.currentTrack.id}/image",
+                              );
                     }
 
                     return Padding(
@@ -49,8 +65,7 @@ class PlayerPage extends StatelessWidget {
                                 placeholder: const AssetImage(
                                   "assets/melodink_track_cover_not_found.png",
                                 ),
-                                image: NetworkImage(
-                                    "$appUrl/api/track/${state.currentTrack.id}/image"),
+                                image: image,
                                 imageErrorBuilder:
                                     (context, error, stackTrace) {
                                   return Image.asset(
@@ -67,7 +82,8 @@ class PlayerPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    state.currentTrack.title,
+                  key: const Key("titleText"),
+                                    title,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 18,
@@ -75,7 +91,8 @@ class PlayerPage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    state.currentTrack.metadata.artist,
+                  key: const Key("artistText"),
+                                    artist,
                                     style: const TextStyle(
                                       fontSize: 15.5,
                                     ),

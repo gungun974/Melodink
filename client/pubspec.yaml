@@ -43,6 +43,8 @@ dependencies:
   rust_core: ^0.3.6
   thiserror: ^0.3.2
   freezed_annotation: ^2.4.1
+  mocktail: ^1.0.3
+  faker: ^2.1.0
 
 dev_dependencies:
   flutter_test:
@@ -52,12 +54,16 @@ dev_dependencies:
   flutter_launcher_icons: "^0.13.1"
   build_runner: ^2.4.9
   freezed: ^2.5.2
+  integration_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true
   assets:
     - assets/melodink_track_cover_not_found.png
+    - assets/melodink_icon.png
     - lib/core/database/migrations/
+    - integration_test/assets/
 
 flutter_launcher_icons:
   android: "launcher_icon"

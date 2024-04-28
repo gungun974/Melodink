@@ -98,7 +98,12 @@ class TracksInfoHeader extends StatelessWidget {
                   ],
                   const SizedBox(width: 4),
                   Text(
-                    '${playlist.tracks.length} tracks, $totalDurationHuman',
+                    switch (playlist.tracks.length) {
+                      0 => 'Empty',
+                      1 => '1 track, $totalDurationHuman',
+                      _ =>
+                        '${playlist.tracks.length} tracks, $totalDurationHuman',
+                    },
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,

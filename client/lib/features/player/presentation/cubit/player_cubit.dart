@@ -6,9 +6,10 @@ import 'package:equatable/equatable.dart';
 import 'package:melodink_client/config.dart';
 import 'package:melodink_client/core/helpers/generate_unique_id.dart';
 import 'package:melodink_client/features/player/domain/repositories/played_track_repository.dart';
+import 'package:melodink_client/features/player/presentation/cubit/player_shuffler.dart';
 import 'package:melodink_client/features/tracks/domain/entities/track.dart';
+import 'package:melodink_client/features/tracks/domain/entities/track_file.dart';
 import 'package:mutex/mutex.dart';
-import 'package:path/path.dart' as p;
 
 abstract class PlayerState extends Equatable {
   const PlayerState();
@@ -127,12 +128,15 @@ class PlayerCubit extends Cubit<PlayerState> {
 
   final PlayedTrackRepository _playedTrackRepository;
   final AudioHandler _audioHandler;
+  final TrackShuffler _shuffler;
 
   PlayerCubit({
     required PlayedTrackRepository playedTrackRepository,
     required AudioHandler audioHandler,
+    required TrackShuffler shuffler,
   })  : _playedTrackRepository = playedTrackRepository,
         _audioHandler = audioHandler,
+        _shuffler = shuffler,
         super(PlayerStandby()) {
     _audioHandler.customEvent.listen(_updatePlaybackInfo);
     _audioHandler.customEvent.listen(_watchPlayedTrack2);
@@ -266,7 +270,7 @@ class PlayerCubit extends Cubit<PlayerState> {
       _previousTracks.add(startTrack);
     }
 
-    _nextTracks.shuffle();
+    _nextTracks = _shuffler.shuffle(_nextTracks);
 
     await _updatePlaylistTracks(0);
 
@@ -304,14 +308,16 @@ class PlayerCubit extends Cubit<PlayerState> {
   }
 
   MediaItem _getTrackMediaItem(Track track, String index) {
-    String filename = "audio${p.extension(track.path)}";
+    TrackFile trackFile = TrackFile.getNetworkTrackFile(
+      track,
+      audioFormat,
+      audioQuality,
+    );
 
-    if (audioFormat == "hls") {
-      filename = "audio.m3u8";
-    }
+    final cacheFile = track.cacheFile;
 
-    if (audioFormat == "dash") {
-      filename = "audio.mpd";
+    if (cacheFile != null) {
+      trackFile = cacheFile;
     }
 
     return MediaItem(
@@ -320,12 +326,9 @@ class PlayerCubit extends Cubit<PlayerState> {
       artist: track.metadata.artist,
       album: track.album,
       genre: track.metadata.genre,
-      artUri: Uri.parse(
-        "$appUrl/api/track/${track.id}/image",
-      ),
+      artUri: trackFile.image,
       extras: {
-        'url':
-            "$appUrl/api/track/${track.id}/audio/$audioFormat/$audioQuality/$filename",
+        'uri': trackFile.uri,
         "index": index,
       },
     );

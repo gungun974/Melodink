@@ -9,6 +9,14 @@ watch-code-generation:
 dev: prebuild watch-code-generation
 	flutter run
 
+dev-test: prebuild watch-code-generation
+	flutter run integration_test/app_test.dart -d pixel | awk ' \
+	/Warning: integration_test plugin was not detected./ {skip=1} \
+		/https:\/\/flutter.dev\/docs\/testing\/integration-tests#testing-on-firebase-test-lab/ {skip=0; next} \
+		/Performing hot restart.../ {system("clear"); next} \
+		skip {next} \
+		{print} \
+	'
 
 build-apk: prebuild
 	flutter build apk
@@ -21,4 +29,4 @@ migrate-create:
 	@read name; \
 	migrate create -ext sql -dir ./lib/core/database/migrations -tz UTC $$name
 
-.PHONY: prebuild dev watch-code-generation build-apk build-ios migrate-create
+.PHONY: prebuild dev dev-test watch-code-generation build-apk build-ios migrate-create

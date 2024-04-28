@@ -36,19 +36,21 @@ class _PlayerControlsState extends State<PlayerControls> {
               : MainAxisAlignment.spaceBetween,
           children: [
             IconButton(
+              key: const Key("shuffleButton"),
               padding: const EdgeInsets.only(),
-              icon: AdwaitaIcon(
+              icon: const AdwaitaIcon(
                 AdwaitaIcons.media_playlist_shuffle,
-                color: isShuffled
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.white,
               ),
+              color: isShuffled
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.white,
               iconSize: widget.smallControlsButton ? 20.0 : 24.0,
               onPressed: () {
                 BlocProvider.of<PlayerCubit>(context).toogleShufle();
               },
             ),
             IconButton(
+              key: const Key("previousButton"),
               padding: const EdgeInsets.only(),
               icon: const AdwaitaIcon(AdwaitaIcons.media_skip_backward),
               iconSize: widget.smallControlsButton ? 20.0 : 28.0,
@@ -61,6 +63,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                 builder: (context, snapshot) {
                   final isPlaying = snapshot.data?.playing ?? false;
                   return IconButton(
+                    key: const Key("playButton"),
                     padding: const EdgeInsets.only(),
                     icon: isPlaying
                         ? const AdwaitaIcon(AdwaitaIcons.media_playback_pause)
@@ -76,6 +79,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                   );
                 }),
             IconButton(
+              key: const Key("nextButton"),
               padding: const EdgeInsets.only(),
               icon: const AdwaitaIcon(AdwaitaIcons.media_skip_forward),
               iconSize: widget.smallControlsButton ? 20.0 : 28.0,
@@ -89,6 +93,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                 final repeatMode =
                     snapshot.data?.repeatMode ?? AudioServiceRepeatMode.none;
                 return IconButton(
+                  key: const Key("repeatButton"),
                   padding: const EdgeInsets.only(),
                   icon: repeatMode == AudioServiceRepeatMode.one
                       ? const AdwaitaIcon(

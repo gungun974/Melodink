@@ -38,6 +38,10 @@ class MyAudioHandler extends BaseAudioHandler {
     _listenForCurrentSongIndexChanges();
   }
 
+  dispose() async {
+    await _player.dispose();
+  }
+
   Future<void> _loadEmptyPlaylist() async {
     try {
       await _player.setAudioSource(
@@ -210,10 +214,14 @@ class MyAudioHandler extends BaseAudioHandler {
       Debouncer(delay: const Duration(milliseconds: 35));
 
   UriAudioSource _createAudioSource(MediaItem mediaItem) {
+    final rawUri = mediaItem.extras!['uri'] as Uri;
+
+    final uri = rawUri.replace(
+      queryParameters: {"rn": mediaItem.extras?["index"]},
+    );
+
     return AudioSource.uri(
-      Uri.parse(
-        "${mediaItem.extras!['url'] as String}?rn=${mediaItem.extras?["index"]}",
-      ),
+      uri.isScheme("file") ? rawUri : uri,
       tag: mediaItem,
     );
   }
@@ -251,6 +259,11 @@ class MyAudioHandler extends BaseAudioHandler {
     }
 
     await _player.seekToPrevious();
+  }
+
+  @override
+  Future<void> setSpeed(double speed) async {
+    await _player.setSpeed(speed);
   }
 
   @override

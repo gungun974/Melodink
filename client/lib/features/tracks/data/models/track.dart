@@ -43,6 +43,7 @@ class TrackJson {
       title: title,
       album: album,
       duration: duration,
+      cacheFile: null,
       tagsFormat: tagsFormat,
       fileType: fileType,
       path: path,
@@ -125,4 +126,3 @@ class TrackMetadataJson {
     );
   }
 }
-
