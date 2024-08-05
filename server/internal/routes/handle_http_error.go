@@ -20,7 +20,11 @@ func handleHTTPError(err error, w http.ResponseWriter) {
 		http.Error(w, errNotFound.Message, errNotFound.Code)
 		return
 	case errors.As(err, &errValidation):
-		http.Error(w, http.StatusText(errValidation.Code), errValidation.Code)
+		http.Error(
+			w,
+			http.StatusText(errValidation.Code)+"\n"+errValidation.Error(),
+			errValidation.Code,
+		)
 		return
 	case errors.As(err, &errUnauthorized):
 		http.Error(w, http.StatusText(errUnauthorized.Code), errUnauthorized.Code)
