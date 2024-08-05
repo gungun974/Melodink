@@ -32,6 +32,8 @@ func MainRouter(container internal.Container) http.Handler {
 
 	UserRouter(container, router)
 
+	router.Mount("/track", TrackRouter(container))
+
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hoi"))
 	})
