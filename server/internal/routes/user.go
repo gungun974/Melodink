@@ -46,4 +46,22 @@ func UserRouter(c internal.Container, router *chi.Mux) {
 
 		response.WriteResponse(w, r)
 	})
+
+	router.Post("/register", func(w http.ResponseWriter, r *http.Request) {
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.UserController.Register(r.Context(), bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	user_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/user"
+	"github.com/gungun974/Melodink/server/internal/models"
 	"github.com/gungun974/validator"
 )
 
@@ -65,4 +66,48 @@ func (c *UserController) GenerateAuthToken(
 	userId int,
 ) (string, time.Time, error) {
 	return c.userUsecase.GenerateUserAuthToken(ctx, userId)
+}
+
+func (c *UserController) Register(
+	ctx context.Context,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	name, err := validator.ValidateMapString(
+		"name",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMaxValidator{Max: 32},
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	email, err := validator.ValidateMapString(
+		"email",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMaxValidator{Max: 128},
+			validator.StringMinValidator{Min: 1},
+			validator.StringEmailValidator{},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	password, err := validator.ValidateMapString(
+		"password",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+			validator.StringMaxValidator{Max: 128},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.userUsecase.RegisterUser(ctx, name, email, password)
 }
