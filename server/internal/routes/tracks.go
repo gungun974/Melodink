@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -34,6 +35,26 @@ func TrackRouter(c internal.Container) http.Handler {
 		id := chi.URLParam(r, "id")
 
 		response, err := c.TrackController.GetTrack(r.Context(), id)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Put("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.TrackController.EditTrack(r.Context(), id, bodyData)
 		if err != nil {
 			handleHTTPError(err, w)
 			return

@@ -66,6 +66,214 @@ func (c *TrackController) GetTrack(
 	return c.trackUsecase.GetTrackById(ctx, id)
 }
 
+func (c *TrackController) EditTrack(
+	ctx context.Context,
+	rawId string,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	title, err := validator.ValidateMapString(
+		"title",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	album, err := validator.ValidateMapString(
+		"album",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	trackNumber, err := validator.ValidateMapInt(
+		"track_number",
+		bodyData,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: -1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	totalTracks, err := validator.ValidateMapInt(
+		"total_tracks",
+		bodyData,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: -1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	discNumber, err := validator.ValidateMapInt(
+		"disc_number",
+		bodyData,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: -1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	totalDiscs, err := validator.ValidateMapInt(
+		"total_discs",
+		bodyData,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: -1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	date, err := validator.ValidateMapString(
+		"date",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	year, err := validator.ValidateMapInt(
+		"year",
+		bodyData,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: -1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	genre, err := validator.ValidateMapString(
+		"genre",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	lyrics, err := validator.ValidateMapString(
+		"lyrics",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	comment, err := validator.ValidateMapString(
+		"comment",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	artist, err := validator.ValidateMapString(
+		"artist",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	albumArtist, err := validator.ValidateMapString(
+		"album_artist",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	composer, err := validator.ValidateMapString(
+		"composer",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	copyright, err := validator.ValidateMapString(
+		"copyright",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.EditTrack(ctx, track_usecase.EditTrackParams{
+		Id: id,
+
+		Title: title,
+
+		Album: album,
+
+		TrackNumber: trackNumber,
+		TotalTracks: totalTracks,
+
+		DiscNumber: discNumber,
+		TotalDiscs: totalDiscs,
+
+		Date: date,
+		Year: year,
+
+		Genre:   genre,
+		Lyrics:  lyrics,
+		Comment: comment,
+
+		Artist:      artist,
+		AlbumArtist: albumArtist,
+		Composer:    composer,
+
+		Copyright: copyright,
+	})
+}
+
 func checkIfFileIsAudioFile(file io.ReadSeeker, handler *multipart.FileHeader) error {
 	if handler.Size > 500*1024*1024 {
 		return entities.NewValidationError("File is too big")
