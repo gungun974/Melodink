@@ -31,6 +31,8 @@ func ConvertToTrackViewModel(
 	return TrackViewModel{
 		Id: track.Id,
 
+		UserId: track.UserId,
+
 		Title:    track.Title,
 		Duration: track.Duration,
 
@@ -99,5 +101,56 @@ func ConvertToTrackMetadataViewModel(
 		Composer:    metadata.Composer,
 
 		Copyright: metadata.Copyright,
+	}
+}
+
+type MinimalTrackViewModel struct {
+	Id int `json:"id"`
+
+	Title    string `json:"title"`
+	Duration int    `json:"duration"`
+
+	Album string `json:"album"`
+
+	TrackNumber int `json:"track_number"`
+
+	DiscNumber int `json:"disc_number"`
+
+	Date string `json:"date"`
+	Year int    `json:"year"`
+
+	Genre string `json:"genre"`
+
+	Artist      string `json:"artist"`
+	AlbumArtist string `json:"album_artist"`
+	Composer    string `json:"composer"`
+
+	DateAdded time.Time `json:"date_added"`
+}
+
+func ConvertToMinimalTrackViewModel(
+	track entities.Track,
+) MinimalTrackViewModel {
+	return MinimalTrackViewModel{
+		Id: track.Id,
+
+		Title:    track.Title,
+		Duration: track.Duration,
+
+		Album: track.Metadata.Album,
+
+		TrackNumber: track.Metadata.TrackNumber,
+
+		DiscNumber: track.Metadata.DiscNumber,
+
+		Date: track.Metadata.Date,
+		Year: track.Metadata.Year,
+
+		Genre: track.Metadata.Genre,
+
+		Artist:      track.Metadata.Artist,
+		AlbumArtist: track.Metadata.AlbumArtist,
+
+		DateAdded: track.DateAdded,
 	}
 }

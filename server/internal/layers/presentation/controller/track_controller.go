@@ -10,6 +10,7 @@ import (
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	track_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/track"
 	"github.com/gungun974/Melodink/server/internal/models"
+	"github.com/gungun974/validator"
 )
 
 type TrackController struct {
@@ -40,6 +41,29 @@ func (c *TrackController) UploadAudio(
 	}
 
 	return c.trackUsecase.UploadTrack(ctx, file)
+}
+
+func (c *TrackController) ListUserTracks(
+	ctx context.Context,
+) (models.APIResponse, error) {
+	return c.trackUsecase.ListUserTracks(ctx)
+}
+
+func (c *TrackController) GetTrack(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.GetTrackById(ctx, id)
 }
 
 func checkIfFileIsAudioFile(file io.ReadSeeker, handler *multipart.FileHeader) error {
