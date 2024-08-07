@@ -66,6 +66,23 @@ func (c *TrackController) GetTrack(
 	return c.trackUsecase.GetTrackById(ctx, id)
 }
 
+func (c *TrackController) GetCover(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.GetTrackCover(ctx, id)
+}
+
 func (c *TrackController) EditTrack(
 	ctx context.Context,
 	rawId string,
