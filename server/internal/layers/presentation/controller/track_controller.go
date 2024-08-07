@@ -274,6 +274,23 @@ func (c *TrackController) EditTrack(
 	})
 }
 
+func (c *TrackController) DeleteTrack(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.DeleteTrack(ctx, id)
+}
+
 func checkIfFileIsAudioFile(file io.ReadSeeker, handler *multipart.FileHeader) error {
 	if handler.Size > 500*1024*1024 {
 		return entities.NewValidationError("File is too big")

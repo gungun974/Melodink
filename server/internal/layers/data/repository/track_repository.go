@@ -281,3 +281,25 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 
 	return nil
 }
+
+func (r *TrackRepository) DeleteTrack(track *entities.Track) error {
+	m := data_models.TrackModel{}
+
+	err := r.Database.Get(&m, `
+    DELETE FROM
+      tracks
+    WHERE 
+      id = ?
+    RETURNING *
+  `,
+		track.Id,
+	)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return err
+	}
+
+	*track = m.ToTrack()
+
+	return nil
+}

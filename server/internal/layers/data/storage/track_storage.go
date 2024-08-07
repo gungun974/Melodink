@@ -112,3 +112,14 @@ func (s *TrackStorage) MoveAudioFile(track *entities.Track) error {
 
 	return nil
 }
+
+func (s *TrackStorage) RemoveAudioFile(track *entities.Track) error {
+	err := os.Remove(track.Path)
+	if err != nil {
+		return err
+	}
+
+	track.Path = ""
+
+	return nil
+}
