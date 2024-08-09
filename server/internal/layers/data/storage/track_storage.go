@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -54,7 +55,7 @@ func (s *TrackStorage) UploadAudioFile(userId int, file io.Reader) (string, erro
 		return fileLocation, nil
 	}
 
-	newFileLocation := fileLocation + mtype.Extension()
+	newFileLocation := fileLocation + strings.ReplaceAll(mtype.Extension(), ".mp4", ".m4a")
 
 	err = os.Rename(fileLocation, newFileLocation)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	track_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/track"
+	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/gungun974/Melodink/server/internal/models"
 	"github.com/gungun974/validator"
 )
@@ -326,6 +327,7 @@ func checkIfFileIsAudioFile(file io.ReadSeeker, handler *multipart.FileHeader) e
 
 	for _, mimeType := range []string{
 		"audio/mpeg",
+		"video/mp4",
 		"audio/mp4",
 		"audio/ogg",
 		"audio/vorbis",
@@ -341,6 +343,7 @@ func checkIfFileIsAudioFile(file io.ReadSeeker, handler *multipart.FileHeader) e
 	}
 
 	if !validMimeType {
+		logger.MainLogger.Warnf("Can't process %s", mtype.String())
 		return entities.NewValidationError("File is not a valid audio file")
 	}
 
