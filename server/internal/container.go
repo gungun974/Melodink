@@ -3,6 +3,7 @@ package internal
 import (
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
 	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
+	playlist_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/playlist"
 	track_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/track"
 	user_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/user"
 	"github.com/gungun974/Melodink/server/internal/layers/presentation/controller"
@@ -11,8 +12,9 @@ import (
 )
 
 type Container struct {
-	UserController  controller.UserController
-	TrackController controller.TrackController
+	UserController     controller.UserController
+	TrackController    controller.TrackController
+	PlaylistController controller.PlaylistController
 }
 
 func NewContainer(db *sqlx.DB) Container {
@@ -22,6 +24,7 @@ func NewContainer(db *sqlx.DB) Container {
 
 	userRepository := repository.NewUserRepository(db)
 	trackRepository := repository.NewTrackRepository(db)
+	playlistRepository := repository.NewPlaylistRepository(db, trackRepository)
 
 	//! Storage
 
@@ -31,6 +34,7 @@ func NewContainer(db *sqlx.DB) Container {
 
 	userPresenter := presenter.NewUserPresenter()
 	trackPresenter := presenter.NewTrackPresenter()
+	playlistPresenter := presenter.NewPlaylistPresenter()
 
 	//! Usecase
 
@@ -45,10 +49,17 @@ func NewContainer(db *sqlx.DB) Container {
 		trackPresenter,
 	)
 
+	playlistUsecase := playlist_usecase.NewPlaylistUsecase(
+		playlistRepository,
+		trackRepository,
+		playlistPresenter,
+	)
+
 	//! Controller
 
 	container.UserController = controller.NewUserController(userUsecase)
 	container.TrackController = controller.NewTrackController(trackUsecase)
+	container.PlaylistController = controller.NewPlaylistController(playlistUsecase)
 
 	return container
 }
