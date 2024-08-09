@@ -111,3 +111,9 @@ func (c *UserController) Register(
 
 	return c.userUsecase.RegisterUser(ctx, name, email, password)
 }
+
+func (c *UserController) GetCurrentLogged(
+	ctx context.Context,
+) (models.APIResponse, error) {
+	return c.userUsecase.GetCurrentLoggedUser(ctx)
+}

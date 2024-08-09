@@ -7,7 +7,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gungun974/Melodink/server/internal"
 	"github.com/gungun974/Melodink/server/internal/auth"
-	"github.com/gungun974/Melodink/server/internal/models"
 )
 
 func UserRouter(c internal.Container, router *chi.Mux) {
@@ -28,9 +27,14 @@ func UserRouter(c internal.Container, router *chi.Mux) {
 
 		auth.SetAuthCookie(w, key, exp)
 
-		response := models.RedirectAPIResponse{
-			Status: http.StatusSeeOther,
-			Url:    "/",
+		_, _ = w.Write([]byte("ok"))
+	})
+
+	router.Get("/me", func(w http.ResponseWriter, r *http.Request) {
+		response, err := c.UserController.GetCurrentLogged(r.Context())
+		if err != nil {
+			handleHTTPError(err, w)
+			return
 		}
 
 		response.WriteResponse(w, r)
@@ -39,12 +43,7 @@ func UserRouter(c internal.Container, router *chi.Mux) {
 	router.Post("/logout", func(w http.ResponseWriter, r *http.Request) {
 		auth.RemoveAuthCookie(w)
 
-		response := models.RedirectAPIResponse{
-			Status: http.StatusSeeOther,
-			Url:    "/login",
-		}
-
-		response.WriteResponse(w, r)
+		_, _ = w.Write([]byte("ok"))
 	})
 
 	router.Post("/register", func(w http.ResponseWriter, r *http.Request) {
