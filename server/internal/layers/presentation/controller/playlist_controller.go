@@ -121,6 +121,23 @@ func (c *PlaylistController) EditPlaylist(
 	})
 }
 
+func (c *PlaylistController) DuplicatePlaylist(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.playlistUsecase.DuplicatePlaylist(ctx, id)
+}
+
 func (c *PlaylistController) DeletePlaylist(
 	ctx context.Context,
 	rawId string,
