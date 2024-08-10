@@ -35,6 +35,7 @@ func MainRouter(container internal.Container) http.Handler {
 	router.Mount("/track", TrackRouter(container))
 	router.Mount("/playlist", PlaylistRouter(container))
 	router.Mount("/album", AlbumRouter(container))
+	router.Mount("/artist", ArtistRouter(container))
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hoi"))

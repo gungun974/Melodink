@@ -52,12 +52,10 @@ func (r *AlbumRepository) getVirtualAlbumFromTrack(track entities.Track) (string
 	return hashString, nil
 }
 
-func (r *AlbumRepository) GetAllAlbumsFromUser(userId int) ([]entities.Album, error) {
-	tracks, err := r.trackRepository.GetAllTracksFromUser(userId)
-	if err != nil {
-		return nil, entities.NewInternalError(err)
-	}
-
+func (r *AlbumRepository) GroupTracksInAlbums(
+	userId *int,
+	tracks []entities.Track,
+) []entities.Album {
 	albums := []entities.Album{}
 
 outerloop:
@@ -77,7 +75,7 @@ outerloop:
 		albums = append(albums, entities.Album{
 			Id: albumId,
 
-			UserId: &userId,
+			UserId: userId,
 
 			Name: track.Metadata.Album,
 
@@ -89,7 +87,16 @@ outerloop:
 		})
 	}
 
-	return albums, nil
+	return albums
+}
+
+func (r *AlbumRepository) GetAllAlbumsFromUser(userId int) ([]entities.Album, error) {
+	tracks, err := r.trackRepository.GetAllTracksFromUser(userId)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	return r.GroupTracksInAlbums(&userId, tracks), nil
 }
 
 func (r *AlbumRepository) GetAlbumByIdFromUser(userId int, albumId string) (entities.Album, error) {

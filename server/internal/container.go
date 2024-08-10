@@ -4,6 +4,7 @@ import (
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
 	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
 	album_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/album"
+	artist_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/artist"
 	playlist_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/playlist"
 	track_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/track"
 	user_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/user"
@@ -17,6 +18,7 @@ type Container struct {
 	TrackController    controller.TrackController
 	PlaylistController controller.PlaylistController
 	AlbumController    controller.AlbumController
+	ArtistController   controller.ArtistController
 }
 
 func NewContainer(db *sqlx.DB) Container {
@@ -28,6 +30,7 @@ func NewContainer(db *sqlx.DB) Container {
 	trackRepository := repository.NewTrackRepository(db)
 	playlistRepository := repository.NewPlaylistRepository(db, trackRepository)
 	albumRepository := repository.NewAlbumRepository(db, trackRepository)
+	artistRepository := repository.NewArtistRepository(db, trackRepository, albumRepository)
 
 	//! Storage
 
@@ -39,6 +42,7 @@ func NewContainer(db *sqlx.DB) Container {
 	trackPresenter := presenter.NewTrackPresenter()
 	playlistPresenter := presenter.NewPlaylistPresenter()
 	albumPresenter := presenter.NewAlbumPresenter()
+	artistPresenter := presenter.NewArtistPresenter()
 
 	//! Usecase
 
@@ -61,12 +65,15 @@ func NewContainer(db *sqlx.DB) Container {
 
 	albumUsecase := album_usecase.NewAlbumUsecase(albumRepository, albumPresenter)
 
+	artistUsecase := artist_usecase.NewArtistUsecase(artistRepository, artistPresenter)
+
 	//! Controller
 
 	container.UserController = controller.NewUserController(userUsecase)
 	container.TrackController = controller.NewTrackController(trackUsecase)
 	container.PlaylistController = controller.NewPlaylistController(playlistUsecase)
 	container.AlbumController = controller.NewAlbumController(albumUsecase)
+	container.ArtistController = controller.NewArtistController(artistUsecase)
 
 	return container
 }
