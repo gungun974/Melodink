@@ -1,4 +1,7 @@
 prebuild:
+ifndef NIX
+	flutter pub run pigeon --input ./pigeon/native_communication.dart
+endif
 
 dev: prebuild
 	flutter run

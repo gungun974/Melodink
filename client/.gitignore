@@ -1,3 +1,7 @@
+# App specific files
+
+/lib/generated
+
 # Miscellaneous
 *.class
 *.log

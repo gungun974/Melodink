@@ -151,5 +151,6 @@ func handleNotLogged(
 }
 
 func isAuthProtectedRoute(path string) bool {
-	return !strings.HasPrefix(path, "/login") && !strings.HasPrefix(path, "/register")
+	return !strings.HasPrefix(path, "/login") && !strings.HasPrefix(path, "/register") &&
+		!strings.HasSuffix(path, "audio")
 }

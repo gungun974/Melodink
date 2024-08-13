@@ -97,6 +97,7 @@
 
           buildInputs = with pkgs; [
             which
+            mpv
             wrapGAppsHook
           ];
 
@@ -104,7 +105,18 @@
 
           src = gitignore.lib.gitignoreSource ./client;
 
+          patchPhase = ''
+            mkdir -p /build/source/build/linux/x64/release/
+            cp ${pkgs.fetchurl {
+              url = "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz";
+              hash = "sha256-Kxv/b3F/lyXHC/jXnkeG2hPeiicAWeS6C90mKue+Rus=";
+            }} /build/source/build/linux/x64/release/mimalloc-2.1.2.tar.gz
+          '';
+
+          NIX = "true";
+
           preBuild = ''
+            packageRun pigeon --input ./pigeon/native_communication.dart
             make prebuild
           '';
 
@@ -112,7 +124,7 @@
             rm $out/bin/melodink_client
             makeWrapper $out/app/melodink_client $out/bin/melodink_client \
                 "''${gappsWrapperArgs[@]}" \
-                --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath []}
+                --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped]}
           '';
 
           autoPubspecLock = ./client/pubspec.lock;
@@ -129,7 +141,7 @@
         GOROOT = "${pkgs.go_1_22}/share/go";
 
         shellHook = ''
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.sqlite]}
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped pkgs.sqlite]}
         '';
 
         buildInputs = [
@@ -147,6 +159,7 @@
 
           pkgs.pkg-config
           pkgs.gtk3
+          pkgs.mpv
         ];
       };
     });

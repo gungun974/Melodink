@@ -14,6 +14,11 @@ dependencies:
   get_it: ^7.6.7
   go_router: ^14.2.2
   http: ^1.2.0
+  equatable: ^2.0.5
+  audio_service: ^0.18.15
+  rxdart: ^0.28.0
+  mutex: ^3.1.0
+  audio_service_mpris: ^0.1.5
 
 dev_dependencies:
   flutter_test:
@@ -21,6 +26,8 @@ dev_dependencies:
 
   flutter_lints: ^4.0.0
   flutter_launcher_icons: "^0.13.1"
+
+  pigeon: ^21.1.0
 
 flutter:
   uses-material-design: true

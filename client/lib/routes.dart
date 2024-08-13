@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:melodink_client/features/player/presentation/pages/test_player_page.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -31,7 +32,7 @@ final GoRouter appRouter = GoRouter(
       name: "/",
       pageBuilder: (context, state) => CustomTransitionPage<void>(
         key: state.pageKey,
-        child: const Scaffold(body: Center(child: Text("Melodink"))),
+        child: const TestPlayerPage(),
         transitionDuration: pageTransitonDuration,
         transitionsBuilder: slideUpTransitionBuilder,
       ),

@@ -63,6 +63,7 @@ add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 add_executable(${BINARY_NAME}
   "main.cc"
   "my_application.cc"
+  "messages.g.cc"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
 )
 
@@ -91,6 +92,7 @@ set_target_properties(${BINARY_NAME}
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+target_link_libraries(${BINARY_NAME} PRIVATE ${MIMALLOC_LIB})
 
 # === Installation ===
 # By default, "installing" just makes a relocatable bundle in the build
@@ -122,6 +124,117 @@ foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endforeach(bundled_library)
+
+# We use the mimalloc's object file (mimalloc.o) & link the final executable with it.
+# This ensures that the standard malloc interface resolves to the mimalloc library.
+#
+# Refer to "Static Override" section in mimalloc's documentation:
+# https://github.com/microsoft/mimalloc#static-override
+function(download_and_verify url md5 locationForArchive)
+  # Check if the archive exists.
+  if(EXISTS "${locationForArchive}")
+    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+
+    # If MD5 doesn't match, delete the archive to download again.
+    if(NOT md5 STREQUAL ARCHIVE_MD5)
+      file(REMOVE "${locationForArchive}")
+      message(STATUS "MD5 mismatch. File deleted.")
+    endif()
+  endif()
+
+  # Download the archive if it doesn't exist.
+  if(NOT EXISTS "${locationForArchive}")
+    message(STATUS "Downloading archive from ${url}...")
+    file(DOWNLOAD "${url}" "${locationForArchive}")
+    message(STATUS "Downloaded archive to ${locationForArchive}.")
+
+    # Verify MD5 of the newly downloaded file.
+    file(MD5 "${locationForArchive}" ARCHIVE_MD5)
+
+    if(md5 STREQUAL ARCHIVE_MD5)
+      message(STATUS "${locationForArchive} Verification successful.")
+    else()
+      message(FATAL_ERROR "${locationForArchive} Integrity check failed, please try to rebuild project again.")
+    endif()
+  endif()
+endfunction()
+
+# ------------------------------------------------------------------------------
+set(MIMALLOC "mimalloc-2.1.2.tar.gz")
+
+set(MIMALLOC_URL "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz")
+set(MIMALLOC_MD5 "5179c8f5cf1237d2300e2d8559a7bc55")
+
+set(MIMALLOC_ARCHIVE "${CMAKE_BINARY_DIR}/${MIMALLOC}")
+set(MIMALLOC_SRC "${CMAKE_BINARY_DIR}/mimalloc")
+
+download_and_verify(
+  ${MIMALLOC_URL}
+  ${MIMALLOC_MD5}
+  ${MIMALLOC_ARCHIVE}
+)
+
+function(check_directory_exists_and_not_empty dir result_var)
+  # Check if the directory exists
+  if(EXISTS "${dir}")
+    # Check if the directory is not empty
+    file(GLOB dir_contents "${dir}/*")
+
+    if(dir_contents)
+      set(${result_var} TRUE PARENT_SCOPE)
+    else()
+      set(${result_var} FALSE PARENT_SCOPE)
+      message(STATUS "Directory ${dir} exists but is empty!")
+    endif()
+  else()
+    set(${result_var} FALSE PARENT_SCOPE)
+    message(STATUS "Directory ${dir} does not exist!")
+  endif()
+endfunction()
+
+# Extract
+# https://stackoverflow.com/a/19859882/12825435
+set(MIMALLOC_LIB "${MIMALLOC_SRC}/out/release/mimalloc.o" CACHE INTERNAL "")
+
+check_directory_exists_and_not_empty(${MIMALLOC_SRC} MIMALLOC_VALID)
+
+if(NOT MIMALLOC_VALID)
+  message(STATUS "Extracting ${MIMALLOC}...")
+  make_directory("${MIMALLOC_SRC}")
+  add_custom_command(
+    OUTPUT ${MIMALLOC_LIB}
+    COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${MIMALLOC_ARCHIVE}\""
+
+    # add_subdirectory() is too much work. Alternatively building it through command line.
+    COMMAND "mkdir" "-p" "out/release"
+    COMMAND "cd" "out/release"
+    COMMAND "${CMAKE_COMMAND}" "../../mimalloc-2.1.2"
+    COMMAND "make"
+    WORKING_DIRECTORY "${MIMALLOC_SRC}"
+  )
+endif()
+
+add_custom_target("MIMALLOC_TARGET" ALL DEPENDS ${MIMALLOC_LIB})
+
+# ------------------------------------------------------------------------------
+
+
+# Check for libmpv & epoxy headers & libraries.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(mpv IMPORTED_TARGET mpv)
+
+
+# target_compile_features(${TARGET} PRIVATE "${mpv_CFLAGS_OTHER}")
+#
+# target_include_directories(
+#   ${TARGET} INTERFACE
+#   "${CMAKE_CURRENT_SOURCE_DIR}/include"
+#   "${mpv_INCLUDE_DIRS}"
+# )
+
+target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::mpv)
+
+# ----
 
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/linux/")
