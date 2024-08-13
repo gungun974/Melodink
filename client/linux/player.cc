@@ -48,6 +48,7 @@ private:
 
   std::thread event_thread;
   std::atomic<bool> stop_event_thread;
+  std::atomic<bool> dont_send_audio_changed;
 
   PigeonMelodinkMelodinkHostPlayerApiInfo *flutter_api;
 
@@ -89,6 +90,10 @@ private:
           int64_t pos = *(int64_t *)prop->data;
 
           if (pos < 0) {
+            continue;
+          }
+
+          if (dont_send_audio_changed.load()) {
             continue;
           }
 
@@ -222,6 +227,8 @@ public:
     set_player_state(
         PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_IDLE);
 
+    dont_send_audio_changed.store(true);
+
     //!
     //! Previous audios
     //!
@@ -343,6 +350,8 @@ public:
 
     set_player_state(
         PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_READY);
+
+    dont_send_audio_changed.store(false);
   }
 
   int get_current_track_pos() {
