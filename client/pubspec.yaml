@@ -19,6 +19,14 @@ dependencies:
   rxdart: ^0.28.0
   mutex: ^3.1.0
   audio_service_mpris: ^0.1.5
+  responsive_builder: ^0.7.1
+  adwaita_icons: ^0.2.1
+  intl: ^0.19.0
+  timeago: ^3.7.0
+  sliver_tools: ^0.2.12
+  bloc: ^8.1.4
+  flutter_bloc: ^8.1.6
+  audio_video_progress_bar: ^2.0.3
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +41,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/melodink_icon.png
+    - assets/melodink_track_cover_not_found.png
 
 flutter_launcher_icons:
   android: "launcher_icon"

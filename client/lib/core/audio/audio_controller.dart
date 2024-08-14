@@ -116,6 +116,8 @@ class AudioController extends BaseAudioHandler
   @override
   Future<void> skipToQueueItem(int index) async {
     await _updatePlaylistTracks(index);
+
+    await api.play();
   }
 
   @override
@@ -127,6 +129,14 @@ class AudioController extends BaseAudioHandler
     }[repeatMode]!);
 
     await _updatePlaybackState();
+  }
+
+  Future<void> toogleShufle() async {
+    if (playbackState.value.shuffleMode == AudioServiceShuffleMode.all) {
+      await setShuffleMode(AudioServiceShuffleMode.none);
+    } else {
+      await setShuffleMode(AudioServiceShuffleMode.all);
+    }
   }
 
   @override
@@ -169,6 +179,8 @@ class AudioController extends BaseAudioHandler
 
       if (restart) {
         await seek(Duration.zero);
+
+        await api.play();
       }
 
       await _updatePlaybackState();
@@ -178,6 +190,10 @@ class AudioController extends BaseAudioHandler
   Future<void> addTrackToQueue(MinimalTrack track) async {
     await playlistTracksMutex.protect(() async {
       _queueTracks.add(track);
+
+      if (_previousTracks.isEmpty && _queueTracks.isNotEmpty) {
+        _previousTracks.add(_queueTracks.removeAt(0));
+      }
 
       await _updatePlayerTracks();
 
