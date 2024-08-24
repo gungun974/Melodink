@@ -1,42 +1,41 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:melodink_client/routes.dart';
 
 class MobileNavbar extends StatelessWidget {
-  final String location;
-
   const MobileNavbar({
     super.key,
-    required this.location,
   });
 
   @override
   Widget build(BuildContext context) {
-    final location = GoRouter.of(context).location;
-
     int currentIndex = 0;
-
-    if (location == "/tracks") {
-      currentIndex = 0;
-    } else if (location.startsWith("/library")) {
-      currentIndex = 1;
-    }
 
     return BottomNavigationBar(
       items: const <BottomNavigationBarItem>[
         BottomNavigationBarItem(
           icon: AdwaitaIcon(
-            AdwaitaIcons.playlist2,
+            AdwaitaIcons.heart_outline_thick,
           ),
-          label: 'Tracks',
+          label: 'Liked songs',
+        ),
+        BottomNavigationBarItem(
+          icon: AdwaitaIcon(
+            AdwaitaIcons.system_search,
+          ),
+          label: 'Search',
         ),
         BottomNavigationBarItem(
           icon: AdwaitaIcon(
             AdwaitaIcons.library_music,
-            size: 18,
           ),
           label: 'Library',
+        ),
+        BottomNavigationBarItem(
+          icon: AdwaitaIcon(
+            AdwaitaIcons.person2,
+          ),
+          label: 'Me',
         ),
       ],
       currentIndex: currentIndex,
@@ -48,9 +47,16 @@ class MobileNavbar extends StatelessWidget {
       onTap: (int index) {
         switch (index) {
           case 0:
-            GoRouter.of(context).go("/tracks");
+            GoRouter.of(context).go("/liked");
             break;
           case 1:
+            GoRouter.of(context).go("/search");
+            break;
+          case 2:
+            GoRouter.of(context).go("/library");
+            break;
+          case 3:
+            GoRouter.of(context).go("/playerTest");
             break;
         }
       },

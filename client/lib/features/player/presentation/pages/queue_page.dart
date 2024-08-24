@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:melodink_client/core/audio/audio_controller.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
-import 'package:melodink_client/core/widgets/sliver_container.dart';
-import 'package:melodink_client/features/track/presentation/widgets/tracks_list.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/player/presentation/widgets/player_queue_controls.dart';
+import 'package:melodink_client/features/player/presentation/widgets/queue_tracks_panel.dart';
 import 'package:melodink_client/injection_container.dart';
-import 'package:responsive_builder/responsive_builder.dart';
 
 class QueuePage extends StatefulWidget {
   const QueuePage({
@@ -20,187 +21,126 @@ class _QueuePageState extends State<QueuePage> {
 
   @override
   Widget build(BuildContext context) {
-    return ResponsiveBuilder(builder: (
-      context,
-      sizingInformation,
-    ) {
-      return Scaffold(
-        appBar: sizingInformation.deviceScreenType != DeviceScreenType.desktop
-            ? AppBar(
-                title: const Text("Queue"),
-              )
-            : null,
-        body: Stack(
-          children: [
-            Container(
-              color: Colors.black87,
-            ),
-            const GradientBackground(),
-            Container(
-              color: const Color.fromRGBO(0, 0, 0, 0.08),
-              child: StreamBuilder(
-                stream: audioController.currentTrack.stream,
-                builder: (context, snapshot) {
-                  final currentTrack = snapshot.data;
-                  if (currentTrack == null) {
-                    return Container();
-                  }
+    return AppScreenTypeLayoutBuilder(builder: (context, size) {
+      return Stack(
+        children: [
+          const GradientBackground(),
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: size == AppScreenTypeLayout.mobile
+                ? AppBar(
+                    leading: IconButton(
+                      icon: SvgPicture.asset(
+                        "assets/icons/arrow-down.svg",
+                        width: 24,
+                        height: 24,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    title: const Text(
+                      "Queue",
+                      style: TextStyle(
+                        fontSize: 20,
+                        letterSpacing: 20 * 0.03,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    centerTitle: true,
+                    backgroundColor: const Color.fromRGBO(0, 0, 0, 0.08),
+                    shadowColor: Colors.transparent,
+                  )
+                : null,
+            body: StreamBuilder(
+              stream: audioController.currentTrack.stream,
+              builder: (context, snapshot) {
+                final currentTrack = snapshot.data;
+                if (currentTrack == null) {
+                  return Container();
+                }
 
-                  return CustomScrollView(
-                    slivers: [
-                      if (sizingInformation.deviceScreenType ==
-                          DeviceScreenType.desktop)
-                        const SliverContainer(
-                          maxWidth: 1200,
-                          padding: 32,
-                          sliver: SliverPadding(
-                            padding: EdgeInsets.only(top: 24),
-                            sliver: SliverToBoxAdapter(
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (size == AppScreenTypeLayout.desktop)
+                      Container(
+                        constraints: const BoxConstraints(maxWidth: 1200 + 48),
+                        padding: const EdgeInsets.only(left: 24.0, top: 24.0),
+                        child: const Row(
+                          children: [
+                            Expanded(
                               child: Text(
-                                'Queue',
+                                "Queue",
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 54,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      if (audioController.previousTracks.value.isNotEmpty) ...[
-                        SliverContainer(
-                          maxWidth: 1200,
-                          padding: sizingInformation.deviceScreenType ==
-                                  DeviceScreenType.desktop
-                              ? 32
-                              : 16,
-                          sliver: SliverPadding(
-                            padding: EdgeInsets.only(
-                                top: sizingInformation.deviceScreenType ==
-                                        DeviceScreenType.desktop
-                                    ? 8
-                                    : 16),
-                            sliver: const SliverToBoxAdapter(
-                              child: Text(
-                                'Now Playing',
-                                style: TextStyle(
+                                  fontSize: 48,
+                                  letterSpacing: 48 * 0.03,
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 24,
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                        SliverContainer(
-                          maxWidth: 1200,
-                          padding: sizingInformation.deviceScreenType ==
-                                  DeviceScreenType.desktop
-                              ? 32
-                              : 0,
-                          sliver: SliverPadding(
-                            padding: const EdgeInsets.only(top: 8, bottom: 8),
-                            sliver: TracksList(
-                              tracks: [
-                                audioController.previousTracks.value.last,
-                              ],
-                              playCallback: (int index, _) {
+                      ),
+                    Expanded(
+                      child: CustomScrollView(
+                        slivers: [
+                          //! Now playing
+                          QueueTracksPanel(
+                            name: 'Now playing',
+                            type: QueueTracksPanelType.start,
+                            size: size,
+                            tracks: [audioController.previousTracks.value.last],
+                            playCallback: (_, __) {},
+                            useQueueTrack: false,
+                          ),
+                          //! Next in Queue
+                          if (audioController.queueTracks.value.isNotEmpty)
+                            QueueTracksPanel(
+                              name: 'Next in Queue',
+                              size: size,
+                              type: QueueTracksPanelType.middle,
+                              tracks: audioController.queueTracks.value,
+                              playCallback: (_, index) {
                                 audioController.skipToQueueItem(
                                   index +
                                       audioController
-                                          .previousTracks.value.length -
-                                      1,
+                                          .previousTracks.value.length,
                                 );
                               },
+                              trackNumberOffset: 1,
                             ),
-                          ),
-                        ),
-                      ],
-                      if (audioController.queueTracks.value.isNotEmpty) ...[
-                        SliverContainer(
-                          maxWidth: 1200,
-                          padding: sizingInformation.deviceScreenType ==
-                                  DeviceScreenType.desktop
-                              ? 32
-                              : 16,
-                          sliver: const SliverPadding(
-                            padding: EdgeInsets.only(top: 8),
-                            sliver: SliverToBoxAdapter(
-                              child: Text(
-                                'Next in queue',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 24,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SliverContainer(
-                          maxWidth: 1200,
-                          padding: 32,
-                          sliver: SliverPadding(
-                            padding: const EdgeInsets.only(top: 8, bottom: 8),
-                            sliver: TracksList(
-                              tracks: audioController.queueTracks.value,
-                              numberOffset: 1,
-                              playCallback: (int index, _) {
+
+                          //! Next
+                          if (audioController.nextTracks.value.isNotEmpty)
+                            QueueTracksPanel(
+                              name: 'Next',
+                              type: QueueTracksPanelType.end,
+                              size: size,
+                              tracks: audioController.nextTracks.value,
+                              playCallback: (_, index) {
                                 audioController.skipToQueueItem(
                                   index +
+                                      audioController
+                                          .previousTracks.value.length +
                                       audioController.queueTracks.value.length,
                                 );
                               },
+                              trackNumberOffset:
+                                  audioController.queueTracks.value.length + 1,
                             ),
-                          ),
-                        ),
-                      ],
-                      SliverContainer(
-                        maxWidth: 1200,
-                        padding: sizingInformation.deviceScreenType ==
-                                DeviceScreenType.desktop
-                            ? 32
-                            : 16,
-                        sliver: const SliverPadding(
-                          padding: EdgeInsets.only(top: 8),
-                          sliver: SliverToBoxAdapter(
-                            child: Text(
-                              'Next up',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 24,
-                              ),
-                            ),
-                          ),
-                        ),
+                        ],
                       ),
-                      SliverContainer(
-                        maxWidth: 1200,
-                        padding: sizingInformation.deviceScreenType ==
-                                DeviceScreenType.desktop
-                            ? 32
-                            : 0,
-                        sliver: SliverPadding(
-                          padding: const EdgeInsets.only(top: 8, bottom: 48),
-                          sliver: TracksList(
-                            tracks: audioController.nextTracks.value,
-                            numberOffset:
-                                1 + audioController.queueTracks.value.length,
-                            playCallback: (int index, _) {
-                              audioController.skipToQueueItem(
-                                index +
-                                    audioController
-                                        .previousTracks.value.length +
-                                    audioController.queueTracks.value.length,
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
+                    ),
+                    const SizedBox(height: 12),
+                    AppScreenTypeLayoutBuilders(
+                      mobile: (_) => const PlayerQueueControls(),
+                    )
+                  ],
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       );
     });
   }

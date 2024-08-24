@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:melodink_client/core/audio/audio_controller.dart';
+import 'package:go_router/go_router.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/injection_container.dart';
 
@@ -566,6 +567,13 @@ class _TestPlayerPageState extends State<TestPlayerPage> {
                   child: const Text("loop one"),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () async {
+                GoRouter.of(context).go("/");
+              },
+              child: const Text("Exit"),
             ),
           ],
         ),

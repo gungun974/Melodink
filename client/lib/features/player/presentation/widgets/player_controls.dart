@@ -1,15 +1,15 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:melodink_client/core/audio/audio_controller.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/injection_container.dart';
 
 class PlayerControls extends StatefulWidget {
-  final bool smallControlsButton;
+  final bool largeControlsButton;
 
   const PlayerControls({
     super.key,
-    this.smallControlsButton = true,
+    this.largeControlsButton = false,
   });
 
   @override
@@ -22,48 +22,51 @@ class _PlayerControlsState extends State<PlayerControls> {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: widget.smallControlsButton
-          ? MainAxisAlignment.center
-          : MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: widget.largeControlsButton
+          ? MainAxisAlignment.spaceBetween
+          : MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         StreamBuilder(
             stream: audioController.playbackState,
             builder: (context, snapshot) {
               return IconButton(
-                key: const Key("shuffleButton"),
-                padding: const EdgeInsets.only(),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
                 icon: const AdwaitaIcon(
                   AdwaitaIcons.media_playlist_shuffle,
                 ),
                 color: snapshot.data?.shuffleMode == AudioServiceShuffleMode.all
                     ? Theme.of(context).colorScheme.primary
                     : Colors.white,
-                iconSize: widget.smallControlsButton ? 20.0 : 24.0,
+                iconSize: widget.largeControlsButton ? 24.0 : 20.0,
                 onPressed: () async {
                   await audioController.toogleShufle();
                 },
               );
             }),
+        const SizedBox(width: 16),
         IconButton(
-          key: const Key("previousButton"),
-          padding: const EdgeInsets.only(),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
           icon: const AdwaitaIcon(AdwaitaIcons.media_skip_backward),
-          iconSize: widget.smallControlsButton ? 20.0 : 28.0,
+          iconSize: widget.largeControlsButton ? 28.0 : 20.0,
           onPressed: () async {
             await audioController.skipToPrevious();
           },
         ),
+        const SizedBox(width: 16),
         StreamBuilder<PlaybackState>(
             stream: audioController.playbackState,
             builder: (context, snapshot) {
               final isPlaying = snapshot.data?.playing ?? false;
               return IconButton(
-                key: const Key("playButton"),
-                padding: const EdgeInsets.only(),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
                 icon: isPlaying
                     ? const AdwaitaIcon(AdwaitaIcons.media_playback_pause)
                     : const AdwaitaIcon(AdwaitaIcons.media_playback_start),
-                iconSize: widget.smallControlsButton ? 34.0 : 52.0,
+                iconSize: widget.largeControlsButton ? 52.0 : 36.0,
                 onPressed: () async {
                   if (isPlaying) {
                     await audioController.pause();
@@ -73,23 +76,25 @@ class _PlayerControlsState extends State<PlayerControls> {
                 },
               );
             }),
+        const SizedBox(width: 16),
         IconButton(
-          key: const Key("nextButton"),
-          padding: const EdgeInsets.only(),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
           icon: const AdwaitaIcon(AdwaitaIcons.media_skip_forward),
-          iconSize: widget.smallControlsButton ? 20.0 : 28.0,
+          iconSize: widget.largeControlsButton ? 28.0 : 20.0,
           onPressed: () async {
             await audioController.skipToNext();
           },
         ),
+        const SizedBox(width: 16),
         StreamBuilder<PlaybackState>(
           stream: audioController.playbackState,
           builder: (context, snapshot) {
             final repeatMode =
                 snapshot.data?.repeatMode ?? AudioServiceRepeatMode.none;
             return IconButton(
-              key: const Key("repeatButton"),
-              padding: const EdgeInsets.only(),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
               icon: repeatMode == AudioServiceRepeatMode.one
                   ? const AdwaitaIcon(
                       AdwaitaIcons.media_playlist_repeat_song,
@@ -97,7 +102,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                   : const AdwaitaIcon(
                       AdwaitaIcons.media_playlist_repeat,
                     ),
-              iconSize: widget.smallControlsButton ? 20.0 : 24.0,
+              iconSize: widget.largeControlsButton ? 24.0 : 20.0,
               color: repeatMode != AudioServiceRepeatMode.none
                   ? Theme.of(context).colorScheme.primary
                   : Colors.white,
@@ -120,7 +125,7 @@ class _PlayerControlsState extends State<PlayerControls> {
               },
             );
           },
-        ),
+        )
       ],
     );
   }

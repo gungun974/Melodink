@@ -1,21 +1,19 @@
 import 'package:get_it/get_it.dart';
 
 import 'package:http/http.dart' as http;
-import 'package:melodink_client/core/audio/audio_controller.dart';
-import 'package:melodink_client/features/track/presentation/cubit/tracks_cubit.dart';
+import 'package:melodink_client/core/routes/cubit.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 
 final sl = GetIt.instance;
 
 Future<void> setup() async {
-  //! Track
+//! Router
+  sl.registerSingleton<RouterCubit>(RouterCubit());
 
-  // Cubit
-  sl.registerFactory(
-    () => TracksCubit(),
-  );
+  //! Player
+
+  sl.registerSingleton<AudioController>(await initAudioService());
 
   //! External
   sl.registerLazySingleton(() => http.Client());
-
-  sl.registerSingleton<AudioController>(await initAudioService());
 }

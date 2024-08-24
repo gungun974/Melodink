@@ -27,6 +27,8 @@ dependencies:
   bloc: ^8.1.4
   flutter_bloc: ^8.1.6
   audio_video_progress_bar: ^2.0.3
+  cached_network_image: ^3.4.1
+  flutter_svg: ^1.1.6
 
 dev_dependencies:
   flutter_test:
@@ -42,6 +44,28 @@ flutter:
   assets:
     - assets/melodink_icon.png
     - assets/melodink_track_cover_not_found.png
+    - assets/melodink_fulllogo.png
+
+    - assets/icons/arrow-down.svg
+    - assets/icons/arrow-left.svg
+    - assets/icons/arrow-right.svg
+    - assets/icons/download.svg
+    - assets/icons/download2.svg
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto/Roboto-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Roboto/Roboto-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Roboto/Roboto-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Roboto/Roboto-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Roboto/Roboto-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Roboto/Roboto-Black.ttf
+          weight: 900
 
 flutter_launcher_icons:
   android: "launcher_icon"

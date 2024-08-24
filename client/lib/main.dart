@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:melodink_client/routes.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:melodink_client/core/routes/cubit.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'injection_container.dart' as di;
@@ -34,21 +36,25 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Melodink Client',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: false,
-        brightness: Brightness.dark,
-        appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
-        primaryColor: Colors.black,
-        iconTheme: const IconThemeData().copyWith(color: Colors.white),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromRGBO(196, 126, 208, 1),
+    return BlocProvider(
+      create: (BuildContext contex) => di.sl<RouterCubit>(),
+      child: MaterialApp.router(
+        title: 'Melodink Client',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          useMaterial3: false,
           brightness: Brightness.dark,
+          appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
+          primaryColor: Colors.black,
+          iconTheme: const IconThemeData().copyWith(color: Colors.white),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color.fromRGBO(196, 126, 208, 1),
+            brightness: Brightness.dark,
+          ),
+          fontFamily: "Roboto",
         ),
+        routerConfig: appRouter,
       ),
-      routerConfig: appRouter,
     );
   }
 }

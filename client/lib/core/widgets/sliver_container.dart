@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class SliverContainer extends StatelessWidget {
   final int maxWidth;
-  final double padding;
+  final EdgeInsets padding;
   final Widget sliver;
 
   const SliverContainer({
@@ -17,12 +17,17 @@ class SliverContainer extends StatelessWidget {
     return SliverLayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.crossAxisExtent;
-        final double padding = width > maxWidth + this.padding
+        final double padding = width > maxWidth + (this.padding.horizontal)
             ? (width - maxWidth) / 2
-            : this.padding;
+            : this.padding.horizontal / 2;
 
         return SliverPadding(
-          padding: EdgeInsets.symmetric(horizontal: padding),
+          padding: EdgeInsets.only(
+            left: padding,
+            right: padding,
+            top: this.padding.top,
+            bottom: this.padding.bottom,
+          ),
           sliver: sliver,
         );
       },
