@@ -12,8 +12,6 @@ import 'package:pigeon/pigeon.dart';
   kotlinOut:
       'android/app/src/main/kotlin/dev/flutter/pigeon_melodink/Messages.g.kt',
   kotlinOptions: KotlinOptions(),
-  javaOut: 'android/app/src/main/java/io/flutter/plugins/Messages.java',
-  javaOptions: JavaOptions(),
   swiftOut: 'ios/Runner/Messages.g.swift',
   swiftOptions: SwiftOptions(),
   objcHeaderOut: 'macos/Runner/messages.g.h',
