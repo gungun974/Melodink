@@ -33,6 +33,7 @@
           allowUnfree = true;
         };
       };
+      flutter-sdk = (import ./nix/flutter) pkgs;
       sdk = android-nixpkgs.sdk.${system} (sdkPkgs:
         with sdkPkgs; [
           build-tools-30-0-3
@@ -85,7 +86,7 @@
           '';
         };
 
-        melodink-client = pkgs.flutter324.buildFlutterApplication rec {
+        melodink-client = pkgs.flutter.buildFlutterApplication rec {
           pname = "melodink-client";
           version = "1.0.0";
 
@@ -130,8 +131,8 @@
         ANDROID_SDK_ROOT = "${sdk}/share/android-sdk";
         ANDROID_HOME = "${sdk}/share/android-sdk";
         CHROME_EXECUTABLE = "chromium";
-        FLUTTER_SDK = "${pkgs.flutter324}";
-        GRADLE_OPTS = "-Dorg.gradle.project.android.aapt1FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
+        FLUTTER_SDK = "${flutter-sdk}";
+        GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
 
         GOROOT = "${pkgs.go_1_22}/share/go";
 
@@ -143,7 +144,7 @@
           (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo122Module;})
           pkgs.go_1_22
           pkgs.air
-          pkgs.flutter324
+          flutter-sdk
           pinnedJDK
           sdk
           (pkgs.go-migrate.overrideAttrs (finalAttrs: previousAttrs: {
