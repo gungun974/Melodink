@@ -205,6 +205,23 @@ class AudioController extends BaseAudioHandler
     });
   }
 
+  Future<void> setQueueAndNext(
+    List<MinimalTrack> queueTracks,
+    List<MinimalTrack> nextTracks,
+  ) async {
+    await playlistTracksMutex.protect(() async {
+      _queueTracks.clear();
+      _nextTracks.clear();
+
+      _queueTracks.addAll(queueTracks);
+      _nextTracks.addAll(nextTracks);
+
+      await _updatePlayerTracks();
+
+      await _updatePlaybackState();
+    });
+  }
+
   Future<void> _doShuffle(AudioServiceShuffleMode shuffleMode) async {
     final currentTrack = _previousTracks.lastOrNull;
 

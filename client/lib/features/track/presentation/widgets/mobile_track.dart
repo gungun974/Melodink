@@ -71,12 +71,13 @@ class MobileTrack extends StatelessWidget {
                   ),
                 ),
               ),
-              IconButton(
+              Padding(
                 padding: const EdgeInsets.only(right: 4),
-                constraints: const BoxConstraints(),
-                icon: const AdwaitaIcon(AdwaitaIcons.view_more_horizontal),
-                iconSize: 20.0,
-                onPressed: () async {},
+                child: SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: AdwaitaIcon(AdwaitaIcons.view_more_horizontal),
+                ),
               )
             ],
           ),

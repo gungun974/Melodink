@@ -1,5 +1,6 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
@@ -94,12 +95,15 @@ class DesktopQueueTrack extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 24),
-              IconButton(
-                padding: const EdgeInsets.only(right: 4),
-                constraints: const BoxConstraints(),
-                icon: const AdwaitaIcon(AdwaitaIcons.menu),
-                iconSize: 20.0,
-                onPressed: () async {},
+              ReorderableListener(
+                child: const Padding(
+                  padding: EdgeInsets.only(right: 4),
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: AdwaitaIcon(AdwaitaIcons.menu),
+                  ),
+                ),
               ),
               const SizedBox(width: 20),
             ],

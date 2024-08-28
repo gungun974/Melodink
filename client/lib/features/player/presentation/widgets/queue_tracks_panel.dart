@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
+import 'package:melodink_client/features/player/presentation/pages/queue_page.dart';
 import 'package:melodink_client/features/player/presentation/widgets/desktop_queue_track.dart';
 import 'package:melodink_client/features/player/presentation/widgets/mobile_queue_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
@@ -20,11 +22,13 @@ class QueueTracksPanel extends StatelessWidget {
   final QueueTracksPanelType type;
   final AppScreenTypeLayout size;
 
-  final List<MinimalTrack> tracks;
+  final List<QueueTrack> tracks;
   final void Function(MinimalTrack track, int index) playCallback;
 
   final bool useQueueTrack;
   final int trackNumberOffset;
+
+  final String dragAndDropKeyPrefix;
 
   const QueueTracksPanel({
     super.key,
@@ -35,6 +39,7 @@ class QueueTracksPanel extends StatelessWidget {
     required this.playCallback,
     this.useQueueTrack = true,
     this.trackNumberOffset = 0,
+    this.dragAndDropKeyPrefix = "",
   });
 
   @override
@@ -105,23 +110,48 @@ class QueueTracksPanel extends StatelessWidget {
             left: padding,
             right: padding,
           ),
-          sliver: SliverFixedExtentList(
-            itemExtent: 50,
+          sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
-              (context, index) {
+              (context, rawIndex) {
+                if (rawIndex == 0) {
+                  return ReorderableItem(
+                      key: Key("Prev-$dragAndDropKeyPrefix"),
+                      childBuilder:
+                          (BuildContext context, ReorderableItemState state) {
+                        return Container(
+                          color: Colors.transparent,
+                          height: 0,
+                        );
+                      });
+                }
+
+                final index = rawIndex - 1;
+
+                if (index >= tracks.length) {
+                  return ReorderableItem(
+                      key: Key("Next-$dragAndDropKeyPrefix"),
+                      childBuilder:
+                          (BuildContext context, ReorderableItemState state) {
+                        return Container(
+                          color: Colors.transparent,
+                          height: 0,
+                        );
+                      });
+                }
+
                 late final Widget child;
 
                 if (useQueueTrack) {
                   if (size == AppScreenTypeLayout.mobile) {
                     child = MobileQueueTrack(
-                      track: tracks[index],
+                      track: tracks[index].track,
                       playCallback: (track) {
                         playCallback(track, index);
                       },
                     );
                   } else {
                     child = DesktopQueueTrack(
-                      track: tracks[index],
+                      track: tracks[index].track,
                       trackNumber: trackNumberOffset + index + 1,
                       playCallback: (track) {
                         playCallback(track, index);
@@ -131,14 +161,14 @@ class QueueTracksPanel extends StatelessWidget {
                 } else {
                   if (size == AppScreenTypeLayout.mobile) {
                     child = MobileTrack(
-                      track: tracks[index],
+                      track: tracks[index].track,
                       playCallback: (track) {
                         playCallback(track, index);
                       },
                     );
                   } else {
                     child = DesktopTrack(
-                      track: tracks[index],
+                      track: tracks[index].track,
                       trackNumber: trackNumberOffset + index + 1,
                       playCallback: (track) {
                         playCallback(track, index);
@@ -147,15 +177,28 @@ class QueueTracksPanel extends StatelessWidget {
                   }
                 }
 
-                return Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: size == AppScreenTypeLayout.desktop ? 0 : 12,
-                  ),
-                  color: const Color.fromRGBO(0, 0, 0, 0.03),
-                  child: child,
+                return ReorderableItem(
+                  key: tracks[index].key,
+                  childBuilder:
+                      (BuildContext context, ReorderableItemState state) {
+                    return Opacity(
+                      opacity:
+                          state == ReorderableItemState.placeholder ? 0.0 : 1.0,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal:
+                              size == AppScreenTypeLayout.desktop ? 0 : 12,
+                        ),
+                        color: state == ReorderableItemState.normal
+                            ? const Color.fromRGBO(0, 0, 0, 0.03)
+                            : const Color.fromRGBO(0, 0, 0, 0.05),
+                        child: child,
+                      ),
+                    );
+                  },
                 );
               },
-              childCount: tracks.length,
+              childCount: tracks.length + 2,
             ),
           ),
         ),
