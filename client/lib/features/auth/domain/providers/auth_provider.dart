@@ -59,11 +59,11 @@ class AuthError extends AuthState {
 
 @riverpod
 class AuthNotifier extends _$AuthNotifier {
-  late AuthRepository authRepository;
+  late AuthRepository _authRepository;
 
   @override
   Future<AuthState> build() async {
-    authRepository = ref.read(authRepositoryProvider);
+    _authRepository = ref.read(authRepositoryProvider);
 
     AppApi().dio.interceptors.add(
       InterceptorsWrapper(
@@ -82,7 +82,7 @@ class AuthNotifier extends _$AuthNotifier {
       ),
     );
 
-    final user = await authRepository.getCurrentUser();
+    final user = await _authRepository.getCurrentUser();
 
     if (user == null) {
       return const AuthLoaded(
@@ -100,7 +100,7 @@ class AuthNotifier extends _$AuthNotifier {
     state = const AsyncValue.loading();
 
     try {
-      final user = await authRepository.login(email, password);
+      final user = await _authRepository.login(email, password);
 
       state = AsyncValue.data(AuthLoaded(
         status: AuthStatus.authenticated,
@@ -139,7 +139,7 @@ class AuthNotifier extends _$AuthNotifier {
     state = const AsyncValue.loading();
 
     try {
-      final user = await authRepository.register(name, email, password);
+      final user = await _authRepository.register(name, email, password);
 
       state = AsyncValue.data(AuthLoaded(
         status: AuthStatus.authenticated,
@@ -167,7 +167,7 @@ class AuthNotifier extends _$AuthNotifier {
   }
 
   Future<void> logout() async {
-    await authRepository.logout();
+    await _authRepository.logout();
 
     state = const AsyncValue.data(AuthLoaded(
       status: AuthStatus.unauthenticated,

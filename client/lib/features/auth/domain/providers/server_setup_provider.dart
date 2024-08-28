@@ -44,11 +44,11 @@ class ServerSetupError extends ServerSetupState {
 
 @riverpod
 class ServerSetupNotifier extends _$ServerSetupNotifier {
-  late AuthRepository authRepository;
+  late AuthRepository _authRepository;
 
   @override
   ServerSetupState build() {
-    authRepository = ref.read(authRepositoryProvider);
+    _authRepository = ref.read(authRepositoryProvider);
 
     final serverUrl = AppApi().getServerUrl().trim();
 
@@ -65,7 +65,7 @@ class ServerSetupNotifier extends _$ServerSetupNotifier {
     state = ServerSetupLoading();
 
     try {
-      final savedServerUrl = await authRepository.checkAndSetServerUrl(
+      final savedServerUrl = await _authRepository.checkAndSetServerUrl(
         serverUrl,
       );
 
