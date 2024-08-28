@@ -1,8 +1,8 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:melodink_client/core/routes/cubit.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/routes/provider.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/features/home/presentation/widgets/desktop_sidebar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
@@ -34,8 +34,10 @@ class DesktopPlayerBar extends StatelessWidget {
                   size: 20.0,
                 ),
                 const SizedBox(width: 16),
-                BlocBuilder<RouterCubit, RouterCubitState>(
-                  builder: (context, state) {
+                Consumer(
+                  builder: (context, ref, child) {
+                    final currentUrl = ref.watch(appRouterCurrentUrl);
+
                     return IconButton(
                       padding: const EdgeInsets.only(right: 4),
                       constraints: const BoxConstraints(),
@@ -43,11 +45,11 @@ class DesktopPlayerBar extends StatelessWidget {
                         AdwaitaIcons.music_queue,
                         size: 20.0,
                       ),
-                      color: state.currentUrl == "/queue"
+                      color: currentUrl == "/queue"
                           ? Theme.of(context).colorScheme.primary
                           : Colors.white,
                       onPressed: () async {
-                        if (state.currentUrl == "/queue") {
+                        if (currentUrl == "/queue") {
                           GoRouter.of(context).pop();
                           while (GoRouter.of(context)
                                   .location

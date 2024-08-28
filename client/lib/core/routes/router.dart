@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:melodink_client/core/routes/cubit.dart';
+import 'package:melodink_client/core/routes/provider.dart';
 import 'package:melodink_client/core/routes/routes.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
@@ -11,7 +11,6 @@ import 'package:melodink_client/features/home/presentation/widgets/desktop_sideb
 import 'package:melodink_client/features/home/presentation/widgets/mobile_navbar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/desktop_player_bar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/mobile_current_track.dart';
-import 'package:melodink_client/injection_container.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -24,11 +23,13 @@ final GlobalKey<NavigatorState> _shellNavigatorKey =
 class GoRouterObserver extends NavigatorObserver {
   GoRouter? router;
 
-  final RouterCubit routerCubit = sl();
+  GoRouterObserver({required this.setCurrentUrl});
 
   setRouter(GoRouter router) {
     this.router = router;
   }
+
+  final void Function(String? url) setCurrentUrl;
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
@@ -36,7 +37,7 @@ class GoRouterObserver extends NavigatorObserver {
     if (router == null) {
       return;
     }
-    routerCubit.setCurrentUrl(router.location);
+    setCurrentUrl(router.location);
   }
 
   @override
@@ -45,7 +46,7 @@ class GoRouterObserver extends NavigatorObserver {
     if (router == null) {
       return;
     }
-    routerCubit.setCurrentUrl(router.location);
+    setCurrentUrl(router.location);
   }
 
   @override
@@ -54,7 +55,7 @@ class GoRouterObserver extends NavigatorObserver {
     if (router == null) {
       return;
     }
-    routerCubit.setCurrentUrl(router.location);
+    setCurrentUrl(router.location);
   }
 
   @override
@@ -63,14 +64,20 @@ class GoRouterObserver extends NavigatorObserver {
     if (router == null) {
       return;
     }
-    routerCubit.setCurrentUrl(router.location);
+    setCurrentUrl(router.location);
   }
 }
 
 final appRouterProvider = Provider((ref) {
-  final routeObserver1 = GoRouterObserver();
-  final routeObserver2 = GoRouterObserver();
-  final routeObserver3 = GoRouterObserver();
+  setCurrentUrl(String? url) {
+    Future(() {
+      ref.read(appRouterCurrentUrl.notifier).state = url;
+    });
+  }
+
+  final routeObserver1 = GoRouterObserver(setCurrentUrl: setCurrentUrl);
+  final routeObserver2 = GoRouterObserver(setCurrentUrl: setCurrentUrl);
+  final routeObserver3 = GoRouterObserver(setCurrentUrl: setCurrentUrl);
 
   final router = GoRouter(
     initialLocation: "/",

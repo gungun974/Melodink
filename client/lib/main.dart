@@ -2,9 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:melodink_client/core/api/api.dart';
-import 'package:melodink_client/core/routes/cubit.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
 import 'package:window_manager/window_manager.dart';
@@ -46,9 +44,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (BuildContext contex) => di.sl<RouterCubit>(),
-      child: Consumer(builder: (contex, ref, _) {
+    return Consumer(
+      builder: (contex, ref, _) {
         final appRouter = ref.watch(appRouterProvider);
 
         ref.listen(isUserAuthenticatedProvider, (prev, next) {
@@ -77,7 +74,7 @@ class MyApp extends StatelessWidget {
           ),
           routerConfig: appRouter,
         );
-      }),
+      },
     );
   }
 }
