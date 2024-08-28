@@ -3,7 +3,7 @@
 
   inputs = {
     # Nixpkgs
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs?rev=c1ce56e9c606b4cd31f0950768911b1171b8db51";
 
     flake-utils.url = "github:numtide/flake-utils";
 
@@ -16,10 +16,6 @@
       url = "github:tadfisher/android-nixpkgs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    flutter-nix = {
-      url = "github:maximoffua/flutter.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs = {
@@ -27,7 +23,6 @@
     gitignore,
     flake-utils,
     android-nixpkgs,
-    flutter-nix,
     ...
   }:
     flake-utils.lib.eachDefaultSystem (system: let
@@ -38,7 +33,6 @@
           allowUnfree = true;
         };
       };
-      flutter-sdk = flutter-nix.packages.${system};
       sdk = android-nixpkgs.sdk.${system} (sdkPkgs:
         with sdkPkgs; [
           build-tools-30-0-3
@@ -91,7 +85,7 @@
           '';
         };
 
-        melodink-client = pkgs.flutter.buildFlutterApplication rec {
+        melodink-client = pkgs.flutter324.buildFlutterApplication rec {
           pname = "melodink-client";
           version = "1.0.0";
 
@@ -136,8 +130,8 @@
         ANDROID_SDK_ROOT = "${sdk}/share/android-sdk";
         ANDROID_HOME = "${sdk}/share/android-sdk";
         CHROME_EXECUTABLE = "chromium";
-        FLUTTER_SDK = "${pkgs.flutter}";
-        GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
+        FLUTTER_SDK = "${pkgs.flutter324}";
+        GRADLE_OPTS = "-Dorg.gradle.project.android.aapt1FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
 
         GOROOT = "${pkgs.go_1_22}/share/go";
 
@@ -149,8 +143,7 @@
           (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo122Module;})
           pkgs.go_1_22
           pkgs.air
-          flutter-sdk.flutter
-          flutter-sdk.dart
+          pkgs.flutter324
           pinnedJDK
           sdk
           (pkgs.go-migrate.overrideAttrs (finalAttrs: previousAttrs: {
