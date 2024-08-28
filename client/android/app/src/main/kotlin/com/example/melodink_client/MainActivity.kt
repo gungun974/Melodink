@@ -1,4 +1,4 @@
-package com.example.melodink_client
+package fr.gungun974.melodink
 
 import com.ryanheise.audioservice.AudioServiceActivity;
 
