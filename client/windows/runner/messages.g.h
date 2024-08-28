@@ -160,6 +160,7 @@ class MelodinkHostPlayerApi {
     const flutter::EncodableList& next_urls) = 0;
   virtual std::optional<FlutterError> SetLoopMode(const MelodinkHostPlayerLoopMode& loop) = 0;
   virtual ErrorOr<PlayerStatus> FetchStatus() = 0;
+  virtual std::optional<FlutterError> SetAuthToken(const std::string& auth_token) = 0;
 
   // The codec used by MelodinkHostPlayerApi.
   static const flutter::StandardMessageCodec& GetCodec();

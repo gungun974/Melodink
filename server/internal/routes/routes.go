@@ -37,6 +37,10 @@ func MainRouter(container internal.Container) http.Handler {
 	router.Mount("/album", AlbumRouter(container))
 	router.Mount("/artist", ArtistRouter(container))
 
+	router.Get("/check", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("IamAMelodinkCompatibleServer"))
+	})
+
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hoi"))
 	})

@@ -150,6 +150,9 @@ public:
       return;
     };
 
+    mpv_set_option_string(mpv, "http-header-fields",
+                          "User-Agent: Melodink-MPV");
+
     mpv_observe_property(mpv, 0, "playlist-playing-pos", MPV_FORMAT_INT64);
     mpv_observe_property(mpv, 0, "pause", MPV_FORMAT_FLAG);
     mpv_observe_property(mpv, 0, "idle-active", MPV_FORMAT_FLAG);
@@ -429,5 +432,16 @@ public:
 
   PigeonMelodinkMelodinkHostPlayerProcessingState get_current_player_state() {
     return state;
+  }
+
+  void set_auth_token(const char *auth_token) {
+    char auth_header[1024];
+    snprintf(auth_header, sizeof(auth_header), "Cookie: %s", auth_token);
+
+    char headers[2048];
+    snprintf(headers, sizeof(headers), "%s\nUser-Agent: Melodink-MPV",
+             auth_header);
+
+    mpv_set_option_string(mpv, "http-header-fields", headers);
   }
 };

@@ -314,6 +314,25 @@ void SetUpPGNMelodinkHostPlayerApiWithSuffix(id<FlutterBinaryMessenger> binaryMe
       [channel setMessageHandler:nil];
     }
   }
+  {
+    FlutterBasicMessageChannel *channel =
+      [[FlutterBasicMessageChannel alloc]
+        initWithName:[NSString stringWithFormat:@"%@%@", @"dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApi.setAuthToken", messageChannelSuffix]
+        binaryMessenger:binaryMessenger
+        codec:PGNGetMessagesCodec()];
+    if (api) {
+      NSCAssert([api respondsToSelector:@selector(setAuthTokenAuthToken:error:)], @"PGNMelodinkHostPlayerApi api (%@) doesn't respond to @selector(setAuthTokenAuthToken:error:)", api);
+      [channel setMessageHandler:^(id _Nullable message, FlutterReply callback) {
+        NSArray<id> *args = message;
+        NSString *arg_authToken = GetNullableObjectAtIndex(args, 0);
+        FlutterError *error;
+        [api setAuthTokenAuthToken:arg_authToken error:&error];
+        callback(wrapResult(nil, error));
+      }];
+    } else {
+      [channel setMessageHandler:nil];
+    }
+  }
 }
 @interface PGNMelodinkHostPlayerApiInfo ()
 @property(nonatomic, strong) NSObject<FlutterBinaryMessenger> *binaryMessenger;

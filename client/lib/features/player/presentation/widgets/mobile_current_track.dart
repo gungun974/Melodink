@@ -1,8 +1,8 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:audio_service/audio_service.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/tiny_player_seeker.dart';
 import 'package:melodink_client/injection_container.dart';
@@ -44,7 +44,7 @@ class _MobileCurrentTrackInfoState extends State<MobileCurrentTrackInfo> {
                       IntrinsicHeight(
                         child: Row(
                           children: [
-                            CachedNetworkImage(
+                            AuthCachedNetworkImage(
                               height: 40,
                               imageUrl: currentTrack.getCoverUrl(),
                               placeholder: (context, url) => Image.asset(

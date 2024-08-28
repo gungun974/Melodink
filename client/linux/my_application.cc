@@ -124,6 +124,15 @@ handle_fetch_status(gpointer user_data) {
           app->player->get_current_loop_mode()));
 }
 
+static PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse *
+handle_set_auth_token(const gchar *auth_token, gpointer user_data) {
+  MyApplication *app = MY_APPLICATION(user_data);
+
+  app->player->set_auth_token(auth_token);
+
+  return pigeon_melodink_melodink_host_player_api_set_auth_token_response_new();
+}
+
 static PigeonMelodinkMelodinkHostPlayerApiVTable
     melodink_host_player_api_vtable = {
         .play = handle_play,
@@ -134,6 +143,7 @@ static PigeonMelodinkMelodinkHostPlayerApiVTable
         .set_audios = handle_set_audios,
         .set_loop_mode = handle_set_loop_mode,
         .fetch_status = handle_fetch_status,
+        .set_auth_token = handle_set_auth_token,
 };
 
 // Implements GApplication::activate.

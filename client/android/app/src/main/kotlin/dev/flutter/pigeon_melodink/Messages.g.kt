@@ -163,6 +163,7 @@ interface MelodinkHostPlayerApi {
   fun setAudios(previousUrls: List<String>, nextUrls: List<String>)
   fun setLoopMode(loop: MelodinkHostPlayerLoopMode)
   fun fetchStatus(): PlayerStatus
+  fun setAuthToken(authToken: String)
 
   companion object {
     /** The codec used by MelodinkHostPlayerApi. */
@@ -298,6 +299,24 @@ interface MelodinkHostPlayerApi {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
               listOf(api.fetchStatus())
+            } catch (exception: Throwable) {
+              wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApi.setAuthToken$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val authTokenArg = args[0] as String
+            val wrapped: List<Any?> = try {
+              api.setAuthToken(authTokenArg)
+              listOf(null)
             } catch (exception: Throwable) {
               wrapError(exception)
             }

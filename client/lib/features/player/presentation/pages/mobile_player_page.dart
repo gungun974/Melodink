@@ -1,8 +1,8 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
@@ -73,7 +73,7 @@ class _MobilePlayerPageState extends State<MobilePlayerPage> {
 
                           album = currentTrack.album;
 
-                          image = CachedNetworkImage(
+                          image = AuthCachedNetworkImage(
                             imageUrl: currentTrack.getCoverUrl(),
                             placeholder: (context, url) => Image.asset(
                               "assets/melodink_track_cover_not_found.png",

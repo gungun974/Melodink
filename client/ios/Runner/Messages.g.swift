@@ -194,6 +194,7 @@ protocol MelodinkHostPlayerApi {
   func setAudios(previousUrls: [String], nextUrls: [String]) throws
   func setLoopMode(loop: MelodinkHostPlayerLoopMode) throws
   func fetchStatus() throws -> PlayerStatus
+  func setAuthToken(authToken: String) throws
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -312,6 +313,21 @@ class MelodinkHostPlayerApiSetup {
       }
     } else {
       fetchStatusChannel.setMessageHandler(nil)
+    }
+    let setAuthTokenChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApi.setAuthToken\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      setAuthTokenChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let authTokenArg = args[0] as! String
+        do {
+          try api.setAuthToken(authToken: authTokenArg)
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      setAuthTokenChannel.setMessageHandler(nil)
     }
   }
 }

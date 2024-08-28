@@ -76,6 +76,7 @@ NSObject<FlutterMessageCodec> *PGNGetMessagesCodec(void);
 - (void)setLoopModeLoop:(PGNMelodinkHostPlayerLoopMode)loop error:(FlutterError *_Nullable *_Nonnull)error;
 /// @return `nil` only when `error != nil`.
 - (nullable PGNPlayerStatus *)fetchStatusWithError:(FlutterError *_Nullable *_Nonnull)error;
+- (void)setAuthTokenAuthToken:(NSString *)authToken error:(FlutterError *_Nullable *_Nonnull)error;
 @end
 
 extern void SetUpPGNMelodinkHostPlayerApi(id<FlutterBinaryMessenger> binaryMessenger, NSObject<PGNMelodinkHostPlayerApi> *_Nullable api);

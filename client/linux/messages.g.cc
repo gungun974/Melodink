@@ -483,6 +483,43 @@ PigeonMelodinkMelodinkHostPlayerApiFetchStatusResponse* pigeon_melodink_melodink
   return self;
 }
 
+struct _PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse {
+  GObject parent_instance;
+
+  FlValue* value;
+};
+
+G_DEFINE_TYPE(PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse, pigeon_melodink_melodink_host_player_api_set_auth_token_response, G_TYPE_OBJECT)
+
+static void pigeon_melodink_melodink_host_player_api_set_auth_token_response_dispose(GObject* object) {
+  PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse* self = PIGEON_MELODINK_MELODINK_HOST_PLAYER_API_SET_AUTH_TOKEN_RESPONSE(object);
+  g_clear_pointer(&self->value, fl_value_unref);
+  G_OBJECT_CLASS(pigeon_melodink_melodink_host_player_api_set_auth_token_response_parent_class)->dispose(object);
+}
+
+static void pigeon_melodink_melodink_host_player_api_set_auth_token_response_init(PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse* self) {
+}
+
+static void pigeon_melodink_melodink_host_player_api_set_auth_token_response_class_init(PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponseClass* klass) {
+  G_OBJECT_CLASS(klass)->dispose = pigeon_melodink_melodink_host_player_api_set_auth_token_response_dispose;
+}
+
+PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse* pigeon_melodink_melodink_host_player_api_set_auth_token_response_new() {
+  PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse* self = PIGEON_MELODINK_MELODINK_HOST_PLAYER_API_SET_AUTH_TOKEN_RESPONSE(g_object_new(pigeon_melodink_melodink_host_player_api_set_auth_token_response_get_type(), nullptr));
+  self->value = fl_value_new_list();
+  fl_value_append_take(self->value, fl_value_new_null());
+  return self;
+}
+
+PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse* pigeon_melodink_melodink_host_player_api_set_auth_token_response_new_error(const gchar* code, const gchar* message, FlValue* details) {
+  PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse* self = PIGEON_MELODINK_MELODINK_HOST_PLAYER_API_SET_AUTH_TOKEN_RESPONSE(g_object_new(pigeon_melodink_melodink_host_player_api_set_auth_token_response_get_type(), nullptr));
+  self->value = fl_value_new_list();
+  fl_value_append_take(self->value, fl_value_new_string(code));
+  fl_value_append_take(self->value, fl_value_new_string(message != nullptr ? message : ""));
+  fl_value_append_take(self->value, details != nullptr ? fl_value_ref(details) : fl_value_new_null());
+  return self;
+}
+
 G_DECLARE_FINAL_TYPE(PigeonMelodinkMelodinkHostPlayerApi, pigeon_melodink_melodink_host_player_api, PIGEON_MELODINK, MELODINK_HOST_PLAYER_API, GObject)
 
 struct _PigeonMelodinkMelodinkHostPlayerApi {
@@ -679,6 +716,27 @@ static void pigeon_melodink_melodink_host_player_api_fetch_status_cb(FlBasicMess
   }
 }
 
+static void pigeon_melodink_melodink_host_player_api_set_auth_token_cb(FlBasicMessageChannel* channel, FlValue* message_, FlBasicMessageChannelResponseHandle* response_handle, gpointer user_data) {
+  PigeonMelodinkMelodinkHostPlayerApi* self = PIGEON_MELODINK_MELODINK_HOST_PLAYER_API(user_data);
+
+  if (self->vtable == nullptr || self->vtable->set_auth_token == nullptr) {
+    return;
+  }
+
+  FlValue* value0 = fl_value_get_list_value(message_, 0);
+  const gchar* auth_token = fl_value_get_string(value0);
+  g_autoptr(PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse) response = self->vtable->set_auth_token(auth_token, self->user_data);
+  if (response == nullptr) {
+    g_warning("No response returned to %s.%s", "MelodinkHostPlayerApi", "setAuthToken");
+    return;
+  }
+
+  g_autoptr(GError) error = NULL;
+  if (!fl_basic_message_channel_respond(channel, response_handle, response->value, &error)) {
+    g_warning("Failed to send response to %s.%s: %s", "MelodinkHostPlayerApi", "setAuthToken", error->message);
+  }
+}
+
 void pigeon_melodink_melodink_host_player_api_set_method_handlers(FlBinaryMessenger* messenger, const gchar* suffix, const PigeonMelodinkMelodinkHostPlayerApiVTable* vtable, gpointer user_data, GDestroyNotify user_data_free_func) {
   g_autofree gchar* dot_suffix = suffix != nullptr ? g_strdup_printf(".%s", suffix) : g_strdup("");
   g_autoptr(PigeonMelodinkMelodinkHostPlayerApi) api_data = pigeon_melodink_melodink_host_player_api_new(vtable, user_data, user_data_free_func);
@@ -708,6 +766,9 @@ void pigeon_melodink_melodink_host_player_api_set_method_handlers(FlBinaryMessen
   g_autofree gchar* fetch_status_channel_name = g_strdup_printf("dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApi.fetchStatus%s", dot_suffix);
   g_autoptr(FlBasicMessageChannel) fetch_status_channel = fl_basic_message_channel_new(messenger, fetch_status_channel_name, FL_MESSAGE_CODEC(codec));
   fl_basic_message_channel_set_message_handler(fetch_status_channel, pigeon_melodink_melodink_host_player_api_fetch_status_cb, g_object_ref(api_data), g_object_unref);
+  g_autofree gchar* set_auth_token_channel_name = g_strdup_printf("dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApi.setAuthToken%s", dot_suffix);
+  g_autoptr(FlBasicMessageChannel) set_auth_token_channel = fl_basic_message_channel_new(messenger, set_auth_token_channel_name, FL_MESSAGE_CODEC(codec));
+  fl_basic_message_channel_set_message_handler(set_auth_token_channel, pigeon_melodink_melodink_host_player_api_set_auth_token_cb, g_object_ref(api_data), g_object_unref);
 }
 
 void pigeon_melodink_melodink_host_player_api_clear_method_handlers(FlBinaryMessenger* messenger, const gchar* suffix) {
@@ -738,6 +799,9 @@ void pigeon_melodink_melodink_host_player_api_clear_method_handlers(FlBinaryMess
   g_autofree gchar* fetch_status_channel_name = g_strdup_printf("dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApi.fetchStatus%s", dot_suffix);
   g_autoptr(FlBasicMessageChannel) fetch_status_channel = fl_basic_message_channel_new(messenger, fetch_status_channel_name, FL_MESSAGE_CODEC(codec));
   fl_basic_message_channel_set_message_handler(fetch_status_channel, nullptr, nullptr, nullptr);
+  g_autofree gchar* set_auth_token_channel_name = g_strdup_printf("dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApi.setAuthToken%s", dot_suffix);
+  g_autoptr(FlBasicMessageChannel) set_auth_token_channel = fl_basic_message_channel_new(messenger, set_auth_token_channel_name, FL_MESSAGE_CODEC(codec));
+  fl_basic_message_channel_set_message_handler(set_auth_token_channel, nullptr, nullptr, nullptr);
 }
 
 struct _PigeonMelodinkMelodinkHostPlayerApiInfo {

@@ -312,6 +312,29 @@ PigeonMelodinkMelodinkHostPlayerApiFetchStatusResponse* pigeon_melodink_melodink
  */
 PigeonMelodinkMelodinkHostPlayerApiFetchStatusResponse* pigeon_melodink_melodink_host_player_api_fetch_status_response_new_error(const gchar* code, const gchar* message, FlValue* details);
 
+G_DECLARE_FINAL_TYPE(PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse, pigeon_melodink_melodink_host_player_api_set_auth_token_response, PIGEON_MELODINK, MELODINK_HOST_PLAYER_API_SET_AUTH_TOKEN_RESPONSE, GObject)
+
+/**
+ * pigeon_melodink_melodink_host_player_api_set_auth_token_response_new:
+ *
+ * Creates a new response to MelodinkHostPlayerApi.setAuthToken.
+ *
+ * Returns: a new #PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse
+ */
+PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse* pigeon_melodink_melodink_host_player_api_set_auth_token_response_new();
+
+/**
+ * pigeon_melodink_melodink_host_player_api_set_auth_token_response_new_error:
+ * @code: error code.
+ * @message: error message.
+ * @details: (allow-none): error details or %NULL.
+ *
+ * Creates a new error response to MelodinkHostPlayerApi.setAuthToken.
+ *
+ * Returns: a new #PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse
+ */
+PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse* pigeon_melodink_melodink_host_player_api_set_auth_token_response_new_error(const gchar* code, const gchar* message, FlValue* details);
+
 /**
  * PigeonMelodinkMelodinkHostPlayerApiVTable:
  *
@@ -326,6 +349,7 @@ typedef struct {
   PigeonMelodinkMelodinkHostPlayerApiSetAudiosResponse* (*set_audios)(FlValue* previous_urls, FlValue* next_urls, gpointer user_data);
   PigeonMelodinkMelodinkHostPlayerApiSetLoopModeResponse* (*set_loop_mode)(PigeonMelodinkMelodinkHostPlayerLoopMode loop, gpointer user_data);
   PigeonMelodinkMelodinkHostPlayerApiFetchStatusResponse* (*fetch_status)(gpointer user_data);
+  PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse* (*set_auth_token)(const gchar* auth_token, gpointer user_data);
 } PigeonMelodinkMelodinkHostPlayerApiVTable;
 
 /**

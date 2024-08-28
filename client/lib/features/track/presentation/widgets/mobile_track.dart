@@ -1,6 +1,6 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
 class MobileTrack extends StatelessWidget {
@@ -32,7 +32,7 @@ class MobileTrack extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      CachedNetworkImage(
+                      AuthCachedNetworkImage(
                         imageUrl: track.getCoverUrl(),
                         placeholder: (context, url) => Image.asset(
                           "assets/melodink_track_cover_not_found.png",

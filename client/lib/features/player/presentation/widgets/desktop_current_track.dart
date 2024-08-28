@@ -1,5 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/injection_container.dart';
 
@@ -30,7 +30,7 @@ class _DesktopCurrentTrackState extends State<DesktopCurrentTrack> {
             children: [
               AspectRatio(
                 aspectRatio: 1.0,
-                child: CachedNetworkImage(
+                child: AuthCachedNetworkImage(
                   imageUrl: currentTrack.getCoverUrl(),
                   placeholder: (context, url) => Image.asset(
                     "assets/melodink_track_cover_not_found.png",

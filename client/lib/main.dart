@@ -3,9 +3,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/routes/cubit.dart';
 import 'package:melodink_client/core/routes/router.dart';
+import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
 import 'package:window_manager/window_manager.dart';
+
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'injection_container.dart' as di;
 
@@ -28,7 +32,13 @@ void main() async {
     windowManager.waitUntilReadyToShow(windowOptions);
   }
 
-  runApp(const MyApp());
+  await AppApi().setupCookieJar();
+
+  await AppApi().configureDio();
+
+  runApp(const ProviderScope(
+    child: MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -38,23 +48,36 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (BuildContext contex) => di.sl<RouterCubit>(),
-      child: MaterialApp.router(
-        title: 'Melodink Client',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: false,
-          brightness: Brightness.dark,
-          appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
-          primaryColor: Colors.black,
-          iconTheme: const IconThemeData().copyWith(color: Colors.white),
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color.fromRGBO(196, 126, 208, 1),
+      child: Consumer(builder: (contex, ref, _) {
+        final appRouter = ref.watch(appRouterProvider);
+
+        ref.listen(isUserAuthenticatedProvider, (prev, next) {
+          final prevValue = prev?.valueOrNull ?? false;
+          final nextValue = next.valueOrNull ?? false;
+
+          if (prevValue && !nextValue) {
+            appRouter.refresh();
+          }
+        });
+
+        return MaterialApp.router(
+          title: 'Melodink Client',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            useMaterial3: false,
             brightness: Brightness.dark,
+            appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
+            primaryColor: Colors.black,
+            iconTheme: const IconThemeData().copyWith(color: Colors.white),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color.fromRGBO(196, 126, 208, 1),
+              brightness: Brightness.dark,
+            ),
+            fontFamily: "Roboto",
           ),
-          fontFamily: "Roboto",
-        ),
-        routerConfig: appRouter,
-      ),
+          routerConfig: appRouter,
+        );
+      }),
     );
   }
 }

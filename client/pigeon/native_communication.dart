@@ -83,6 +83,8 @@ abstract class MelodinkHostPlayerApi {
   void setLoopMode(MelodinkHostPlayerLoopMode loop);
 
   PlayerStatus fetchStatus();
+
+  void setAuthToken(String authToken);
 }
 
 @FlutterApi()

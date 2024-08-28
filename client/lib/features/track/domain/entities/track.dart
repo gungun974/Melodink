@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:melodink_client/core/api/api.dart';
 
 class MinimalTrack extends Equatable {
   final int id;
@@ -56,10 +57,10 @@ class MinimalTrack extends Equatable {
       ];
 
   String getUrl() {
-    return "http://127.0.0.1:8000/track/$id/audio";
+    return "${AppApi().getServerUrl()}track/$id/audio";
   }
 
   String getCoverUrl() {
-    return "http://127.0.0.1:8000/track/$id/cover";
+    return "${AppApi().getServerUrl()}track/$id/cover";
   }
 }

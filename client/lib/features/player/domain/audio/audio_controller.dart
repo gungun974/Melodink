@@ -1,4 +1,5 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/messages.g.dart';
 import 'package:mutex/mutex.dart';
@@ -306,6 +307,10 @@ class AudioController extends BaseAudioHandler
 
   Future<void> _updatePlayerTracks() async {
     await playerTracksMutex.protect(() async {
+      await api.setAuthToken(
+        await AppApi().generateCookieHeader(),
+      );
+
       await api.setAudios(
         _previousTracks.map((track) => track.getUrl()).toList(),
         [..._queueTracks, ..._nextTracks]

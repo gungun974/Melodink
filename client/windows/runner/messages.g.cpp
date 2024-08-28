@@ -382,6 +382,34 @@ void MelodinkHostPlayerApi::SetUp(
       channel.SetMessageHandler(nullptr);
     }
   }
+  {
+    BasicMessageChannel<> channel(binary_messenger, "dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApi.setAuthToken" + prepended_suffix, &GetCodec());
+    if (api != nullptr) {
+      channel.SetMessageHandler([api](const EncodableValue& message, const flutter::MessageReply<EncodableValue>& reply) {
+        try {
+          const auto& args = std::get<EncodableList>(message);
+          const auto& encodable_auth_token_arg = args.at(0);
+          if (encodable_auth_token_arg.IsNull()) {
+            reply(WrapError("auth_token_arg unexpectedly null."));
+            return;
+          }
+          const auto& auth_token_arg = std::get<std::string>(encodable_auth_token_arg);
+          std::optional<FlutterError> output = api->SetAuthToken(auth_token_arg);
+          if (output.has_value()) {
+            reply(WrapError(output.value()));
+            return;
+          }
+          EncodableList wrapped;
+          wrapped.push_back(EncodableValue());
+          reply(EncodableValue(std::move(wrapped)));
+        } catch (const std::exception& exception) {
+          reply(WrapError(exception.what()));
+        }
+      });
+    } else {
+      channel.SetMessageHandler(nullptr);
+    }
+  }
 }
 
 EncodableValue MelodinkHostPlayerApi::WrapError(std::string_view error_message) {
