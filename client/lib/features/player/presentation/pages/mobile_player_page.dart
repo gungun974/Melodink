@@ -1,5 +1,6 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
@@ -7,22 +8,16 @@ import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_controls.dart';
-import 'package:melodink_client/injection_container.dart';
 
-class MobilePlayerPage extends StatefulWidget {
+class MobilePlayerPage extends ConsumerWidget {
   const MobilePlayerPage({
     super.key,
   });
 
   @override
-  State<MobilePlayerPage> createState() => _MobilePlayerPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final audioController = ref.watch(audioControllerProvider);
 
-class _MobilePlayerPageState extends State<MobilePlayerPage> {
-  final AudioController audioController = sl();
-
-  @override
-  Widget build(BuildContext context) {
     return Stack(
       children: [
         const GradientBackground(),

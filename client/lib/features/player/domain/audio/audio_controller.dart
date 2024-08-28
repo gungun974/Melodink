@@ -1,24 +1,27 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/messages.g.dart';
 import 'package:mutex/mutex.dart';
 import 'package:rxdart/rxdart.dart';
 
+late final AudioController _audioController;
+
 Future<AudioController> initAudioService() async {
-  final audioService = await AudioService.init(
+  _audioController = await AudioService.init(
     builder: () => AudioController(),
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.gungun974.melodink.audio',
+      androidNotificationChannelId: 'fr.gungun974.melodink.audio',
       androidNotificationChannelName: 'Melodink Audio Service',
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,
     ),
   );
 
-  MelodinkHostPlayerApiInfo.setUp(audioService);
+  MelodinkHostPlayerApiInfo.setUp(_audioController);
 
-  return audioService;
+  return _audioController;
 }
 
 class AudioController extends BaseAudioHandler
@@ -413,3 +416,5 @@ class AudioController extends BaseAudioHandler
     currentTrack.add(_previousTracks.lastOrNull);
   }
 }
+
+final audioControllerProvider = Provider((ref) => _audioController);

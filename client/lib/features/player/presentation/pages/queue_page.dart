@@ -1,26 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_queue_controls.dart';
 import 'package:melodink_client/features/player/presentation/widgets/queue_tracks_panel.dart';
-import 'package:melodink_client/injection_container.dart';
 
-class QueuePage extends StatefulWidget {
+class QueuePage extends ConsumerWidget {
   const QueuePage({
     super.key,
   });
 
   @override
-  State<QueuePage> createState() => _QueuePageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final audioController = ref.watch(audioControllerProvider);
 
-class _QueuePageState extends State<QueuePage> {
-  final AudioController audioController = sl();
-
-  @override
-  Widget build(BuildContext context) {
     return AppScreenTypeLayoutBuilder(builder: (context, size) {
       return Stack(
         children: [

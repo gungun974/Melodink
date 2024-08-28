@@ -1,10 +1,10 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/injection_container.dart';
 
-class PlayerControls extends StatefulWidget {
+class PlayerControls extends ConsumerWidget {
   final bool largeControlsButton;
 
   const PlayerControls({
@@ -13,16 +13,11 @@ class PlayerControls extends StatefulWidget {
   });
 
   @override
-  State<PlayerControls> createState() => _PlayerControlsState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final audioController = ref.watch(audioControllerProvider);
 
-class _PlayerControlsState extends State<PlayerControls> {
-  final AudioController audioController = sl();
-
-  @override
-  Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: widget.largeControlsButton
+      mainAxisAlignment: largeControlsButton
           ? MainAxisAlignment.spaceBetween
           : MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -39,7 +34,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                 color: snapshot.data?.shuffleMode == AudioServiceShuffleMode.all
                     ? Theme.of(context).colorScheme.primary
                     : Colors.white,
-                iconSize: widget.largeControlsButton ? 24.0 : 20.0,
+                iconSize: largeControlsButton ? 24.0 : 20.0,
                 onPressed: () async {
                   await audioController.toogleShufle();
                 },
@@ -50,7 +45,7 @@ class _PlayerControlsState extends State<PlayerControls> {
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
           icon: const AdwaitaIcon(AdwaitaIcons.media_skip_backward),
-          iconSize: widget.largeControlsButton ? 28.0 : 20.0,
+          iconSize: largeControlsButton ? 28.0 : 20.0,
           onPressed: () async {
             await audioController.skipToPrevious();
           },
@@ -66,7 +61,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                 icon: isPlaying
                     ? const AdwaitaIcon(AdwaitaIcons.media_playback_pause)
                     : const AdwaitaIcon(AdwaitaIcons.media_playback_start),
-                iconSize: widget.largeControlsButton ? 52.0 : 36.0,
+                iconSize: largeControlsButton ? 52.0 : 36.0,
                 onPressed: () async {
                   if (isPlaying) {
                     await audioController.pause();
@@ -81,7 +76,7 @@ class _PlayerControlsState extends State<PlayerControls> {
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
           icon: const AdwaitaIcon(AdwaitaIcons.media_skip_forward),
-          iconSize: widget.largeControlsButton ? 28.0 : 20.0,
+          iconSize: largeControlsButton ? 28.0 : 20.0,
           onPressed: () async {
             await audioController.skipToNext();
           },
@@ -102,7 +97,7 @@ class _PlayerControlsState extends State<PlayerControls> {
                   : const AdwaitaIcon(
                       AdwaitaIcons.media_playlist_repeat,
                     ),
-              iconSize: widget.largeControlsButton ? 24.0 : 20.0,
+              iconSize: largeControlsButton ? 24.0 : 20.0,
               color: repeatMode != AudioServiceRepeatMode.none
                   ? Theme.of(context).colorScheme.primary
                   : Colors.white,

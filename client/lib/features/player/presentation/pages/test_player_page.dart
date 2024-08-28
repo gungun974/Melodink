@@ -1,22 +1,17 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
-import 'package:melodink_client/injection_container.dart';
 
-class TestPlayerPage extends StatefulWidget {
+class TestPlayerPage extends ConsumerWidget {
   const TestPlayerPage({super.key});
 
   @override
-  State<TestPlayerPage> createState() => _TestPlayerPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final audioController = ref.watch(audioControllerProvider);
 
-class _TestPlayerPageState extends State<TestPlayerPage> {
-  final AudioController audioController = sl();
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Column(

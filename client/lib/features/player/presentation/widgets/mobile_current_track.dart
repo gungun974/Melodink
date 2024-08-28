@@ -1,24 +1,19 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/tiny_player_seeker.dart';
-import 'package:melodink_client/injection_container.dart';
 
-class MobileCurrentTrackInfo extends StatefulWidget {
+class MobileCurrentTrackInfo extends ConsumerWidget {
   const MobileCurrentTrackInfo({super.key});
 
   @override
-  State<MobileCurrentTrackInfo> createState() => _MobileCurrentTrackInfoState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final audioController = ref.watch(audioControllerProvider);
 
-class _MobileCurrentTrackInfoState extends State<MobileCurrentTrackInfo> {
-  final AudioController audioController = sl();
-
-  @override
-  Widget build(BuildContext context) {
     return StreamBuilder(
       stream: audioController.currentTrack.stream,
       builder: (context, snapshot) {

@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/injection_container.dart';
 
-class DesktopCurrentTrack extends StatefulWidget {
+class DesktopCurrentTrack extends ConsumerWidget {
   const DesktopCurrentTrack({super.key});
 
   @override
-  State<DesktopCurrentTrack> createState() => _DesktopCurrentTrackState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final audioController = ref.watch(audioControllerProvider);
 
-class _DesktopCurrentTrackState extends State<DesktopCurrentTrack> {
-  final AudioController audioController = sl();
-
-  @override
-  Widget build(BuildContext context) {
     return StreamBuilder(
       stream: audioController.currentTrack.stream,
       builder: (context, snapshot) {
