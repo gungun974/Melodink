@@ -73,6 +73,13 @@ class AudioController extends BaseAudioHandler
 
   @override
   Future<void> play() async {
+    if (playbackState.valueOrNull?.processingState ==
+        AudioProcessingState.idle) {
+      await skipToQueueItem(0);
+
+      await api.seek(0);
+    }
+
     await api.play();
 
     await _updatePlaybackState();
@@ -96,12 +103,18 @@ class AudioController extends BaseAudioHandler
   Future<void> seek(Duration position) async {
     await api.seek(position.inMilliseconds);
 
+    await api.play();
+
     await _updatePlaybackState();
   }
 
   @override
   Future<void> skipToPrevious() async {
-    await api.skipToPrevious();
+    if (_previousTracks.length == 1) {
+      await api.seek(0);
+    } else {
+      await api.skipToPrevious();
+    }
 
     await api.play();
 
@@ -358,17 +371,7 @@ class AudioController extends BaseAudioHandler
 
   @override
   Future<void> updateState(MelodinkHostPlayerProcessingState state) async {
-    playbackState.add(playbackState.value.copyWith(
-      processingState: const {
-        MelodinkHostPlayerProcessingState.idle: AudioProcessingState.idle,
-        MelodinkHostPlayerProcessingState.loading: AudioProcessingState.loading,
-        MelodinkHostPlayerProcessingState.buffering:
-            AudioProcessingState.buffering,
-        MelodinkHostPlayerProcessingState.ready: AudioProcessingState.ready,
-        MelodinkHostPlayerProcessingState.completed:
-            AudioProcessingState.completed,
-      }[state]!,
-    ));
+    await _updatePlaybackState();
   }
 
   Future<void> _updatePlaybackState() async {
@@ -393,8 +396,13 @@ class AudioController extends BaseAudioHandler
         MelodinkHostPlayerProcessingState.completed:
             AudioProcessingState.completed,
       }[status.state]!,
-      playing: status.playing,
-      updatePosition: Duration(milliseconds: status.positionMs),
+      playing: status.state == MelodinkHostPlayerProcessingState.idle
+          ? false
+          : status.playing,
+      updatePosition: status.state == MelodinkHostPlayerProcessingState.idle
+          ? currentTrack.valueOrNull?.duration ??
+              Duration(milliseconds: status.positionMs)
+          : Duration(milliseconds: status.positionMs),
       bufferedPosition: Duration(milliseconds: status.bufferedPositionMs),
       speed: 1.0,
       repeatMode: const {

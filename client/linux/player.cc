@@ -121,6 +121,14 @@ private:
                 PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_IDLE);
           }
         }
+
+        if (strcmp(prop->name, "eof-reached") == 0) {
+          int eof = has_eof_reached();
+          if (eof) {
+            set_player_state(
+                PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_IDLE);
+          }
+        }
       }
     }
   }
@@ -144,6 +152,8 @@ public:
     mpv_set_option_string(mpv, "prefetch-playlist", "yes");
     mpv_set_option_string(mpv, "merge-files", "yes");
 
+    mpv_set_option_string(mpv, "keep-open", "yes");
+
     if (mpv_initialize(mpv) < 0) {
       fprintf(stderr, "Could not initialize MPV context\n");
       exit(1);
@@ -156,6 +166,7 @@ public:
     mpv_observe_property(mpv, 0, "playlist-playing-pos", MPV_FORMAT_INT64);
     mpv_observe_property(mpv, 0, "pause", MPV_FORMAT_FLAG);
     mpv_observe_property(mpv, 0, "idle-active", MPV_FORMAT_FLAG);
+    mpv_observe_property(mpv, 0, "eof-reached", MPV_FORMAT_FLAG);
 
     event_thread = std::thread(&AudioPlayer::event_loop, this);
   }
@@ -386,6 +397,12 @@ public:
     int is_paused = 0;
     mpv_get_property(mpv, "pause", MPV_FORMAT_FLAG, &is_paused);
     return !is_paused;
+  }
+
+  bool has_eof_reached() {
+    int is_eof = 0;
+    mpv_get_property(mpv, "eof-reached", MPV_FORMAT_FLAG, &is_eof);
+    return is_eof;
   }
 
   void set_loop_mode(PigeonMelodinkMelodinkHostPlayerLoopMode loop) {

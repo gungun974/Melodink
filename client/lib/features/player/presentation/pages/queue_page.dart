@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart' hide ReorderableList;
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -145,15 +147,23 @@ class _QueueReordableManagerState extends State<QueueReordableManager> {
     });
   }
 
+  late final StreamSubscription updateStream;
+
   @override
   initState() {
     super.initState();
 
     syncRealCurrentTracks();
 
-    widget.audioController.currentTrack.listen((_) {
+    updateStream = widget.audioController.currentTrack.listen((_) {
       syncRealCurrentTracks();
     });
+  }
+
+  @override
+  dispose() {
+    updateStream.cancel();
+    super.dispose();
   }
 
   int _indexOfKey(Key key, List<QueueTrack> tracks) {
