@@ -154,6 +154,8 @@ public:
 
     mpv_set_option_string(mpv, "keep-open", "yes");
 
+    mpv_set_option_string(mpv, "idle", "yes");
+
     if (mpv_initialize(mpv) < 0) {
       fprintf(stderr, "Could not initialize MPV context\n");
       exit(1);
@@ -250,6 +252,11 @@ public:
     // Set current audio
 
     int current_index = this->get_current_track_pos();
+
+    if (current_index == -1) {
+      const char *clear_cmd[] = {"playlist-clear", NULL};
+      mpv_command(mpv, clear_cmd);
+    }
 
     this->get_track_url_at(current_index, result);
 
