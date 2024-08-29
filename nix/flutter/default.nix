@@ -10,6 +10,7 @@
         ./patches/deregister-pub-dependencies-artifact.patch
         ./patches/flutter-pub-dart-override.patch
         ./patches/set-flutter-gradle-cache.patch
+        ./patches/disable-auto-update.patch
       ];
     })
     .overrideAttrs (oldAttrs: {
