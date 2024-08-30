@@ -5,6 +5,8 @@ import 'package:melodink_client/features/auth/presentation/pages/login_page.dart
 import 'package:melodink_client/features/auth/presentation/pages/register_page.dart';
 import 'package:melodink_client/features/auth/presentation/pages/select_server_page.dart';
 import 'package:melodink_client/features/home/presentation/pages/home_page.dart';
+import 'package:melodink_client/features/library/presentation/pages/album_page.dart';
+import 'package:melodink_client/features/library/presentation/pages/albums_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/mobile_player_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/test_player_page.dart';
@@ -13,8 +15,33 @@ final List<RouteBase> appRoutesWithShell = [
   GoRoute(
     path: '/',
     name: "/",
-    builder: (BuildContext context, GoRouterState state) {
-      return const HomePage();
+    pageBuilder: (BuildContext context, GoRouterState state) {
+      return NoTransitionPage(
+        key: state.pageKey,
+        child: const HomePage(),
+      );
+    },
+  ),
+  GoRoute(
+    path: '/album',
+    name: "/album",
+    pageBuilder: (BuildContext context, GoRouterState state) {
+      return NoTransitionPage(
+        key: state.pageKey,
+        child: const AlbumsPage(),
+      );
+    },
+  ),
+  GoRoute(
+    path: '/album/:id',
+    name: "/album/:id",
+    pageBuilder: (BuildContext context, GoRouterState state) {
+      final id = state.pathParameters['id']!;
+
+      return NoTransitionPage(
+        key: state.pageKey,
+        child: AlbumPage(albumId: id),
+      );
     },
   ),
   GoRoute(

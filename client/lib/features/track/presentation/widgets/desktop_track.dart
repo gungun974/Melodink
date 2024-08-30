@@ -11,6 +11,9 @@ class DesktopTrack extends StatelessWidget {
   final int trackNumber;
   final bool displayDateAdded;
 
+  final bool displayImage;
+  final bool displayAlbum;
+
   final void Function(MinimalTrack track) playCallback;
 
   const DesktopTrack({
@@ -19,6 +22,8 @@ class DesktopTrack extends StatelessWidget {
     required this.trackNumber,
     required this.playCallback,
     this.displayDateAdded = false,
+    this.displayImage = true,
+    this.displayAlbum = true,
   });
 
   @override
@@ -52,18 +57,19 @@ class DesktopTrack extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      AuthCachedNetworkImage(
-                        imageUrl: track.getCoverUrl(),
-                        placeholder: (context, url) => Image.asset(
-                          "assets/melodink_track_cover_not_found.png",
-                        ),
-                        errorWidget: (context, url, error) {
-                          return Image.asset(
+                      if (displayImage)
+                        AuthCachedNetworkImage(
+                          imageUrl: track.getCoverUrl(),
+                          placeholder: (context, url) => Image.asset(
                             "assets/melodink_track_cover_not_found.png",
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 10),
+                          ),
+                          errorWidget: (context, url, error) {
+                            return Image.asset(
+                              "assets/melodink_track_cover_not_found.png",
+                            );
+                          },
+                        ),
+                      if (displayImage) const SizedBox(width: 10),
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,16 +97,17 @@ class DesktopTrack extends StatelessWidget {
                   ),
                 ),
               ),
-              Expanded(
-                child: Text(
-                  track.album,
-                  style: TextStyle(
-                    fontSize: 12,
-                    letterSpacing: 14 * 0.03,
-                    color: Colors.grey[350],
+              if (displayAlbum)
+                Expanded(
+                  child: Text(
+                    track.album,
+                    style: TextStyle(
+                      fontSize: 12,
+                      letterSpacing: 14 * 0.03,
+                      color: Colors.grey[350],
+                    ),
                   ),
                 ),
-              ),
               if (displayDateAdded)
                 SizedBox(
                   width: 96,

@@ -43,3 +43,20 @@ func (c *AlbumController) GetUserAlbum(
 
 	return c.albumUsecase.GetUserAlbumById(ctx, id)
 }
+
+func (c *AlbumController) GetUserAlbumCover(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.ValidateString(
+		rawId,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.albumUsecase.GetAlbumCover(ctx, id)
+}

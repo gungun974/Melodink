@@ -1,15 +1,19 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/routes/provider.dart';
 import 'package:melodink_client/features/player/presentation/widgets/desktop_current_track.dart';
 
-class DesktopSidebar extends StatelessWidget {
+class DesktopSidebar extends ConsumerWidget {
   const DesktopSidebar({super.key});
 
   static const width = 220.0;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUrl = ref.watch(appRouterCurrentUrl);
+
     return Container(
       width: width,
       color: const Color.fromRGBO(0, 0, 0, 0.08),
@@ -28,6 +32,7 @@ class DesktopSidebar extends StatelessWidget {
                     onTap: () {
                       GoRouter.of(context).go("/search");
                     },
+                    active: currentUrl == "/search",
                   ),
                   DesktopSidebarItem(
                     label: "Liked songs",
@@ -38,6 +43,7 @@ class DesktopSidebar extends StatelessWidget {
                     onTap: () {
                       GoRouter.of(context).go("/liked");
                     },
+                    active: currentUrl == "/liked",
                   ),
                   DesktopSidebarItem(
                     label: "Playlists",
@@ -46,8 +52,9 @@ class DesktopSidebar extends StatelessWidget {
                       size: 24.0,
                     ),
                     onTap: () {
-                      GoRouter.of(context).go("/playlists");
+                      GoRouter.of(context).go("/playlist");
                     },
+                    active: currentUrl == "/playlist",
                   ),
                   DesktopSidebarItem(
                     label: "Albums",
@@ -56,8 +63,9 @@ class DesktopSidebar extends StatelessWidget {
                       size: 24.0,
                     ),
                     onTap: () {
-                      GoRouter.of(context).go("/albums");
+                      GoRouter.of(context).go("/album");
                     },
+                    active: currentUrl == "/album",
                   ),
                   DesktopSidebarItem(
                     label: "Artists",
@@ -66,8 +74,9 @@ class DesktopSidebar extends StatelessWidget {
                       size: 24.0,
                     ),
                     onTap: () {
-                      GoRouter.of(context).go("/artists");
+                      GoRouter.of(context).go("/artist");
                     },
+                    active: currentUrl == "/artist",
                   ),
                   DesktopSidebarItem(
                     label: "Me",
@@ -78,6 +87,7 @@ class DesktopSidebar extends StatelessWidget {
                     onTap: () {
                       GoRouter.of(context).go("/playerTest");
                     },
+                    active: currentUrl == "/user",
                   ),
                 ],
               ),

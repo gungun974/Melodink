@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 class DesktopTrackHeader extends StatelessWidget {
   final bool displayDateAdded;
 
+  final bool displayAlbum;
+
   const DesktopTrackHeader({
     super.key,
     this.displayDateAdded = false,
+    this.displayAlbum = true,
   });
 
   @override
@@ -40,16 +43,17 @@ class DesktopTrackHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const Expanded(
-              child: Text(
-                "Album",
-                style: TextStyle(
-                  fontSize: 14,
-                  letterSpacing: 14 * 0.03,
-                  fontWeight: FontWeight.w500,
+            if (displayAlbum)
+              const Expanded(
+                child: Text(
+                  "Album",
+                  style: TextStyle(
+                    fontSize: 14,
+                    letterSpacing: 14 * 0.03,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-            ),
             if (displayDateAdded)
               const SizedBox(
                 width: 96,
