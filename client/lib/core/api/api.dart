@@ -22,6 +22,15 @@ class AppApi {
     );
 
     dio.interceptors.add(CookieManager(cookieJar));
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (Response<dynamic> response,
+            ResponseInterceptorHandler handler) async {
+          currentCookies = await getCookies();
+          return handler.next(response);
+        },
+      ),
+    );
   }
 
   factory AppApi() {
@@ -58,8 +67,14 @@ class AppApi {
     return await cookieJar.loadForRequest(Uri.parse(getServerUrl()));
   }
 
-  Future<String> generateCookieHeader() async {
-    return (await getCookies())
+  List<Cookie> currentCookies = [];
+
+  List<Cookie> getCachedCookies() {
+    return currentCookies;
+  }
+
+  String generateCookieHeader() {
+    return (getCachedCookies())
         .map((cookie) => '${cookie.name}=${cookie.value}')
         .join('; ');
   }

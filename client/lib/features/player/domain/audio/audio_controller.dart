@@ -341,7 +341,7 @@ class AudioController extends BaseAudioHandler
   Future<void> _updatePlayerTracks() async {
     await playerTracksMutex.protect(() async {
       await api.setAuthToken(
-        await AppApi().generateCookieHeader(),
+        AppApi().generateCookieHeader(),
       );
 
       await api.setAudios(

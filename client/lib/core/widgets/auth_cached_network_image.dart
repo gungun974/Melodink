@@ -31,31 +31,14 @@ class AuthCachedNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: AppApi().generateCookieHeader(),
-        builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-          final safePlaceholder = placeholder;
-
-          final data = snapshot.data;
-          if (data == null) {
-            return SizedBox(
-              height: height,
-              width: width,
-              child: safePlaceholder != null
-                  ? safePlaceholder(context, imageUrl)
-                  : null,
-            );
-          }
-          return CachedNetworkImage(
-            httpHeaders: {
-              'Cookie': data,
-            },
-            height: height,
-            width: width,
-            imageUrl: imageUrl,
-            placeholder: placeholder,
-            errorWidget: errorWidget,
-          );
-        });
+    return CachedNetworkImage(
+      httpHeaders: {
+        'Cookie': AppApi().generateCookieHeader(),
+      },
+      height: height,
+      width: width,
+      imageUrl: imageUrl,
+      errorWidget: errorWidget,
+    );
   }
 }
