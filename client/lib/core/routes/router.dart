@@ -111,28 +111,20 @@ final appRouterProvider = Provider((ref) {
         navigatorKey: _globalShellNavigatorKey,
         observers: [routeObserver2],
         builder: (context, state, child) {
-          return SafeArea(
-            child: NotificationListener<OverscrollIndicatorNotification>(
-              onNotification: (OverscrollIndicatorNotification overscroll) {
-                overscroll.disallowIndicator();
-                return true;
-              },
-              child: AppScreenTypeLayoutBuilders(
-                mobile: (BuildContext context) => child,
-                desktop: (BuildContext context) {
-                  return Scaffold(
-                    body: Column(
-                      children: [
-                        Expanded(
-                          child: child,
-                        ),
-                        const DesktopPlayerBar(),
-                      ],
+          return AppScreenTypeLayoutBuilders(
+            mobile: (BuildContext context) => child,
+            desktop: (BuildContext context) {
+              return Scaffold(
+                body: Column(
+                  children: [
+                    Expanded(
+                      child: child,
                     ),
-                  );
-                },
-              ),
-            ),
+                    const DesktopPlayerBar(),
+                  ],
+                ),
+              );
+            },
           );
         },
         routes: [
@@ -142,44 +134,66 @@ final appRouterProvider = Provider((ref) {
             builder: (context, state, child) {
               return AppScreenTypeLayoutBuilders(
                 desktop: (BuildContext context) {
-                  return Scaffold(
-                    body: Stack(
-                      children: [
-                        const GradientBackground(),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const DesktopSidebar(),
-                            Expanded(
-                              child: child,
+                  return Stack(
+                    children: [
+                      const GradientBackground(),
+                      Scaffold(
+                        backgroundColor: Colors.transparent,
+                        body: SafeArea(
+                          child: NotificationListener<
+                              OverscrollIndicatorNotification>(
+                            onNotification:
+                                (OverscrollIndicatorNotification overscroll) {
+                              overscroll.disallowIndicator();
+                              return true;
+                            },
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const DesktopSidebar(),
+                                Expanded(
+                                  child: child,
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   );
                 },
                 mobile: (BuildContext context) {
-                  return Scaffold(
-                    body: Column(
-                      children: [
-                        Expanded(
-                          child: Stack(
-                            children: [
-                              const GradientBackground(),
-                              child,
-                            ],
+                  return Stack(
+                    children: [
+                      const GradientBackground(),
+                      Scaffold(
+                        backgroundColor: Colors.transparent,
+                        body: SafeArea(
+                          child: NotificationListener<
+                              OverscrollIndicatorNotification>(
+                            onNotification:
+                                (OverscrollIndicatorNotification overscroll) {
+                              overscroll.disallowIndicator();
+                              return true;
+                            },
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: child,
+                                ),
+                                const MobileCurrentTrackInfo()
+                              ],
+                            ),
                           ),
                         ),
-                        const MobileCurrentTrackInfo()
-                      ],
-                    ),
-                    bottomNavigationBar: Theme(
-                      data: Theme.of(context).copyWith(
-                        splashColor: Colors.transparent,
+                        bottomNavigationBar: Theme(
+                          data: Theme.of(context).copyWith(
+                            splashColor: Colors.transparent,
+                          ),
+                          child: const MobileNavbar(),
+                        ),
                       ),
-                      child: const MobileNavbar(),
-                    ),
+                    ],
                   );
                 },
               );
