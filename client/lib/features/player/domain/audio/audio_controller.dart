@@ -350,17 +350,6 @@ class AudioController extends BaseAudioHandler
             .map((track) => track.getUrl())
             .toList(),
       );
-
-      await updateQueue([..._previousTracks, ..._queueTracks, ..._nextTracks]
-          .map((track) => MediaItem(
-                id: "${track.id}",
-                album: track.album,
-                title: track.title,
-                artist: track.albumArtist,
-                duration: track.duration,
-                artUri: Uri.parse(track.getCoverUrl()),
-              ))
-          .toList());
     });
   }
 
@@ -415,6 +404,22 @@ class AudioController extends BaseAudioHandler
           ? AudioServiceShuffleMode.all
           : AudioServiceShuffleMode.none,
     ));
+
+    final track = _previousTracks.lastOrNull;
+
+    mediaItem.add(track != null
+        ? MediaItem(
+            id: "${track.id}",
+            album: track.album,
+            title: track.title,
+            artist: track.albumArtist,
+            duration: track.duration,
+            artUri: Uri.parse(track.getCoverUrl()),
+            artHeaders: {
+              'Cookie': AppApi().generateCookieHeader(),
+            },
+          )
+        : null);
 
     _updateUiTrackLists();
   }
