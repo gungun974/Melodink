@@ -48,6 +48,8 @@ class AppApi {
 
   configureDio() async {
     dio.options.baseUrl = await asyncPrefs.getString("serverUrl") ?? "";
+
+    currentCookies = await getCookies();
   }
 
   bool hasServerUrl() {

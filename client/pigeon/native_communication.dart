@@ -9,8 +9,7 @@ import 'package:pigeon/pigeon.dart';
   gobjectHeaderOut: 'linux/messages.g.h',
   gobjectSourceOut: 'linux/messages.g.cc',
   gobjectOptions: GObjectOptions(),
-  kotlinOut:
-      'android/app/src/main/kotlin/dev/flutter/pigeon_melodink/Messages.g.kt',
+  kotlinOut: 'android/app/src/main/kotlin/fr/gungun974/melodink/Messages.g.kt',
   kotlinOptions: KotlinOptions(),
   swiftOut: 'ios/Runner/Messages.g.swift',
   swiftOptions: SwiftOptions(),

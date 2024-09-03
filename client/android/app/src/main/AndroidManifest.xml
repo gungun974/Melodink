@@ -10,10 +10,10 @@
     <application
         android:label="melodink_client"
         android:name="${applicationName}"
+        android:usesCleartextTraffic="true"
         android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
-            android:usesCleartextTraffic="true"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
