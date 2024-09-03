@@ -3,9 +3,11 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -14,6 +16,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
+    // Initialize FFI
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+
     await windowManager.ensureInitialized();
 
     WindowOptions windowOptions = const WindowOptions(
@@ -26,6 +32,8 @@ void main() async {
 
     windowManager.waitUntilReadyToShow(windowOptions);
   }
+
+  await DatabaseService.getDatabase();
 
   await AppApi().setupCookieJar();
 
