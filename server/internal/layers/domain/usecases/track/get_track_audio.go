@@ -33,8 +33,14 @@ func (u *TrackUsecase) GetTrackAudio(
 		return nil, entities.NewInternalError(err)
 	}
 
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
 	return models.ReaderAPIResponse{
 		MIMEType: mtype.String(),
 		Reader:   file,
+		Size:     fileInfo.Size(),
 	}, nil
 }

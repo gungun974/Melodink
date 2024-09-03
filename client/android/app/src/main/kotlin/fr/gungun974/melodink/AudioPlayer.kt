@@ -7,11 +7,21 @@ import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.FileDataSource
+import androidx.media3.datasource.cache.Cache
+import androidx.media3.datasource.cache.CacheDataSink
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import androidx.media3.datasource.cache.NoOpCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import java.io.File
 
 @UnstableApi
 class AudioPlayer(private val context: Context) {
@@ -197,28 +207,62 @@ class AudioPlayer(private val context: Context) {
         currentAuthCookie = cookie
     }
 
+    private fun buildCacheDataSourceFactory(): DataSource.Factory {
+        val cache = getDownloadCache()
+        val cacheSink = CacheDataSink.Factory()
+            .setCache(cache)
+        val upstreamFactory =
+            DefaultDataSource.Factory(context, DefaultHttpDataSource.Factory().apply {
+                setDefaultRequestProperties(
+                    mapOf(
+                        "Cookie" to currentAuthCookie
+                    )
+                )
+            })
+        return CacheDataSource.Factory()
+            .setCache(cache)
+            .setCacheWriteDataSinkFactory(cacheSink)
+            .setCacheReadDataSourceFactory(FileDataSource.Factory())
+            .setUpstreamDataSourceFactory(upstreamFactory)
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+    }
+
+    private val DOWNLOAD_CONTENT_DIRECTORY = "player-audio-cache"
+    private var downloadCache: Cache? = null
+
+    @Synchronized
+    private fun getDownloadCache(): Cache {
+        if (downloadCache == null) {
+            val downloadContentDirectory = File(
+                context.getExternalFilesDir(null),
+                DOWNLOAD_CONTENT_DIRECTORY
+            )
+
+            downloadCache =
+                SimpleCache(
+                    downloadContentDirectory,
+                    LeastRecentlyUsedCacheEvictor(1000 * 1024 * 1024),
+                    StandaloneDatabaseProvider(context)
+                )
+        }
+        return downloadCache!!
+    }
 
     @OptIn(UnstableApi::class)
     private fun buildMediaSource(url: String): MediaSource {
+        val mediaItem = MediaItem.fromUri(url)
+        val mediaSource =
+            ProgressiveMediaSource.Factory(buildCacheDataSourceFactory())
+                .createMediaSource(mediaItem)
 
-        val extractorsFactory =
-         DefaultExtractorsFactory().setConstantBitrateSeekingEnabled(true);
-
-        return DefaultMediaSourceFactory(DefaultHttpDataSource.Factory().apply {
-                    setDefaultRequestProperties(
-                        mapOf(
-                            "Cookie" to currentAuthCookie
-                        )
-                    )
-                },extractorsFactory )
-            .createMediaSource(MediaItem.fromUri(url))
+        return mediaSource
     }
 
     fun setLoopMode(loop: MelodinkHostPlayerLoopMode) {
-       if (loop == MelodinkHostPlayerLoopMode.NONE) {
-           exoPlayer.repeatMode = Player.REPEAT_MODE_OFF
-           return
-       }
+        if (loop == MelodinkHostPlayerLoopMode.NONE) {
+            exoPlayer.repeatMode = Player.REPEAT_MODE_OFF
+            return
+        }
         if (loop == MelodinkHostPlayerLoopMode.ONE) {
             exoPlayer.repeatMode = Player.REPEAT_MODE_ONE
             return
