@@ -22,6 +22,7 @@ class AlbumPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final audioController = ref.watch(audioControllerProvider);
     final asyncAlbum = ref.watch(albumByIdProvider(albumId));
+    final albumDownload = ref.watch(albumDownloadNotifierProvider(albumId));
 
     final album = asyncAlbum.valueOrNull;
 
@@ -60,6 +61,18 @@ class AlbumPage extends ConsumerWidget {
                           album.tracks,
                         );
                       },
+                      downloadCallback: () async {
+                        final albumDownloadNotifier = ref.read(
+                          albumDownloadNotifierProvider(album.id).notifier,
+                        );
+
+                        if (!albumDownload.downloaded) {
+                          await albumDownloadNotifier.download();
+                        } else {
+                          await albumDownloadNotifier.deleteDownloaded();
+                        }
+                      },
+                      downloaded: albumDownload.downloaded,
                     )
                   : MobilePlaylistHeader(
                       name: album.name,
@@ -74,6 +87,18 @@ class AlbumPage extends ConsumerWidget {
                           album.tracks,
                         );
                       },
+                      downloadCallback: () async {
+                        final albumDownloadNotifier = ref.read(
+                          albumDownloadNotifierProvider(album.id).notifier,
+                        );
+
+                        if (!albumDownload.downloaded) {
+                          await albumDownloadNotifier.download();
+                        } else {
+                          await albumDownloadNotifier.deleteDownloaded();
+                        }
+                      },
+                      downloaded: albumDownload.downloaded,
                     ),
             ),
             SliverContainer(

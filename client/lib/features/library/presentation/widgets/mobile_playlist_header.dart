@@ -21,6 +21,10 @@ class MobilePlaylistHeader extends ConsumerWidget {
 
   final VoidCallback playCallback;
 
+  final VoidCallback downloadCallback;
+
+  final bool downloaded;
+
   const MobilePlaylistHeader({
     super.key,
     required this.name,
@@ -30,6 +34,8 @@ class MobilePlaylistHeader extends ConsumerWidget {
     required this.tracks,
     required this.artist,
     required this.playCallback,
+    required this.downloadCallback,
+    required this.downloaded,
   });
 
   @override
@@ -114,18 +120,24 @@ class MobilePlaylistHeader extends ConsumerWidget {
                 hoverColor: Colors.transparent,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                icon: SvgPicture.asset(
-                  "assets/icons/download.svg",
-                  width: 20,
-                  height: 20,
-                  colorFilter: const ColorFilter.mode(
-                    Colors.white,
-                    BlendMode.srcIn,
-                  ),
-                ),
+                icon: downloaded
+                    ? SvgPicture.asset(
+                        "assets/icons/download2.svg",
+                        width: 20,
+                        height: 20,
+                      )
+                    : SvgPicture.asset(
+                        "assets/icons/download.svg",
+                        width: 20,
+                        height: 20,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
+                      ),
                 color: Colors.white,
                 iconSize: 24.0,
-                onPressed: () async {},
+                onPressed: downloadCallback,
               ),
               const SizedBox(width: 16),
               IconButton(

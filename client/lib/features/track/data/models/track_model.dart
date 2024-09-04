@@ -57,6 +57,24 @@ class MinimalTrackModel {
     );
   }
 
+  factory MinimalTrackModel.fromMinimalTrack(MinimalTrack track) {
+    return MinimalTrackModel(
+      id: track.id,
+      title: track.title,
+      duration: track.duration,
+      album: track.album,
+      trackNumber: track.trackNumber,
+      discNumber: track.discNumber,
+      date: track.date,
+      year: track.year,
+      genre: track.genre,
+      artist: track.artist,
+      albumArtist: track.albumArtist,
+      composer: track.composer,
+      dateAdded: track.dateAdded,
+    );
+  }
+
   factory MinimalTrackModel.fromJson(Map<String, dynamic> json) {
     return MinimalTrackModel(
       id: (json['id'] as num).toInt(),
@@ -73,5 +91,23 @@ class MinimalTrackModel {
       composer: json['composer'],
       dateAdded: DateTime.parse(json['date_added']),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'duration': duration.inMilliseconds,
+      'album': album,
+      'track_number': trackNumber,
+      'disc_number': discNumber,
+      'date': date,
+      'year': year,
+      'genre': genre,
+      'artist': artist,
+      'album_artist': albumArtist,
+      'composer': composer,
+      'date_added': dateAdded.toIso8601String(),
+    };
   }
 }

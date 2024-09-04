@@ -414,7 +414,7 @@ class AudioController extends BaseAudioHandler
             title: track.title,
             artist: track.albumArtist,
             duration: track.duration,
-            artUri: Uri.parse(track.getCoverUrl()),
+            artUri: track.getCoverUri(),
             artHeaders: {
               'Cookie': AppApi().generateCookieHeader(),
             },

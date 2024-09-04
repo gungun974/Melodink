@@ -1,5 +1,6 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
@@ -57,13 +58,25 @@ class MobileTrack extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            track.albumArtist,
-                            style: TextStyle(
-                              fontSize: 12,
-                              letterSpacing: 14 * 0.03,
-                              color: Colors.grey[350],
-                            ),
+                          Row(
+                            children: [
+                              if (track.downloadedTrack != null)
+                                SvgPicture.asset(
+                                  "assets/icons/download2.svg",
+                                  width: 14,
+                                  height: 14,
+                                ),
+                              if (track.downloadedTrack != null)
+                                const SizedBox(width: 4),
+                              Text(
+                                track.albumArtist,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  letterSpacing: 14 * 0.03,
+                                  color: Colors.grey[350],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

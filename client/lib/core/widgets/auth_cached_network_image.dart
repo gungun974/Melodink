@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:melodink_client/core/api/api.dart';
@@ -31,14 +33,21 @@ class AuthCachedNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CachedNetworkImage(
-      httpHeaders: {
-        'Cookie': AppApi().generateCookieHeader(),
-      },
-      height: height,
-      width: width,
-      imageUrl: imageUrl,
-      errorWidget: errorWidget,
+    Uri? uri = Uri.tryParse(imageUrl);
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+      return CachedNetworkImage(
+        httpHeaders: {
+          'Cookie': AppApi().generateCookieHeader(),
+        },
+        height: height,
+        width: width,
+        imageUrl: imageUrl,
+        errorWidget: errorWidget,
+      );
+    }
+
+    return Image.file(
+      File(imageUrl),
     );
   }
 }

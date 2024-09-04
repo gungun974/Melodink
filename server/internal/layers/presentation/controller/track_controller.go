@@ -101,6 +101,23 @@ func (c *TrackController) GetTrackAudio(
 	return c.trackUsecase.GetTrackAudio(ctx, id)
 }
 
+func (c *TrackController) GetTrackFileSignature(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.GetTrackFileSignature(ctx, id)
+}
+
 func (c *TrackController) EditTrack(
 	ctx context.Context,
 	rawId string,

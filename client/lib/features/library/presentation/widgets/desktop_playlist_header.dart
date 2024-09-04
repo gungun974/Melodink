@@ -21,6 +21,10 @@ class DesktopPlaylistHeader extends ConsumerWidget {
 
   final VoidCallback playCallback;
 
+  final VoidCallback downloadCallback;
+
+  final bool downloaded;
+
   const DesktopPlaylistHeader({
     super.key,
     required this.name,
@@ -30,6 +34,8 @@ class DesktopPlaylistHeader extends ConsumerWidget {
     required this.tracks,
     required this.artist,
     required this.playCallback,
+    required this.downloadCallback,
+    required this.downloaded,
   });
 
   @override
@@ -170,18 +176,24 @@ class DesktopPlaylistHeader extends ConsumerWidget {
                         hoverColor: Colors.transparent,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
-                        icon: SvgPicture.asset(
-                          "assets/icons/download.svg",
-                          width: 24,
-                          height: 24,
-                          colorFilter: const ColorFilter.mode(
-                            Colors.white,
-                            BlendMode.srcIn,
-                          ),
-                        ),
+                        icon: downloaded
+                            ? SvgPicture.asset(
+                                "assets/icons/download2.svg",
+                                width: 24,
+                                height: 24,
+                              )
+                            : SvgPicture.asset(
+                                "assets/icons/download.svg",
+                                width: 24,
+                                height: 24,
+                                colorFilter: const ColorFilter.mode(
+                                  Colors.white,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
                         color: Colors.white,
                         iconSize: 24.0,
-                        onPressed: () async {},
+                        onPressed: downloadCallback,
                       )
                     ],
                   )

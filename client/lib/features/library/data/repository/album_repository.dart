@@ -1,55 +1,83 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:melodink_client/core/api/api.dart';
-import 'package:melodink_client/core/error/exceptions.dart';
-import 'package:melodink_client/features/library/data/models/album_model.dart';
+import 'package:melodink_client/features/library/data/datasource/album_local_data_source.dart';
+import 'package:melodink_client/features/library/data/datasource/album_remote_data_source.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
+import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 
 class AlbumNotFoundException implements Exception {}
 
 class AlbumRepository {
+  final AlbumRemoteDataSource albumRemoteDataSource;
+  final AlbumLocalDataSource albumLocalDataSource;
+
+  final DownloadTrackRepository downloadTrackRepository;
+
+  AlbumRepository({
+    required this.albumRemoteDataSource,
+    required this.albumLocalDataSource,
+    required this.downloadTrackRepository,
+  });
+
   Future<List<Album>> getAllAlbums() async {
     try {
-      final response = await AppApi().dio.get("/album");
+      final remoteAlbums = await albumRemoteDataSource.getAllAlbums();
 
-      return (response.data as List)
-          .map(
-            (rawModel) => AlbumModel.fromJson(rawModel).toAlbum(),
-          )
-          .toList();
-    } on DioException catch (e) {
-      final response = e.response;
-      if (response == null) {
-        throw ServerTimeoutException();
-      }
+      return remoteAlbums;
+    } catch (_) {
+      final localAlbums = await albumLocalDataSource.getAllAlbums();
 
-      throw ServerUnknownException();
-    } catch (e) {
-      throw ServerUnknownException();
+      return localAlbums;
     }
   }
 
   Future<Album> getAlbumById(String id) async {
-    try {
-      final response = await AppApi().dio.get("/album/$id");
+    Album? album = await albumLocalDataSource.getAlbumById(id);
 
-      return AlbumModel.fromJson(response.data).toAlbum();
-    } on DioException catch (e) {
-      final response = e.response;
-      if (response == null) {
-        throw ServerTimeoutException();
-      }
+    album ??= await albumRemoteDataSource.getAlbumById(id);
 
-      if (response.statusCode == 404) {
-        throw AlbumNotFoundException();
-      }
+    final List<MinimalTrack> tracks = [];
 
-      throw ServerUnknownException();
-    } catch (e) {
-      print(e);
-      throw ServerUnknownException();
+    for (var i = 0; i < album.tracks.length; i++) {
+      final track = album.tracks[i];
+      tracks.add(
+        track.copyWith(
+          downloadedTrack: await downloadTrackRepository
+              .getDownloadedTrackByTrackId(track.id),
+        ),
+      );
     }
+
+    return album.copyWith(tracks: tracks);
+  }
+
+  Future<Album> updateAndStoreAlbum(String id) async {
+    final album = await albumRemoteDataSource.getAlbumById(id);
+    await albumLocalDataSource.storeAlbum(album);
+    return album;
+  }
+
+  Future<void> deleteStoredAlbum(String id) async {
+    await albumLocalDataSource.deleteStoredAlbum(id);
+  }
+
+  Future<bool> isAlbumDownloaded(String id) async {
+    final album = await albumLocalDataSource.getAlbumById(id);
+
+    return album != null;
   }
 }
 
-final albumRepositoryProvider = Provider((ref) => AlbumRepository());
+final albumRepositoryProvider = Provider(
+  (ref) => AlbumRepository(
+    albumRemoteDataSource: ref.watch(
+      albumRemoteDataSourceProvider,
+    ),
+    albumLocalDataSource: ref.watch(
+      albumLocalDataSourceProvider,
+    ),
+    downloadTrackRepository: ref.watch(
+      downloadTrackRepositoryProvider,
+    ),
+  ),
+);
