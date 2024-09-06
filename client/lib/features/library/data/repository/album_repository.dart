@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/datasource/album_local_data_source.dart';
 import 'package:melodink_client/features/library/data/datasource/album_remote_data_source.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
@@ -13,22 +14,29 @@ class AlbumRepository {
 
   final DownloadTrackRepository downloadTrackRepository;
 
+  final NetworkInfo networkInfo;
+
   AlbumRepository({
     required this.albumRemoteDataSource,
     required this.albumLocalDataSource,
     required this.downloadTrackRepository,
+    required this.networkInfo,
   });
 
   Future<List<Album>> getAllAlbums() async {
-    try {
-      final remoteAlbums = await albumRemoteDataSource.getAllAlbums();
+    if (networkInfo.isServerRecheable()) {
+      try {
+        final remoteAlbums = await albumRemoteDataSource.getAllAlbums();
 
-      return remoteAlbums;
-    } catch (_) {
-      final localAlbums = await albumLocalDataSource.getAllAlbums();
+        return remoteAlbums;
+      } catch (_) {
+        final localAlbums = await albumLocalDataSource.getAllAlbums();
 
-      return localAlbums;
+        return localAlbums;
+      }
     }
+
+    return await albumLocalDataSource.getAllAlbums();
   }
 
   Future<Album> getAlbumById(String id) async {
@@ -78,6 +86,9 @@ final albumRepositoryProvider = Provider(
     ),
     downloadTrackRepository: ref.watch(
       downloadTrackRepositoryProvider,
+    ),
+    networkInfo: ref.watch(
+      networkInfoProvider,
     ),
   ),
 );

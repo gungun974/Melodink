@@ -22,7 +22,9 @@ func MainRouter(container internal.Container) http.Handler {
 	router.Use(middleware.StripSlashes)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
-	router.Use(middlewares.AdvancedConditionalLogger([]string{}))
+	router.Use(middlewares.AdvancedConditionalLogger([]string{
+		"/health",
+	}))
 
 	router.Use(middleware.Recoverer)
 
@@ -40,6 +42,8 @@ func MainRouter(container internal.Container) http.Handler {
 	router.Get("/check", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("IamAMelodinkCompatibleServer"))
 	})
+
+	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {})
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hoi"))
