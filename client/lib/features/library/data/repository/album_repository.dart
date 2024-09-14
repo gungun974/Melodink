@@ -24,14 +24,20 @@ class AlbumRepository {
   });
 
   Future<List<Album>> getAllAlbums() async {
+    final localAlbums = await albumLocalDataSource.getAllAlbums();
+
     if (networkInfo.isServerRecheable()) {
       try {
         final remoteAlbums = await albumRemoteDataSource.getAllAlbums();
 
+        for (var i = 0; i < remoteAlbums.length; i++) {
+          if (localAlbums.any((album) => album.id == remoteAlbums[i].id)) {
+            remoteAlbums[i] = remoteAlbums[i].copyWith(isDownloaded: true);
+          }
+        }
+
         return remoteAlbums;
       } catch (_) {
-        final localAlbums = await albumLocalDataSource.getAllAlbums();
-
         return localAlbums;
       }
     }

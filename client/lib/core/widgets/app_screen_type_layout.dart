@@ -6,6 +6,19 @@ enum AppScreenTypeLayout {
   desktop,
 }
 
+AppScreenTypeLayout getAppScreenType(Size size) {
+  var deviceType = getDeviceType(size);
+
+  switch (deviceType) {
+    case DeviceScreenType.mobile:
+      return AppScreenTypeLayout.mobile;
+    case DeviceScreenType.watch:
+      return AppScreenTypeLayout.mobile;
+    default:
+      return AppScreenTypeLayout.desktop;
+  }
+}
+
 class AppScreenTypeLayoutBuilder extends StatelessWidget {
   final Widget Function(BuildContext, AppScreenTypeLayout) builder;
 

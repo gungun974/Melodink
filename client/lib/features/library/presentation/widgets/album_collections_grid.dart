@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 
@@ -17,9 +19,12 @@ class AlbumCollectionsGrid extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.crossAxisExtent;
 
+        final screenType = getAppScreenType(MediaQuery.of(context).size);
+
         const maxCrossAxisExtent = 200.0;
         const crossAxisSpacing = 16.0;
-        const childAspectRatio = 200 / 300;
+        final childAspectRatio =
+            200 / (screenType == AppScreenTypeLayout.desktop ? 260 : 270);
 
         final rawCrossAxisCount = width / maxCrossAxisExtent;
 
@@ -34,6 +39,7 @@ class AlbumCollectionsGrid extends StatelessWidget {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: crossAxisSpacing,
             childAspectRatio: childAspectRatio,
+            mainAxisSpacing: crossAxisSpacing,
           ),
           delegate: SliverChildBuilderDelegate(
             (context, index) {
@@ -72,14 +78,27 @@ class AlbumCollectionsGrid extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      album.albumArtist,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[400],
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          album.albumArtist,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                        album.isDownloaded
+                            ? SvgPicture.asset(
+                                "assets/icons/download2.svg",
+                                width: 15,
+                                height: 15,
+                              )
+                            : const SizedBox.shrink(),
+                      ],
                     ),
                   ],
                 ),
