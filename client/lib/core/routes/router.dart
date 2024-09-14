@@ -84,6 +84,8 @@ final appRouterProvider = Provider((ref) {
     navigatorKey: _rootNavigatorKey,
     observers: [routeObserver1],
     redirect: (context, state) async {
+      setCurrentUrl(state.matchedLocation);
+
       final isServerConfigured = ref.read(isServerConfiguredProvider);
 
       if (!isServerConfigured) {
