@@ -52,8 +52,7 @@ class AlbumPage extends ConsumerWidget {
                       name: album.name,
                       type: "Album",
                       imageUrl: album.getCoverUrl(),
-                      description:
-                          "Cupcake ipsum dolor sit amet. I love tiramisu cake sesame snaps biscuit  sesame snaps cookie icing. Ice cream lemon drops powder pie donut donut  bear claw candy canes chupa chups.",
+                      description: "",
                       tracks: album.tracks,
                       artist: album.albumArtist,
                       playCallback: () async {
@@ -78,8 +77,6 @@ class AlbumPage extends ConsumerWidget {
                       name: album.name,
                       type: "Album",
                       imageUrl: album.getCoverUrl(),
-                      description:
-                          "Cupcake ipsum dolor sit amet. I love tiramisu cake sesame snaps biscuit  sesame snaps cookie icing. Ice cream lemon drops powder pie donut donut  bear claw candy canes chupa chups.",
                       tracks: album.tracks,
                       artist: album.albumArtist,
                       playCallback: () async {

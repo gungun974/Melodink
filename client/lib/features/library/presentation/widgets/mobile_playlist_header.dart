@@ -13,8 +13,6 @@ class MobilePlaylistHeader extends ConsumerWidget {
   final String type;
   final String imageUrl;
 
-  final String description;
-
   final List<MinimalTrack> tracks;
 
   final String artist;
@@ -30,7 +28,6 @@ class MobilePlaylistHeader extends ConsumerWidget {
     required this.name,
     required this.type,
     required this.imageUrl,
-    required this.description,
     required this.tracks,
     required this.artist,
     required this.playCallback,
