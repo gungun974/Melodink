@@ -33,6 +33,7 @@ class DownloadState extends Equatable {
 @Riverpod(keepAlive: true)
 class DownloadManagerNotifier extends _$DownloadManagerNotifier {
   late DownloadTrackRepository _downloadTrackRepository;
+  late AudioController _audioController;
 
   final _executor = AsyncExecutor();
 
@@ -41,6 +42,14 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
   @override
   DownloadState build() {
     _downloadTrackRepository = ref.read(downloadTrackRepositoryProvider);
+    _audioController = ref.read(audioControllerProvider);
+
+    _audioController.currentTrack.stream.listen((_) async {
+      await Future.delayed(
+        const Duration(milliseconds: 10),
+      );
+      deleteOrphanTracks();
+    });
 
     return const DownloadState(
       queueTracks: [],
@@ -77,6 +86,8 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
         );
 
         _mutex.release();
+
+        await _audioController.reloadPlayerTracks();
       } catch (e) {
         state = state.copyWith(
           queueTracks: [
@@ -95,9 +106,11 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
   }
 
   deleteOrphanTracks() async {
-    final currentTrack = ref.read(audioControllerProvider);
-
     final orphans = await _downloadTrackRepository.getOrphanTracks();
+
+    if (orphans.isEmpty) {
+      return;
+    }
 
     await _mutex.acquire();
     state = state.copyWith(
@@ -110,8 +123,10 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
     _mutex.release();
 
     await _downloadTrackRepository.deleteOrphanTracks(
-      currentTrack.currentTrack.value?.id,
+      _audioController.currentTrack.value?.id,
     );
+
+    await _audioController.reloadPlayerTracks();
   }
 }
 

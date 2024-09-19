@@ -77,6 +77,39 @@ class MinimalTrack extends Equatable {
     );
   }
 
+  MinimalTrack copyWithoutDownloadedTrack({
+    int? id,
+    String? title,
+    Duration? duration,
+    String? album,
+    int? trackNumber,
+    int? discNumber,
+    String? date,
+    int? year,
+    String? genre,
+    String? artist,
+    String? albumArtist,
+    String? composer,
+    DateTime? dateAdded,
+  }) {
+    return MinimalTrack(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      duration: duration ?? this.duration,
+      album: album ?? this.album,
+      trackNumber: trackNumber ?? this.trackNumber,
+      discNumber: discNumber ?? this.discNumber,
+      date: date ?? this.date,
+      year: year ?? this.year,
+      genre: genre ?? this.genre,
+      artist: artist ?? this.artist,
+      albumArtist: albumArtist ?? this.albumArtist,
+      composer: composer ?? this.composer,
+      dateAdded: dateAdded ?? this.dateAdded,
+      downloadedTrack: null,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,

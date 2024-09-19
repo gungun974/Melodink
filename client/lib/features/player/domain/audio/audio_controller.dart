@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/messages.g.dart';
 import 'package:mutex/mutex.dart';
@@ -27,6 +28,8 @@ Future<AudioController> initAudioService() async {
 class AudioController extends BaseAudioHandler
     implements MelodinkHostPlayerApiInfo {
   final api = MelodinkHostPlayerApi();
+
+  DownloadTrackRepository? downloadTrackRepository;
 
   final playlistTracksMutex = Mutex();
   final playerTracksMutex = Mutex();
@@ -353,6 +356,63 @@ class AudioController extends BaseAudioHandler
     });
   }
 
+  Future<void> reloadPlayerTracks() async {
+    final getDownloadedTrackByTrackId =
+        downloadTrackRepository?.getDownloadedTrackByTrackId;
+
+    if (getDownloadedTrackByTrackId == null) {
+      return;
+    }
+
+    if (_previousTracks.isEmpty &&
+        _queueTracks.isEmpty &&
+        _nextTracks.isEmpty) {
+      return;
+    }
+
+    for (var (index, track) in _previousTracks.indexed) {
+      if (index == _previousTracks.length - 1) {
+        continue;
+      }
+
+      final downloadedTrack = await getDownloadedTrackByTrackId(track.id);
+
+      if (downloadedTrack != null) {
+        _previousTracks[index] =
+            track.copyWith(downloadedTrack: downloadedTrack);
+        continue;
+      }
+
+      _previousTracks[index] = track.copyWithoutDownloadedTrack();
+    }
+
+    for (var (index, track) in _queueTracks.indexed) {
+      final downloadedTrack = await getDownloadedTrackByTrackId(track.id);
+
+      if (downloadedTrack != null) {
+        _queueTracks[index] = track.copyWith(downloadedTrack: downloadedTrack);
+        continue;
+      }
+
+      _queueTracks[index] = track.copyWithoutDownloadedTrack();
+    }
+
+    for (var (index, track) in _nextTracks.indexed) {
+      final downloadedTrack = await getDownloadedTrackByTrackId(track.id);
+
+      if (downloadedTrack != null) {
+        _nextTracks[index] = track.copyWith(downloadedTrack: downloadedTrack);
+        continue;
+      }
+
+      _nextTracks[index] = track.copyWithoutDownloadedTrack();
+    }
+
+    await _updatePlayerTracks();
+
+    await _updatePlaybackState();
+  }
+
   @override
   Future<void> audioChanged(int pos) async {
     await _updatePlaylistTracks(pos);
@@ -447,4 +507,9 @@ class AudioController extends BaseAudioHandler
   }
 }
 
-final audioControllerProvider = Provider((ref) => _audioController);
+final audioControllerProvider = Provider((ref) {
+  _audioController.downloadTrackRepository =
+      ref.watch(downloadTrackRepositoryProvider);
+
+  return _audioController;
+});
