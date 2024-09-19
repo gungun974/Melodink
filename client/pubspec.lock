@@ -17,10 +17,11 @@ packages:
   adwaita_icons:
     dependency: "direct main"
     description:
-      name: adwaita_icons
-      sha256: "2d6f3cc7499b33375a65fe885255cd24cf77afc4726c5b0d4f185e1bb4611ba6"
-      url: "https://pub.dev"
-    source: hosted
+      path: "."
+      ref: "4506dba6301b6d9f969a93204b3642063f2d0316"
+      resolved-ref: "4506dba6301b6d9f969a93204b3642063f2d0316"
+      url: "https://github.com/gungun974/adwaita_icons"
+    source: git
     version: "0.2.1"
   analyzer:
     dependency: transitive
