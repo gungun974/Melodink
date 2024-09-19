@@ -29,13 +29,23 @@ class DownloadTrackRepository {
       final data = await db.rawQuery(
           "SELECT * FROM track_download WHERE track_id = ?", [trackId]);
 
-      final downloadTrack = data.firstOrNull;
+      final rawDownloadTrack = data.firstOrNull;
 
-      if (downloadTrack == null) {
+      if (rawDownloadTrack == null) {
         return null;
       }
 
-      return decodeDownloadTrack(downloadTrack);
+      final downloadTrack = decodeDownloadTrack(rawDownloadTrack);
+
+      final audioFile = File(downloadTrack.audioFile);
+
+      if (!(await audioFile.exists())) {
+        await deleteTrack(downloadTrack.trackId);
+
+        return null;
+      }
+
+      return downloadTrack;
     } catch (e) {
       print(e);
       throw ServerUnknownException();
@@ -161,6 +171,21 @@ class DownloadTrackRepository {
           whereArgs: [orphan.trackId],
         );
       }
+    } catch (e) {
+      print(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<void> deleteTrack(int trackId) async {
+    final db = await DatabaseService.getDatabase();
+
+    try {
+      await db.delete(
+        "track_download",
+        where: "track_id = ?",
+        whereArgs: [trackId],
+      );
     } catch (e) {
       print(e);
       throw ServerUnknownException();
