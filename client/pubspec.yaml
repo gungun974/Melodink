@@ -23,7 +23,6 @@ dependencies:
   timeago: ^3.7.0
   sliver_tools: ^0.2.12
   audio_video_progress_bar: ^2.0.3
-  cached_network_image: ^3.4.1
   flutter_svg: ^2.0.10
   cookie_jar: ^4.0.8
   flutter_hooks: ^0.20.5
@@ -40,6 +39,7 @@ dependencies:
   sqflite_common_ffi: ^2.3.3
   path: ^1.9.0
   connectivity_plus: ^6.0.5
+  crypto: ^3.0.5
 dependency_overrides:
   flutter_svg: ^2.0.10
 
