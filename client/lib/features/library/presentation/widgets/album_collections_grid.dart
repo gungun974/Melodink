@@ -24,7 +24,7 @@ class AlbumCollectionsGrid extends StatelessWidget {
         const maxCrossAxisExtent = 200.0;
         const crossAxisSpacing = 16.0;
         final childAspectRatio =
-            200 / (screenType == AppScreenTypeLayout.desktop ? 260 : 270);
+            200 / (screenType == AppScreenTypeLayout.desktop ? 262 : 272);
 
         final rawCrossAxisCount = width / maxCrossAxisExtent;
 
