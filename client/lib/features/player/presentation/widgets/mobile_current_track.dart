@@ -68,7 +68,7 @@ class MobileCurrentTrackInfo extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  currentTrack.albumArtist,
+                                  currentTrack.getVirtualAlbumArtist(),
                                   style: TextStyle(
                                       fontSize: 12,
                                       letterSpacing: 14 * 0.03,

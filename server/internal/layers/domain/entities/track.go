@@ -46,3 +46,13 @@ type TrackMetadata struct {
 
 	Copyright string
 }
+
+func (m TrackMetadata) GetVirtualAlbumArtist() string {
+	artist := m.AlbumArtist
+
+	if len(artist) != 0 {
+		return artist
+	}
+
+	return m.Artist
+}

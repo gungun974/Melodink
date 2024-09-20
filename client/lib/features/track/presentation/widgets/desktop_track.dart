@@ -106,7 +106,7 @@ class DesktopTrack extends ConsumerWidget {
                               if (track.downloadedTrack != null)
                                 const SizedBox(width: 4),
                               Text(
-                                track.albumArtist,
+                                track.getVirtualAlbumArtist(),
                                 style: TextStyle(
                                   fontSize: 12,
                                   letterSpacing: 14 * 0.03,

@@ -65,7 +65,7 @@ class MobilePlayerPage extends ConsumerWidget {
                         if (currentTrack != null) {
                           title = currentTrack.title;
 
-                          artist = currentTrack.albumArtist;
+                          artist = currentTrack.getVirtualAlbumArtist();
 
                           album = currentTrack.album;
 

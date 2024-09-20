@@ -30,12 +30,14 @@ type ArtistRepository struct {
 }
 
 func (r *ArtistRepository) getVirtualArtistFromTrack(track entities.Track) (string, error) {
-	if len(strings.TrimSpace(track.Metadata.Album)) == 0 {
-		return "", errors.New("This track has no album artist")
+	artist := track.Metadata.GetVirtualAlbumArtist()
+
+	if len(artist) == 0 {
+		return "", errors.New("This track has no artist or album artist")
 	}
 
 	rawId := "r#" + strings.ReplaceAll(
-		track.Metadata.AlbumArtist,
+		artist,
 		"#",
 		"##",
 	)
@@ -78,7 +80,7 @@ outerloop:
 
 			UserId: &userId,
 
-			Name: track.Metadata.Album,
+			Name: track.Metadata.GetVirtualAlbumArtist(),
 
 			AllTracks: []entities.Track{
 				track,
@@ -126,7 +128,7 @@ func (r *ArtistRepository) GetArtistByIdFromUser(
 		return entities.Artist{}, ArtistNotFoundError
 	}
 
-	artist.Name = artist.AllTracks[0].Metadata.AlbumArtist
+	artist.Name = artist.AllTracks[0].Metadata.GetVirtualAlbumArtist()
 
 	artist.Albums = r.albumRepository.GroupTracksInAlbums(&userId, artist.AllTracks)
 

@@ -36,7 +36,7 @@ func (r *AlbumRepository) getVirtualAlbumFromTrack(track entities.Track) (string
 		"#",
 		"##",
 	) + "r#" + strings.ReplaceAll(
-		track.Metadata.AlbumArtist,
+		track.Metadata.GetVirtualAlbumArtist(),
 		"#",
 		"##",
 	)
@@ -79,7 +79,7 @@ outerloop:
 
 			Name: track.Metadata.Album,
 
-			AlbumArtist: track.Metadata.AlbumArtist,
+			AlbumArtist: track.Metadata.GetVirtualAlbumArtist(),
 
 			Tracks: []entities.Track{
 				track,
@@ -131,7 +131,7 @@ func (r *AlbumRepository) GetAlbumByIdFromUser(userId int, albumId string) (enti
 
 	album.Name = album.Tracks[0].Metadata.Album
 
-	album.AlbumArtist = album.Tracks[0].Metadata.AlbumArtist
+	album.AlbumArtist = album.Tracks[0].Metadata.GetVirtualAlbumArtist()
 
 	return album, nil
 }

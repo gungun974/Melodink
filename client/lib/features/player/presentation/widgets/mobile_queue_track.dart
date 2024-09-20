@@ -44,7 +44,7 @@ class MobileQueueTrack extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          track.albumArtist,
+                          track.getVirtualAlbumArtist(),
                           style: TextStyle(
                             fontSize: 12,
                             letterSpacing: 14 * 0.03,

@@ -128,6 +128,14 @@ class MinimalTrack extends Equatable {
         downloadedTrack,
       ];
 
+  String getVirtualAlbumArtist() {
+    if (albumArtist.isNotEmpty) {
+      return albumArtist;
+    }
+
+    return artist;
+  }
+
   String getUrl() {
     final audioFile = downloadedTrack?.audioFile;
 
