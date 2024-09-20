@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -166,4 +167,33 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
       );
     }
   }
+}
+
+@riverpod
+List<MinimalTrack> albumSortedTracks(AlbumSortedTracksRef ref, String albumId) {
+  final asyncAlbum = ref.watch(albumByIdProvider(albumId));
+
+  final album = asyncAlbum.valueOrNull;
+
+  if (album == null) {
+    return [];
+  }
+
+  final tracks = [...album.tracks];
+
+  tracks.sort((a, b) {
+    int discCompare = a.discNumber.compareTo(b.discNumber);
+    if (discCompare != 0) {
+      return discCompare;
+    }
+
+    int trackCompare = a.trackNumber.compareTo(b.trackNumber);
+    if (trackCompare != 0) {
+      return trackCompare;
+    }
+
+    return a.title.compareTo(b.title);
+  });
+
+  return tracks;
 }

@@ -24,6 +24,8 @@ class AlbumPage extends ConsumerWidget {
     final asyncAlbum = ref.watch(albumByIdProvider(albumId));
     final albumDownload = ref.watch(albumDownloadNotifierProvider(albumId));
 
+    final tracks = ref.watch(albumSortedTracksProvider(albumId));
+
     final album = asyncAlbum.valueOrNull;
 
     if (album == null) {
@@ -53,11 +55,11 @@ class AlbumPage extends ConsumerWidget {
                       type: "Album",
                       imageUrl: album.getCoverUrl(),
                       description: "",
-                      tracks: album.tracks,
+                      tracks: tracks,
                       artist: album.albumArtist,
                       playCallback: () async {
                         await audioController.loadTracks(
-                          album.tracks,
+                          tracks,
                         );
                       },
                       downloadCallback: () async {
@@ -77,11 +79,11 @@ class AlbumPage extends ConsumerWidget {
                       name: album.name,
                       type: "Album",
                       imageUrl: album.getCoverUrl(),
-                      tracks: album.tracks,
+                      tracks: tracks,
                       artist: album.albumArtist,
                       playCallback: () async {
                         await audioController.loadTracks(
-                          album.tracks,
+                          tracks,
                         );
                       },
                       downloadCallback: () async {
@@ -136,21 +138,21 @@ class AlbumPage extends ConsumerWidget {
 
                     if (size == AppScreenTypeLayout.mobile) {
                       child = MobileTrack(
-                        track: album.tracks[index],
+                        track: tracks[index],
                         playCallback: (track) async {
                           await audioController.loadTracks(
-                            album.tracks,
+                            tracks,
                             startAt: index,
                           );
                         },
                       );
                     } else {
                       child = DesktopTrack(
-                        track: album.tracks[index],
+                        track: tracks[index],
                         trackNumber: index + 1,
                         playCallback: (track) async {
                           await audioController.loadTracks(
-                            album.tracks,
+                            tracks,
                             startAt: index,
                           );
                         },
@@ -168,7 +170,7 @@ class AlbumPage extends ConsumerWidget {
                       child: child,
                     );
                   },
-                  childCount: album.tracks.length,
+                  childCount: tracks.length,
                 ),
               ),
             ),
