@@ -149,7 +149,7 @@ class AlbumPage extends ConsumerWidget {
                     } else {
                       child = DesktopTrack(
                         track: tracks[index],
-                        trackNumber: index + 1,
+                        trackNumber: tracks[index].trackNumber,
                         playCallback: (track) async {
                           await audioController.loadTracks(
                             tracks,
