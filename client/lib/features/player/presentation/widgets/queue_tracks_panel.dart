@@ -3,8 +3,6 @@ import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_page.dart';
-import 'package:melodink_client/features/player/presentation/widgets/desktop_queue_track.dart';
-import 'package:melodink_client/features/player/presentation/widgets/mobile_queue_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
@@ -143,19 +141,25 @@ class QueueTracksPanel extends StatelessWidget {
 
                 if (useQueueTrack) {
                   if (size == AppScreenTypeLayout.mobile) {
-                    child = MobileQueueTrack(
+                    child = MobileTrack(
                       track: tracks[index].track,
                       playCallback: (track) {
                         playCallback(track, index);
                       },
+                      displayImage: false,
+                      displayMoreActions: false,
+                      displayReorderable: true,
                     );
                   } else {
-                    child = DesktopQueueTrack(
+                    child = DesktopTrack(
                       track: tracks[index].track,
                       trackNumber: trackNumberOffset + index + 1,
                       playCallback: (track) {
                         playCallback(track, index);
                       },
+                      displayImage: false,
+                      displayLike: false,
+                      displayReorderable: true,
                     );
                   }
                 } else {

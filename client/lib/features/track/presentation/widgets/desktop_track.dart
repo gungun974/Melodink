@@ -1,5 +1,6 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
@@ -18,6 +19,9 @@ class DesktopTrack extends ConsumerWidget {
   final bool displayImage;
   final bool displayAlbum;
 
+  final bool displayLike;
+  final bool displayReorderable;
+
   final void Function(MinimalTrack track) playCallback;
 
   const DesktopTrack({
@@ -28,6 +32,8 @@ class DesktopTrack extends ConsumerWidget {
     this.displayDateAdded = false,
     this.displayImage = true,
     this.displayAlbum = true,
+    this.displayLike = true,
+    this.displayReorderable = false,
   });
 
   @override
@@ -156,19 +162,42 @@ class DesktopTrack extends ConsumerWidget {
                   ),
                 ),
               ),
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  height: 50,
-                  color: Colors.transparent,
-                  child: AppIconButton(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    icon: const AdwaitaIcon(AdwaitaIcons.heart_outline_thick),
-                    iconSize: 20.0,
-                    onPressed: () async {},
+              if (displayLike)
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    height: 50,
+                    color: Colors.transparent,
+                    child: AppIconButton(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      icon: const AdwaitaIcon(AdwaitaIcons.heart_outline_thick),
+                      iconSize: 20.0,
+                      onPressed: () async {},
+                    ),
                   ),
                 ),
-              ),
+              if (displayReorderable)
+                GestureDetector(
+                  onTap: () {},
+                  child: ReorderableListener(
+                    child: Container(
+                      height: 50,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      color: Colors.transparent,
+                      child: const MouseRegion(
+                        cursor: SystemMouseCursors.grab,
+                        child: Padding(
+                          padding: EdgeInsets.all(4.0),
+                          child: SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: AdwaitaIcon(AdwaitaIcons.menu),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

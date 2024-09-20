@@ -1,5 +1,6 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
@@ -12,10 +13,18 @@ class MobileTrack extends ConsumerWidget {
 
   final void Function(MinimalTrack track) playCallback;
 
+  final bool displayImage;
+
+  final bool displayMoreActions;
+  final bool displayReorderable;
+
   const MobileTrack({
     super.key,
     required this.track,
     required this.playCallback,
+    this.displayImage = true,
+    this.displayMoreActions = true,
+    this.displayReorderable = false,
   });
 
   @override
@@ -38,18 +47,19 @@ class MobileTrack extends ConsumerWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      AuthCachedNetworkImage(
-                        imageUrl: track.getCoverUrl(),
-                        placeholder: (context, url) => Image.asset(
-                          "assets/melodink_track_cover_not_found.png",
-                        ),
-                        errorWidget: (context, url, error) {
-                          return Image.asset(
+                      if (displayImage)
+                        AuthCachedNetworkImage(
+                          imageUrl: track.getCoverUrl(),
+                          placeholder: (context, url) => Image.asset(
                             "assets/melodink_track_cover_not_found.png",
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 10),
+                          ),
+                          errorWidget: (context, url, error) {
+                            return Image.asset(
+                              "assets/melodink_track_cover_not_found.png",
+                            );
+                          },
+                        ),
+                      if (displayImage) const SizedBox(width: 10),
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,21 +102,44 @@ class MobileTrack extends ConsumerWidget {
                   ),
                 ),
               ),
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  height: 50,
-                  color: Colors.transparent,
-                  child: const AppIconButton(
-                    padding: EdgeInsets.only(
-                      left: 16,
-                      right: 4,
+              if (displayMoreActions)
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    height: 50,
+                    color: Colors.transparent,
+                    child: const AppIconButton(
+                      padding: EdgeInsets.only(
+                        left: 16,
+                        right: 4,
+                      ),
+                      iconSize: 20,
+                      icon: AdwaitaIcon(AdwaitaIcons.view_more_horizontal),
                     ),
-                    iconSize: 20,
-                    icon: AdwaitaIcon(AdwaitaIcons.view_more_horizontal),
                   ),
                 ),
-              )
+              if (displayReorderable)
+                GestureDetector(
+                  onTap: () {},
+                  child: ReorderableListener(
+                    child: Container(
+                      height: 50,
+                      padding: const EdgeInsets.only(left: 16),
+                      color: Colors.transparent,
+                      child: const MouseRegion(
+                        cursor: SystemMouseCursors.grab,
+                        child: Padding(
+                          padding: EdgeInsets.all(4),
+                          child: SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: AdwaitaIcon(AdwaitaIcons.menu),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
