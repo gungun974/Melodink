@@ -205,27 +205,30 @@ class AuthCachedNetworkImage extends StatelessWidget {
   Widget build(BuildContext context) {
     Uri? uri = Uri.tryParse(imageUrl);
 
-    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
-      final localErrorWidget = errorWidget;
+    ImageProvider imageProvider;
 
-      return Image(
-        image: AppImageCacheProvider(uri),
-        height: height,
-        width: width,
-        errorBuilder: localErrorWidget != null
-            ? (BuildContext context, Object error, StackTrace? stackTrace) {
-                return SizedBox(
-                  height: height,
-                  width: width,
-                  child: localErrorWidget(context, uri.toString(), error),
-                );
-              }
-            : null,
-      );
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+      imageProvider = AppImageCacheProvider(uri);
+    } else {
+      imageProvider = FileImage(File(imageUrl));
     }
 
-    return Image.file(
-      File(imageUrl),
+    final localErrorWidget = errorWidget;
+
+    return Image(
+      image: imageProvider,
+      height: height,
+      width: width,
+      errorBuilder: localErrorWidget != null
+          ? (BuildContext context, Object error, StackTrace? stackTrace) {
+              return SizedBox(
+                height: height,
+                width: width,
+                child: localErrorWidget(context, uri.toString(), error),
+              );
+            }
+          : null,
+      gaplessPlayback: true,
     );
   }
 }
