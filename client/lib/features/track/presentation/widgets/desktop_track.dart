@@ -1,13 +1,15 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/core/helpers/timeago.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
+import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
-class DesktopTrack extends StatelessWidget {
+class DesktopTrack extends ConsumerWidget {
   final MinimalTrack track;
 
   final int trackNumber;
@@ -29,7 +31,9 @@ class DesktopTrack extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
+
     return GestureDetector(
       onTap: () {
         playCallback(track);
@@ -45,10 +49,13 @@ class DesktopTrack extends StatelessWidget {
                 child: Text(
                   "$trackNumber",
                   textAlign: TextAlign.end,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     letterSpacing: 14 * 0.03,
                     fontWeight: FontWeight.w500,
+                    color: isCurrentTrack
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
                   ),
                 ),
               ),
@@ -78,10 +85,13 @@ class DesktopTrack extends StatelessWidget {
                         children: [
                           Text(
                             track.title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               letterSpacing: 14 * 0.03,
                               fontWeight: FontWeight.w500,
+                              color: isCurrentTrack
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
                             ),
                           ),
                           const SizedBox(height: 4),

@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -36,4 +37,25 @@ Stream<AudioControllerPositionData> audioControllerPositionDataStream(
       );
     },
   );
+}
+
+@riverpod
+Stream<MinimalTrack?> currentTrackStream(CurrentTrackStreamRef ref) async* {
+  final audioController = ref.watch(audioControllerProvider);
+
+  await for (final track in audioController.currentTrack.stream) {
+    yield track;
+  }
+}
+
+@riverpod
+bool isCurrentTrack(
+  IsCurrentTrackRef ref,
+  int trackId,
+) {
+  final currentTrackStream = ref.watch(currentTrackStreamProvider);
+
+  final currentTrack = currentTrackStream.valueOrNull;
+
+  return currentTrack?.id == trackId;
 }

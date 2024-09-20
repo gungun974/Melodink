@@ -1,11 +1,13 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
+import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
-class MobileTrack extends StatelessWidget {
+class MobileTrack extends ConsumerWidget {
   final MinimalTrack track;
 
   final void Function(MinimalTrack track) playCallback;
@@ -17,7 +19,9 @@ class MobileTrack extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
+
     return GestureDetector(
       onTap: () {
         playCallback(track);
@@ -52,10 +56,13 @@ class MobileTrack extends StatelessWidget {
                         children: [
                           Text(
                             track.title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               letterSpacing: 14 * 0.03,
                               fontWeight: FontWeight.w500,
+                              color: isCurrentTrack
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
                             ),
                           ),
                           const SizedBox(height: 4),
