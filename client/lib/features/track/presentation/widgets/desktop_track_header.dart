@@ -43,6 +43,7 @@ class DesktopTrackHeader extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(width: 24),
             if (displayAlbum)
               const Expanded(
                 child: Text(

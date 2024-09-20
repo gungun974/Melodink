@@ -85,48 +85,57 @@ class DesktopTrack extends ConsumerWidget {
                           },
                         ),
                       if (displayImage) const SizedBox(width: 10),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            track.title,
-                            style: TextStyle(
-                              fontSize: 14,
-                              letterSpacing: 14 * 0.03,
-                              fontWeight: FontWeight.w500,
-                              color: isCurrentTrack
-                                  ? Theme.of(context).colorScheme.primary
-                                  : null,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              if (track.downloadedTrack != null)
-                                SvgPicture.asset(
-                                  "assets/icons/download2.svg",
-                                  width: 14,
-                                  height: 14,
-                                ),
-                              if (track.downloadedTrack != null)
-                                const SizedBox(width: 4),
-                              Text(
-                                track.getVirtualAlbumArtist(),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Tooltip(
+                              message: track.title,
+                              waitDuration: const Duration(milliseconds: 800),
+                              child: Text(
+                                track.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   letterSpacing: 14 * 0.03,
-                                  color: Colors.grey[350],
+                                  fontWeight: FontWeight.w500,
+                                  color: isCurrentTrack
+                                      ? Theme.of(context).colorScheme.primary
+                                      : null,
                                 ),
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                if (track.downloadedTrack != null)
+                                  SvgPicture.asset(
+                                    "assets/icons/download2.svg",
+                                    width: 14,
+                                    height: 14,
+                                  ),
+                                if (track.downloadedTrack != null)
+                                  const SizedBox(width: 4),
+                                Text(
+                                  track.getVirtualAlbumArtist(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    letterSpacing: 14 * 0.03,
+                                    color: Colors.grey[350],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
+              const SizedBox(width: 24),
               if (displayAlbum)
                 Expanded(
                   child: Text(
