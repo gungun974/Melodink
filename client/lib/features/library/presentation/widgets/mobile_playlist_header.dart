@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_human.dart';
+import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
@@ -111,12 +112,8 @@ class MobilePlaylistHeader extends ConsumerWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              IconButton(
-                splashColor: Colors.transparent,
-                highlightColor: Colors.transparent,
-                hoverColor: Colors.transparent,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+              AppIconButton(
+                padding: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
                 icon: downloaded
                     ? SvgPicture.asset(
                         "assets/icons/download2.svg",
@@ -132,34 +129,24 @@ class MobilePlaylistHeader extends ConsumerWidget {
                           BlendMode.srcIn,
                         ),
                       ),
-                color: Colors.white,
-                iconSize: 24.0,
+                iconSize: 20.0,
                 onPressed: downloadCallback,
               ),
-              const SizedBox(width: 16),
-              IconButton(
-                splashColor: Colors.transparent,
-                highlightColor: Colors.transparent,
-                hoverColor: Colors.transparent,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+              AppIconButton(
+                padding: const EdgeInsets.all(8),
                 icon: const AdwaitaIcon(
                   AdwaitaIcons.view_more_horizontal,
                 ),
                 color: Colors.white,
-                iconSize: 24.0,
+                iconSize: 20.0,
                 onPressed: () async {},
               ),
               const Spacer(),
               StreamBuilder(
                 stream: audioController.playbackState,
                 builder: (context, snapshot) {
-                  return IconButton(
-                    splashColor: Colors.transparent,
-                    highlightColor: Colors.transparent,
-                    hoverColor: Colors.transparent,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                  return AppIconButton(
+                    padding: const EdgeInsets.all(8),
                     icon: const AdwaitaIcon(
                       AdwaitaIcons.media_playlist_shuffle,
                     ),
@@ -174,14 +161,9 @@ class MobilePlaylistHeader extends ConsumerWidget {
                   );
                 },
               ),
-              const SizedBox(width: 16),
-              IconButton(
-                splashColor: Colors.transparent,
-                highlightColor: Colors.transparent,
-                hoverColor: Colors.transparent,
+              AppIconButton(
                 onPressed: playCallback,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.only(left: 8),
                 iconSize: 40,
                 icon: Container(
                   decoration: BoxDecoration(

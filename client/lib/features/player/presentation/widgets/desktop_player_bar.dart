@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/routes/provider.dart';
 import 'package:melodink_client/core/routes/router.dart';
+import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/features/home/presentation/widgets/desktop_sidebar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_controls.dart';
@@ -24,27 +25,27 @@ class DesktopPlayerBar extends StatelessWidget {
           ),
           const Expanded(child: LargePlayerSeeker()),
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-            ),
+            padding: const EdgeInsets.only(left: 12, right: 18),
             child: Row(
               children: [
-                const AdwaitaIcon(
-                  AdwaitaIcons.heart_outline_thick,
-                  size: 20.0,
+                const AppIconButton(
+                  padding: EdgeInsets.all(8),
+                  icon: AdwaitaIcon(
+                    AdwaitaIcons.heart_outline_thick,
+                  ),
+                  iconSize: 20.0,
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 2),
                 Consumer(
                   builder: (context, ref, child) {
                     final currentUrl = ref.watch(appRouterCurrentUrl);
 
-                    return IconButton(
-                      padding: const EdgeInsets.only(right: 4),
-                      constraints: const BoxConstraints(),
+                    return AppIconButton(
+                      padding: const EdgeInsets.all(8),
                       icon: const AdwaitaIcon(
                         AdwaitaIcons.music_queue,
-                        size: 20.0,
                       ),
+                      iconSize: 20.0,
                       color: currentUrl == "/queue"
                           ? Theme.of(context).colorScheme.primary
                           : Colors.white,

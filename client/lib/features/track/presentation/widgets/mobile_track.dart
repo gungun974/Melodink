@@ -1,6 +1,7 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
@@ -84,12 +85,19 @@ class MobileTrack extends StatelessWidget {
                   ),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: AdwaitaIcon(AdwaitaIcons.view_more_horizontal),
+              GestureDetector(
+                onTap: () {},
+                child: Container(
+                  height: 50,
+                  color: Colors.transparent,
+                  child: const AppIconButton(
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 4,
+                    ),
+                    iconSize: 20,
+                    icon: AdwaitaIcon(AdwaitaIcons.view_more_horizontal),
+                  ),
                 ),
               )
             ],

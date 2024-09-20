@@ -56,13 +56,24 @@ class MobileQueueTrack extends StatelessWidget {
                   ],
                 ),
               ),
-              ReorderableListener(
-                child: const Padding(
-                  padding: EdgeInsets.only(right: 4),
-                  child: SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: AdwaitaIcon(AdwaitaIcons.menu),
+              GestureDetector(
+                onTap: () {},
+                child: ReorderableListener(
+                  child: Container(
+                    height: 50,
+                    padding: const EdgeInsets.only(left: 16),
+                    color: Colors.transparent,
+                    child: const MouseRegion(
+                      cursor: SystemMouseCursors.grab,
+                      child: Padding(
+                        padding: EdgeInsets.all(4),
+                        child: SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: AdwaitaIcon(AdwaitaIcons.menu),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

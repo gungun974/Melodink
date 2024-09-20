@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -138,9 +139,8 @@ class MobilePlayerPage extends ConsumerWidget {
                                   const Spacer(),
                                   Padding(
                                     padding: const EdgeInsets.all(4.0),
-                                    child: IconButton(
+                                    child: AppIconButton(
                                       padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
                                       icon: const AdwaitaIcon(
                                           AdwaitaIcons.heart_outline_thick),
                                       iconSize: 24.0,

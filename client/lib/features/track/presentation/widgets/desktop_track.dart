@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/core/helpers/timeago.dart';
+import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
@@ -145,15 +146,19 @@ class DesktopTrack extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 24),
-              IconButton(
-                padding: const EdgeInsets.only(right: 4),
-                constraints: const BoxConstraints(),
-                icon: const AdwaitaIcon(AdwaitaIcons.heart_outline_thick),
-                iconSize: 20.0,
-                onPressed: () async {},
+              GestureDetector(
+                onTap: () {},
+                child: Container(
+                  height: 50,
+                  color: Colors.transparent,
+                  child: AppIconButton(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    icon: const AdwaitaIcon(AdwaitaIcons.heart_outline_thick),
+                    iconSize: 20.0,
+                    onPressed: () async {},
+                  ),
+                ),
               ),
-              const SizedBox(width: 20),
             ],
           ),
         ),

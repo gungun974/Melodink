@@ -2,6 +2,7 @@ import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 
 class PlayerControls extends ConsumerWidget {
@@ -25,9 +26,8 @@ class PlayerControls extends ConsumerWidget {
         StreamBuilder(
             stream: audioController.playbackState,
             builder: (context, snapshot) {
-              return IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+              return AppIconButton(
+                padding: const EdgeInsets.all(8),
                 icon: const AdwaitaIcon(
                   AdwaitaIcons.media_playlist_shuffle,
                 ),
@@ -40,24 +40,20 @@ class PlayerControls extends ConsumerWidget {
                 },
               );
             }),
-        const SizedBox(width: 16),
-        IconButton(
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
+        AppIconButton(
+          padding: const EdgeInsets.all(8),
           icon: const AdwaitaIcon(AdwaitaIcons.media_skip_backward),
           iconSize: largeControlsButton ? 28.0 : 20.0,
           onPressed: () async {
             await audioController.skipToPrevious();
           },
         ),
-        const SizedBox(width: 16),
         StreamBuilder<PlaybackState>(
             stream: audioController.playbackState,
             builder: (context, snapshot) {
               final isPlaying = snapshot.data?.playing ?? false;
-              return IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+              return AppIconButton(
+                padding: const EdgeInsets.all(8),
                 icon: isPlaying
                     ? const AdwaitaIcon(AdwaitaIcons.media_playback_pause)
                     : const AdwaitaIcon(AdwaitaIcons.media_playback_start),
@@ -71,25 +67,21 @@ class PlayerControls extends ConsumerWidget {
                 },
               );
             }),
-        const SizedBox(width: 16),
-        IconButton(
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
+        AppIconButton(
+          padding: const EdgeInsets.all(8),
           icon: const AdwaitaIcon(AdwaitaIcons.media_skip_forward),
           iconSize: largeControlsButton ? 28.0 : 20.0,
           onPressed: () async {
             await audioController.skipToNext();
           },
         ),
-        const SizedBox(width: 16),
         StreamBuilder<PlaybackState>(
           stream: audioController.playbackState,
           builder: (context, snapshot) {
             final repeatMode =
                 snapshot.data?.repeatMode ?? AudioServiceRepeatMode.none;
-            return IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+            return AppIconButton(
+              padding: const EdgeInsets.all(8),
               icon: repeatMode == AudioServiceRepeatMode.one
                   ? const AdwaitaIcon(
                       AdwaitaIcons.media_playlist_repeat_song,
