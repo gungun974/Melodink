@@ -82,20 +82,29 @@ class AlbumCollectionsGrid extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          album.albumArtist,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[400],
+                        Expanded(
+                          child: Tooltip(
+                            message: album.albumArtist,
+                            waitDuration: const Duration(milliseconds: 800),
+                            child: Text(
+                              album.albumArtist,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[400],
+                              ),
+                            ),
                           ),
                         ),
                         album.isDownloaded
-                            ? SvgPicture.asset(
-                                "assets/icons/download2.svg",
-                                width: 15,
-                                height: 15,
+                            ? Padding(
+                                padding: const EdgeInsets.only(left: 4.0),
+                                child: SvgPicture.asset(
+                                  "assets/icons/download2.svg",
+                                  width: 15,
+                                  height: 15,
+                                ),
                               )
                             : const SizedBox.shrink(),
                       ],
