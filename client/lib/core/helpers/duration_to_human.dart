@@ -18,14 +18,14 @@ String durationToHuman(Duration duration) {
     splited.add("$minutes minute${minutes > 1 ? 's' : ''}");
   }
 
-  if (duration.inSeconds > 0 && days < 0) {
+  if (duration.inSeconds > 0 && days <= 0) {
     splited.add("$seconds seconde${seconds > 1 ? 's' : ''}");
   }
 
   var human = "";
 
   for (final (index, element) in splited.indexed) {
-    if (index == splited.length - 1) {
+    if (index == splited.length - 1 && splited.length > 1) {
       human += "and ";
     }
 
