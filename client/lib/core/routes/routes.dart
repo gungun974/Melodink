@@ -23,27 +23,28 @@ final List<RouteBase> appRoutesWithShell = [
     },
   ),
   GoRoute(
-    path: '/album',
-    name: "/album",
-    pageBuilder: (BuildContext context, GoRouterState state) {
-      return NoTransitionPage(
-        key: state.pageKey,
-        child: const AlbumsPage(),
-      );
-    },
-  ),
-  GoRoute(
-    path: '/album/:id',
-    name: "/album/:id",
-    pageBuilder: (BuildContext context, GoRouterState state) {
-      final id = state.pathParameters['id']!;
+      path: '/album',
+      name: "/album",
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        return NoTransitionPage(
+          key: state.pageKey,
+          child: const AlbumsPage(),
+        );
+      },
+      routes: [
+        GoRoute(
+          path: ':id',
+          name: ":id",
+          pageBuilder: (BuildContext context, GoRouterState state) {
+            final id = state.pathParameters['id']!;
 
-      return NoTransitionPage(
-        key: state.pageKey,
-        child: AlbumPage(albumId: id),
-      );
-    },
-  ),
+            return NoTransitionPage(
+              key: state.pageKey,
+              child: AlbumPage(albumId: id),
+            );
+          },
+        ),
+      ]),
   GoRoute(
     path: '/tracks',
     name: "/tracks",
