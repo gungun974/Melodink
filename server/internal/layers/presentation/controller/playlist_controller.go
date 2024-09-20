@@ -201,3 +201,20 @@ func (c *PlaylistController) SetPlaylistTracks(
 		TrackIds: trackIds,
 	})
 }
+
+func (c *PlaylistController) GetPlaylistCover(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.playlistUsecase.GetPlaylistCover(ctx, id)
+}

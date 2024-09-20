@@ -7,6 +7,8 @@ import 'package:melodink_client/features/auth/presentation/pages/select_server_p
 import 'package:melodink_client/features/home/presentation/pages/home_page.dart';
 import 'package:melodink_client/features/library/presentation/pages/album_page.dart';
 import 'package:melodink_client/features/library/presentation/pages/albums_page.dart';
+import 'package:melodink_client/features/library/presentation/pages/playlist_page.dart';
+import 'package:melodink_client/features/library/presentation/pages/playlists_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/mobile_player_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/test_player_page.dart';
@@ -23,28 +25,53 @@ final List<RouteBase> appRoutesWithShell = [
     },
   ),
   GoRoute(
-      path: '/album',
-      name: "/album",
-      pageBuilder: (BuildContext context, GoRouterState state) {
-        return NoTransitionPage(
-          key: state.pageKey,
-          child: const AlbumsPage(),
-        );
-      },
-      routes: [
-        GoRoute(
-          path: ':id',
-          name: ":id",
-          pageBuilder: (BuildContext context, GoRouterState state) {
-            final id = state.pathParameters['id']!;
+    path: '/album',
+    name: "/album",
+    pageBuilder: (BuildContext context, GoRouterState state) {
+      return NoTransitionPage(
+        key: state.pageKey,
+        child: const AlbumsPage(),
+      );
+    },
+    routes: [
+      GoRoute(
+        path: ':id',
+        name: "/album/:id",
+        pageBuilder: (BuildContext context, GoRouterState state) {
+          final id = state.pathParameters['id']!;
 
-            return NoTransitionPage(
-              key: state.pageKey,
-              child: AlbumPage(albumId: id),
-            );
-          },
-        ),
-      ]),
+          return NoTransitionPage(
+            key: state.pageKey,
+            child: AlbumPage(albumId: id),
+          );
+        },
+      ),
+    ],
+  ),
+  GoRoute(
+    path: '/playlist',
+    name: "/playlist",
+    pageBuilder: (BuildContext context, GoRouterState state) {
+      return NoTransitionPage(
+        key: state.pageKey,
+        child: const PlaylistsPage(),
+      );
+    },
+    routes: [
+      GoRoute(
+        path: ':id',
+        name: "/playlist/:id",
+        pageBuilder: (BuildContext context, GoRouterState state) {
+          final id = state.pathParameters['id']!;
+
+          return NoTransitionPage(
+            key: state.pageKey,
+            child: PlaylistPage(playlistId: int.parse(id)),
+          );
+        },
+      ),
+    ],
+  ),
   GoRoute(
     path: '/tracks',
     name: "/tracks",
