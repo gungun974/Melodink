@@ -124,6 +124,10 @@
           '';
 
           autoPubspecLock = ./client/pubspec.lock;
+
+          gitHashes = {
+            adwaita_icons = "sha256-M2QMkxDc1qEnm344H2mdrUNqxO/sVHCY8ETc2rBtrXo=";
+          };
         };
       };
 
