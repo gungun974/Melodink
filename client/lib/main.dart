@@ -41,6 +41,10 @@ void main() async {
 
   await initAudioService();
 
+  PaintingBinding.instance.imageCache
+    ..maximumSize = 10000
+    ..maximumSizeBytes = 750 * 1024 * 1024; // 750 MB
+
   runApp(const ProviderScope(
     child: MyApp(),
   ));

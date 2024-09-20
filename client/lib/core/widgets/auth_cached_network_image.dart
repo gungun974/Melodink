@@ -90,10 +90,10 @@ class AppImageCacheProvider extends ImageProvider<AppImageCacheProvider> {
         final difference = currentTime.difference(time);
 
         if (difference.inHours <= 1) {
-          final buffer = await ui.ImmutableBuffer.fromUint8List(
-              await cacheLocation.readAsBytes());
-
           try {
+            final buffer = await ui.ImmutableBuffer.fromUint8List(
+                await cacheLocation.readAsBytes());
+
             return await decode(buffer);
           } catch (_) {
             await cacheLocation.delete();
