@@ -17,7 +17,7 @@ class DownloadTrackRepository {
     return DownloadTrack(
       trackId: data["track_id"] as int,
       audioFile: data["audio_file"] as String,
-      imageFile: data["image_file"] as String,
+      imageFile: data["image_file"] as String?,
       fileSignature: data["file_signature"] as String,
     );
   }
@@ -74,17 +74,30 @@ class DownloadTrackRepository {
       final downloadPath =
           "${(await getApplicationSupportDirectory()).path}/download/$trackId";
       final downloadAudioPath = "$downloadPath-audio";
-      final downloadImagePath = "$downloadPath-image";
+      String? downloadImagePath = "$downloadPath-image";
 
       await AppApi().dio.download(
             "/track/$trackId/audio",
             downloadAudioPath,
           );
 
-      await AppApi().dio.download(
-            "/track/$trackId/cover",
-            downloadImagePath,
-          );
+      try {
+        await AppApi().dio.download(
+              "/track/$trackId/cover",
+              downloadImagePath,
+            );
+      } on DioException catch (e) {
+        final response = e.response;
+        if (response == null) {
+          rethrow;
+        }
+
+        if (response.statusCode != 404) {
+          rethrow;
+        }
+
+        downloadImagePath = null;
+      }
 
       if (downloadTrack == null) {
         await db.insert("track_download", {
@@ -161,9 +174,13 @@ class DownloadTrackRepository {
           await File(orphan.audioFile).delete();
         } catch (_) {}
 
-        try {
-          await File(orphan.imageFile).delete();
-        } catch (_) {}
+        final imageFile = orphan.imageFile;
+
+        if (imageFile != null) {
+          try {
+            await File(imageFile).delete();
+          } catch (_) {}
+        }
 
         await db.delete(
           "track_download",

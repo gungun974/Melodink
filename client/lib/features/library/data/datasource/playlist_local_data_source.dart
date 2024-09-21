@@ -14,7 +14,7 @@ class PlaylistLocalDataSource {
   static Playlist decodeDownloadTrack(Map<String, Object?> data) {
     return Playlist(
       id: data["playlist_id"] as int,
-      localCover: data["image_file"] as String,
+      localCover: data["image_file"] as String?,
       name: data["name"] as String,
       description: data["description"] as String,
       tracks: (json.decode(data["tracks"] as String) as List)
@@ -69,12 +69,25 @@ class PlaylistLocalDataSource {
 
       final downloadPath =
           "${(await getApplicationSupportDirectory()).path}/download-playlist/${playlist.id}";
-      final downloadImagePath = "$downloadPath-image";
+      String? downloadImagePath = "$downloadPath-image";
 
-      await AppApi().dio.download(
-            "/playlist/${playlist.id}/cover",
-            downloadImagePath,
-          );
+      try {
+        await AppApi().dio.download(
+              "/playlist/${playlist.id}/cover",
+              downloadImagePath,
+            );
+      } on DioException catch (e) {
+        final response = e.response;
+        if (response == null) {
+          rethrow;
+        }
+
+        if (response.statusCode != 404) {
+          rethrow;
+        }
+
+        downloadImagePath = null;
+      }
 
       final body = {
         "image_file": downloadImagePath,

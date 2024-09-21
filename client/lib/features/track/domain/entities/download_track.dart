@@ -4,7 +4,7 @@ class DownloadTrack extends Equatable {
   final int trackId;
 
   final String audioFile;
-  final String imageFile;
+  final String? imageFile;
 
   final String fileSignature;
 
@@ -16,7 +16,7 @@ class DownloadTrack extends Equatable {
   });
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
         trackId,
         audioFile,
         imageFile,
