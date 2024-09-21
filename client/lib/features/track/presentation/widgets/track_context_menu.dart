@@ -1,48 +1,51 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
-import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/presentation/widgets/multi_tracks_context_menu.dart';
+import 'package:melodink_client/features/track/presentation/widgets/single_track_context_menu.dart';
 
-class TrackContextMenu extends ConsumerWidget {
+class TrackContextMenu extends StatelessWidget {
   const TrackContextMenu({
     super.key,
     required this.track,
-    required this.menuController,
+    required this.tracks,
+    required this.singleMenuController,
+    required this.multiMenuController,
     required this.child,
   });
 
   final MinimalTrack track;
 
-  final MenuController menuController;
+  final List<MinimalTrack> tracks;
+
+  final MenuController singleMenuController;
+  final MenuController multiMenuController;
 
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
-
+  Widget build(BuildContext context) {
     return GestureDetector(
       onSecondaryTapDown: (TapDownDetails details) {
-        menuController.open(
-            position: details.localPosition + const Offset(5, 5));
+        if (tracks.isNotEmpty) {
+          multiMenuController.open(
+            position: details.localPosition + const Offset(5, 5),
+          );
+          return;
+        }
+        singleMenuController.open(
+          position: details.localPosition + const Offset(5, 5),
+        );
       },
-      child: MenuAnchor(
-        menuChildren: [
-          MenuItemButton(
-            leadingIcon: const AdwaitaIcon(
-              AdwaitaIcons.playlist,
-              size: 20,
-            ),
-            child: const Text("Add to queue"),
-            onPressed: () {
-              audioController.addTrackToQueue(track);
-            },
-          ),
-        ],
-        controller: menuController,
-        child: child,
+      child: MultiTracksContextMenu(
+        tracks: tracks,
+        menuController: multiMenuController,
+        child: SingleTrackContextMenu(
+          track: track,
+          menuController: singleMenuController,
+          child: child,
+        ),
       ),
     );
   }

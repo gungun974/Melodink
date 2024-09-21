@@ -9,6 +9,7 @@ import 'package:melodink_client/features/player/domain/audio/audio_controller.da
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/mobile_track.dart';
+import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 
 class PlaylistPage extends ConsumerWidget {
   final int playlistId;
@@ -132,45 +133,9 @@ class PlaylistPage extends ConsumerWidget {
                 left: padding,
                 right: padding,
               ),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    late final Widget child;
-
-                    if (size == AppScreenTypeLayout.mobile) {
-                      child = MobileTrack(
-                        track: tracks[index],
-                        playCallback: (track) async {
-                          await audioController.loadTracks(
-                            tracks,
-                            startAt: index,
-                          );
-                        },
-                      );
-                    } else {
-                      child = DesktopTrack(
-                        track: tracks[index],
-                        trackNumber: index + 1,
-                        playCallback: (track) async {
-                          await audioController.loadTracks(
-                            tracks,
-                            startAt: index,
-                          );
-                        },
-                      );
-                    }
-
-                    return Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal:
-                            size == AppScreenTypeLayout.desktop ? 0 : 12,
-                      ),
-                      color: const Color.fromRGBO(0, 0, 0, 0.03),
-                      child: child,
-                    );
-                  },
-                  childCount: tracks.length,
-                ),
+              sliver: TrackList(
+                tracks: tracks,
+                size: size,
               ),
             ),
             SliverContainer(
