@@ -98,7 +98,9 @@ class QueueTracksPanel extends StatelessWidget {
             sliver: SliverToBoxAdapter(
               child: Container(
                 color: const Color.fromRGBO(0, 0, 0, 0.03),
-                child: const DesktopTrackHeader(),
+                child: const DesktopTrackHeader(
+                  displayLike: false,
+                ),
               ),
             ),
           ),
@@ -159,6 +161,7 @@ class QueueTracksPanel extends StatelessWidget {
                       },
                       displayImage: false,
                       displayLike: false,
+                      displayMoreActions: false,
                       displayReorderable: true,
                     );
                   }
@@ -177,6 +180,7 @@ class QueueTracksPanel extends StatelessWidget {
                       playCallback: (track) {
                         playCallback(track, index);
                       },
+                      displayLike: false,
                     );
                   }
                 }

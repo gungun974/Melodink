@@ -1,14 +1,15 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 
-class MobileTrack extends ConsumerWidget {
+class MobileTrack extends HookConsumerWidget {
   final MinimalTrack track;
 
   final void Function(MinimalTrack track) playCallback;
@@ -31,13 +32,20 @@ class MobileTrack extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
 
+    final menuController = useMemoized(() => MenuController());
+
+    final trackContextMenuKey = useMemoized(() => GlobalKey());
+
     return GestureDetector(
       onTap: () {
         playCallback(track);
       },
-      child: SizedBox(
-        height: 50,
+      child: TrackContextMenu(
+        key: trackContextMenuKey,
+        track: track,
+        menuController: menuController,
         child: Container(
+          height: 50,
           color: Colors.transparent,
           child: Row(
             children: [
@@ -111,19 +119,12 @@ class MobileTrack extends ConsumerWidget {
                 ),
               ),
               if (displayMoreActions)
-                GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    height: 50,
-                    color: Colors.transparent,
-                    child: const AppIconButton(
-                      padding: EdgeInsets.only(
-                        left: 16,
-                        right: 4,
-                      ),
-                      iconSize: 20,
-                      icon: AdwaitaIcon(AdwaitaIcons.view_more_horizontal),
-                    ),
+                TrackContextMenuButton(
+                  trackContextMenuKey: trackContextMenuKey,
+                  menuController: menuController,
+                  padding: const EdgeInsets.only(
+                    left: 16,
+                    right: 4,
                   ),
                 ),
               if (displayReorderable)

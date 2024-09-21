@@ -4,11 +4,13 @@ class DesktopTrackHeader extends StatelessWidget {
   final bool displayDateAdded;
 
   final bool displayAlbum;
+  final bool displayLike;
 
   const DesktopTrackHeader({
     super.key,
     this.displayDateAdded = false,
     this.displayAlbum = true,
+    this.displayLike = true,
   });
 
   @override
@@ -79,9 +81,8 @@ class DesktopTrackHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 24),
-            const SizedBox(width: 20),
-            const SizedBox(width: 20),
+            if (displayLike) const SizedBox(width: 52),
+            const SizedBox(width: 68),
           ],
         ),
       ),

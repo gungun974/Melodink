@@ -1,5 +1,6 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -9,8 +10,9 @@ import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 
-class DesktopTrack extends ConsumerWidget {
+class DesktopTrack extends HookConsumerWidget {
   final MinimalTrack track;
 
   final int trackNumber;
@@ -20,6 +22,7 @@ class DesktopTrack extends ConsumerWidget {
   final bool displayAlbum;
 
   final bool displayLike;
+  final bool displayMoreActions;
   final bool displayReorderable;
 
   final void Function(MinimalTrack track) playCallback;
@@ -33,6 +36,7 @@ class DesktopTrack extends ConsumerWidget {
     this.displayImage = true,
     this.displayAlbum = true,
     this.displayLike = true,
+    this.displayMoreActions = true,
     this.displayReorderable = false,
   });
 
@@ -40,13 +44,20 @@ class DesktopTrack extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
 
+    final menuController = useMemoized(() => MenuController());
+
+    final trackContextMenuKey = useMemoized(() => GlobalKey());
+
     return GestureDetector(
       onTap: () {
         playCallback(track);
       },
-      child: SizedBox(
-        height: 50,
+      child: TrackContextMenu(
+        key: trackContextMenuKey,
+        track: track,
+        menuController: menuController,
         child: Container(
+          height: 50,
           color: Colors.transparent,
           child: Row(
             children: [
@@ -178,12 +189,18 @@ class DesktopTrack extends ConsumerWidget {
                     height: 50,
                     color: Colors.transparent,
                     child: AppIconButton(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       icon: const AdwaitaIcon(AdwaitaIcons.heart_outline_thick),
                       iconSize: 20.0,
                       onPressed: () async {},
                     ),
                   ),
+                ),
+              if (displayMoreActions)
+                TrackContextMenuButton(
+                  trackContextMenuKey: trackContextMenuKey,
+                  menuController: menuController,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
                 ),
               if (displayReorderable)
                 GestureDetector(
