@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
+import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/track/data/models/track_model.dart';
@@ -36,7 +37,7 @@ class PlaylistLocalDataSource {
           .map((downloadTrack) => decodeDownloadTrack(downloadTrack))
           .toList();
     } catch (e) {
-      print(e);
+      mainLogger.e(e);
       throw ServerUnknownException();
     }
   }
@@ -56,7 +57,7 @@ class PlaylistLocalDataSource {
 
       return decodeDownloadTrack(downloadTrack);
     } catch (e) {
-      print(e);
+      mainLogger.e(e);
       throw ServerUnknownException();
     }
   }
@@ -128,7 +129,7 @@ class PlaylistLocalDataSource {
 
       throw ServerUnknownException();
     } catch (e) {
-      print(e);
+      mainLogger.e(e);
       throw ServerUnknownException();
     }
   }
@@ -149,7 +150,7 @@ class PlaylistLocalDataSource {
         whereArgs: [playlistId],
       );
     } catch (e) {
-      print(e);
+      mainLogger.e(e);
       throw ServerUnknownException();
     }
   }

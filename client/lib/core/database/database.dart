@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:melodink_client/core/logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -52,6 +53,8 @@ class DatabaseService {
         await batch.commit();
       },
     );
+
+    databaseLogger.i("📀 Database connection established successfully!");
 
     await _migrateDatabase(database);
 
@@ -110,6 +113,8 @@ class DatabaseService {
       'INSERT INTO schema_migrations (version) VALUES (?)',
       [version],
     );
+
+    databaseLogger.i("Database is now at version $version");
   }
 
   static _migrateDatabase(Database database) async {
@@ -117,8 +122,16 @@ class DatabaseService {
 
     int currentVersion = await _getDatabaseVersion(database);
 
+    bool hasStartedMigration = false;
+
     for (final migrationFile in migrationsFiles) {
       if (currentVersion < migrationFile.version) {
+        if (!hasStartedMigration) {
+          databaseLogger
+              .i("Database is starting migration from version $currentVersion");
+        }
+
+        hasStartedMigration = true;
         try {
           await database.transaction((txn) async {
             await txn.execute(await rootBundle.loadString(migrationFile.path));
@@ -126,12 +139,17 @@ class DatabaseService {
             await _setDatabaseVersion(txn, migrationFile.version);
           });
         } catch (e) {
-          print("Failed to upgrade database");
+          databaseLogger
+              .e("Failed to apply database migration ${migrationFile.version}");
           rethrow;
         }
 
         currentVersion = migrationFile.version;
       }
+    }
+
+    if (hasStartedMigration) {
+      databaseLogger.i("Database has finish migration process");
     }
   }
 }

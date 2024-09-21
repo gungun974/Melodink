@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/messages.g.dart';
@@ -46,32 +47,26 @@ class AudioController extends BaseAudioHandler
 
   // ignore: unused_element
   void _debugTracks() {
-    // ignore: avoid_print
-    print("PREV ------------------------");
+    audioControllerLogger.d("PREV ------------------------");
 
     for (final (index, track) in _previousTracks.indexed) {
-      // ignore: avoid_print
-      print("$index : ${track.title}");
+      audioControllerLogger.d("$index : ${track.title}");
     }
 
-    // ignore: avoid_print
-    print("QUEUE ------------------------");
+    audioControllerLogger.d("QUEUE ------------------------");
 
     for (final (index, track) in _queueTracks.indexed) {
-      // ignore: avoid_print
-      print("$index : ${track.title}");
+      audioControllerLogger.d("$index : ${track.title}");
     }
 
-    // ignore: avoid_print
-    print("NEXT ------------------------");
+    audioControllerLogger.d("NEXT ------------------------");
 
     for (final (index, track) in _nextTracks.indexed) {
-      // ignore: avoid_print
-      print("$index : ${track.title}");
+      audioControllerLogger.d("$index : ${track.title}");
     }
 
-    // ignore: avoid_print
-    print("\n---------------------------------------------\n");
+    audioControllerLogger
+        .d("\n---------------------------------------------\n");
   }
 
   @override

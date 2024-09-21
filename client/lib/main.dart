@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
+import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';

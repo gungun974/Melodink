@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
+import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/library/data/models/playlist_model.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
@@ -45,7 +46,7 @@ class PlaylistRemoteDataSource {
 
       throw ServerUnknownException();
     } catch (e) {
-      print(e);
+      mainLogger.e(e);
       throw ServerUnknownException();
     }
   }
