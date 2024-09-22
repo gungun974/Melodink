@@ -137,14 +137,25 @@ class DownloadTrackRepository {
       final albumTracksData =
           await db.rawQuery("SELECT tracks FROM album_download");
 
-      final trackIds = albumTracksData
-          .map((data) => (json.decode(data["tracks"] as String) as List)
-              .map(
-                (rawModel) => MinimalTrackModel.fromJson(rawModel).id,
-              )
-              .toList())
-          .expand((i) => i)
-          .toList();
+      final playlistTracksData =
+          await db.rawQuery("SELECT tracks FROM playlist_download");
+
+      final trackIds = [
+        ...albumTracksData
+            .map((data) => (json.decode(data["tracks"] as String) as List)
+                .map(
+                  (rawModel) => MinimalTrackModel.fromJson(rawModel).id,
+                )
+                .toList())
+            .expand((i) => i),
+        ...playlistTracksData
+            .map((data) => (json.decode(data["tracks"] as String) as List)
+                .map(
+                  (rawModel) => MinimalTrackModel.fromJson(rawModel).id,
+                )
+                .toList())
+            .expand((i) => i)
+      ];
 
       final orphansData = await db.rawQuery(
         "SELECT * FROM track_download WHERE track_id NOT IN (${trackIds.join(",")})",
