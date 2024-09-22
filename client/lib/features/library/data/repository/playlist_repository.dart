@@ -68,6 +68,18 @@ class PlaylistRepository {
     return playlist.copyWith(tracks: tracks);
   }
 
+  Future<void> addPlaylistTracks(
+    int playlistId,
+    List<MinimalTrack> tracks,
+  ) async {
+    final playlist = await playlistRemoteDataSource.getPlaylistById(playlistId);
+
+    await playlistRemoteDataSource.setPlaylistTracks(
+      playlist.id,
+      [...playlist.tracks, ...tracks],
+    );
+  }
+
   Future<Playlist> updateAndStorePlaylist(int id) async {
     final playlist = await playlistRemoteDataSource.getPlaylistById(id);
     await playlistLocalDataSource.storePlaylist(playlist);
