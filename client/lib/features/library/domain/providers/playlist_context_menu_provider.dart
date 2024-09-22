@@ -1,7 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
+import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'playlist_context_menu_provider.g.dart';
@@ -32,5 +34,21 @@ class PlaylistContextMenuNotifier extends _$PlaylistContextMenuNotifier {
 
   addTracks(Playlist playlist, List<MinimalTrack> tracks) async {
     await _playlistRepository.addPlaylistTracks(playlist.id, tracks);
+
+    final _ = ref.refresh(playlistByIdProvider(playlist.id));
+  }
+
+  removeTracks(Playlist playlist, int fromIndex, int toIndex) async {
+    await _playlistRepository.removePlaylistTracks(
+      playlist.id,
+      fromIndex,
+      toIndex,
+    );
+
+    await ref
+        .read(downloadManagerNotifierProvider.notifier)
+        .deleteOrphanTracks();
+
+    final _ = ref.refresh(playlistByIdProvider(playlist.id));
   }
 }

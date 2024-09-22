@@ -35,6 +35,18 @@ class DesktopTrack extends HookConsumerWidget {
 
   final List<MinimalTrack> selectedTracks;
 
+  final List<Widget> Function(
+    BuildContext context,
+    MenuController menuController,
+    MinimalTrack track,
+  )? singleCustomActionsBuilder;
+
+  final List<Widget> Function(
+    BuildContext context,
+    MenuController menuController,
+    List<MinimalTrack> tracks,
+  )? multiCustomActionsBuilder;
+
   const DesktopTrack({
     super.key,
     required this.track,
@@ -49,6 +61,8 @@ class DesktopTrack extends HookConsumerWidget {
     this.selectCallback,
     this.selected = false,
     this.selectedTracks = const [],
+    this.singleCustomActionsBuilder,
+    this.multiCustomActionsBuilder,
   });
 
   @override
@@ -102,6 +116,8 @@ class DesktopTrack extends HookConsumerWidget {
             tracks: selectedTracks,
             singleMenuController: trackContextMenuController,
             multiMenuController: tracksContextMenuController,
+            singleCustomActionsBuilder: singleCustomActionsBuilder,
+            multiCustomActionsBuilder: multiCustomActionsBuilder,
             child: Container(
               height: 50,
               color: selected

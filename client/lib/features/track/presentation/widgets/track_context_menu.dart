@@ -13,6 +13,8 @@ class TrackContextMenu extends StatelessWidget {
     required this.singleMenuController,
     required this.multiMenuController,
     required this.child,
+    this.singleCustomActionsBuilder,
+    this.multiCustomActionsBuilder,
   });
 
   final MinimalTrack track;
@@ -23,6 +25,18 @@ class TrackContextMenu extends StatelessWidget {
   final MenuController multiMenuController;
 
   final Widget child;
+
+  final List<Widget> Function(
+    BuildContext context,
+    MenuController menuController,
+    MinimalTrack track,
+  )? singleCustomActionsBuilder;
+
+  final List<Widget> Function(
+    BuildContext context,
+    MenuController menuController,
+    List<MinimalTrack> tracks,
+  )? multiCustomActionsBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +55,11 @@ class TrackContextMenu extends StatelessWidget {
       child: MultiTracksContextMenu(
         tracks: tracks,
         menuController: multiMenuController,
+        customActionsBuilder: multiCustomActionsBuilder,
         child: SingleTrackContextMenu(
           track: track,
           menuController: singleMenuController,
+          customActionsBuilder: singleCustomActionsBuilder,
           child: child,
         ),
       ),

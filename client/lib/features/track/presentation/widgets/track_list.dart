@@ -20,6 +20,23 @@ class TrackList extends HookConsumerWidget {
 
   final bool displayTrackIndex;
 
+  final List<Widget> Function(
+    BuildContext context,
+    MenuController menuController,
+    MinimalTrack track,
+    int index,
+    VoidCallback unselect,
+  )? singleCustomActionsBuilder;
+
+  final List<Widget> Function(
+    BuildContext context,
+    MenuController menuController,
+    List<MinimalTrack> tracks,
+    int startIndex,
+    int endIndex,
+    VoidCallback unselect,
+  )? multiCustomActionsBuilder;
+
   const TrackList({
     super.key,
     required this.tracks,
@@ -27,6 +44,8 @@ class TrackList extends HookConsumerWidget {
     this.displayImage = true,
     this.displayAlbum = true,
     this.displayTrackIndex = true,
+    this.singleCustomActionsBuilder,
+    this.multiCustomActionsBuilder,
   });
 
   @override
@@ -75,6 +94,49 @@ class TrackList extends HookConsumerWidget {
             endSelect.value = null;
           }
 
+          List<Widget> Function(
+              BuildContext context,
+              MenuController menuController,
+              MinimalTrack track)? localSingleCustomActionsBuilder;
+
+          if (singleCustomActionsBuilder != null) {
+            localSingleCustomActionsBuilder = (context, menuController, track) {
+              return singleCustomActionsBuilder!(
+                context,
+                menuController,
+                track,
+                index,
+                () {
+                  startSelect.value = null;
+                  endSelect.value = null;
+                },
+              );
+            };
+          }
+
+          List<Widget> Function(
+              BuildContext context,
+              MenuController menuController,
+              List<MinimalTrack> tracks)? localMultiCustomActionsBuilder;
+
+          if (multiCustomActionsBuilder != null &&
+              startSelect.value != null &&
+              endSelect.value != null) {
+            localMultiCustomActionsBuilder = (context, menuController, tracks) {
+              return multiCustomActionsBuilder!(
+                context,
+                menuController,
+                tracks,
+                min(startSelect.value!, endSelect.value!),
+                max(startSelect.value!, endSelect.value!),
+                () {
+                  startSelect.value = null;
+                  endSelect.value = null;
+                },
+              );
+            };
+          }
+
           if (size == AppScreenTypeLayout.mobile) {
             child = MobileTrack(
               track: tracks[index],
@@ -87,6 +149,8 @@ class TrackList extends HookConsumerWidget {
               selected: selected,
               selectedTracks: selectedTracks,
               selectCallback: selectCallback,
+              singleCustomActionsBuilder: localSingleCustomActionsBuilder,
+              multiCustomActionsBuilder: localMultiCustomActionsBuilder,
             );
           } else {
             child = DesktopTrack(
@@ -104,6 +168,8 @@ class TrackList extends HookConsumerWidget {
               selected: selected,
               selectedTracks: selectedTracks,
               selectCallback: selectCallback,
+              singleCustomActionsBuilder: localSingleCustomActionsBuilder,
+              multiCustomActionsBuilder: localMultiCustomActionsBuilder,
             );
           }
 

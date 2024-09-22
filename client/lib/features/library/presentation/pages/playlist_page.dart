@@ -1,14 +1,14 @@
+import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
+import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
 import 'package:melodink_client/features/library/presentation/widgets/desktop_playlist_header.dart';
 import 'package:melodink_client/features/library/presentation/widgets/mobile_playlist_header.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
-import 'package:melodink_client/features/track/presentation/widgets/mobile_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 
 class PlaylistPage extends ConsumerWidget {
@@ -137,6 +137,65 @@ class PlaylistPage extends ConsumerWidget {
                 tracks: tracks,
                 size: size,
                 displayTrackIndex: false,
+                singleCustomActionsBuilder: (
+                  context,
+                  menuController,
+                  tracks,
+                  index,
+                  unselect,
+                ) {
+                  return [
+                    const Divider(height: 8),
+                    MenuItemButton(
+                      leadingIcon: const AdwaitaIcon(
+                        AdwaitaIcons.list_remove,
+                        size: 20,
+                      ),
+                      child: const Text("Remove from this playlist"),
+                      onPressed: () {
+                        ref
+                            .read(playlistContextMenuNotifierProvider.notifier)
+                            .removeTracks(
+                              playlist,
+                              index,
+                              index,
+                            );
+                        menuController.close();
+                        unselect();
+                      },
+                    ),
+                  ];
+                },
+                multiCustomActionsBuilder: (
+                  context,
+                  menuController,
+                  tracks,
+                  startIndex,
+                  endIndex,
+                  unselect,
+                ) {
+                  return [
+                    const Divider(height: 8),
+                    MenuItemButton(
+                      leadingIcon: const AdwaitaIcon(
+                        AdwaitaIcons.list_remove,
+                        size: 20,
+                      ),
+                      child: const Text("Remove from this playlist"),
+                      onPressed: () {
+                        ref
+                            .read(playlistContextMenuNotifierProvider.notifier)
+                            .removeTracks(
+                              playlist,
+                              startIndex,
+                              endIndex,
+                            );
+                        menuController.close();
+                        unselect();
+                      },
+                    ),
+                  ];
+                },
               ),
             ),
             SliverContainer(

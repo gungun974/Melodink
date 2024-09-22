@@ -11,11 +11,18 @@ class SingleTrackContextMenu extends ConsumerWidget {
     required this.track,
     required this.menuController,
     required this.child,
+    this.customActionsBuilder,
   });
 
   final MinimalTrack track;
 
   final MenuController menuController;
+
+  final List<Widget> Function(
+    BuildContext context,
+    MenuController menuController,
+    MinimalTrack track,
+  )? customActionsBuilder;
 
   final Widget child;
 
@@ -58,8 +65,11 @@ class SingleTrackContextMenu extends ConsumerWidget {
           child: const Text("Add track to queue"),
           onPressed: () {
             audioController.addTrackToQueue(track);
+            menuController.close();
           },
         ),
+        if (customActionsBuilder != null)
+          ...customActionsBuilder!(context, menuController, track),
       ],
       controller: menuController,
       child: child,

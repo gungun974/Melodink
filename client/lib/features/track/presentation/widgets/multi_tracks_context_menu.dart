@@ -11,11 +11,18 @@ class MultiTracksContextMenu extends ConsumerWidget {
     required this.tracks,
     required this.menuController,
     required this.child,
+    this.customActionsBuilder,
   });
 
   final List<MinimalTrack> tracks;
 
   final MenuController menuController;
+
+  final List<Widget> Function(
+    BuildContext context,
+    MenuController menuController,
+    List<MinimalTrack> track,
+  )? customActionsBuilder;
 
   final Widget child;
 
@@ -59,6 +66,8 @@ class MultiTracksContextMenu extends ConsumerWidget {
             audioController.addTracksToQueue(tracks);
           },
         ),
+        if (customActionsBuilder != null)
+          ...customActionsBuilder!(context, menuController, tracks),
       ],
       controller: menuController,
       child: child,
