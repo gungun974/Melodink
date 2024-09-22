@@ -18,12 +18,15 @@ class TrackList extends HookConsumerWidget {
   final bool displayImage;
   final bool displayAlbum;
 
+  final bool displayTrackIndex;
+
   const TrackList({
     super.key,
     required this.tracks,
     required this.size,
     this.displayImage = true,
     this.displayAlbum = true,
+    this.displayTrackIndex = true,
   });
 
   @override
@@ -88,7 +91,8 @@ class TrackList extends HookConsumerWidget {
           } else {
             child = DesktopTrack(
               track: tracks[index],
-              trackNumber: tracks[index].trackNumber,
+              trackNumber:
+                  displayTrackIndex ? tracks[index].trackNumber : index + 1,
               playCallback: (track) async {
                 await audioController.loadTracks(
                   tracks,

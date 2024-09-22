@@ -136,6 +136,7 @@ class PlaylistPage extends ConsumerWidget {
               sliver: TrackList(
                 tracks: tracks,
                 size: size,
+                displayTrackIndex: false,
               ),
             ),
             SliverContainer(
