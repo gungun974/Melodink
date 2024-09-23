@@ -12,6 +12,7 @@ import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 
 class DesktopTrack extends HookConsumerWidget {
@@ -68,6 +69,12 @@ class DesktopTrack extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
+
+    final downloadedTrack = ref
+        .watch(
+          isTrackDownloadedProvider(track.id),
+        )
+        .valueOrNull;
 
     final trackContextMenuController = useMemoized(() => MenuController());
 
@@ -151,7 +158,8 @@ class DesktopTrack extends HookConsumerWidget {
                         children: [
                           if (displayImage)
                             AuthCachedNetworkImage(
-                              imageUrl: track.getCoverUrl(),
+                              imageUrl: downloadedTrack?.getCoverUrl() ??
+                                  track.getCoverUrl(),
                               placeholder: (context, url) => Image.asset(
                                 "assets/melodink_track_cover_not_found.png",
                               ),
@@ -190,13 +198,13 @@ class DesktopTrack extends HookConsumerWidget {
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    if (track.downloadedTrack != null)
+                                    if (downloadedTrack != null)
                                       SvgPicture.asset(
                                         "assets/icons/download2.svg",
                                         width: 14,
                                         height: 14,
                                       ),
-                                    if (track.downloadedTrack != null)
+                                    if (downloadedTrack != null)
                                       const SizedBox(width: 4),
                                     Text(
                                       track.getVirtualAlbumArtist(),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
+import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/messages.g.dart';
 import 'package:mutex/mutex.dart';
@@ -350,71 +351,78 @@ class AudioController extends BaseAudioHandler
     });
   }
 
+  int? _lastCurrentTrackId;
+  String? _lastCurrentTrackUrl;
+
   Future<void> _updatePlayerTracks() async {
     await playerTracksMutex.protect(() async {
       await api.setAuthToken(
         AppApi().generateCookieHeader(),
       );
 
+      final getDownloadedTrackByTrackId =
+          downloadTrackRepository?.getDownloadedTrackByTrackId;
+
+      final List<String> prevUrls = [];
+
+      for (final (index, track) in _previousTracks.indexed) {
+        if (index == _previousTracks.length - 1) {
+          if (_lastCurrentTrackId == track.id) {
+            prevUrls.add(_lastCurrentTrackUrl ?? track.getUrl());
+            continue;
+          }
+        }
+
+        DownloadTrack? downloadedTrack;
+
+        if (getDownloadedTrackByTrackId != null) {
+          downloadedTrack = await getDownloadedTrackByTrackId(track.id);
+        }
+
+        late String url;
+
+        if (downloadedTrack == null) {
+          url = track.getUrl();
+        } else {
+          url = downloadedTrack.getUrl();
+        }
+
+        prevUrls.add(url);
+
+        if (index == _previousTracks.length - 1) {
+          _lastCurrentTrackId = track.id;
+          _lastCurrentTrackUrl = url;
+        }
+      }
+
+      final List<String> nextUrls = [];
+
+      for (final track in [..._queueTracks, ..._nextTracks]) {
+        DownloadTrack? downloadedTrack;
+
+        if (getDownloadedTrackByTrackId != null) {
+          downloadedTrack = await getDownloadedTrackByTrackId(track.id);
+        }
+
+        if (downloadedTrack == null) {
+          nextUrls.add(track.getUrl());
+        } else {
+          nextUrls.add(downloadedTrack.getUrl());
+        }
+      }
+
       await api.setAudios(
-        _previousTracks.map((track) => track.getUrl()).toList(),
-        [..._queueTracks, ..._nextTracks]
-            .map((track) => track.getUrl())
-            .toList(),
+        prevUrls,
+        nextUrls,
       );
     });
   }
 
   Future<void> reloadPlayerTracks() async {
-    final getDownloadedTrackByTrackId =
-        downloadTrackRepository?.getDownloadedTrackByTrackId;
-
-    if (getDownloadedTrackByTrackId == null) {
-      return;
-    }
-
     if (_previousTracks.isEmpty &&
         _queueTracks.isEmpty &&
         _nextTracks.isEmpty) {
       return;
-    }
-
-    for (var (index, track) in _previousTracks.indexed) {
-      if (index == _previousTracks.length - 1) {
-        continue;
-      }
-
-      final downloadedTrack = await getDownloadedTrackByTrackId(track.id);
-
-      if (downloadedTrack != null) {
-        _previousTracks[index] =
-            track.copyWith(downloadedTrack: downloadedTrack);
-        continue;
-      }
-
-      _previousTracks[index] = track.copyWithoutDownloadedTrack();
-    }
-
-    for (var (index, track) in _queueTracks.indexed) {
-      final downloadedTrack = await getDownloadedTrackByTrackId(track.id);
-
-      if (downloadedTrack != null) {
-        _queueTracks[index] = track.copyWith(downloadedTrack: downloadedTrack);
-        continue;
-      }
-
-      _queueTracks[index] = track.copyWithoutDownloadedTrack();
-    }
-
-    for (var (index, track) in _nextTracks.indexed) {
-      final downloadedTrack = await getDownloadedTrackByTrackId(track.id);
-
-      if (downloadedTrack != null) {
-        _nextTracks[index] = track.copyWith(downloadedTrack: downloadedTrack);
-        continue;
-      }
-
-      _nextTracks[index] = track.copyWithoutDownloadedTrack();
     }
 
     await _updatePlayerTracks();
@@ -476,6 +484,15 @@ class AudioController extends BaseAudioHandler
 
     final track = _previousTracks.lastOrNull;
 
+    final getDownloadedTrackByTrackId =
+        downloadTrackRepository?.getDownloadedTrackByTrackId;
+
+    DownloadTrack? downloadedTrack;
+
+    if (getDownloadedTrackByTrackId != null && track != null) {
+      downloadedTrack = await getDownloadedTrackByTrackId(track.id);
+    }
+
     mediaItem.add(track != null
         ? MediaItem(
             id: "${track.id}",
@@ -483,7 +500,7 @@ class AudioController extends BaseAudioHandler
             title: track.title,
             artist: track.albumArtist,
             duration: track.duration,
-            artUri: track.getCoverUri(),
+            artUri: downloadedTrack?.getCoverUri() ?? track.getCoverUri(),
             artHeaders: {
               'Cookie': AppApi().generateCookieHeader(),
             },

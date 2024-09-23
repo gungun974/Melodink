@@ -9,6 +9,7 @@ import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_controls.dart';
+import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 
 class MobilePlayerPage extends ConsumerWidget {
   const MobilePlayerPage({
@@ -50,110 +51,121 @@ class MobilePlayerPage extends ConsumerWidget {
                     StreamBuilder(
                       stream: audioController.currentTrack.stream,
                       builder: (context, snapshot) {
-                        String title = "";
+                        return Consumer(
+                          builder: (context, ref, child) {
+                            String title = "";
 
-                        String artist = "";
+                            String artist = "";
 
-                        String album = "";
+                            String album = "";
 
-                        Widget image = Image.asset(
-                          "assets/melodink_track_cover_not_found.png",
-                        );
-
-                        final currentTrack = snapshot.data;
-
-                        if (currentTrack != null) {
-                          title = currentTrack.title;
-
-                          artist = currentTrack.getVirtualAlbumArtist();
-
-                          album = currentTrack.album;
-
-                          image = AuthCachedNetworkImage(
-                            imageUrl: currentTrack.getCoverUrl(),
-                            placeholder: (context, url) => Image.asset(
+                            Widget image = Image.asset(
                               "assets/melodink_track_cover_not_found.png",
-                            ),
-                            errorWidget: (context, url, error) {
-                              return Image.asset(
-                                "assets/melodink_track_cover_not_found.png",
-                              );
-                            },
-                          );
-                        }
+                            );
 
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: const Color.fromRGBO(0, 0, 0, 0.03),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: AspectRatio(
-                                      aspectRatio: 1.0,
-                                      child: image,
-                                    ),
+                            final currentTrack = snapshot.data;
+
+                            if (currentTrack != null) {
+                              title = currentTrack.title;
+
+                              artist = currentTrack.getVirtualAlbumArtist();
+
+                              album = currentTrack.album;
+
+                              final downloadedTrack = ref
+                                  .watch(
+                                    isTrackDownloadedProvider(currentTrack.id),
                                   )
-                                ],
+                                  .valueOrNull;
+
+                              image = AuthCachedNetworkImage(
+                                imageUrl: downloadedTrack?.getCoverUrl() ??
+                                    currentTrack.getCoverUrl(),
+                                placeholder: (context, url) => Image.asset(
+                                  "assets/melodink_track_cover_not_found.png",
+                                ),
+                                errorWidget: (context, url, error) {
+                                  return Image.asset(
+                                    "assets/melodink_track_cover_not_found.png",
+                                  );
+                                },
+                              );
+                            }
+
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: const Color.fromRGBO(0, 0, 0, 0.03),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              const SizedBox(height: 10),
-                              Row(
+                              padding: const EdgeInsets.all(8),
+                              child: Column(
                                 children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  Row(
                                     children: [
-                                      Text(
-                                        title,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 16,
-                                          letterSpacing: 16 * 0.03,
+                                      Expanded(
+                                        child: AspectRatio(
+                                          aspectRatio: 1.0,
+                                          child: image,
                                         ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        artist,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          letterSpacing: 14 * 0.03,
-                                          color: Colors.grey[350],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        album,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          letterSpacing: 12 * 0.03,
-                                          fontWeight: FontWeight.w300,
-                                          color: Colors.grey[350],
-                                        ),
-                                      ),
+                                      )
                                     ],
                                   ),
-                                  const Spacer(),
-                                  Padding(
-                                    padding: const EdgeInsets.all(4.0),
-                                    child: AppIconButton(
-                                      padding: EdgeInsets.zero,
-                                      icon: const AdwaitaIcon(
-                                          AdwaitaIcons.heart_outline_thick),
-                                      iconSize: 24.0,
-                                      color: Colors.white,
-                                      onPressed: () {
-                                        GoRouter.of(context).push("/queue");
-                                      },
-                                    ),
-                                  )
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            title,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 16,
+                                              letterSpacing: 16 * 0.03,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            artist,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              letterSpacing: 14 * 0.03,
+                                              color: Colors.grey[350],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            album,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              letterSpacing: 12 * 0.03,
+                                              fontWeight: FontWeight.w300,
+                                              color: Colors.grey[350],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const Spacer(),
+                                      Padding(
+                                        padding: const EdgeInsets.all(4.0),
+                                        child: AppIconButton(
+                                          padding: EdgeInsets.zero,
+                                          icon: const AdwaitaIcon(
+                                              AdwaitaIcons.heart_outline_thick),
+                                          iconSize: 24.0,
+                                          color: Colors.white,
+                                          onPressed: () {
+                                            GoRouter.of(context).push("/queue");
+                                          },
+                                        ),
+                                      )
+                                    ],
+                                  ),
                                 ],
                               ),
-                            ],
-                          ),
+                            );
+                          },
                         );
                       },
                     ),

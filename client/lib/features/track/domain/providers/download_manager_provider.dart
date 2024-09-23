@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:mutex/mutex.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -39,16 +40,22 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
 
   final _mutex = Mutex();
 
+  int? _lastCurrentTrackId;
+
   @override
   DownloadState build() {
     _downloadTrackRepository = ref.read(downloadTrackRepositoryProvider);
     _audioController = ref.read(audioControllerProvider);
 
-    _audioController.currentTrack.stream.listen((_) async {
+    _audioController.currentTrack.stream.listen((track) async {
       await Future.delayed(
         const Duration(milliseconds: 10),
       );
-      deleteOrphanTracks();
+
+      if (track != null && _lastCurrentTrackId != track.id) {
+        _lastCurrentTrackId = track.id;
+        deleteOrphanTracks();
+      }
     });
 
     return const DownloadState(
@@ -88,6 +95,8 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
         _mutex.release();
 
         await _audioController.reloadPlayerTracks();
+
+        final _ = ref.refresh(isTrackDownloadedProvider(currentTrack.id));
       } catch (e) {
         state = state.copyWith(
           queueTracks: [
@@ -127,6 +136,10 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
     );
 
     await _audioController.reloadPlayerTracks();
+
+    for (final orphan in orphans) {
+      final _ = ref.refresh(isTrackDownloadedProvider(orphan.trackId));
+    }
   }
 }
 

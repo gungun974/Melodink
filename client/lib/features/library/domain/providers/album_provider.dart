@@ -132,6 +132,8 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
       downloadManagerNotifier.addTracksToDownloadTodo(
         newAlbum.tracks,
       );
+
+      final _ = ref.refresh(allAlbumsProvider);
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,
@@ -160,6 +162,8 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
         isLoading: false,
         downloaded: false,
       );
+
+      final _ = ref.refresh(allAlbumsProvider);
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,

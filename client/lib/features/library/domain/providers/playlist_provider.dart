@@ -18,17 +18,9 @@ Future<List<Playlist>> allPlaylists(AllPlaylistsRef ref) async {
 Future<Playlist> playlistById(PlaylistByIdRef ref, int id) async {
   final playlistRepository = ref.watch(playlistRepositoryProvider);
 
-  ref.watch(playlistDownloadNotifierProvider(id).select(
-    (state) => state.downloaded,
-  ));
+  final result = await playlistRepository.getPlaylistById(id);
 
-  final playlist = await playlistRepository.getPlaylistById(id);
-
-  if (playlist.isDownloaded) {
-    ref.watch(downloadManagerNotifierProvider);
-  }
-
-  return playlist;
+  return result;
 }
 
 class PlaylistDownloadState extends Equatable {
@@ -133,6 +125,8 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
       downloadManagerNotifier.addTracksToDownloadTodo(
         newPlaylist.tracks,
       );
+
+      final _ = ref.refresh(allPlaylistsProvider);
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,
@@ -162,6 +156,8 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
         isLoading: false,
         downloaded: false,
       );
+
+      final _ = ref.refresh(allPlaylistsProvider);
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,

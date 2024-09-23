@@ -12,14 +12,11 @@ class AlbumRepository {
   final AlbumRemoteDataSource albumRemoteDataSource;
   final AlbumLocalDataSource albumLocalDataSource;
 
-  final DownloadTrackRepository downloadTrackRepository;
-
   final NetworkInfo networkInfo;
 
   AlbumRepository({
     required this.albumRemoteDataSource,
     required this.albumLocalDataSource,
-    required this.downloadTrackRepository,
     required this.networkInfo,
   });
 
@@ -50,19 +47,7 @@ class AlbumRepository {
 
     album ??= await albumRemoteDataSource.getAlbumById(id);
 
-    final List<MinimalTrack> tracks = [];
-
-    for (var i = 0; i < album.tracks.length; i++) {
-      final track = album.tracks[i];
-      tracks.add(
-        track.copyWith(
-          downloadedTrack: await downloadTrackRepository
-              .getDownloadedTrackByTrackId(track.id),
-        ),
-      );
-    }
-
-    return album.copyWith(tracks: tracks);
+    return album;
   }
 
   Future<Album> updateAndStoreAlbum(String id) async {
@@ -89,9 +74,6 @@ final albumRepositoryProvider = Provider(
     ),
     albumLocalDataSource: ref.watch(
       albumLocalDataSourceProvider,
-    ),
-    downloadTrackRepository: ref.watch(
-      downloadTrackRepositoryProvider,
     ),
     networkInfo: ref.watch(
       networkInfoProvider,

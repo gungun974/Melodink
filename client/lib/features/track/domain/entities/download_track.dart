@@ -22,4 +22,17 @@ class DownloadTrack extends Equatable {
         imageFile,
         fileSignature,
       ];
+
+  String getUrl() {
+    return audioFile;
+  }
+
+  String? getCoverUrl() {
+    return imageFile;
+  }
+
+  Uri getCoverUri() {
+    final url = getCoverUrl();
+    return Uri.parse("file://$url");
+  }
 }

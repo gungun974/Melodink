@@ -3,7 +3,6 @@ import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/datasource/playlist_local_data_source.dart';
 import 'package:melodink_client/features/library/data/datasource/playlist_remote_data_source.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
-import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
 class PlaylistNotFoundException implements Exception {}
@@ -12,14 +11,11 @@ class PlaylistRepository {
   final PlaylistRemoteDataSource playlistRemoteDataSource;
   final PlaylistLocalDataSource playlistLocalDataSource;
 
-  final DownloadTrackRepository downloadTrackRepository;
-
   final NetworkInfo networkInfo;
 
   PlaylistRepository({
     required this.playlistRemoteDataSource,
     required this.playlistLocalDataSource,
-    required this.downloadTrackRepository,
     required this.networkInfo,
   });
 
@@ -53,19 +49,7 @@ class PlaylistRepository {
 
     playlist ??= await playlistRemoteDataSource.getPlaylistById(id);
 
-    final List<MinimalTrack> tracks = [];
-
-    for (var i = 0; i < playlist.tracks.length; i++) {
-      final track = playlist.tracks[i];
-      tracks.add(
-        track.copyWith(
-          downloadedTrack: await downloadTrackRepository
-              .getDownloadedTrackByTrackId(track.id),
-        ),
-      );
-    }
-
-    return playlist.copyWith(tracks: tracks);
+    return playlist;
   }
 
   Future<void> addPlaylistTracks(
@@ -128,9 +112,6 @@ final playlistRepositoryProvider = Provider(
     ),
     playlistLocalDataSource: ref.watch(
       playlistLocalDataSourceProvider,
-    ),
-    downloadTrackRepository: ref.watch(
-      downloadTrackRepositoryProvider,
     ),
     networkInfo: ref.watch(
       networkInfoProvider,
