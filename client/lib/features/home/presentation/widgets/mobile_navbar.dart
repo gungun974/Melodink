@@ -56,7 +56,6 @@ class MobileNavbar extends StatelessWidget {
             GoRouter.of(context).go("/album");
             break;
           case 3:
-            GoRouter.of(context).go("/playerTest");
             break;
         }
       },

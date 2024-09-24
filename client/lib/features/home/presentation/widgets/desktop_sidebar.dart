@@ -84,9 +84,7 @@ class DesktopSidebar extends ConsumerWidget {
                       AdwaitaIcons.person2,
                       size: 24.0,
                     ),
-                    onTap: () {
-                      GoRouter.of(context).go("/playerTest");
-                    },
+                    onTap: () {},
                     active: currentUrl == "/user",
                   ),
                 ],

@@ -11,7 +11,6 @@ import 'package:melodink_client/features/library/presentation/pages/playlist_pag
 import 'package:melodink_client/features/library/presentation/pages/playlists_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/mobile_player_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_page.dart';
-import 'package:melodink_client/features/player/presentation/pages/test_player_page.dart';
 
 final List<RouteBase> appRoutesWithShell = [
   GoRoute(
@@ -124,13 +123,6 @@ final List<RouteBase> appRoutesWithNoShell = [
     name: "/auth/register",
     builder: (BuildContext context, GoRouterState state) {
       return const RegisterPage();
-    },
-  ),
-  GoRoute(
-    path: '/playerTest',
-    name: "/playerTest",
-    builder: (BuildContext context, GoRouterState state) {
-      return const TestPlayerPage();
     },
   ),
 ];
