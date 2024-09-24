@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_human.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
+import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
@@ -16,7 +17,7 @@ class MobilePlaylistHeader extends ConsumerWidget {
 
   final List<MinimalTrack> tracks;
 
-  final String artist;
+  final List<MinimalArtist> artists;
 
   final VoidCallback playCallback;
 
@@ -30,7 +31,7 @@ class MobilePlaylistHeader extends ConsumerWidget {
     required this.type,
     required this.imageUrl,
     required this.tracks,
-    required this.artist,
+    required this.artists,
     required this.playCallback,
     required this.downloadCallback,
     required this.downloaded,
@@ -79,7 +80,7 @@ class MobilePlaylistHeader extends ConsumerWidget {
               const SizedBox(height: 2),
               Text.rich(
                 TextSpan(
-                  text: artist,
+                  text: artists.map((artist) => artist.name).join(", "),
                   style: const TextStyle(
                     fontSize: 14,
                     letterSpacing: 14 * 0.03,
@@ -88,7 +89,7 @@ class MobilePlaylistHeader extends ConsumerWidget {
                   children: [
                     TextSpan(
                       text: [
-                        if (artist.isNotEmpty) "",
+                        if (artists.isNotEmpty) "",
                         "${tracks.length} Track${tracks.length > 1 ? 's' : ''}",
                         durationToHuman(
                           tracks.fold(

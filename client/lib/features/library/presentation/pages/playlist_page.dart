@@ -58,7 +58,7 @@ class PlaylistPage extends ConsumerWidget {
                       imageUrl: playlist.getCoverUrl(),
                       description: playlist.description,
                       tracks: tracks,
-                      artist: "",
+                      artists: const [],
                       playCallback: () async {
                         await audioController.loadTracks(
                           tracks,
@@ -83,7 +83,7 @@ class PlaylistPage extends ConsumerWidget {
                       type: "Playlist",
                       imageUrl: playlist.getCoverUrl(),
                       tracks: tracks,
-                      artist: "",
+                      artists: const [],
                       playCallback: () async {
                         await audioController.loadTracks(
                           tracks,

@@ -5,8 +5,10 @@ import (
 	"encoding/hex"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/dhowden/tag"
+	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/pkgs/audiolength"
 )
@@ -84,6 +86,23 @@ func scanAudio(path string) (entities.Track, error) {
 		}
 	}
 
+	rawArtist := metadata.Artist()
+	rawAlbumArtist := metadata.AlbumArtist()
+
+	artists := strings.Split(rawArtist, ",")
+	albumArtists := strings.Split(rawAlbumArtist, ",")
+
+	for i := range artists {
+		artists[i] = strings.TrimSpace(artists[i])
+	}
+
+	for i := range albumArtists {
+		albumArtists[i] = strings.TrimSpace(albumArtists[i])
+	}
+
+	artists = helpers.RemoveEmptyStrings(artists)
+	albumArtists = helpers.RemoveEmptyStrings(albumArtists)
+
 	return entities.Track{
 		Title:    metadata.Title(),
 		Duration: duration,
@@ -113,9 +132,9 @@ func scanAudio(path string) (entities.Track, error) {
 			AcoustID:            acoustID,
 			AcoustIDFingerprint: acoustIDFingerprint,
 
-			Artist:      metadata.Artist(),
-			AlbumArtist: metadata.AlbumArtist(),
-			Composer:    metadata.Composer(),
+			Artists:      artists,
+			AlbumArtists: albumArtists,
+			Composer:     metadata.Composer(),
 
 			Copyright: copyright,
 		},

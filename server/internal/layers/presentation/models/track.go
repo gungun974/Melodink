@@ -49,7 +49,8 @@ func ConvertToTrackViewModel(
 }
 
 type TrackMetadataViewModel struct {
-	Album string `json:"album"`
+	Album   string `json:"album"`
+	AlbumId string `json:"album_id"`
 
 	TrackNumber int `json:"track_number"`
 	TotalTracks int `json:"total_tracks"`
@@ -67,9 +68,9 @@ type TrackMetadataViewModel struct {
 	AcoustID            string `json:"acoust_id"`
 	AcoustIDFingerprint string `json:"acoust_id_fingerprint"`
 
-	Artist      string `json:"artist"`
-	AlbumArtist string `json:"album_artist"`
-	Composer    string `json:"composer"`
+	Artists      []MinimalArtistViewModel `json:"artists"`
+	AlbumArtists []MinimalArtistViewModel `json:"album_artists"`
+	Composer     string                   `json:"composer"`
 
 	Copyright string `json:"copyright"`
 }
@@ -77,8 +78,15 @@ type TrackMetadataViewModel struct {
 func ConvertToTrackMetadataViewModel(
 	metadata entities.TrackMetadata,
 ) TrackMetadataViewModel {
+	albumId := ""
+
+	if id, err := metadata.GetVirtualAlbumId(); err == nil {
+		albumId = id
+	}
+
 	return TrackMetadataViewModel{
-		Album: metadata.Album,
+		Album:   metadata.Album,
+		AlbumId: albumId,
 
 		TrackNumber: metadata.TrackNumber,
 		TotalTracks: metadata.TotalTracks,
@@ -96,9 +104,9 @@ func ConvertToTrackMetadataViewModel(
 		AcoustID:            metadata.AcoustID,
 		AcoustIDFingerprint: metadata.AcoustIDFingerprint,
 
-		Artist:      metadata.Artist,
-		AlbumArtist: metadata.AlbumArtist,
-		Composer:    metadata.Composer,
+		Artists:      ConvertToMinimalArtistsViewModel(metadata.Artists),
+		AlbumArtists: ConvertToMinimalArtistsViewModel(metadata.AlbumArtists),
+		Composer:     metadata.Composer,
 
 		Copyright: metadata.Copyright,
 	}
@@ -110,7 +118,8 @@ type MinimalTrackViewModel struct {
 	Title    string `json:"title"`
 	Duration int    `json:"duration"`
 
-	Album string `json:"album"`
+	Album   string `json:"album"`
+	AlbumId string `json:"album_id"`
 
 	TrackNumber int `json:"track_number"`
 
@@ -121,9 +130,9 @@ type MinimalTrackViewModel struct {
 
 	Genre string `json:"genre"`
 
-	Artist      string `json:"artist"`
-	AlbumArtist string `json:"album_artist"`
-	Composer    string `json:"composer"`
+	Artists      []MinimalArtistViewModel `json:"artists"`
+	AlbumArtists []MinimalArtistViewModel `json:"album_artists"`
+	Composer     string                   `json:"composer"`
 
 	DateAdded time.Time `json:"date_added"`
 }
@@ -131,13 +140,20 @@ type MinimalTrackViewModel struct {
 func ConvertToMinimalTrackViewModel(
 	track entities.Track,
 ) MinimalTrackViewModel {
+	albumId := ""
+
+	if id, err := track.Metadata.GetVirtualAlbumId(); err == nil {
+		albumId = id
+	}
+
 	return MinimalTrackViewModel{
 		Id: track.Id,
 
 		Title:    track.Title,
 		Duration: track.Duration,
 
-		Album: track.Metadata.Album,
+		Album:   track.Metadata.Album,
+		AlbumId: albumId,
 
 		TrackNumber: track.Metadata.TrackNumber,
 
@@ -148,8 +164,8 @@ func ConvertToMinimalTrackViewModel(
 
 		Genre: track.Metadata.Genre,
 
-		Artist:      track.Metadata.Artist,
-		AlbumArtist: track.Metadata.AlbumArtist,
+		Artists:      ConvertToMinimalArtistsViewModel(track.Metadata.Artists),
+		AlbumArtists: ConvertToMinimalArtistsViewModel(track.Metadata.AlbumArtists),
 
 		DateAdded: track.DateAdded,
 	}

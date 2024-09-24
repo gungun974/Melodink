@@ -206,12 +206,25 @@ class DesktopTrack extends HookConsumerWidget {
                                       ),
                                     if (downloadedTrack != null)
                                       const SizedBox(width: 4),
-                                    Text(
-                                      track.getVirtualAlbumArtist(),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        letterSpacing: 14 * 0.03,
-                                        color: Colors.grey[350],
+                                    Expanded(
+                                      child: Tooltip(
+                                        message: track.artists
+                                            .map((artist) => artist.name)
+                                            .join(", "),
+                                        waitDuration:
+                                            const Duration(milliseconds: 800),
+                                        child: Text(
+                                          track.artists
+                                              .map((artist) => artist.name)
+                                              .join(", "),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            letterSpacing: 14 * 0.03,
+                                            color: Colors.grey[350],
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],

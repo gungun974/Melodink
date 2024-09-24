@@ -1,10 +1,7 @@
 package repository
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"errors"
-	"strings"
 
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/jmoiron/sqlx"
@@ -26,32 +23,6 @@ type AlbumRepository struct {
 	trackRepository TrackRepository
 }
 
-func (r *AlbumRepository) getVirtualAlbumFromTrack(track entities.Track) (string, error) {
-	if len(strings.TrimSpace(track.Metadata.Album)) == 0 {
-		return "", errors.New("This track has no album")
-	}
-
-	rawId := "a#" + strings.ReplaceAll(
-		track.Metadata.Album,
-		"#",
-		"##",
-	) + "r#" + strings.ReplaceAll(
-		track.Metadata.GetVirtualAlbumArtist(),
-		"#",
-		"##",
-	)
-
-	hasher := md5.New()
-
-	hasher.Write([]byte(rawId))
-
-	hashBytes := hasher.Sum(nil)
-
-	hashString := hex.EncodeToString(hashBytes)
-
-	return hashString, nil
-}
-
 func (r *AlbumRepository) GroupTracksInAlbums(
 	userId *int,
 	tracks []entities.Track,
@@ -60,7 +31,7 @@ func (r *AlbumRepository) GroupTracksInAlbums(
 
 outerloop:
 	for _, track := range tracks {
-		albumId, err := r.getVirtualAlbumFromTrack(track)
+		albumId, err := track.Metadata.GetVirtualAlbumId()
 		if err != nil {
 			continue
 		}
@@ -79,7 +50,7 @@ outerloop:
 
 			Name: track.Metadata.Album,
 
-			AlbumArtist: track.Metadata.GetVirtualAlbumArtist(),
+			AlbumArtists: track.Metadata.GetVirtualAlbumArtists(),
 
 			Tracks: []entities.Track{
 				track,
@@ -114,7 +85,7 @@ func (r *AlbumRepository) GetAlbumByIdFromUser(userId int, albumId string) (enti
 	}
 
 	for _, track := range tracks {
-		albumId, err := r.getVirtualAlbumFromTrack(track)
+		albumId, err := track.Metadata.GetVirtualAlbumId()
 		if err != nil {
 			continue
 		}
@@ -131,7 +102,7 @@ func (r *AlbumRepository) GetAlbumByIdFromUser(userId int, albumId string) (enti
 
 	album.Name = album.Tracks[0].Metadata.Album
 
-	album.AlbumArtist = album.Tracks[0].Metadata.GetVirtualAlbumArtist()
+	album.AlbumArtists = album.Tracks[0].Metadata.GetVirtualAlbumArtists()
 
 	return album, nil
 }

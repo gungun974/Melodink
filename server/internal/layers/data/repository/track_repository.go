@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 
 	data_models "github.com/gungun974/Melodink/server/internal/layers/data/models"
@@ -76,6 +77,18 @@ func (r *TrackRepository) GetTrack(
 func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 	m := data_models.TrackModel{}
 
+	artists := "[]"
+
+	if jsonData, err := json.Marshal(track.Metadata.Artists); err == nil {
+		artists = string(jsonData)
+	}
+
+	albumArtists := "[]"
+
+	if jsonData, err := json.Marshal(track.Metadata.AlbumArtists); err == nil {
+		albumArtists = string(jsonData)
+	}
+
 	err := r.Database.Get(
 		&m,
 		`
@@ -110,8 +123,8 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
         metadata_acoust_id,
         metadata_acoust_id_fingerprint,
 
-        metadata_artist,
-        metadata_album_artist,
+        metadata_artists,
+        metadata_album_artists,
         metadata_composer,
 
         metadata_copyright
@@ -173,8 +186,8 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 		track.Metadata.AcoustID,
 		track.Metadata.AcoustIDFingerprint,
 
-		track.Metadata.Artist,
-		track.Metadata.AlbumArtist,
+		artists,
+		albumArtists,
 		track.Metadata.Composer,
 
 		track.Metadata.Copyright,
@@ -226,8 +239,8 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
         metadata_acoust_id = ?,
         metadata_acoust_id_fingerprint = ?,
 
-        metadata_artist = ?,
-        metadata_album_artist = ?,
+        metadata_artists = ?,
+        metadata_album_artists = ?,
         metadata_composer = ?,
 
         metadata_copyright = ? 
@@ -264,8 +277,8 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 		track.Metadata.AcoustID,
 		track.Metadata.AcoustIDFingerprint,
 
-		track.Metadata.Artist,
-		track.Metadata.AlbumArtist,
+		track.Metadata.Artists,
+		track.Metadata.AlbumArtists,
 		track.Metadata.Composer,
 
 		track.Metadata.Copyright,

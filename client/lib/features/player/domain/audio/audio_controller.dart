@@ -498,7 +498,7 @@ class AudioController extends BaseAudioHandler
             id: "${track.id}",
             album: track.album,
             title: track.title,
-            artist: track.albumArtist,
+            artist: track.artists.map((artist) => artist.name).join(", "),
             duration: track.duration,
             artUri: downloadedTrack?.getCoverUri() ?? track.getCoverUri(),
             artHeaders: {

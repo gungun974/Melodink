@@ -68,8 +68,8 @@ func (s *TrackStorage) UploadAudioFile(userId int, file io.Reader) (string, erro
 func (s *TrackStorage) MoveAudioFile(track *entities.Track) error {
 	directory := fmt.Sprintf("%s/%d", AUDIOS_STORAGE, *track.UserId)
 
-	if !helpers.IsEmptyOrWhitespace(track.Metadata.Artist) {
-		directory = helpers.SafeJoin(directory, track.Metadata.Artist)
+	if len(track.Metadata.Artists) > 0 && !helpers.IsEmptyOrWhitespace(track.Metadata.Artists[0]) {
+		directory = helpers.SafeJoin(directory, track.Metadata.Artists[0])
 	}
 
 	if !helpers.IsEmptyOrWhitespace(track.Metadata.Album) {

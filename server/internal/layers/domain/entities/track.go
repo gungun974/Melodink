@@ -1,6 +1,13 @@
 package entities
 
-import "time"
+import (
+	"crypto/md5"
+	"encoding/hex"
+	"errors"
+	"slices"
+	"strings"
+	"time"
+)
 
 type Track struct {
 	Id int
@@ -40,19 +47,47 @@ type TrackMetadata struct {
 	AcoustID            string
 	AcoustIDFingerprint string
 
-	Artist      string
-	AlbumArtist string
-	Composer    string
+	Artists      []string
+	AlbumArtists []string
+	Composer     string
 
 	Copyright string
 }
 
-func (m TrackMetadata) GetVirtualAlbumArtist() string {
-	artist := m.AlbumArtist
+func (m TrackMetadata) GetVirtualAlbumArtists() []string {
+	artists := slices.Clone(m.AlbumArtists)
 
-	if len(artist) != 0 {
-		return artist
+	if len(artists) == 0 && len(m.Artists) > 0 {
+		artists = []string{m.Artists[0]}
 	}
 
-	return m.Artist
+	slices.Sort(artists)
+
+	return artists
+}
+
+func (m TrackMetadata) GetVirtualAlbumId() (string, error) {
+	if len(strings.TrimSpace(m.Album)) == 0 {
+		return "", errors.New("This track has no album")
+	}
+
+	rawId := "a#" + strings.ReplaceAll(
+		m.Album,
+		"#",
+		"##",
+	) + "r#" + strings.ReplaceAll(
+		strings.Join(m.GetVirtualAlbumArtists(), "$"),
+		"#",
+		"##",
+	)
+
+	hasher := md5.New()
+
+	hasher.Write([]byte(rawId))
+
+	hashBytes := hasher.Sum(nil)
+
+	hashString := hex.EncodeToString(hashBytes)
+
+	return hashString, nil
 }

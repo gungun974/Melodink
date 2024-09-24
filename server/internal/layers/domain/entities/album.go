@@ -7,7 +7,7 @@ type Album struct {
 
 	Name string
 
-	AlbumArtist string
+	AlbumArtists []string
 
 	Tracks []Track
 }

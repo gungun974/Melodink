@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
 class Album extends Equatable {
@@ -7,7 +8,7 @@ class Album extends Equatable {
 
   final String name;
 
-  final String albumArtist;
+  final List<MinimalArtist> albumArtists;
 
   final List<MinimalTrack> tracks;
 
@@ -18,7 +19,7 @@ class Album extends Equatable {
   const Album({
     required this.id,
     required this.name,
-    required this.albumArtist,
+    required this.albumArtists,
     required this.tracks,
     this.isDownloaded = false,
     this.localCover,
@@ -27,14 +28,14 @@ class Album extends Equatable {
   Album copyWith({
     String? id,
     String? name,
-    String? albumArtist,
+    List<MinimalArtist>? albumArtists,
     List<MinimalTrack>? tracks,
     bool? isDownloaded,
   }) {
     return Album(
       id: id ?? this.id,
       name: name ?? this.name,
-      albumArtist: albumArtist ?? this.albumArtist,
+      albumArtists: albumArtists ?? this.albumArtists,
       tracks: tracks ?? this.tracks,
       isDownloaded: isDownloaded ?? this.isDownloaded,
     );
@@ -44,7 +45,7 @@ class Album extends Equatable {
   List<Object?> get props => [
         id,
         name,
-        albumArtist,
+        albumArtists,
         tracks,
         isDownloaded,
         localCover,

@@ -58,7 +58,9 @@ class DesktopCurrentTrack extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    currentTrack.getVirtualAlbumArtist(),
+                    currentTrack.artists
+                        .map((artist) => artist.name)
+                        .join(", "),
                     style: TextStyle(
                       fontSize: 12,
                       letterSpacing: 12 * 0.03,

@@ -55,7 +55,7 @@ class MobilePlayerPage extends ConsumerWidget {
                           builder: (context, ref, child) {
                             String title = "";
 
-                            String artist = "";
+                            String artists = "";
 
                             String album = "";
 
@@ -68,7 +68,9 @@ class MobilePlayerPage extends ConsumerWidget {
                             if (currentTrack != null) {
                               title = currentTrack.title;
 
-                              artist = currentTrack.getVirtualAlbumArtist();
+                              artists = currentTrack.artists
+                                  .map((artist) => artist.name)
+                                  .join(", ");
 
                               album = currentTrack.album;
 
@@ -113,40 +115,43 @@ class MobilePlayerPage extends ConsumerWidget {
                                   const SizedBox(height: 10),
                                   Row(
                                     children: [
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            title,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 16,
-                                              letterSpacing: 16 * 0.03,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              title,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 16,
+                                                letterSpacing: 16 * 0.03,
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            artist,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              letterSpacing: 14 * 0.03,
-                                              color: Colors.grey[350],
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              artists,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                letterSpacing: 14 * 0.03,
+                                                color: Colors.grey[350],
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            album,
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              letterSpacing: 12 * 0.03,
-                                              fontWeight: FontWeight.w300,
-                                              color: Colors.grey[350],
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              album,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                letterSpacing: 12 * 0.03,
+                                                fontWeight: FontWeight.w300,
+                                                color: Colors.grey[350],
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                      const Spacer(),
                                       Padding(
                                         padding: const EdgeInsets.all(4.0),
                                         child: AppIconButton(

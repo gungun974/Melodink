@@ -3,6 +3,7 @@ package track_usecase
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
@@ -31,9 +32,9 @@ type EditTrackParams struct {
 	Lyrics  string
 	Comment string
 
-	Artist      string
-	AlbumArtist string
-	Composer    string
+	Artists      []string
+	AlbumArtists []string
+	Composer     string
 
 	Copyright string
 }
@@ -76,8 +77,19 @@ func (u *TrackUsecase) EditTrack(
 	track.Metadata.Lyrics = params.Lyrics
 	track.Metadata.Comment = params.Comment
 
-	track.Metadata.Artist = params.Artist
-	track.Metadata.AlbumArtist = params.AlbumArtist
+	for i := range params.Artists {
+		params.Artists[i] = strings.TrimSpace(params.Artists[i])
+	}
+
+	for i := range params.AlbumArtists {
+		params.AlbumArtists[i] = strings.TrimSpace(params.AlbumArtists[i])
+	}
+
+	params.Artists = helpers.RemoveEmptyStrings(params.Artists)
+	params.AlbumArtists = helpers.RemoveEmptyStrings(params.AlbumArtists)
+
+	track.Metadata.Artists = params.Artists
+	track.Metadata.AlbumArtists = params.AlbumArtists
 	track.Metadata.Composer = params.Composer
 
 	track.Metadata.Copyright = params.Copyright

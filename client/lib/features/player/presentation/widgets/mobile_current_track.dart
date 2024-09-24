@@ -45,50 +45,58 @@ class MobileCurrentTrackInfo extends ConsumerWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        IntrinsicHeight(
-                          child: Row(
-                            children: [
-                              AuthCachedNetworkImage(
-                                height: 40,
-                                imageUrl: downloadedTrack?.getCoverUrl() ??
-                                    currentTrack.getCoverUrl(),
-                                placeholder: (context, url) => Image.asset(
-                                  "assets/melodink_track_cover_not_found.png",
+                        Expanded(
+                          child: IntrinsicHeight(
+                            child: Row(
+                              children: [
+                                AuthCachedNetworkImage(
                                   height: 40,
-                                ),
-                                errorWidget: (context, url, error) {
-                                  return Image.asset(
+                                  imageUrl: downloadedTrack?.getCoverUrl() ??
+                                      currentTrack.getCoverUrl(),
+                                  placeholder: (context, url) => Image.asset(
                                     "assets/melodink_track_cover_not_found.png",
                                     height: 40,
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 10),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    currentTrack.title,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      letterSpacing: 14 * 0.03,
-                                      fontWeight: FontWeight.w500,
-                                    ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    currentTrack.getVirtualAlbumArtist(),
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        letterSpacing: 14 * 0.03,
-                                        color: Colors.grey[350]),
+                                  errorWidget: (context, url, error) {
+                                    return Image.asset(
+                                      "assets/melodink_track_cover_not_found.png",
+                                      height: 40,
+                                    );
+                                  },
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        currentTrack.title,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          letterSpacing: 14 * 0.03,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        currentTrack.artists
+                                            .map((artist) => artist.name)
+                                            .join(", "),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            letterSpacing: 14 * 0.03,
+                                            color: Colors.grey[350]),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const Spacer(),
                         StreamBuilder<PlaybackState>(
                           stream: audioController.playbackState,
                           builder: (context, snapshot) {

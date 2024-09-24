@@ -11,7 +11,7 @@ type AlbumViewModel struct {
 
 	Name string `json:"name"`
 
-	AlbumArtist string `json:"album_artist"`
+	AlbumArtists []MinimalArtistViewModel `json:"album_artists"`
 
 	Tracks []MinimalTrackViewModel `json:"tracks"`
 }
@@ -46,7 +46,7 @@ func ConvertToAlbumViewModel(
 
 		Name: album.Name,
 
-		AlbumArtist: album.AlbumArtist,
+		AlbumArtists: ConvertToMinimalArtistsViewModel(album.AlbumArtists),
 
 		Tracks: tracksViewModels,
 	}

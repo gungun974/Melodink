@@ -57,7 +57,7 @@ class AlbumPage extends ConsumerWidget {
                       imageUrl: album.getCoverUrl(),
                       description: "",
                       tracks: tracks,
-                      artist: album.albumArtist,
+                      artists: album.albumArtists,
                       playCallback: () async {
                         await audioController.loadTracks(
                           tracks,
@@ -81,7 +81,7 @@ class AlbumPage extends ConsumerWidget {
                       type: "Album",
                       imageUrl: album.getCoverUrl(),
                       tracks: tracks,
-                      artist: album.albumArtist,
+                      artists: album.albumArtists,
                       playCallback: () async {
                         await audioController.loadTracks(
                           tracks,

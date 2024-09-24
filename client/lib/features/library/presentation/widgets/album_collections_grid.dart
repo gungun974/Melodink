@@ -84,10 +84,14 @@ class AlbumCollectionsGrid extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Tooltip(
-                            message: album.albumArtist,
+                            message: album.albumArtists
+                                .map((artist) => artist.name)
+                                .join(", "),
                             waitDuration: const Duration(milliseconds: 800),
                             child: Text(
-                              album.albumArtist,
+                              album.albumArtists
+                                  .map((artist) => artist.name)
+                                  .join(", "),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(

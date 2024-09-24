@@ -1,6 +1,7 @@
 package data_models
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
@@ -50,9 +51,9 @@ type TrackModel struct {
 	MetadataAcoustID            string `db:"metadata_acoust_id"`
 	MetadataAcoustIDFingerprint string `db:"metadata_acoust_id_fingerprint"`
 
-	MetadataArtist      string `db:"metadata_artist"`
-	MetadataAlbumArtist string `db:"metadata_album_artist"`
-	MetadataComposer    string `db:"metadata_composer"`
+	MetadataArtists      string `db:"metadata_artists"`
+	MetadataAlbumArtists string `db:"metadata_album_artists"`
+	MetadataComposer     string `db:"metadata_composer"`
 
 	MetadataCopyright string `db:"metadata_copyright"`
 
@@ -61,6 +62,18 @@ type TrackModel struct {
 }
 
 func (m *TrackModel) ToTrack() entities.Track {
+	var artists []string
+
+	if err := json.Unmarshal([]byte(m.MetadataArtists), &artists); err != nil {
+		artists = []string{}
+	}
+
+	var albumArtists []string
+
+	if err := json.Unmarshal([]byte(m.MetadataAlbumArtists), &albumArtists); err != nil {
+		albumArtists = []string{}
+	}
+
 	return entities.Track{
 		Id: m.Id,
 
@@ -96,9 +109,9 @@ func (m *TrackModel) ToTrack() entities.Track {
 			AcoustID:            m.MetadataAcoustID,
 			AcoustIDFingerprint: m.MetadataAcoustIDFingerprint,
 
-			Artist:      m.MetadataArtist,
-			AlbumArtist: m.MetadataAlbumArtist,
-			Composer:    m.MetadataComposer,
+			Artists:      artists,
+			AlbumArtists: albumArtists,
+			Composer:     m.MetadataComposer,
 
 			Copyright: m.MetadataCopyright,
 		},

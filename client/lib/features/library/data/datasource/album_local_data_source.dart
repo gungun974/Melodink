@@ -6,6 +6,7 @@ import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/logger/logger.dart';
+import 'package:melodink_client/features/library/data/models/artist_model.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/track/data/models/track_model.dart';
@@ -17,7 +18,12 @@ class AlbumLocalDataSource {
       id: data["album_id"] as String,
       localCover: data["image_file"] as String?,
       name: data["name"] as String,
-      albumArtist: data["album_artist"] as String,
+      albumArtists: (json.decode(data["album_artists"] as String) as List)
+          .map(
+            (rawModel) =>
+                MinimalArtistModel.fromJson(rawModel).toMinimalArtist(),
+          )
+          .toList(),
       tracks: (json.decode(data["tracks"] as String) as List)
           .map(
             (rawModel) => MinimalTrackModel.fromJson(rawModel).toMinimalTrack(),
@@ -93,7 +99,14 @@ class AlbumLocalDataSource {
       final body = {
         "image_file": downloadImagePath,
         "name": album.name,
-        "album_artist": album.albumArtist,
+        "album_artists": json.encode(
+          album.albumArtists
+              .map(
+                (artist) =>
+                    MinimalArtistModel.fromMinimalArtist(artist).toJson(),
+              )
+              .toList(),
+        ),
         "tracks": json.encode(
           album.tracks
               .map(
