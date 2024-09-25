@@ -47,7 +47,7 @@ class AlbumCollectionsGrid extends StatelessWidget {
 
               return InkWell(
                 onTap: () {
-                  GoRouter.of(context).go("/album/${album.id}");
+                  GoRouter.of(context).push("/album/${album.id}");
                 },
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

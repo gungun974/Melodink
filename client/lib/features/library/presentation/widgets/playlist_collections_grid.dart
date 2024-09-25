@@ -47,7 +47,7 @@ class PlaylistCollectionsGrid extends StatelessWidget {
 
               return InkWell(
                 onTap: () {
-                  GoRouter.of(context).go("/playlist/${playlist.id}");
+                  GoRouter.of(context).push("/playlist/${playlist.id}");
                 },
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

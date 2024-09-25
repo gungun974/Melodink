@@ -1,4 +1,55 @@
+import 'package:melodink_client/features/library/data/models/album_model.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
+
+class ArtistModel {
+  final String id;
+
+  final String name;
+
+  final List<AlbumModel> albums;
+  final List<AlbumModel> appearAlbums;
+
+  const ArtistModel({
+    required this.id,
+    required this.name,
+    required this.albums,
+    required this.appearAlbums,
+  });
+
+  Artist toArtist() {
+    return Artist(
+      id: id,
+      name: name,
+      albums: albums
+          .map(
+            (album) => album.toAlbum(),
+          )
+          .toList(),
+      appearAlbums: appearAlbums
+          .map(
+            (album) => album.toAlbum(),
+          )
+          .toList(),
+    );
+  }
+
+  factory ArtistModel.fromJson(Map<String, dynamic> json) {
+    return ArtistModel(
+      id: json['id'],
+      name: json['name'],
+      albums: (json['albums'] as List)
+          .map(
+            (album) => AlbumModel.fromJson(album),
+          )
+          .toList(),
+      appearAlbums: (json['appear_albums'] as List)
+          .map(
+            (album) => AlbumModel.fromJson(album),
+          )
+          .toList(),
+    );
+  }
+}
 
 class MinimalArtistModel {
   final String id;

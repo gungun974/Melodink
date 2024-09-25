@@ -60,3 +60,20 @@ func (c *ArtistController) GetUserArtistAlbums(
 
 	return c.artistUsecase.GetUserArtistAlbums(ctx, id)
 }
+
+func (c *ArtistController) GetUserArtistCover(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.ValidateString(
+		rawId,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.artistUsecase.GetArtistCover(ctx, id)
+}

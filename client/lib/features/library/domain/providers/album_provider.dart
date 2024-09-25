@@ -18,15 +18,7 @@ Future<List<Album>> allAlbums(AllAlbumsRef ref) async {
 Future<Album> albumById(AlbumByIdRef ref, String id) async {
   final albumRepository = ref.watch(albumRepositoryProvider);
 
-  ref.watch(albumDownloadNotifierProvider(id).select(
-    (state) => state.downloaded,
-  ));
-
   final album = await albumRepository.getAlbumById(id);
-
-  if (album.isDownloaded) {
-    ref.watch(downloadManagerNotifierProvider);
-  }
 
   return album;
 }
