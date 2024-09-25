@@ -26,7 +26,7 @@ Stream<AudioControllerPositionData> audioControllerPositionDataStream(
 
   return Rx.combineLatest3<Duration, PlaybackState, MediaItem?,
       AudioControllerPositionData>(
-    AudioService.position,
+    AudioController.quickPosition,
     audioController.playbackState,
     audioController.mediaItem,
     (position, playerState, duration) {

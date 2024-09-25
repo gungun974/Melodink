@@ -29,6 +29,12 @@ Future<AudioController> initAudioService() async {
 
 class AudioController extends BaseAudioHandler
     implements MelodinkHostPlayerApiInfo {
+  static final Stream<Duration> quickPosition =
+      AudioService.createPositionStream(
+          steps: 8000,
+          minPeriod: const Duration(milliseconds: 16),
+          maxPeriod: const Duration(milliseconds: 200));
+
   final api = MelodinkHostPlayerApi();
 
   DownloadTrackRepository? downloadTrackRepository;
