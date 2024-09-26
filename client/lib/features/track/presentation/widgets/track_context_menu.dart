@@ -82,8 +82,13 @@ class TrackContextMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (TapDownDetails details) {
+    return Listener(
+      onPointerDown: (PointerDownEvent details) {
+        if (menuController.isOpen) {
+          menuController.close();
+          return;
+        }
+
         final trackContextMenuRenderBox =
             trackContextMenuKey.currentContext?.findRenderObject();
 

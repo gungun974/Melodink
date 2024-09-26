@@ -9,6 +9,7 @@ import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 
 class MobilePlaylistHeader extends ConsumerWidget {
   final String name;
@@ -80,13 +81,21 @@ class MobilePlaylistHeader extends ConsumerWidget {
               const SizedBox(height: 2),
               Text.rich(
                 TextSpan(
-                  text: artists.map((artist) => artist.name).join(", "),
                   style: const TextStyle(
                     fontSize: 14,
                     letterSpacing: 14 * 0.03,
                     fontWeight: FontWeight.w500,
                   ),
                   children: [
+                    ...getArtistsLinksTextSpans(
+                        context,
+                        artists,
+                        const TextStyle(
+                          fontSize: 14,
+                          letterSpacing: 14 * 0.03,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        false),
                     TextSpan(
                       text: [
                         if (artists.isNotEmpty) "",

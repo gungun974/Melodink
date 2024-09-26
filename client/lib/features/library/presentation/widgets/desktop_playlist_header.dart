@@ -9,6 +9,7 @@ import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 
 class DesktopPlaylistHeader extends ConsumerWidget {
   final String name;
@@ -150,14 +151,18 @@ class DesktopPlaylistHeader extends ConsumerWidget {
                       Expanded(
                         child: Row(
                           children: [
-                            Text(
-                              artists.map((artist) => artist.name).join(", "),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                letterSpacing: 14 * 0.03,
-                                fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: ArtistsLinksText(
+                                artists: artists,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  letterSpacing: 14 * 0.03,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            )
+                            ),
                           ],
                         ),
                       ),

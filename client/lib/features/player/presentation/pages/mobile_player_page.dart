@@ -6,10 +6,13 @@ import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
+import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_controls.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
+import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 
 class MobilePlayerPage extends ConsumerWidget {
   const MobilePlayerPage({
@@ -55,9 +58,10 @@ class MobilePlayerPage extends ConsumerWidget {
                           builder: (context, ref, child) {
                             String title = "";
 
-                            String artists = "";
+                            List<MinimalArtist> artists = [];
 
                             String album = "";
+                            String albumId = "";
 
                             Widget image = Image.asset(
                               "assets/melodink_track_cover_not_found.png",
@@ -68,11 +72,10 @@ class MobilePlayerPage extends ConsumerWidget {
                             if (currentTrack != null) {
                               title = currentTrack.title;
 
-                              artists = currentTrack.artists
-                                  .map((artist) => artist.name)
-                                  .join(", ");
+                              artists.addAll(currentTrack.artists);
 
                               album = currentTrack.album;
+                              albumId = currentTrack.albumId;
 
                               final downloadedTrack = ref
                                   .watch(
@@ -120,8 +123,9 @@ class MobilePlayerPage extends ConsumerWidget {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              title,
+                                            AlbumLinkText(
+                                              text: title,
+                                              albumId: albumId,
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.w500,
                                                 fontSize: 16,
@@ -129,8 +133,8 @@ class MobilePlayerPage extends ConsumerWidget {
                                               ),
                                             ),
                                             const SizedBox(height: 4),
-                                            Text(
-                                              artists,
+                                            ArtistsLinksText(
+                                              artists: artists,
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
@@ -140,8 +144,9 @@ class MobilePlayerPage extends ConsumerWidget {
                                               ),
                                             ),
                                             const SizedBox(height: 4),
-                                            Text(
-                                              album,
+                                            AlbumLinkText(
+                                              text: album,
+                                              albumId: albumId,
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 letterSpacing: 12 * 0.03,

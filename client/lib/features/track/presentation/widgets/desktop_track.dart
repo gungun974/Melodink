@@ -13,6 +13,8 @@ import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
+import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 
 class DesktopTrack extends HookConsumerWidget {
@@ -107,6 +109,7 @@ class DesktopTrack extends HookConsumerWidget {
                 }
               },
         child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: !isTouchDevice(context)
               ? null
               : () {
@@ -207,23 +210,14 @@ class DesktopTrack extends HookConsumerWidget {
                                     if (downloadedTrack != null)
                                       const SizedBox(width: 4),
                                     Expanded(
-                                      child: Tooltip(
-                                        message: track.artists
-                                            .map((artist) => artist.name)
-                                            .join(", "),
-                                        waitDuration:
-                                            const Duration(milliseconds: 800),
-                                        child: Text(
-                                          track.artists
-                                              .map((artist) => artist.name)
-                                              .join(", "),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            letterSpacing: 14 * 0.03,
-                                            color: Colors.grey[350],
-                                          ),
+                                      child: ArtistsLinksText(
+                                        artists: track.artists,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          letterSpacing: 14 * 0.03,
+                                          color: Colors.grey[350],
                                         ),
                                       ),
                                     ),
@@ -239,12 +233,17 @@ class DesktopTrack extends HookConsumerWidget {
                   const SizedBox(width: 24),
                   if (displayAlbum)
                     Expanded(
-                      child: Text(
-                        track.album,
-                        style: TextStyle(
-                          fontSize: 12,
-                          letterSpacing: 14 * 0.03,
-                          color: Colors.grey[350],
+                      child: IntrinsicWidth(
+                        child: AlbumLinkText(
+                          text: track.album,
+                          albumId: track.albumId,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            letterSpacing: 14 * 0.03,
+                            color: Colors.grey[350],
+                          ),
                         ),
                       ),
                     ),
@@ -275,6 +274,7 @@ class DesktopTrack extends HookConsumerWidget {
                   if (displayLike)
                     GestureDetector(
                       onTap: () {},
+                      onDoubleTap: () {},
                       child: Container(
                         height: 50,
                         color: Colors.transparent,
@@ -296,6 +296,7 @@ class DesktopTrack extends HookConsumerWidget {
                   if (displayReorderable)
                     GestureDetector(
                       onTap: () {},
+                      onDoubleTap: () {},
                       child: ReorderableListener(
                         child: Container(
                           height: 50,

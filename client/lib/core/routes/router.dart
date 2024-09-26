@@ -203,6 +203,7 @@ final appRouterProvider = Provider((ref) {
             routes: [
               StatefulShellRoute.indexedStack(
                 builder: (context, state, child) {
+                  setCurrentUrl(GoRouter.of(context).location);
                   return child;
                 },
                 branches: [

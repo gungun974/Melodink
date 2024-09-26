@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
+import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 
 class DesktopCurrentTrack extends ConsumerWidget {
   const DesktopCurrentTrack({super.key});
@@ -48,8 +50,9 @@ class DesktopCurrentTrack extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    currentTrack.title,
+                  AlbumLinkText(
+                    text: currentTrack.title,
+                    albumId: currentTrack.albumId,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -57,10 +60,8 @@ class DesktopCurrentTrack extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    currentTrack.artists
-                        .map((artist) => artist.name)
-                        .join(", "),
+                  ArtistsLinksText(
+                    artists: currentTrack.artists,
                     style: TextStyle(
                       fontSize: 12,
                       letterSpacing: 12 * 0.03,
@@ -68,8 +69,9 @@ class DesktopCurrentTrack extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    currentTrack.album,
+                  AlbumLinkText(
+                    text: currentTrack.album,
+                    albumId: currentTrack.albumId,
                     style: TextStyle(
                       fontSize: 11.2,
                       fontWeight: FontWeight.w300,
