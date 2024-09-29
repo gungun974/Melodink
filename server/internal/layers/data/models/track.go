@@ -44,18 +44,22 @@ type TrackModel struct {
 	MetadataDate string `db:"metadata_date"`
 	MetadataYear int    `db:"metadata_year"`
 
-	MetadataGenre   string `db:"metadata_genre"`
+	MetadataGenres  string `db:"metadata_genres"`
 	MetadataLyrics  string `db:"metadata_lyrics"`
 	MetadataComment string `db:"metadata_comment"`
 
-	MetadataAcoustID            string `db:"metadata_acoust_id"`
-	MetadataAcoustIDFingerprint string `db:"metadata_acoust_id_fingerprint"`
+	MetadataAcoustID string `db:"metadata_acoust_id"`
+
+	MetadataMusicBrainzReleaseId   string `db:"metadata_music_brainz_release_id"`
+	MetadataMusicBrainzTrackId     string `db:"metadata_music_brainz_track_id"`
+	MetadataMusicBrainzRecordingId string `db:"metadata_music_brainz_recording_id"`
 
 	MetadataArtists      string `db:"metadata_artists"`
 	MetadataAlbumArtists string `db:"metadata_album_artists"`
-	MetadataComposer     string `db:"metadata_composer"`
 
-	MetadataCopyright string `db:"metadata_copyright"`
+	MetadataArtistsRoles string `db:"metadata_artists_roles"`
+
+	MetadataComposer string `db:"metadata_composer"`
 
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt *time.Time `db:"updated_at"`
@@ -72,6 +76,18 @@ func (m *TrackModel) ToTrack() entities.Track {
 
 	if err := json.Unmarshal([]byte(m.MetadataAlbumArtists), &albumArtists); err != nil {
 		albumArtists = []string{}
+	}
+
+	var genres []string
+
+	if err := json.Unmarshal([]byte(m.MetadataGenres), &genres); err != nil {
+		genres = []string{}
+	}
+
+	var artistsRoles TrackArtistRoleModels
+
+	if err := json.Unmarshal([]byte(m.MetadataArtistsRoles), &artistsRoles); err != nil {
+		artistsRoles = TrackArtistRoleModels{}
 	}
 
 	return entities.Track{
@@ -102,18 +118,74 @@ func (m *TrackModel) ToTrack() entities.Track {
 			Date: m.MetadataDate,
 			Year: m.MetadataYear,
 
-			Genre:   m.MetadataGenre,
+			Genres:  genres,
 			Lyrics:  m.MetadataLyrics,
 			Comment: m.MetadataComment,
 
-			AcoustID:            m.MetadataAcoustID,
-			AcoustIDFingerprint: m.MetadataAcoustIDFingerprint,
+			AcoustID: m.MetadataAcoustID,
+
+			MusicBrainzReleaseId:   m.MetadataMusicBrainzReleaseId,
+			MusicBrainzTrackId:     m.MetadataMusicBrainzTrackId,
+			MusicBrainzRecordingId: m.MetadataMusicBrainzRecordingId,
 
 			Artists:      artists,
 			AlbumArtists: albumArtists,
-			Composer:     m.MetadataComposer,
 
-			Copyright: m.MetadataCopyright,
+			ArtistsRoles: artistsRoles.ToTrackArtistRoles(),
+
+			Composer: m.MetadataComposer,
 		},
+	}
+}
+
+type TrackArtistRoleModels []TrackArtistRoleModel
+
+func (s TrackArtistRoleModels) ToTrackArtistRoles() []entities.TrackArtistRole {
+	e := make([]entities.TrackArtistRole, 0, len(s))
+
+	for _, m := range s {
+		e = append(e, m.ToTrackArtistRole())
+	}
+
+	return e
+}
+
+func TrackArtistRoleModelsFromEntities(
+	artistsRoles []entities.TrackArtistRole,
+) TrackArtistRoleModels {
+	m := make(TrackArtistRoleModels, 0, len(artistsRoles))
+
+	for _, e := range artistsRoles {
+		m = append(m, TrackArtistRoleModelFromEntity(e))
+	}
+
+	return m
+}
+
+type TrackArtistRoleModel struct {
+	Type string `json:"type"`
+
+	Artist string `json:"artist"`
+
+	Attributes []string `json:"attributes"`
+}
+
+func (m *TrackArtistRoleModel) ToTrackArtistRole() entities.TrackArtistRole {
+	return entities.TrackArtistRole{
+		Type: m.Type,
+
+		Artist: m.Artist,
+
+		Attributes: m.Attributes,
+	}
+}
+
+func TrackArtistRoleModelFromEntity(artistRole entities.TrackArtistRole) TrackArtistRoleModel {
+	return TrackArtistRoleModel{
+		Type: artistRole.Type,
+
+		Artist: artistRole.Artist,
+
+		Attributes: artistRole.Attributes,
 	}
 }

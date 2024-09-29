@@ -89,6 +89,18 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 		albumArtists = string(jsonData)
 	}
 
+	genres := "[]"
+
+	if jsonData, err := json.Marshal(track.Metadata.Genres); err == nil {
+		genres = string(jsonData)
+	}
+
+	artistsRoles := "[]"
+
+	if jsonData, err := json.Marshal(data_models.TrackArtistRoleModelsFromEntities(track.Metadata.ArtistsRoles)); err == nil {
+		artistsRoles = string(jsonData)
+	}
+
 	err := r.Database.Get(
 		&m,
 		`
@@ -116,21 +128,26 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
         metadata_date,
         metadata_year,
 
-        metadata_genre,
+        metadata_genres,
         metadata_lyrics,
         metadata_comment,
 
         metadata_acoust_id,
-        metadata_acoust_id_fingerprint,
+
+        metadata_music_brainz_release_id,
+        metadata_music_brainz_track_id,
+        metadata_music_brainz_recording_id,
 
         metadata_artists,
         metadata_album_artists,
-        metadata_composer,
+        metadata_artists_roles,
 
-        metadata_copyright
+        metadata_composer
       )
     VALUES
       (
+        ?,
+        ?,
         ?,
         ?,
         ?,
@@ -179,18 +196,21 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 		track.Metadata.Date,
 		track.Metadata.Year,
 
-		track.Metadata.Genre,
+		genres,
 		track.Metadata.Lyrics,
 		track.Metadata.Comment,
 
 		track.Metadata.AcoustID,
-		track.Metadata.AcoustIDFingerprint,
+
+		track.Metadata.MusicBrainzReleaseId,
+		track.Metadata.MusicBrainzTrackId,
+		track.Metadata.MusicBrainzRecordingId,
 
 		artists,
 		albumArtists,
-		track.Metadata.Composer,
+		artistsRoles,
 
-		track.Metadata.Copyright,
+		track.Metadata.Composer,
 	)
 	if err != nil {
 		logger.DatabaseLogger.Error(err)
@@ -204,6 +224,30 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 
 func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 	m := data_models.TrackModel{}
+
+	artists := "[]"
+
+	if jsonData, err := json.Marshal(track.Metadata.Artists); err == nil {
+		artists = string(jsonData)
+	}
+
+	albumArtists := "[]"
+
+	if jsonData, err := json.Marshal(track.Metadata.AlbumArtists); err == nil {
+		albumArtists = string(jsonData)
+	}
+
+	genres := "[]"
+
+	if jsonData, err := json.Marshal(track.Metadata.Genres); err == nil {
+		genres = string(jsonData)
+	}
+
+	artistsRoles := "[]"
+
+	if jsonData, err := json.Marshal(data_models.TrackArtistRoleModelsFromEntities(track.Metadata.ArtistsRoles)); err == nil {
+		artistsRoles = string(jsonData)
+	}
 
 	err := r.Database.Get(
 		&m,
@@ -232,18 +276,21 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
         metadata_date = ?,
         metadata_year = ?,
 
-        metadata_genre = ?,
+        metadata_genres = ?,
         metadata_lyrics = ?,
         metadata_comment = ?,
 
         metadata_acoust_id = ?,
-        metadata_acoust_id_fingerprint = ?,
+
+        metadata_music_brainz_release_id = ?,
+        metadata_music_brainz_track_id = ?,
+        metadata_music_brainz_recording_id = ?,
 
         metadata_artists = ?,
         metadata_album_artists = ?,
-        metadata_composer = ?,
+        metadata_artists_roles = ?,
 
-        metadata_copyright = ? 
+        metadata_composer = ?
     WHERE
       id = ?
     RETURNING *
@@ -270,18 +317,21 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 		track.Metadata.Date,
 		track.Metadata.Year,
 
-		track.Metadata.Genre,
+		genres,
 		track.Metadata.Lyrics,
 		track.Metadata.Comment,
 
 		track.Metadata.AcoustID,
-		track.Metadata.AcoustIDFingerprint,
 
-		track.Metadata.Artists,
-		track.Metadata.AlbumArtists,
+		track.Metadata.MusicBrainzReleaseId,
+		track.Metadata.MusicBrainzTrackId,
+		track.Metadata.MusicBrainzRecordingId,
+
+		artists,
+		albumArtists,
+		artistsRoles,
+
 		track.Metadata.Composer,
-
-		track.Metadata.Copyright,
 
 		track.Id,
 	)

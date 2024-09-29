@@ -8,12 +8,14 @@ class ArtistModel {
 
   final List<AlbumModel> albums;
   final List<AlbumModel> appearAlbums;
+  final List<AlbumModel> hasRoleAlbums;
 
   const ArtistModel({
     required this.id,
     required this.name,
     required this.albums,
     required this.appearAlbums,
+    required this.hasRoleAlbums,
   });
 
   Artist toArtist() {
@@ -26,6 +28,11 @@ class ArtistModel {
           )
           .toList(),
       appearAlbums: appearAlbums
+          .map(
+            (album) => album.toAlbum(),
+          )
+          .toList(),
+      hasRoleAlbums: hasRoleAlbums
           .map(
             (album) => album.toAlbum(),
           )
@@ -43,6 +50,11 @@ class ArtistModel {
           )
           .toList(),
       appearAlbums: (json['appear_albums'] as List)
+          .map(
+            (album) => AlbumModel.fromJson(album),
+          )
+          .toList(),
+      hasRoleAlbums: (json['has_role_albums'] as List)
           .map(
             (album) => AlbumModel.fromJson(album),
           )

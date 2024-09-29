@@ -70,27 +70,37 @@ func scanAudio(path string) (entities.Track, error) {
 		}
 	}
 
-	acoustIDFingerprint := ""
+	musicBrainzReleaseId := ""
 
-	if data, ok := rawMetadata["acoustid_fingerprint"]; ok {
+	if data, ok := rawMetadata["musicbrainz_albumid"]; ok {
 		if data, ok := data.(string); ok {
-			acoustIDFingerprint = data
+			musicBrainzReleaseId = data
 		}
 	}
 
-	copyright := ""
+	musicBrainzTrackId := ""
 
-	if data, ok := rawMetadata["copyright"]; ok {
+	if data, ok := rawMetadata["musicbrainz_trackid"]; ok {
 		if data, ok := data.(string); ok {
-			copyright = data
+			musicBrainzTrackId = data
+		}
+	}
+
+	musicBrainzRecordingId := ""
+
+	if data, ok := rawMetadata["musicbrainz_recordingid"]; ok {
+		if data, ok := data.(string); ok {
+			musicBrainzRecordingId = data
 		}
 	}
 
 	rawArtist := metadata.Artist()
 	rawAlbumArtist := metadata.AlbumArtist()
+	rawGenres := metadata.Genre()
 
 	artists := strings.Split(rawArtist, ",")
 	albumArtists := strings.Split(rawAlbumArtist, ",")
+	genres := strings.Split(rawGenres, ",")
 
 	for i := range artists {
 		artists[i] = strings.TrimSpace(artists[i])
@@ -100,8 +110,13 @@ func scanAudio(path string) (entities.Track, error) {
 		albumArtists[i] = strings.TrimSpace(albumArtists[i])
 	}
 
+	for i := range genres {
+		genres[i] = strings.TrimSpace(genres[i])
+	}
+
 	artists = helpers.RemoveEmptyStrings(artists)
 	albumArtists = helpers.RemoveEmptyStrings(albumArtists)
+	genres = helpers.RemoveEmptyStrings(genres)
 
 	return entities.Track{
 		Title:    metadata.Title(),
@@ -125,18 +140,19 @@ func scanAudio(path string) (entities.Track, error) {
 			Date: date,
 			Year: metadata.Year(),
 
-			Genre:   metadata.Genre(),
+			Genres:  genres,
 			Lyrics:  metadata.Lyrics(),
 			Comment: metadata.Comment(),
 
-			AcoustID:            acoustID,
-			AcoustIDFingerprint: acoustIDFingerprint,
+			AcoustID: acoustID,
+
+			MusicBrainzReleaseId:   musicBrainzReleaseId,
+			MusicBrainzTrackId:     musicBrainzTrackId,
+			MusicBrainzRecordingId: musicBrainzRecordingId,
 
 			Artists:      artists,
 			AlbumArtists: albumArtists,
 			Composer:     metadata.Composer(),
-
-			Copyright: copyright,
 		},
 	}, nil
 }

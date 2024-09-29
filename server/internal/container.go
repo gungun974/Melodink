@@ -2,6 +2,7 @@ package internal
 
 import (
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/scanner"
 	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
 	album_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/album"
 	artist_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/artist"
@@ -36,6 +37,11 @@ func NewContainer(db *sqlx.DB) Container {
 
 	trackStorage := storage.NewTrackStorage()
 
+	//! Scanner
+
+	acoustIdScanner := scanner.NewAcoustIdScanner()
+	musicBrainzScanner := scanner.NewMusicBrainzScanner()
+
 	//! Presenter
 
 	userPresenter := presenter.NewUserPresenter()
@@ -54,6 +60,8 @@ func NewContainer(db *sqlx.DB) Container {
 	trackUsecase := track_usecase.NewTrackUsecase(
 		trackRepository,
 		trackStorage,
+		acoustIdScanner,
+		musicBrainzScanner,
 		trackPresenter,
 	)
 

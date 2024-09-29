@@ -36,6 +36,8 @@ class ArtistLocalDataSource {
               albums: [],
               // ignore: prefer_const_literals_to_create_immutables
               appearAlbums: [],
+              // ignore: prefer_const_literals_to_create_immutables
+              hasRoleAlbums: [],
               localCover: downloadedTrack.getCoverUrl(),
             );
           }
@@ -57,6 +59,8 @@ class ArtistLocalDataSource {
               albums: [],
               // ignore: prefer_const_literals_to_create_immutables
               appearAlbums: [],
+              // ignore: prefer_const_literals_to_create_immutables
+              hasRoleAlbums: [],
               localCover: downloadedTrack.getCoverUrl(),
             );
           }

@@ -40,18 +40,30 @@ type TrackMetadata struct {
 	Date string
 	Year int
 
-	Genre   string
+	Genres  []string
 	Lyrics  string
 	Comment string
 
-	AcoustID            string
-	AcoustIDFingerprint string
+	AcoustID string
+
+	MusicBrainzReleaseId   string
+	MusicBrainzTrackId     string
+	MusicBrainzRecordingId string
 
 	Artists      []string
 	AlbumArtists []string
-	Composer     string
 
-	Copyright string
+	ArtistsRoles []TrackArtistRole
+
+	Composer string
+}
+
+type TrackArtistRole struct {
+	Type string
+
+	Artist string
+
+	Attributes []string
 }
 
 func (m TrackMetadata) GetVirtualAlbumArtists() []string {

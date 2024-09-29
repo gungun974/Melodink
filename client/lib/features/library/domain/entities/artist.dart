@@ -9,6 +9,7 @@ class Artist extends Equatable {
 
   final List<Album> albums;
   final List<Album> appearAlbums;
+  final List<Album> hasRoleAlbums;
 
   final String? localCover;
 
@@ -17,6 +18,7 @@ class Artist extends Equatable {
     required this.name,
     required this.albums,
     required this.appearAlbums,
+    required this.hasRoleAlbums,
     this.localCover,
   });
 
@@ -25,12 +27,14 @@ class Artist extends Equatable {
     String? name,
     List<Album>? albums,
     List<Album>? appearAlbums,
+    List<Album>? hasRoleAlbums,
   }) {
     return Artist(
       id: id ?? this.id,
       name: name ?? this.name,
       albums: albums ?? this.albums,
       appearAlbums: appearAlbums ?? this.appearAlbums,
+      hasRoleAlbums: hasRoleAlbums ?? this.hasRoleAlbums,
     );
   }
 

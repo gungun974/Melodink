@@ -11,11 +11,13 @@ type ArtistViewModel struct {
 
 	Name string `json:"name"`
 
-	Albums       []AlbumViewModel `json:"albums"`
-	AppearAlbums []AlbumViewModel `json:"appear_albums"`
+	Albums        []AlbumViewModel `json:"albums"`
+	AppearAlbums  []AlbumViewModel `json:"appear_albums"`
+	HasRoleAlbums []AlbumViewModel `json:"has_role_albums"`
 
-	AllTracks       []MinimalTrackViewModel `json:"all_tracks"`
-	AllAppearTracks []MinimalTrackViewModel `json:"all_appear_tracks"`
+	AllTracks        []MinimalTrackViewModel `json:"all_tracks"`
+	AllAppearTracks  []MinimalTrackViewModel `json:"all_appear_tracks"`
+	AllHasRoleTracks []MinimalTrackViewModel `json:"all_has_role_tracks"`
 }
 
 func ConvertToArtistsViewModel(
@@ -29,6 +31,9 @@ func ConvertToArtistsViewModel(
 
 		artist.AppearAlbums = nil
 		artist.AllAppearTracks = nil
+
+		artist.HasRoleAlbums = nil
+		artist.AllHasRoleTracks = nil
 
 		artistsViewModels[i] = ConvertToArtistViewModel(artist)
 	}
@@ -51,6 +56,12 @@ func ConvertToArtistViewModel(
 		allAppearTracksViewModels[i] = ConvertToMinimalTrackViewModel(track)
 	}
 
+	allHasRoleTracksViewModels := make([]MinimalTrackViewModel, len(artist.AllHasRoleTracks))
+
+	for i, track := range artist.AllHasRoleTracks {
+		allHasRoleTracksViewModels[i] = ConvertToMinimalTrackViewModel(track)
+	}
+
 	albumsViewModels := make([]AlbumViewModel, len(artist.Albums))
 
 	for i, album := range artist.Albums {
@@ -67,6 +78,14 @@ func ConvertToArtistViewModel(
 		appearAlbumsViewModels[i] = ConvertToAlbumViewModel(album)
 	}
 
+	hasRoleAlbumsViewModels := make([]AlbumViewModel, len(artist.HasRoleAlbums))
+
+	for i, album := range artist.HasRoleAlbums {
+		album.Tracks = nil
+
+		hasRoleAlbumsViewModels[i] = ConvertToAlbumViewModel(album)
+	}
+
 	return ArtistViewModel{
 		Id: artist.Id,
 
@@ -74,11 +93,13 @@ func ConvertToArtistViewModel(
 
 		Name: artist.Name,
 
-		Albums:       albumsViewModels,
-		AppearAlbums: appearAlbumsViewModels,
+		Albums:        albumsViewModels,
+		AppearAlbums:  appearAlbumsViewModels,
+		HasRoleAlbums: hasRoleAlbumsViewModels,
 
-		AllTracks:       allTracksViewModels,
-		AllAppearTracks: allAppearTracksViewModels,
+		AllTracks:        allTracksViewModels,
+		AllAppearTracks:  allAppearTracksViewModels,
+		AllHasRoleTracks: allHasRoleTracksViewModels,
 	}
 }
 

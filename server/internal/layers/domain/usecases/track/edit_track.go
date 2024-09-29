@@ -28,15 +28,13 @@ type EditTrackParams struct {
 	Date string
 	Year int
 
-	Genre   string
+	Genres  []string
 	Lyrics  string
 	Comment string
 
 	Artists      []string
 	AlbumArtists []string
 	Composer     string
-
-	Copyright string
 }
 
 func (u *TrackUsecase) EditTrack(
@@ -73,7 +71,7 @@ func (u *TrackUsecase) EditTrack(
 	track.Metadata.Date = params.Date
 	track.Metadata.Year = params.Year
 
-	track.Metadata.Genre = params.Genre
+	track.Metadata.Genres = params.Genres
 	track.Metadata.Lyrics = params.Lyrics
 	track.Metadata.Comment = params.Comment
 
@@ -91,8 +89,6 @@ func (u *TrackUsecase) EditTrack(
 	track.Metadata.Artists = params.Artists
 	track.Metadata.AlbumArtists = params.AlbumArtists
 	track.Metadata.Composer = params.Composer
-
-	track.Metadata.Copyright = params.Copyright
 
 	if err := u.trackRepository.UpdateTrack(track); err != nil {
 		logger.MainLogger.Error("Couldn't update track in Database", err, *track)

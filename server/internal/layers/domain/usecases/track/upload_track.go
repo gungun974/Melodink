@@ -12,6 +12,8 @@ import (
 func (u *TrackUsecase) UploadTrack(
 	ctx context.Context,
 	file io.Reader,
+	performAdvancedScan bool,
+	advancedScanOnlyReplaceEmptyFields bool,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
 	if err != nil {
@@ -28,6 +30,14 @@ func (u *TrackUsecase) UploadTrack(
 	if err != nil {
 		logger.MainLogger.Error("Failed to scan audio")
 		return nil, err
+	}
+
+	if performAdvancedScan {
+		track, err = u.advancedScanTrack(track, advancedScanOnlyReplaceEmptyFields)
+		if err != nil {
+			logger.MainLogger.Errorf("Failed to perform an advanced scan %v", err)
+			return nil, err
+		}
 	}
 
 	track.UserId = &user.Id

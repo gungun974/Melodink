@@ -34,8 +34,8 @@ func (r *ArtistRepository) GetAllArtistsFromUser(userId int) ([]entities.Artist,
 
 	artists := []entities.Artist{}
 
-outerloop:
 	for _, track := range tracks {
+	outerloop:
 		for _, trackArtist := range track.Metadata.GetVirtualAlbumArtists() {
 			artistId, err := entities.GenerateArtistId(trackArtist)
 			if err != nil {
@@ -59,13 +59,14 @@ outerloop:
 				AllTracks: []entities.Track{
 					track,
 				},
-				AllAppearTracks: []entities.Track{},
+				AllAppearTracks:  []entities.Track{},
+				AllHasRoleTracks: []entities.Track{},
 			})
 		}
 	}
 
-outerloop2:
 	for _, track := range tracks {
+	outerloop2:
 		for _, trackArtist := range track.Metadata.Artists {
 			artistId, err := entities.GenerateArtistId(trackArtist)
 			if err != nil {
@@ -90,6 +91,38 @@ outerloop2:
 				AllAppearTracks: []entities.Track{
 					track,
 				},
+				AllHasRoleTracks: []entities.Track{},
+			})
+		}
+	}
+
+	for _, track := range tracks {
+	outerloop3:
+		for _, role := range track.Metadata.ArtistsRoles {
+			artistId, err := entities.GenerateArtistId(role.Artist)
+			if err != nil {
+				continue
+			}
+
+			for i, artist := range artists {
+				if artist.Id == artistId {
+					artists[i].AllHasRoleTracks = append(artists[i].AllHasRoleTracks, track)
+					continue outerloop3
+				}
+			}
+
+			artists = append(artists, entities.Artist{
+				Id: artistId,
+
+				UserId: &userId,
+
+				Name: role.Artist,
+
+				AllTracks:       []entities.Track{},
+				AllAppearTracks: []entities.Track{},
+				AllHasRoleTracks: []entities.Track{
+					track,
+				},
 			})
 		}
 	}
@@ -103,6 +136,11 @@ outerloop2:
 		artists[i].AppearAlbums = r.albumRepository.GroupTracksInAlbums(
 			&userId,
 			artist.AllAppearTracks,
+		)
+
+		artists[i].HasRoleAlbums = r.albumRepository.GroupTracksInAlbums(
+			&userId,
+			artist.AllHasRoleTracks,
 		)
 	}
 
@@ -123,8 +161,9 @@ func (r *ArtistRepository) GetArtistByIdFromUser(
 
 		UserId: &userId,
 
-		AllTracks:       []entities.Track{},
-		AllAppearTracks: []entities.Track{},
+		AllTracks:        []entities.Track{},
+		AllAppearTracks:  []entities.Track{},
+		AllHasRoleTracks: []entities.Track{},
 	}
 
 	for _, track := range tracks {
@@ -157,12 +196,29 @@ func (r *ArtistRepository) GetArtistByIdFromUser(
 		}
 	}
 
-	if len(artist.AllTracks) == 0 && len(artist.AllAppearTracks) == 0 {
+	for _, track := range tracks {
+		for _, role := range track.Metadata.ArtistsRoles {
+			artistId, err := entities.GenerateArtistId(role.Artist)
+			if err != nil {
+				continue
+			}
+
+			if artist.Id == artistId {
+				artist.Name = role.Artist
+
+				artist.AllHasRoleTracks = append(artist.AllHasRoleTracks, track)
+			}
+		}
+	}
+
+	if len(artist.AllTracks) == 0 && len(artist.AllAppearTracks) == 0 &&
+		len(artist.AllHasRoleTracks) == 0 {
 		return entities.Artist{}, ArtistNotFoundError
 	}
 
 	artist.Albums = r.albumRepository.GroupTracksInAlbums(&userId, artist.AllTracks)
 	artist.AppearAlbums = r.albumRepository.GroupTracksInAlbums(&userId, artist.AllAppearTracks)
+	artist.HasRoleAlbums = r.albumRepository.GroupTracksInAlbums(&userId, artist.AllHasRoleTracks)
 
 	return artist, nil
 }

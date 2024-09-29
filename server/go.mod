@@ -2,12 +2,17 @@ module github.com/gungun974/Melodink/server
 
 go 1.22.5
 
+replace git.sr.ht/~gungun974/go-musicbrainzws2 => go.uploadedlobster.com/musicbrainzws2 v0.9.1
+
 require (
 	github.com/alfg/mp4 v0.0.0-20210728035756-55ea58c08aeb
 	github.com/dhowden/tag v0.0.0-20240417053706-3d75831295e8
 	github.com/gabriel-vasile/mimetype v1.4.5
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-chi/cors v1.2.1
+	github.com/go-fingerprint/fingerprint v0.0.0-20140803133125-29397256b7ff
+	github.com/go-fingerprint/gochroma v0.0.0-20211004000611-a294aa5ccab6
+	github.com/go-resty/resty/v2 v2.13.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.17.1
 	github.com/gungun974/validator v0.0.0-20240603034929-08715340e062
@@ -18,6 +23,7 @@ require (
 	github.com/mewkiz/flac v1.0.11
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
+	go.uploadedlobster.com/musicbrainzws2 v0.9.1
 	golang.org/x/crypto v0.25.0
 )
 

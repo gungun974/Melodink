@@ -29,6 +29,8 @@ func NewTrackController(
 func (c *TrackController) UploadAudio(
 	ctx context.Context,
 	r *http.Request,
+	performAdvancedScan bool,
+	advancedScanOnlyReplaceEmptyFields bool,
 ) (models.APIResponse, error) {
 	file, handler, err := r.FormFile("audio")
 	if err == nil {
@@ -41,7 +43,11 @@ func (c *TrackController) UploadAudio(
 		return nil, entities.NewValidationError("File can't be open")
 	}
 
-	return c.trackUsecase.UploadTrack(ctx, file)
+	return c.trackUsecase.UploadTrack(ctx,
+		file,
+		performAdvancedScan,
+		advancedScanOnlyReplaceEmptyFields,
+	)
 }
 
 func (c *TrackController) ListUserTracks(
@@ -221,15 +227,34 @@ func (c *TrackController) EditTrack(
 		return nil, entities.NewValidationError(err.Error())
 	}
 
-	genre, err := validator.ValidateMapString(
-		"genre",
-		bodyData,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 0},
-		},
-	)
-	if err != nil {
-		return nil, entities.NewValidationError(err.Error())
+	rawGenres, ok := bodyData["genres"].([]any)
+	if !ok {
+		return nil, entities.NewValidationError(
+			"genres should be an array",
+		)
+	}
+
+	genres := make([]string, 0, len(rawGenres))
+
+	for _, rawGenre := range rawGenres {
+		genre, ok := rawGenre.(string)
+
+		if !ok {
+			return nil, entities.NewValidationError(
+				"genres should be an array of string",
+			)
+		}
+
+		if _, err := validator.ValidateString(
+			genre,
+			validator.StringValidators{
+				validator.StringMinValidator{Min: 0},
+			},
+		); err != nil {
+			return nil, entities.NewValidationError(err.Error())
+		}
+
+		genres = append(genres, genre)
 	}
 
 	lyrics, err := validator.ValidateMapString(
@@ -325,17 +350,6 @@ func (c *TrackController) EditTrack(
 		return nil, entities.NewValidationError(err.Error())
 	}
 
-	copyright, err := validator.ValidateMapString(
-		"copyright",
-		bodyData,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 0},
-		},
-	)
-	if err != nil {
-		return nil, entities.NewValidationError(err.Error())
-	}
-
 	return c.trackUsecase.EditTrack(ctx, track_usecase.EditTrackParams{
 		Id: id,
 
@@ -352,15 +366,13 @@ func (c *TrackController) EditTrack(
 		Date: date,
 		Year: year,
 
-		Genre:   genre,
+		Genres:  genres,
 		Lyrics:  lyrics,
 		Comment: comment,
 
 		Artists:      artists,
 		AlbumArtists: albumArtists,
 		Composer:     composer,
-
-		Copyright: copyright,
 	})
 }
 

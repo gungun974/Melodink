@@ -17,7 +17,7 @@ class MinimalTrackModel {
   final String date;
   final int year;
 
-  final String genre;
+  final List<String> genres;
 
   final List<MinimalArtistModel> artists;
   final List<MinimalArtistModel> albumArtists;
@@ -35,7 +35,7 @@ class MinimalTrackModel {
     required this.discNumber,
     required this.date,
     required this.year,
-    required this.genre,
+    required this.genres,
     required this.artists,
     required this.albumArtists,
     required this.composer,
@@ -53,7 +53,7 @@ class MinimalTrackModel {
       discNumber: discNumber,
       date: date,
       year: year,
-      genre: genre,
+      genres: genres,
       artists: artists
           .map(
             (artist) => artist.toMinimalArtist(),
@@ -80,7 +80,7 @@ class MinimalTrackModel {
       discNumber: track.discNumber,
       date: track.date,
       year: track.year,
-      genre: track.genre,
+      genres: track.genres,
       artists: track.artists
           .map(
             (artist) => MinimalArtistModel.fromMinimalArtist(artist),
@@ -107,7 +107,7 @@ class MinimalTrackModel {
       discNumber: (json['disc_number'] as num).toInt(),
       date: json['date'],
       year: (json['year'] as num).toInt(),
-      genre: json['genre'],
+      genres: List<String>.from(json['genres']),
       artists: (json['artists'] as List)
           .map(
             (artist) => MinimalArtistModel.fromJson(artist),
@@ -134,7 +134,7 @@ class MinimalTrackModel {
       'disc_number': discNumber,
       'date': date,
       'year': year,
-      'genre': genre,
+      'genres': genres,
       'artists': artists
           .map(
             (artist) => artist.toJson(),

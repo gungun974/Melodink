@@ -3,6 +3,7 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/gungun974/Melodink/server/internal"
@@ -12,7 +13,19 @@ func TrackRouter(c internal.Container) http.Handler {
 	router := chi.NewRouter()
 
 	router.Post("/upload", func(w http.ResponseWriter, r *http.Request) {
-		response, err := c.TrackController.UploadAudio(r.Context(), r)
+		queryParams := r.URL.Query()
+
+		performAdvancedScan := strings.TrimSpace(queryParams.Get("advanced_scan")) == "true"
+		advancedScanOnlyReplaceEmptyFields := !(strings.TrimSpace(
+			queryParams.Get("advanced_scan_only_replace_empty_fields"),
+		) == "false")
+
+		response, err := c.TrackController.UploadAudio(
+			r.Context(),
+			r,
+			performAdvancedScan,
+			advancedScanOnlyReplaceEmptyFields,
+		)
 		if err != nil {
 			handleHTTPError(err, w)
 			return

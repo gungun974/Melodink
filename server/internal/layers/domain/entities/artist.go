@@ -14,11 +14,13 @@ type Artist struct {
 
 	Name string
 
-	Albums       []Album
-	AppearAlbums []Album
+	Albums        []Album
+	AppearAlbums  []Album
+	HasRoleAlbums []Album
 
-	AllTracks       []Track
-	AllAppearTracks []Track
+	AllTracks        []Track
+	AllAppearTracks  []Track
+	AllHasRoleTracks []Track
 }
 
 func GenerateArtistId(artist string) (string, error) {

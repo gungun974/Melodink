@@ -17,7 +17,7 @@ class MinimalTrack extends Equatable {
   final String date;
   final int year;
 
-  final String genre;
+  final List<String> genres;
 
   final List<MinimalArtist> artists;
   final List<MinimalArtist> albumArtists;
@@ -35,7 +35,7 @@ class MinimalTrack extends Equatable {
     required this.discNumber,
     required this.date,
     required this.year,
-    required this.genre,
+    required this.genres,
     required this.artists,
     required this.albumArtists,
     required this.composer,
@@ -52,7 +52,7 @@ class MinimalTrack extends Equatable {
     int? discNumber,
     String? date,
     int? year,
-    String? genre,
+    List<String>? genres,
     List<MinimalArtist>? artists,
     List<MinimalArtist>? albumArtists,
     String? composer,
@@ -68,7 +68,7 @@ class MinimalTrack extends Equatable {
       discNumber: discNumber ?? this.discNumber,
       date: date ?? this.date,
       year: year ?? this.year,
-      genre: genre ?? this.genre,
+      genres: genres ?? this.genres,
       artists: artists ?? this.artists,
       albumArtists: albumArtists ?? this.albumArtists,
       composer: composer ?? this.composer,
@@ -87,7 +87,7 @@ class MinimalTrack extends Equatable {
         discNumber,
         date,
         year,
-        genre,
+        genres,
         artists,
         albumArtists,
         composer,

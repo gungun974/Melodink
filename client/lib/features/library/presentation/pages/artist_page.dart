@@ -124,6 +124,37 @@ class ArtistPage extends ConsumerWidget {
                   albums: appearAlbums,
                 ),
               ),
+            if (artist.hasRoleAlbums.isNotEmpty)
+              SliverContainer(
+                maxWidth: maxWidth,
+                padding: EdgeInsets.only(
+                  left: padding,
+                  right: padding,
+                  top: 8.0,
+                ),
+                sliver: const SliverToBoxAdapter(
+                  child: Text(
+                    "Has role in",
+                    style: TextStyle(
+                      fontSize: 40,
+                      letterSpacing: 40 * 0.03,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            if (artist.hasRoleAlbums.isNotEmpty)
+              SliverContainer(
+                maxWidth: maxWidth,
+                padding: EdgeInsets.only(
+                  left: padding,
+                  right: padding,
+                  top: 8.0,
+                ),
+                sliver: AlbumCollectionsGrid(
+                  albums: artist.hasRoleAlbums,
+                ),
+              ),
           ],
         );
       }),

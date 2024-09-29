@@ -54,7 +54,7 @@
           name = "melodink-server";
           src = gitignore.lib.gitignoreSource ./.;
           subPackages = ["cmd/api"];
-          vendorHash = "sha256-IPjOMqLn2jAp4dG1RFkZpa0VLEO8cRgO+KbPF1KLW60=";
+          vendorHash = "sha256-uXuBnMoTt9eyA7Di3UCtG2eQDfi7NGWV11eWZcmiNc0=";
           CGO_ENABLED = 1;
 
           buildInputs = with pkgs; [
@@ -141,7 +141,7 @@
         GOROOT = "${pkgs.go_1_22}/share/go";
 
         shellHook = ''
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped pkgs.sqlite]}
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped pkgs.sqlite pkgs.chromaprint]}
         '';
 
         buildInputs = [
@@ -159,6 +159,9 @@
           pkgs.pkg-config
           pkgs.gtk3
           pkgs.mpv
+
+          pkgs.chromaprint
+          pkgs.fftw
         ];
       };
     });

@@ -30,7 +30,8 @@ func (u *ArtistUsecase) GetArtistCover(
 		return nil, entities.NewInternalError(err)
 	}
 
-	if len(artist.AllTracks) <= 0 {
+	if len(artist.AllTracks) <= 0 && len(artist.AllAppearTracks) <= 0 &&
+		len(artist.AllHasRoleTracks) <= 0 {
 		return nil, entities.NewNotFoundError(
 			"No image available for this artist",
 		)
@@ -60,6 +61,29 @@ func (u *ArtistUsecase) GetArtistCover(
 	}
 
 	for _, track := range artist.AllAppearTracks {
+		file, err := os.Open(track.Path)
+		if err != nil {
+			return nil, entities.NewInternalError(err)
+		}
+
+		defer file.Close()
+
+		metadata, err := tag.ReadFrom(file)
+		if err != nil {
+			return nil, entities.NewInternalError(err)
+		}
+
+		picture := metadata.Picture()
+
+		if picture != nil {
+			return &models.ImageAPIResponse{
+				MIMEType: picture.MIMEType,
+				Data:     *bytes.NewBuffer(picture.Data),
+			}, nil
+		}
+	}
+
+	for _, track := range artist.AllHasRoleTracks {
 		file, err := os.Open(track.Path)
 		if err != nil {
 			return nil, entities.NewInternalError(err)
