@@ -442,7 +442,9 @@ class AudioController extends BaseAudioHandler
   @override
   Future<void> audioChanged(int pos) async {
     audioChangedDebouncer.run(() async {
-      await _updatePlaylistTracks(pos);
+      if (pos != _previousTracks.length - 1) {
+        await _updatePlaylistTracks(pos);
+      }
     });
   }
 
