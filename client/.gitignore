@@ -1,6 +1,7 @@
 # App specific files
 
 /lib/generated
+ffigen.nix.yaml
 
 *.g.dart
 

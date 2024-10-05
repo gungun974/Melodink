@@ -131,38 +131,65 @@
         };
       };
 
-      devShell = pkgs.mkShell {
-        ANDROID_SDK_ROOT = "${sdk}/share/android-sdk";
-        ANDROID_HOME = "${sdk}/share/android-sdk";
-        CHROME_EXECUTABLE = "chromium";
-        FLUTTER_SDK = "${flutter-sdk}";
-        GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
+      devShell = let
+        ffigenConfig = builtins.fromJSON (builtins.readFile ./client/ffigen.json);
 
-        GOROOT = "${pkgs.go_1_22}/share/go";
+        yamlOutput =
+          ffigenConfig
+          // {
+            llvm-path = ["${pkgs.lib.getLib pkgs.llvmPackages_14.libclang}/lib/libclang.so"];
+            compiler-opts = [
+              "-I${pkgs.clang14Stdenv.cc.libc.dev}/include"
+              "-I${pkgs.gcc-unwrapped}/lib/gcc/${pkgs.targetPlatform.config}/${pkgs.gcc.version}/include"
+            ];
+          };
 
-        shellHook = ''
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped pkgs.sqlite pkgs.chromaprint]}
-        '';
+        mkffigen-config = file:
+          pkgs.writeTextFile {
+            name = "ffigen.yaml";
+            text = builtins.toJSON yamlOutput;
+          };
 
-        buildInputs = [
-          (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo122Module;})
-          pkgs.go_1_22
-          pkgs.air
-          flutter-sdk
-          pinnedJDK
-          sdk
-          (pkgs.go-migrate.overrideAttrs (finalAttrs: previousAttrs: {
-            tags = ["sqlite3" "sqlite"];
-          }))
-          pkgs.sqlite
+        mkffigen = file: name:
+          pkgs.writeShellScriptBin name ''
+            cat ${mkffigen-config file} > ./ffigen.nix.yaml
+            flutter pub run ffigen --config ./ffigen.nix.yaml
+          '';
+      in
+        pkgs.mkShell {
+          ANDROID_SDK_ROOT = "${sdk}/share/android-sdk";
+          ANDROID_HOME = "${sdk}/share/android-sdk";
+          CHROME_EXECUTABLE = "chromium";
+          FLUTTER_SDK = "${flutter-sdk}";
+          GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
 
-          pkgs.pkg-config
-          pkgs.gtk3
-          pkgs.mpv
+          GOROOT = "${pkgs.go_1_22}/share/go";
 
-          pkgs.chromaprint
-          pkgs.fftw
-        ];
-      };
+          shellHook = ''
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped pkgs.sqlite pkgs.chromaprint]}
+          '';
+
+          buildInputs = [
+            (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo122Module;})
+            pkgs.go_1_22
+            pkgs.air
+            flutter-sdk
+            pinnedJDK
+            sdk
+            (pkgs.go-migrate.overrideAttrs (finalAttrs: previousAttrs: {
+              tags = ["sqlite3" "sqlite"];
+            }))
+            pkgs.sqlite
+
+            pkgs.pkg-config
+            pkgs.gtk3
+            pkgs.mpv
+
+            pkgs.chromaprint
+            pkgs.fftw
+
+            (mkffigen ./client/ffigen.yaml "ffigen")
+          ];
+        };
     });
 }

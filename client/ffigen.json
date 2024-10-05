@@ -1,0 +1,18 @@
+{
+  "name": "MPV",
+  "description": "Bindings for libMPV",
+  "output": "./lib/generated/libmpv/bindings.dart",
+  "headers": {
+    "entry-points": [
+      "./headers/client.h"
+    ]
+  },
+  "comments": {
+    "style": "any",
+    "length": "full"
+  },
+  "silence-enum-warning": true,
+  "compiler-opts": [
+    "-I include"
+  ]
+}

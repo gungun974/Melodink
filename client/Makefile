@@ -1,5 +1,6 @@
 prebuild:
 ifndef NIX
+	ffigen || flutter pub run ffigen --config ffigen.json
 	flutter pub run pigeon --input ./pigeon/native_communication.dart
 	flutter pub run build_runner build --delete-conflicting-outputs
 endif
