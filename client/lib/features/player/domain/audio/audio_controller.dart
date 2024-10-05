@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
@@ -436,9 +437,13 @@ class AudioController extends BaseAudioHandler
     await _updatePlaybackState();
   }
 
+  final audioChangedDebouncer = Debouncer(milliseconds: 50);
+
   @override
   Future<void> audioChanged(int pos) async {
-    await _updatePlaylistTracks(pos);
+    audioChangedDebouncer.run(() async {
+      await _updatePlaylistTracks(pos);
+    });
   }
 
   @override
