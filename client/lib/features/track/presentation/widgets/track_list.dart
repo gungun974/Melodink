@@ -174,10 +174,17 @@ class TrackList extends HookConsumerWidget {
           }
 
           return Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: size == AppScreenTypeLayout.desktop ? 0 : 12,
+            decoration: BoxDecoration(
+              color: const Color.fromRGBO(0, 0, 0, 0.03),
+              borderRadius: BorderRadius.vertical(
+                top: size == AppScreenTypeLayout.mobile && index == 0
+                    ? const Radius.circular(8)
+                    : Radius.zero,
+                bottom: index == tracks.length - 1
+                    ? const Radius.circular(8)
+                    : Radius.zero,
+              ),
             ),
-            color: const Color.fromRGBO(0, 0, 0, 0.03),
             child: child,
           );
         },

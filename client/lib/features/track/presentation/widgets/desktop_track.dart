@@ -130,11 +130,14 @@ class DesktopTrack extends HookConsumerWidget {
             multiCustomActionsBuilder: multiCustomActionsBuilder,
             child: Container(
               height: 50,
-              color: selected
-                  ? const Color.fromRGBO(0, 0, 0, 0.075)
-                  : (isHovering.value
-                      ? const Color.fromRGBO(0, 0, 0, 0.05)
-                      : Colors.transparent),
+              decoration: BoxDecoration(
+                color: selected
+                    ? const Color.fromRGBO(0, 0, 0, 0.075)
+                    : (isHovering.value
+                        ? const Color.fromRGBO(0, 0, 0, 0.05)
+                        : Colors.transparent),
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Row(
                 children: [
                   SizedBox(

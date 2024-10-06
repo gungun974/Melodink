@@ -193,13 +193,18 @@ class QueueTracksPanel extends StatelessWidget {
                       opacity:
                           state == ReorderableItemState.placeholder ? 0.0 : 1.0,
                       child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal:
-                              size == AppScreenTypeLayout.desktop ? 0 : 12,
+                        decoration: BoxDecoration(
+                          color: state == ReorderableItemState.normal
+                              ? const Color.fromRGBO(0, 0, 0, 0.03)
+                              : const Color.fromRGBO(0, 0, 0, 0.05),
+                          borderRadius: index != tracks.length - 1
+                              ? null
+                              : const BorderRadius.vertical(
+                                  bottom: Radius.circular(
+                                    8,
+                                  ),
+                                ),
                         ),
-                        color: state == ReorderableItemState.normal
-                            ? const Color.fromRGBO(0, 0, 0, 0.03)
-                            : const Color.fromRGBO(0, 0, 0, 0.05),
                         child: child,
                       ),
                     );
@@ -210,25 +215,9 @@ class QueueTracksPanel extends StatelessWidget {
             ),
           ),
         ),
-        SliverContainer(
-          maxWidth: maxWidth,
-          padding: EdgeInsets.only(
-            left: padding,
-            right: padding,
-            bottom: type == QueueTracksPanelType.end ? 0.0 : separator,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Color.fromRGBO(0, 0, 0, 0.03),
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(
-                    8,
-                  ),
-                ),
-              ),
-              height: 8,
-            ),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: type == QueueTracksPanelType.end ? 0.0 : separator,
           ),
         ),
       ],

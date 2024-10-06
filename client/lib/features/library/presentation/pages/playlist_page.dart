@@ -130,7 +130,6 @@ class PlaylistPage extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    height: size == AppScreenTypeLayout.desktop ? null : 8,
                     child: size == AppScreenTypeLayout.desktop
                         ? const DesktopTrackHeader()
                         : const SizedBox.shrink(),
@@ -210,25 +209,8 @@ class PlaylistPage extends ConsumerWidget {
                   },
                 ),
               ),
-              SliverContainer(
-                maxWidth: maxWidth,
-                padding: EdgeInsets.only(
-                  left: padding,
-                  right: padding,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Color.fromRGBO(0, 0, 0, 0.03),
-                      borderRadius: BorderRadius.vertical(
-                        bottom: Radius.circular(
-                          8,
-                        ),
-                      ),
-                    ),
-                    height: 8,
-                  ),
-                ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 8),
               ),
             ],
           );
