@@ -382,7 +382,8 @@ class AudioController extends BaseAudioHandler
 
         DownloadTrack? downloadedTrack;
 
-        if (getDownloadedTrackByTrackId != null) {
+        if (index >= _previousTracks.length - 15 &&
+            getDownloadedTrackByTrackId != null) {
           downloadedTrack = await getDownloadedTrackByTrackId(track.id);
         }
 
@@ -404,10 +405,10 @@ class AudioController extends BaseAudioHandler
 
       final List<String> nextUrls = [];
 
-      for (final track in [..._queueTracks, ..._nextTracks]) {
+      for (final (index, track) in [..._queueTracks, ..._nextTracks].indexed) {
         DownloadTrack? downloadedTrack;
 
-        if (getDownloadedTrackByTrackId != null) {
+        if (index <= 15 && getDownloadedTrackByTrackId != null) {
           downloadedTrack = await getDownloadedTrackByTrackId(track.id);
         }
 
