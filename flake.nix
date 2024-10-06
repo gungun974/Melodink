@@ -127,6 +127,8 @@
 
           gitHashes = {
             adwaita_icons = "sha256-M2QMkxDc1qEnm344H2mdrUNqxO/sVHCY8ETc2rBtrXo=";
+            color_thief_flutter = "sha256-1I9OufoE03J7CNfJpE0A6GnwNtLtIwaAVxrKpfl77f0=";
+            quantize_dart = "sha256-BQeankAcKuCr77+8Dwhg+iVjEMt9cnmHOuPROFiIIGc=";
           };
         };
       };

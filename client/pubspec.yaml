@@ -44,6 +44,10 @@ dependencies:
   connectivity_plus: ^6.0.5
   crypto: ^3.0.5
   logger: ^2.4.0
+  color_thief_flutter:
+    git:
+      url: https://github.com/makromusic/color_thief_flutter
+      ref: 951766094653f70655f8a5f4609c12f8e95db28b
 
 dev_dependencies:
   flutter_test:
