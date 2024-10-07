@@ -8,10 +8,9 @@ import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/track/data/models/track_model.dart';
+import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:path_provider/path_provider.dart';
-
-class TrackNotFoundException implements Exception {}
 
 class DownloadTrackRepository {
   static DownloadTrack decodeDownloadTrack(Map<String, Object?> data) {

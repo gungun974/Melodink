@@ -184,6 +184,10 @@ func ConvertToMinimalTrackViewModel(
 		albumId = id
 	}
 
+	if track.Metadata.Genres == nil {
+		track.Metadata.Genres = []string{}
+	}
+
 	return MinimalTrackViewModel{
 		Id: track.Id,
 

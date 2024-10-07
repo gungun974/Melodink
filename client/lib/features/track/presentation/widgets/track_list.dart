@@ -15,6 +15,8 @@ class TrackList extends HookConsumerWidget {
 
   final AppScreenTypeLayout size;
 
+  final bool displayDateAdded;
+
   final bool displayImage;
   final bool displayAlbum;
 
@@ -41,6 +43,7 @@ class TrackList extends HookConsumerWidget {
     super.key,
     required this.tracks,
     required this.size,
+    this.displayDateAdded = false,
     this.displayImage = true,
     this.displayAlbum = true,
     this.displayTrackIndex = true,
@@ -163,6 +166,7 @@ class TrackList extends HookConsumerWidget {
                   startAt: index,
                 );
               },
+              displayDateAdded: displayDateAdded,
               displayImage: displayImage,
               displayAlbum: displayAlbum,
               selected: selected,

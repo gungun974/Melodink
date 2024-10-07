@@ -50,7 +50,7 @@ class MobileNavbar extends StatelessWidget {
             GoRouter.of(context).go("/liked");
             break;
           case 1:
-            GoRouter.of(context).go("/search");
+            GoRouter.of(context).go("/track");
             break;
           case 2:
             GoRouter.of(context).go("/album");

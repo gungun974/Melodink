@@ -31,10 +31,10 @@ class AppPasswordFormField extends HookWidget {
       obscureText: !isVisible.value,
       keyboardType: TextInputType.text,
       labelText: labelText,
-      iconOnPressed: () {
+      suffixIconOnPressed: () {
         isVisible.value = !isVisible.value;
       },
-      icon: AdwaitaIcon(
+      suffixIcon: AdwaitaIcon(
         size: 20,
         !isVisible.value ? AdwaitaIcons.view_reveal : AdwaitaIcons.view_conceal,
       ),

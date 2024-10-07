@@ -5,13 +5,15 @@ class AppTextFormField extends StatelessWidget {
 
   final TextEditingController? controller;
 
-  final Widget? icon;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
 
   final TextInputType? keyboardType;
 
   final bool obscureText;
 
-  final VoidCallback? iconOnPressed;
+  final VoidCallback? prefixIconOnPressed;
+  final VoidCallback? suffixIconOnPressed;
 
   final AutovalidateMode? autovalidateMode;
 
@@ -23,10 +25,12 @@ class AppTextFormField extends StatelessWidget {
     super.key,
     required this.labelText,
     this.controller,
-    this.icon,
+    this.prefixIcon,
+    this.suffixIcon,
     this.keyboardType,
     this.obscureText = false,
-    this.iconOnPressed,
+    this.prefixIconOnPressed,
+    this.suffixIconOnPressed,
     this.autovalidateMode,
     this.validator,
     this.onChanged,
@@ -61,18 +65,17 @@ class AppTextFormField extends StatelessWidget {
                       fontSize: 14,
                       letterSpacing: 24 * 0.03,
                       fontWeight: FontWeight.w400,
+                      height: 1.4,
                     ),
                     maxLines: 1,
                     keyboardType: keyboardType,
                     decoration: InputDecoration(
-                      suffixIcon: icon != null ? buildIcon() : null,
+                      prefixIcon: prefixIcon != null ? buildPrefixIcon() : null,
+                      prefixIconConstraints: const BoxConstraints(),
+                      suffixIcon: suffixIcon != null ? buildSuffixIcon() : null,
                       suffixIconConstraints: const BoxConstraints(),
                       isDense: true,
                       filled: false,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
                       labelText: labelText,
                       labelStyle: TextStyle(color: Colors.grey[350]),
                       floatingLabelStyle: TextStyle(
@@ -83,13 +86,22 @@ class AppTextFormField extends StatelessWidget {
                       ),
                       floatingLabelBehavior: FloatingLabelBehavior.auto,
                       border: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.transparent),
+                        borderSide: BorderSide(
+                          color: Colors.transparent,
+                          width: 14,
+                        ),
                       ),
                       focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.transparent),
+                        borderSide: BorderSide(
+                          color: Colors.transparent,
+                          width: 14,
+                        ),
                       ),
                       enabledBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.transparent),
+                        borderSide: BorderSide(
+                          color: Colors.transparent,
+                          width: 14,
+                        ),
                       ),
                     ),
                   ),
@@ -121,20 +133,38 @@ class AppTextFormField extends StatelessWidget {
     );
   }
 
-  Widget buildIcon() {
+  Widget buildPrefixIcon() {
     final iconWidget = Container(
       height: 40,
-      padding: const EdgeInsets.only(left: 12.0, right: 16.0),
+      padding: const EdgeInsets.only(left: 16.0, right: 12.0),
       color: Colors.transparent,
-      child: icon,
+      child: prefixIcon,
     );
 
-    if (iconOnPressed == null) {
+    if (prefixIconOnPressed == null) {
       return iconWidget;
     }
 
     return GestureDetector(
-      onTap: iconOnPressed,
+      onTap: prefixIconOnPressed,
+      child: iconWidget,
+    );
+  }
+
+  Widget buildSuffixIcon() {
+    final iconWidget = Container(
+      height: 40,
+      padding: const EdgeInsets.only(left: 12.0, right: 16.0),
+      color: Colors.transparent,
+      child: suffixIcon,
+    );
+
+    if (suffixIconOnPressed == null) {
+      return iconWidget;
+    }
+
+    return GestureDetector(
+      onTap: suffixIconOnPressed,
       child: iconWidget,
     );
   }

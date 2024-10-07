@@ -30,9 +30,9 @@ class DesktopSidebar extends ConsumerWidget {
                       size: 24.0,
                     ),
                     onTap: () {
-                      GoRouter.of(context).go("/search");
+                      GoRouter.of(context).go("/track");
                     },
-                    active: currentUrl == "/search",
+                    active: currentUrl == "/track",
                   ),
                   DesktopSidebarItem(
                     label: "Liked songs",
