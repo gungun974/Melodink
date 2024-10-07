@@ -84,8 +84,8 @@ List<InlineSpan> getArtistsLinksTextSpans(
             onPointerDown: noInteraction
                 ? null
                 : (PointerDownEvent event) {
-                    if (event.kind != PointerDeviceKind.touch &&
-                        (event.kind != PointerDeviceKind.mouse ||
+                    if (event.kind == PointerDeviceKind.touch ||
+                        (event.kind == PointerDeviceKind.mouse &&
                             event.buttons != kPrimaryButton)) {
                       return;
                     }

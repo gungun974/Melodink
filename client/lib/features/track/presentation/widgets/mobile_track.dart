@@ -116,7 +116,7 @@ class MobileTrack extends HookConsumerWidget {
             multiCustomActionsBuilder: multiCustomActionsBuilder,
             child: Container(
               height: 50,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.only(left: 12),
               decoration: BoxDecoration(
                 color: selected
                     ? const Color.fromRGBO(0, 0, 0, 0.075)
@@ -206,12 +206,15 @@ class MobileTrack extends HookConsumerWidget {
                     ),
                   ),
                   if (displayMoreActions)
-                    TrackContextMenuButton(
-                      trackContextMenuKey: trackContextMenuKey,
-                      menuController: trackContextMenuController,
-                      padding: const EdgeInsets.only(
-                        left: 16,
-                        right: 4,
+                    GestureDetector(
+                      onTap: () {},
+                      child: TrackContextMenuButton(
+                        trackContextMenuKey: trackContextMenuKey,
+                        menuController: trackContextMenuController,
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          right: 16,
+                        ),
                       ),
                     ),
                   if (displayReorderable)
@@ -220,7 +223,7 @@ class MobileTrack extends HookConsumerWidget {
                       child: ReorderableListener(
                         child: Container(
                           height: 50,
-                          padding: const EdgeInsets.only(left: 16),
+                          padding: const EdgeInsets.only(left: 16, right: 12),
                           color: Colors.transparent,
                           child: const MouseRegion(
                             cursor: SystemMouseCursors.grab,

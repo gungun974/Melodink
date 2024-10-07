@@ -291,10 +291,14 @@ class DesktopTrack extends HookConsumerWidget {
                       ),
                     ),
                   if (displayMoreActions)
-                    TrackContextMenuButton(
-                      trackContextMenuKey: trackContextMenuKey,
-                      menuController: trackContextMenuController,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                    GestureDetector(
+                      onTap: () {},
+                      onDoubleTap: () {},
+                      child: TrackContextMenuButton(
+                        trackContextMenuKey: trackContextMenuKey,
+                        menuController: trackContextMenuController,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                      ),
                     ),
                   if (displayReorderable)
                     GestureDetector(
