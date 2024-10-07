@@ -65,7 +65,7 @@ class AppTextFormField extends StatelessWidget {
                       fontSize: 14,
                       letterSpacing: 24 * 0.03,
                       fontWeight: FontWeight.w400,
-                      height: 1.4,
+                      height: 1,
                     ),
                     maxLines: 1,
                     keyboardType: keyboardType,
