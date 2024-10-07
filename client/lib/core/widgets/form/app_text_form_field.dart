@@ -45,7 +45,7 @@ class AppTextFormField extends StatelessWidget {
       builder: (FormFieldState field) {
         return Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF465156),
+            color: const Color.fromRGBO(39, 44, 46, 0.55),
             borderRadius: BorderRadius.circular(8.0),
           ),
           child: Stack(

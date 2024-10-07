@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 enum AppButtonType {
   primary,
   secondary,
+  neutral,
 }
 
 class AppButton extends StatelessWidget {
@@ -32,9 +33,11 @@ class AppButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10.0),
           ),
-          backgroundColor: type == AppButtonType.primary
-              ? Color.fromRGBO(196, 126, 208, 1)
-              : Color.fromRGBO(152, 128, 209, 1),
+          backgroundColor: switch (type) {
+            AppButtonType.primary => Color.fromRGBO(196, 126, 208, 1),
+            AppButtonType.secondary => Color.fromRGBO(152, 128, 209, 1),
+            AppButtonType.neutral => Color.fromRGBO(120, 144, 156, 0.55),
+          },
           shadowColor: Colors.transparent,
         ),
         child: Padding(

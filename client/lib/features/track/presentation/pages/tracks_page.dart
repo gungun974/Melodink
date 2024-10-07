@@ -6,8 +6,10 @@ import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
+import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/widgets/all_track_filter_panel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 
@@ -18,11 +20,14 @@ class TracksPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncTracks = ref.watch(allSearchTracksProvider);
+    final asyncTracks = ref.watch(allFilteredAlbumsTracksProvider);
 
     final tracks = asyncTracks.valueOrNull;
 
-    final searchTextController = useTextEditingController();
+    final searchTextController =
+        useTextEditingController(text: ref.watch(allTracksSearchInputProvider));
+
+    final showFilterPanel = useState(false);
 
     if (tracks == null) {
       return AppNavigationHeader(
@@ -49,42 +54,80 @@ class TracksPage extends HookConsumerWidget {
                   horizontal: padding,
                   vertical: 16,
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    const AppButton(
-                      text: "Filter",
-                      type: AppButtonType.primary,
-                    ),
-                    const SizedBox(width: 16),
-                    AppButton(
-                      text: "View All",
-                      type: AppButtonType.primary,
-                      onPressed: () {
-                        searchTextController.clear();
+                    Row(
+                      children: [
+                        AppButton(
+                          text: "Filter",
+                          type: showFilterPanel.value
+                              ? AppButtonType.primary
+                              : AppButtonType.neutral,
+                          onPressed: () {
+                            if (showFilterPanel.value) {
+                              ref
+                                  .read(allTracksArtistsSelectedOptionsProvider
+                                      .notifier)
+                                  .state = [];
 
-                        ref.read(allTracksSearchInputProvider.notifier).state =
-                            "";
-                      },
-                    ),
-                    const SizedBox(width: 16),
-                    const AppButton(
-                      text: "Import",
-                      type: AppButtonType.primary,
-                    ),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: AppTextFormField(
-                        labelText: "Search",
-                        prefixIcon: const AdwaitaIcon(
-                          size: 20,
-                          AdwaitaIcons.system_search,
+                              ref
+                                  .read(allTracksAlbumsSelectedOptionsProvider
+                                      .notifier)
+                                  .state = [];
+                            }
+
+                            showFilterPanel.value = !showFilterPanel.value;
+                          },
                         ),
-                        controller: searchTextController,
-                        onChanged: (value) => ref
-                            .read(allTracksSearchInputProvider.notifier)
-                            .state = value,
-                      ),
+                        const SizedBox(width: 16),
+                        AppButton(
+                          text: "View All",
+                          type: AppButtonType.primary,
+                          onPressed: () {
+                            searchTextController.clear();
+
+                            ref
+                                .read(allTracksSearchInputProvider.notifier)
+                                .state = "";
+
+                            ref
+                                .read(allTracksArtistsSelectedOptionsProvider
+                                    .notifier)
+                                .state = [];
+
+                            ref
+                                .read(allTracksAlbumsSelectedOptionsProvider
+                                    .notifier)
+                                .state = [];
+                          },
+                        ),
+                        const SizedBox(width: 16),
+                        const AppButton(
+                          text: "Import",
+                          type: AppButtonType.primary,
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: AppTextFormField(
+                            labelText: "Search",
+                            prefixIcon: const AdwaitaIcon(
+                              size: 20,
+                              AdwaitaIcons.system_search,
+                            ),
+                            controller: searchTextController,
+                            onChanged: (value) => ref
+                                .read(allTracksSearchInputProvider.notifier)
+                                .state = value,
+                          ),
+                        ),
+                      ],
                     ),
+                    if (showFilterPanel.value)
+                      MaxContainer(
+                        maxWidth: maxWidth,
+                        padding: EdgeInsets.zero,
+                        child: const AllTrackFilterPanel(),
+                      ),
                   ],
                 ),
               ),
