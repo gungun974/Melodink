@@ -1,59 +1,125 @@
 import 'package:melodink_client/features/library/data/models/artist_model.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
-class MinimalTrackModel {
+class TrackModel {
   final int id;
 
   final String title;
-
   final Duration duration;
 
+  final String tagsFormat;
+  final String fileType;
+
+  final String fileSignature;
+
+  final TrackMetadataModel metadata;
+
+  final DateTime dateAdded;
+
+  const TrackModel({
+    required this.id,
+    required this.title,
+    required this.duration,
+    required this.tagsFormat,
+    required this.fileType,
+    required this.fileSignature,
+    required this.metadata,
+    required this.dateAdded,
+  });
+
+  Track toTrack() {
+    return Track(
+      id: id,
+      title: title,
+      duration: duration,
+      tagsFormat: tagsFormat,
+      fileType: fileType,
+      fileSignature: fileSignature,
+      metadata: metadata.toTrackMetadata(),
+      dateAdded: dateAdded,
+    );
+  }
+
+  factory TrackModel.fromJson(Map<String, dynamic> json) {
+    return TrackModel(
+      id: (json['id'] as num).toInt(),
+      title: json['title'],
+      duration: Duration(milliseconds: (json['duration'] as num).toInt()),
+      tagsFormat: json['tags_format'],
+      fileType: json['file_type'],
+      fileSignature: json['file_signature'],
+      metadata: TrackMetadataModel.fromJson(json['metadata']),
+      dateAdded: DateTime.parse(json['date_added']),
+    );
+  }
+}
+
+class TrackMetadataModel {
   final String album;
   final String albumId;
 
   final int trackNumber;
+  final int totalTracks;
+
   final int discNumber;
+  final int totalDiscs;
 
   final String date;
   final int year;
 
   final List<String> genres;
+  final String lyrics;
+  final String comment;
+
+  final String acoustId;
+
+  final String musicBrainzReleaseId;
+  final String musicBrainzTrackId;
+  final String musicBrainzRecordingId;
 
   final List<MinimalArtistModel> artists;
   final List<MinimalArtistModel> albumArtists;
+
   final String composer;
 
-  final DateTime dateAdded;
-
-  const MinimalTrackModel({
-    required this.id,
-    required this.title,
-    required this.duration,
+  const TrackMetadataModel({
     required this.album,
     required this.albumId,
     required this.trackNumber,
+    required this.totalTracks,
     required this.discNumber,
+    required this.totalDiscs,
     required this.date,
     required this.year,
     required this.genres,
+    required this.lyrics,
+    required this.comment,
+    required this.acoustId,
+    required this.musicBrainzReleaseId,
+    required this.musicBrainzTrackId,
+    required this.musicBrainzRecordingId,
     required this.artists,
     required this.albumArtists,
     required this.composer,
-    required this.dateAdded,
   });
 
-  MinimalTrack toMinimalTrack() {
-    return MinimalTrack(
-      id: id,
-      title: title,
-      duration: duration,
+  TrackMetadata toTrackMetadata() {
+    return TrackMetadata(
       album: album,
       albumId: albumId,
       trackNumber: trackNumber,
+      totalTracks: totalTracks,
       discNumber: discNumber,
+      totalDiscs: totalDiscs,
       date: date,
       year: year,
       genres: genres,
+      lyrics: lyrics,
+      comment: comment,
+      acoustId: acoustId,
+      musicBrainzReleaseId: musicBrainzReleaseId,
+      musicBrainzTrackId: musicBrainzTrackId,
+      musicBrainzRecordingId: musicBrainzRecordingId,
       artists: artists
           .map(
             (artist) => artist.toMinimalArtist(),
@@ -65,49 +131,26 @@ class MinimalTrackModel {
           )
           .toList(),
       composer: composer,
-      dateAdded: dateAdded,
     );
   }
 
-  factory MinimalTrackModel.fromMinimalTrack(MinimalTrack track) {
-    return MinimalTrackModel(
-      id: track.id,
-      title: track.title,
-      duration: track.duration,
-      album: track.album,
-      albumId: track.albumId,
-      trackNumber: track.trackNumber,
-      discNumber: track.discNumber,
-      date: track.date,
-      year: track.year,
-      genres: track.genres,
-      artists: track.artists
-          .map(
-            (artist) => MinimalArtistModel.fromMinimalArtist(artist),
-          )
-          .toList(),
-      albumArtists: track.albumArtists
-          .map(
-            (artist) => MinimalArtistModel.fromMinimalArtist(artist),
-          )
-          .toList(),
-      composer: track.composer,
-      dateAdded: track.dateAdded,
-    );
-  }
-
-  factory MinimalTrackModel.fromJson(Map<String, dynamic> json) {
-    return MinimalTrackModel(
-      id: (json['id'] as num).toInt(),
-      title: json['title'],
-      duration: Duration(milliseconds: (json['duration'] as num).toInt()),
+  factory TrackMetadataModel.fromJson(Map<String, dynamic> json) {
+    return TrackMetadataModel(
       album: json['album'],
       albumId: json['album_id'],
       trackNumber: (json['track_number'] as num).toInt(),
+      totalTracks: (json['total_tracks'] as num).toInt(),
       discNumber: (json['disc_number'] as num).toInt(),
+      totalDiscs: (json['total_discs'] as num).toInt(),
       date: json['date'],
       year: (json['year'] as num).toInt(),
       genres: List<String>.from(json['genres']),
+      lyrics: json['lyrics'],
+      comment: json['comment'],
+      acoustId: json['acoust_id'],
+      musicBrainzReleaseId: json['music_brainz_release_id'],
+      musicBrainzTrackId: json['music_brainz_track_id'],
+      musicBrainzRecordingId: json['music_brainz_recording_id'],
       artists: (json['artists'] as List)
           .map(
             (artist) => MinimalArtistModel.fromJson(artist),
@@ -119,34 +162,6 @@ class MinimalTrackModel {
           )
           .toList(),
       composer: json['composer'],
-      dateAdded: DateTime.parse(json['date_added']),
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'duration': duration.inMilliseconds,
-      'album': album,
-      'album_id': albumId,
-      'track_number': trackNumber,
-      'disc_number': discNumber,
-      'date': date,
-      'year': year,
-      'genres': genres,
-      'artists': artists
-          .map(
-            (artist) => artist.toJson(),
-          )
-          .toList(),
-      'album_artists': albumArtists
-          .map(
-            (artist) => artist.toJson(),
-          )
-          .toList(),
-      'composer': composer,
-      'date_added': dateAdded.toIso8601String(),
-    };
   }
 }

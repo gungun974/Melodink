@@ -11,7 +11,7 @@ import 'package:melodink_client/core/helpers/timeago.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';

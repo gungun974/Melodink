@@ -5,7 +5,7 @@ import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/generated/messages.g.dart';
 import 'package:mutex/mutex.dart';
 import 'package:rxdart/rxdart.dart';

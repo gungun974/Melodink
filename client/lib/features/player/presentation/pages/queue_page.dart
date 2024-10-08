@@ -10,7 +10,7 @@ import 'package:melodink_client/features/player/domain/audio/audio_controller.da
 import 'package:melodink_client/features/player/presentation/widgets/player_queue_controls.dart';
 import 'package:melodink_client/features/player/presentation/widgets/queue_tracks_panel.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 
 class QueuePage extends ConsumerWidget {
   const QueuePage({

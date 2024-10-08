@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:mutex/mutex.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

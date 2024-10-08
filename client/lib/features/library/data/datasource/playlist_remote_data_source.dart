@@ -6,7 +6,7 @@ import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/library/data/models/playlist_model.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 
 class PlaylistRemoteDataSource {
   Future<List<Playlist>> getAllPlaylists() async {

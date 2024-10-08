@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
 class AppTextFormField extends StatelessWidget {
   final String labelText;
@@ -21,6 +24,8 @@ class AppTextFormField extends StatelessWidget {
 
   final ValueChanged<String>? onChanged;
 
+  final bool readOnly;
+
   const AppTextFormField({
     super.key,
     required this.labelText,
@@ -34,6 +39,7 @@ class AppTextFormField extends StatelessWidget {
     this.autovalidateMode,
     this.validator,
     this.onChanged,
+    this.readOnly = false,
   });
 
   @override
@@ -59,13 +65,14 @@ class AppTextFormField extends StatelessWidget {
                       field.didChange(value);
                       onChanged?.call(value);
                     },
+                    readOnly: readOnly,
                     obscureText: obscureText,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontSize: 14,
                       letterSpacing: 24 * 0.03,
                       fontWeight: FontWeight.w400,
-                      height: 1,
+                      height: Platform.isLinux ? 1.4 : 1,
                     ),
                     maxLines: 1,
                     keyboardType: keyboardType,
@@ -85,22 +92,22 @@ class AppTextFormField extends StatelessWidget {
                         fontWeight: FontWeight.w400,
                       ),
                       floatingLabelBehavior: FloatingLabelBehavior.auto,
-                      border: const OutlineInputBorder(
+                      border: OutlineInputBorder(
                         borderSide: BorderSide(
                           color: Colors.transparent,
-                          width: 14,
+                          width: Platform.isLinux ? 16 : 14,
                         ),
                       ),
-                      focusedBorder: const OutlineInputBorder(
+                      focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
                           color: Colors.transparent,
-                          width: 14,
+                          width: Platform.isLinux ? 16 : 14,
                         ),
                       ),
-                      enabledBorder: const OutlineInputBorder(
+                      enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
                           color: Colors.transparent,
-                          width: 14,
+                          width: Platform.isLinux ? 16 : 14,
                         ),
                       ),
                     ),
@@ -166,6 +173,48 @@ class AppTextFormField extends StatelessWidget {
     return GestureDetector(
       onTap: suffixIconOnPressed,
       child: iconWidget,
+    );
+  }
+}
+
+class AppReadTextField extends HookWidget {
+  final String labelText;
+  final String value;
+
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
+
+  final VoidCallback? prefixIconOnPressed;
+  final VoidCallback? suffixIconOnPressed;
+
+  const AppReadTextField({
+    super.key,
+    required this.labelText,
+    required this.value,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.prefixIconOnPressed,
+    this.suffixIconOnPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textController = useTextEditingController(text: value);
+
+    useEffect(() {
+      textController.text = value;
+
+      return null;
+    }, [value]);
+
+    return AppTextFormField(
+      controller: textController,
+      labelText: labelText,
+      prefixIcon: prefixIcon,
+      suffixIcon: suffixIcon,
+      prefixIconOnPressed: prefixIconOnPressed,
+      suffixIconOnPressed: suffixIconOnPressed,
+      readOnly: true,
     );
   }
 }

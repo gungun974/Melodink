@@ -3,7 +3,7 @@ import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/datasource/playlist_local_data_source.dart';
 import 'package:melodink_client/features/library/data/datasource/playlist_remote_data_source.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 
 class PlaylistNotFoundException implements Exception {}
 

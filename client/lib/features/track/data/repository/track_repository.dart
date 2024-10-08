@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/track/data/datasource/track_local_data_source.dart';
 import 'package:melodink_client/features/track/data/datasource/track_remote_data_source.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 
 class TrackNotFoundException implements Exception {}
@@ -28,6 +29,10 @@ class TrackRepository {
     }
 
     return await trackLocalDataSource.getAllTracks();
+  }
+
+  Future<Track> getTrackById(int id) async {
+    return await trackRemoteDataSource.getTrackById(id);
   }
 }
 

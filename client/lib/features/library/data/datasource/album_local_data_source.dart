@@ -9,7 +9,7 @@ import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/library/data/models/artist_model.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
-import 'package:melodink_client/features/track/data/models/track_model.dart';
+import 'package:melodink_client/features/track/data/models/minimal_track_model.dart';
 import 'package:path_provider/path_provider.dart';
 
 class AlbumLocalDataSource {

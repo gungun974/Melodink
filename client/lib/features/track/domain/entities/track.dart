@@ -2,76 +2,50 @@ import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 
-class MinimalTrack extends Equatable {
+class Track extends Equatable {
   final int id;
-  final String title;
 
+  final String title;
   final Duration duration;
 
-  final String album;
-  final String albumId;
+  final String tagsFormat;
+  final String fileType;
 
-  final int trackNumber;
-  final int discNumber;
+  final String fileSignature;
 
-  final String date;
-  final int year;
-
-  final List<String> genres;
-
-  final List<MinimalArtist> artists;
-  final List<MinimalArtist> albumArtists;
-  final String composer;
+  final TrackMetadata metadata;
 
   final DateTime dateAdded;
 
-  const MinimalTrack({
+  const Track({
     required this.id,
     required this.title,
     required this.duration,
-    required this.album,
-    required this.albumId,
-    required this.trackNumber,
-    required this.discNumber,
-    required this.date,
-    required this.year,
-    required this.genres,
-    required this.artists,
-    required this.albumArtists,
-    required this.composer,
+    required this.tagsFormat,
+    required this.fileType,
+    required this.fileSignature,
+    required this.metadata,
     required this.dateAdded,
   });
 
-  MinimalTrack copyWith({
+  Track copyWith({
     int? id,
     String? title,
     Duration? duration,
-    String? album,
-    String? albumId,
-    int? trackNumber,
-    int? discNumber,
-    String? date,
-    int? year,
-    List<String>? genres,
-    List<MinimalArtist>? artists,
-    List<MinimalArtist>? albumArtists,
-    String? composer,
+    String? tagsFormat,
+    String? fileType,
+    String? fileSignature,
+    TrackMetadata? metadata,
     DateTime? dateAdded,
   }) {
-    return MinimalTrack(
+    return Track(
       id: id ?? this.id,
       title: title ?? this.title,
       duration: duration ?? this.duration,
-      album: album ?? this.album,
-      albumId: albumId ?? this.albumId,
-      trackNumber: trackNumber ?? this.trackNumber,
-      discNumber: discNumber ?? this.discNumber,
-      date: date ?? this.date,
-      year: year ?? this.year,
-      genres: genres ?? this.genres,
-      artists: artists ?? this.artists,
-      albumArtists: albumArtists ?? this.albumArtists,
-      composer: composer ?? this.composer,
+      tagsFormat: tagsFormat ?? this.tagsFormat,
+      fileType: fileType ?? this.fileType,
+      fileSignature: fileSignature ?? this.fileSignature,
+      metadata: metadata ?? this.metadata,
       dateAdded: dateAdded ?? this.dateAdded,
     );
   }
@@ -81,34 +55,12 @@ class MinimalTrack extends Equatable {
         id,
         title,
         duration,
-        album,
-        albumId,
-        trackNumber,
-        discNumber,
-        date,
-        year,
-        genres,
-        artists,
-        albumArtists,
-        composer,
+        tagsFormat,
+        fileType,
+        fileSignature,
+        metadata,
         dateAdded,
       ];
-
-  List<MinimalArtist> getVirtualAlbumArtists() {
-    final List<MinimalArtist> newArtists = List.from(albumArtists);
-
-    if (newArtists.isEmpty && artists.isNotEmpty) {
-      return [artists.first];
-    }
-
-    newArtists.sort();
-
-    return newArtists;
-  }
-
-  String getUrl() {
-    return "${AppApi().getServerUrl()}track/$id/audio";
-  }
 
   String getCoverUrl() {
     return "${AppApi().getServerUrl()}track/$id/cover";
@@ -122,4 +74,119 @@ class MinimalTrack extends Equatable {
     }
     return Uri.parse("file://$url");
   }
+}
+
+class TrackMetadata extends Equatable {
+  final String album;
+  final String albumId;
+
+  final int trackNumber;
+  final int totalTracks;
+
+  final int discNumber;
+  final int totalDiscs;
+
+  final String date;
+  final int year;
+
+  final List<String> genres;
+  final String lyrics;
+  final String comment;
+
+  final String acoustId;
+
+  final String musicBrainzReleaseId;
+  final String musicBrainzTrackId;
+  final String musicBrainzRecordingId;
+
+  final List<MinimalArtist> artists;
+  final List<MinimalArtist> albumArtists;
+
+  final String composer;
+
+  const TrackMetadata({
+    required this.album,
+    required this.albumId,
+    required this.trackNumber,
+    required this.totalTracks,
+    required this.discNumber,
+    required this.totalDiscs,
+    required this.date,
+    required this.year,
+    required this.genres,
+    required this.lyrics,
+    required this.comment,
+    required this.acoustId,
+    required this.musicBrainzReleaseId,
+    required this.musicBrainzTrackId,
+    required this.musicBrainzRecordingId,
+    required this.artists,
+    required this.albumArtists,
+    required this.composer,
+  });
+
+  TrackMetadata copyWith({
+    String? album,
+    String? albumId,
+    int? trackNumber,
+    int? totalTracks,
+    int? discNumber,
+    int? totalDiscs,
+    String? date,
+    int? year,
+    List<String>? genres,
+    String? lyrics,
+    String? comment,
+    String? acoustId,
+    String? musicBrainzReleaseId,
+    String? musicBrainzTrackId,
+    String? musicBrainzRecordingId,
+    List<MinimalArtist>? artists,
+    List<MinimalArtist>? albumArtists,
+    String? composer,
+  }) {
+    return TrackMetadata(
+      album: album ?? this.album,
+      albumId: albumId ?? this.albumId,
+      trackNumber: trackNumber ?? this.trackNumber,
+      totalTracks: totalTracks ?? this.totalTracks,
+      discNumber: discNumber ?? this.discNumber,
+      totalDiscs: totalDiscs ?? this.totalDiscs,
+      date: date ?? this.date,
+      year: year ?? this.year,
+      genres: genres ?? this.genres,
+      lyrics: lyrics ?? this.lyrics,
+      comment: comment ?? this.comment,
+      acoustId: acoustId ?? this.acoustId,
+      musicBrainzReleaseId: musicBrainzReleaseId ?? this.musicBrainzReleaseId,
+      musicBrainzTrackId: musicBrainzTrackId ?? this.musicBrainzTrackId,
+      musicBrainzRecordingId:
+          musicBrainzRecordingId ?? this.musicBrainzRecordingId,
+      artists: artists ?? this.artists,
+      albumArtists: albumArtists ?? this.albumArtists,
+      composer: composer ?? this.composer,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        album,
+        albumId,
+        trackNumber,
+        totalTracks,
+        discNumber,
+        totalDiscs,
+        date,
+        year,
+        genres,
+        lyrics,
+        comment,
+        acoustId,
+        musicBrainzReleaseId,
+        musicBrainzTrackId,
+        musicBrainzRecordingId,
+        artists,
+        albumArtists,
+        composer,
+      ];
 }

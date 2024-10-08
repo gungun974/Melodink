@@ -1,7 +1,7 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/multi_tracks_context_menu.dart';
 import 'package:melodink_client/features/track/presentation/widgets/single_track_context_menu.dart';
 

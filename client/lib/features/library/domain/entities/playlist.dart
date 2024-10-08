@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 
 class Playlist extends Equatable {
   final int id;

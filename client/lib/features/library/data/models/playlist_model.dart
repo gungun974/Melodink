@@ -1,5 +1,5 @@
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
-import 'package:melodink_client/features/track/data/models/track_model.dart';
+import 'package:melodink_client/features/track/data/models/minimal_track_model.dart';
 
 class PlaylistModel {
   final int id;

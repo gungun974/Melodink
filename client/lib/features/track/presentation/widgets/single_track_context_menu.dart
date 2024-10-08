@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/routes/router.dart';
+import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/presentation/modals/show_track_modal.dart';
 
 class SingleTrackContextMenu extends ConsumerWidget {
   const SingleTrackContextMenu({
@@ -148,6 +150,34 @@ class SingleTrackContextMenu extends ConsumerWidget {
           ),
         if (customActionsBuilder != null)
           ...customActionsBuilder!(context, menuController, track),
+        const Divider(height: 8),
+        MenuItemButton(
+          leadingIcon: const AdwaitaIcon(
+            AdwaitaIcons.info,
+            size: 20,
+          ),
+          child: const Text("Properties"),
+          onPressed: () {
+            menuController.close();
+            showGeneralDialog(
+              context: context,
+              barrierDismissible: true,
+              barrierLabel: "ShowTrackModal",
+              pageBuilder: (_, __, ___) {
+                return Center(
+                  child: MaxContainer(
+                    maxWidth: 800,
+                    maxHeight: 540,
+                    padding: const EdgeInsets.all(16),
+                    child: ShowTrackModal(
+                      trackId: track.id,
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
       ],
       controller: menuController,
       child: child,

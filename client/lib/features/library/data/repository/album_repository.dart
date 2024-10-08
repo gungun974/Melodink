@@ -4,7 +4,7 @@ import 'package:melodink_client/features/library/data/datasource/album_local_dat
 import 'package:melodink_client/features/library/data/datasource/album_remote_data_source.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 
 class AlbumNotFoundException implements Exception {}
 

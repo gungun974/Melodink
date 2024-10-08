@@ -6,7 +6,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/mobile_track.dart';
 

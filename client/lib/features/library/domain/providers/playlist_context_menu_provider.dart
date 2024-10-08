@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

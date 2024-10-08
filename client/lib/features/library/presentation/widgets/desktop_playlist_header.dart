@@ -8,7 +8,7 @@ import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 
 class DesktopPlaylistHeader extends ConsumerWidget {

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 
 class Album extends Equatable {
   final String id;
