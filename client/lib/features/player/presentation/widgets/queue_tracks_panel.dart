@@ -110,35 +110,28 @@ class QueueTracksPanel extends StatelessWidget {
             left: padding,
             right: padding,
           ),
-          sliver: SliverList(
+          sliver: SliverToBoxAdapter(
+            child: ReorderableItem(
+              key: Key("Prev-$dragAndDropKeyPrefix"),
+              childBuilder: (BuildContext context, ReorderableItemState state) {
+                return Container(
+                  color: Colors.transparent,
+                  height: 0,
+                );
+              },
+            ),
+          ),
+        ),
+        SliverContainer(
+          maxWidth: maxWidth,
+          padding: EdgeInsets.only(
+            left: padding,
+            right: padding,
+          ),
+          sliver: SliverFixedExtentList(
+            itemExtent: 50,
             delegate: SliverChildBuilderDelegate(
-              (context, rawIndex) {
-                if (rawIndex == 0) {
-                  return ReorderableItem(
-                      key: Key("Prev-$dragAndDropKeyPrefix"),
-                      childBuilder:
-                          (BuildContext context, ReorderableItemState state) {
-                        return Container(
-                          color: Colors.transparent,
-                          height: 0,
-                        );
-                      });
-                }
-
-                final index = rawIndex - 1;
-
-                if (index >= tracks.length) {
-                  return ReorderableItem(
-                      key: Key("Next-$dragAndDropKeyPrefix"),
-                      childBuilder:
-                          (BuildContext context, ReorderableItemState state) {
-                        return Container(
-                          color: Colors.transparent,
-                          height: 0,
-                        );
-                      });
-                }
-
+              (context, index) {
                 late final Widget child;
 
                 if (useQueueTrack) {
@@ -211,7 +204,25 @@ class QueueTracksPanel extends StatelessWidget {
                   },
                 );
               },
-              childCount: tracks.length + 2,
+              childCount: tracks.length,
+            ),
+          ),
+        ),
+        SliverContainer(
+          maxWidth: maxWidth,
+          padding: EdgeInsets.only(
+            left: padding,
+            right: padding,
+          ),
+          sliver: SliverToBoxAdapter(
+            child: ReorderableItem(
+              key: Key("Next-$dragAndDropKeyPrefix"),
+              childBuilder: (BuildContext context, ReorderableItemState state) {
+                return Container(
+                  color: Colors.transparent,
+                  height: 0,
+                );
+              },
             ),
           ),
         ),

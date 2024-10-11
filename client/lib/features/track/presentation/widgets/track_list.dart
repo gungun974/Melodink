@@ -60,7 +60,8 @@ class TrackList extends HookConsumerWidget {
     final startSelect = useState<int?>(null);
     final endSelect = useState<int?>(null);
 
-    return SliverList(
+    return SliverFixedExtentList(
+      itemExtent: 50,
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           late final Widget child;
