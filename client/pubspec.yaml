@@ -74,6 +74,7 @@ flutter:
     - assets/icons/arrow-right.svg
     - assets/icons/download.svg
     - assets/icons/download2.svg
+    - assets/icons/history-undo-symbolic.svg
 
     - lib/core/database/migrations/
   fonts:

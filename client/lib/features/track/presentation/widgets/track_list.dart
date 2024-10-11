@@ -19,6 +19,7 @@ class TrackList extends HookConsumerWidget {
 
   final bool displayImage;
   final bool displayAlbum;
+  final bool displayLike;
 
   final bool displayTrackIndex;
 
@@ -46,6 +47,7 @@ class TrackList extends HookConsumerWidget {
     this.displayDateAdded = false,
     this.displayImage = true,
     this.displayAlbum = true,
+    this.displayLike = true,
     this.displayTrackIndex = true,
     this.singleCustomActionsBuilder,
     this.multiCustomActionsBuilder,
@@ -169,6 +171,7 @@ class TrackList extends HookConsumerWidget {
               displayDateAdded: displayDateAdded,
               displayImage: displayImage,
               displayAlbum: displayAlbum,
+              displayLike: displayLike,
               selected: selected,
               selectedTracks: selectedTracks,
               selectCallback: selectCallback,

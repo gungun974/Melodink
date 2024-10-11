@@ -123,8 +123,6 @@ class AudioController extends BaseAudioHandler
     }
 
     await api.play();
-
-    await _updatePlaybackState();
   }
 
   @override
@@ -132,8 +130,6 @@ class AudioController extends BaseAudioHandler
     await api.skipToNext();
 
     await api.play();
-
-    await _updatePlaybackState();
   }
 
   @override
@@ -324,7 +320,8 @@ class AudioController extends BaseAudioHandler
     await _updatePlaybackState();
   }
 
-  Future<void> _updatePlaylistTracks(int currentTrackIndex) async {
+  Future<void> _updatePlaylistTracks(int currentTrackIndex,
+      {bool updatePlayerTracks = true}) async {
     await playlistTracksMutex.protect(() async {
       for (int j = 0; j < _queueTracks.length; j++) {
         final i = j + _previousTracks.length;
@@ -356,7 +353,9 @@ class AudioController extends BaseAudioHandler
         _nextTracks.insert(0, _previousTracks.removeAt(i));
       }
 
-      await _updatePlayerTracks();
+      if (updatePlayerTracks) {
+        await _updatePlayerTracks();
+      }
 
       await _updatePlaybackState();
     });
@@ -455,11 +454,24 @@ class AudioController extends BaseAudioHandler
 
   @override
   Future<void> updateState(MelodinkHostPlayerProcessingState state) async {
-    await _updatePlaybackState();
+    audioChangedDebouncer.run(() async {
+      if (_previousTracks.isEmpty) {
+        return;
+      }
+
+      final status = await api.fetchStatus();
+
+      await _updatePlaylistTracks(status.pos, updatePlayerTracks: false);
+    });
   }
 
   Future<void> _updatePlaybackState() async {
     final status = await api.fetchStatus();
+
+    _updateUiTrackLists();
+
+    // print(
+    //     "CONTROLLER_A: ${_previousTracks.lastOrNull?.id} / ${DateTime.now().millisecond} ${StackTrace.current}");
 
     playbackState.add(playbackState.value.copyWith(
       controls: [
@@ -494,7 +506,8 @@ class AudioController extends BaseAudioHandler
         MelodinkHostPlayerLoopMode.all: AudioServiceRepeatMode.all,
         MelodinkHostPlayerLoopMode.one: AudioServiceRepeatMode.one,
       }[status.loop]!,
-      queueIndex: status.pos,
+      // queueIndex: status.pos,
+      queueIndex: _previousTracks.lastOrNull?.id,
       shuffleMode: isShuffled
           ? AudioServiceShuffleMode.all
           : AudioServiceShuffleMode.none,
@@ -524,8 +537,6 @@ class AudioController extends BaseAudioHandler
             },
           )
         : null);
-
-    _updateUiTrackLists();
   }
 
   final BehaviorSubject<List<MinimalTrack>> previousTracks =
