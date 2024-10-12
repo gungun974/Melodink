@@ -79,7 +79,7 @@ class AppImageCacheProvider extends ImageProvider<AppImageCacheProvider> {
       assert(key == this);
 
       final cacheLocation = File(
-        "${(await getApplicationSupportDirectory()).path}/imacheCache/$cacheId",
+        "${(await getTemporaryDirectory()).path}/imacheCache/$cacheId",
       );
 
       if (await cacheLocation.exists()) {
