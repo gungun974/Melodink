@@ -53,6 +53,12 @@ class AudioController extends BaseAudioHandler
 
   bool isShuffled = false;
 
+  bool _isPlayerTracksEmpty() {
+    return _previousTracks.isEmpty &&
+        _queueTracks.isEmpty &&
+        _nextTracks.isEmpty;
+  }
+
   // ignore: unused_element
   void _debugTracks() {
     audioControllerLogger.d("PREV ------------------------");
@@ -79,6 +85,10 @@ class AudioController extends BaseAudioHandler
 
   @override
   Future<void> play() async {
+    if (_isPlayerTracksEmpty()) {
+      return;
+    }
+
     if (playbackState.valueOrNull?.processingState ==
         AudioProcessingState.idle) {
       await skipToQueueItem(0);
@@ -93,6 +103,10 @@ class AudioController extends BaseAudioHandler
 
   @override
   Future<void> pause() async {
+    if (_isPlayerTracksEmpty()) {
+      return;
+    }
+
     await api.pause();
 
     await _updatePlaybackState();
@@ -100,6 +114,10 @@ class AudioController extends BaseAudioHandler
 
   @override
   Future<void> stop() async {
+    if (_isPlayerTracksEmpty()) {
+      return;
+    }
+
     await api.pause();
 
     await _updatePlaybackState();
@@ -107,6 +125,10 @@ class AudioController extends BaseAudioHandler
 
   @override
   Future<void> seek(Duration position) async {
+    if (_isPlayerTracksEmpty()) {
+      return;
+    }
+
     await api.seek(position.inMilliseconds);
 
     await api.play();
@@ -116,6 +138,10 @@ class AudioController extends BaseAudioHandler
 
   @override
   Future<void> skipToPrevious() async {
+    if (_isPlayerTracksEmpty()) {
+      return;
+    }
+
     if (_previousTracks.length == 1) {
       await api.seek(0);
     } else {
@@ -127,6 +153,10 @@ class AudioController extends BaseAudioHandler
 
   @override
   Future<void> skipToNext() async {
+    if (_isPlayerTracksEmpty()) {
+      return;
+    }
+
     await api.skipToNext();
 
     await api.play();
@@ -134,6 +164,10 @@ class AudioController extends BaseAudioHandler
 
   @override
   Future<void> skipToQueueItem(int index) async {
+    if (_isPlayerTracksEmpty()) {
+      return;
+    }
+
     await _updatePlaylistTracks(index);
 
     await api.play();
@@ -422,10 +456,12 @@ class AudioController extends BaseAudioHandler
         }
       }
 
-      await api.setAudios(
-        prevUrls,
-        nextUrls,
-      );
+      if (prevUrls.isNotEmpty) {
+        await api.setAudios(
+          prevUrls,
+          nextUrls,
+        );
+      }
     });
   }
 

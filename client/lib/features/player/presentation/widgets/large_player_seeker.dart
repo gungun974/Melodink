@@ -54,27 +54,30 @@ class LargePlayerSeeker extends HookConsumerWidget {
       position = newSeekFuture.value ?? position;
     }
 
-    final progressBar = ProgressBar(
-      barHeight: 5.0,
-      thumbRadius: 7.0,
-      thumbColor: Colors.white,
-      baseBarColor: Colors.grey[800],
-      progressBarColor: Colors.white,
-      progress: position,
-      total: duration,
-      timeLabelLocation: TimeLabelLocation.none,
-      onSeek: audioController.seek,
-      onDragStart: (thumbValue) {
-        newSeekFuture.value = thumbValue.timeStamp;
-      },
-      onDragUpdate: (thumbValue) {
-        newSeekFuture.value = thumbValue.timeStamp;
-      },
-      onDragEnd: () {
-        Future.delayed(const Duration(milliseconds: 30), () {
-          newSeekFuture.value = null;
-        });
-      },
+    final progressBar = AbsorbPointer(
+      absorbing: duration.inMilliseconds < 100,
+      child: ProgressBar(
+        barHeight: 5.0,
+        thumbRadius: 7.0,
+        thumbColor: Colors.white,
+        baseBarColor: Colors.grey[800],
+        progressBarColor: Colors.white,
+        progress: position,
+        total: duration,
+        timeLabelLocation: TimeLabelLocation.none,
+        onSeek: audioController.seek,
+        onDragStart: (thumbValue) {
+          newSeekFuture.value = thumbValue.timeStamp;
+        },
+        onDragUpdate: (thumbValue) {
+          newSeekFuture.value = thumbValue.timeStamp;
+        },
+        onDragEnd: () {
+          Future.delayed(const Duration(milliseconds: 30), () {
+            newSeekFuture.value = null;
+          });
+        },
+      ),
     );
 
     if (displayDurationsInBottom) {
