@@ -3,6 +3,7 @@ import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/tracker/domain/entities/played_track.dart';
+import 'package:sqflite/sqflite.dart';
 
 class PlayedTrackRepository {
   static PlayedTrack decodePlayedTrack(Map<String, Object?> data) {
@@ -33,6 +34,44 @@ class PlayedTrackRepository {
 
     try {
       return data.map(PlayedTrackRepository.decodePlayedTrack).toList();
+    } catch (e) {
+      databaseLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<PlayedTrack?> getLastFinishedPlayedTrackByTrackId(int trackId) async {
+    final db = await DatabaseService.getDatabase();
+
+    final data = await db.rawQuery(
+        "SELECT * FROM played_tracks WHERE track_id = ? AND track_ended = 1 ORDER BY finish_at DESC LIMIT 1",
+        [trackId]);
+
+    if (data.firstOrNull == null) {
+      return null;
+    }
+
+    try {
+      return PlayedTrackRepository.decodePlayedTrack(data.first);
+    } catch (e) {
+      databaseLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<int> getTrackPlayedCountByTrackId(int trackId) async {
+    final db = await DatabaseService.getDatabase();
+
+    final data = await db.rawQuery(
+        "SELECT COUNT(*) FROM played_tracks WHERE track_id = ? AND track_ended = 1",
+        [trackId]);
+
+    if (data.firstOrNull == null) {
+      return 0;
+    }
+
+    try {
+      return Sqflite.firstIntValue(data)!;
     } catch (e) {
       databaseLogger.e(e);
       throw ServerUnknownException();

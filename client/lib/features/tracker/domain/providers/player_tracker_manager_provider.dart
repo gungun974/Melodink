@@ -162,6 +162,8 @@ class PlayerTrackerManagerNotifier extends _$PlayerTrackerManagerNotifier {
       );
 
       ref.invalidate(lastHistoryTracksProvider);
+      ref.invalidate(lastPlayedTrackDateProvider(currentTrack.id));
+      ref.invalidate(trackPlayedCountProvider(currentTrack.id));
 
       if (trackEnded) {
         _resetAntiEndSpam = true;

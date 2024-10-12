@@ -153,6 +153,8 @@ class TracksPage extends HookConsumerWidget {
                           child: size == AppScreenTypeLayout.desktop
                               ? const DesktopTrackHeader(
                                   displayDateAdded: true,
+                                  displayLastPlayed: true,
+                                  displayPlayedCount: true,
                                 )
                               : const SizedBox.shrink(),
                         ),
@@ -170,6 +172,8 @@ class TracksPage extends HookConsumerWidget {
                         displayImage: true,
                         displayAlbum: true,
                         displayDateAdded: true,
+                        displayLastPlayed: true,
+                        displayPlayedCount: true,
                       ),
                     ),
                     const SliverToBoxAdapter(

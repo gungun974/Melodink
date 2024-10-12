@@ -6,11 +6,16 @@ class DesktopTrackHeader extends StatelessWidget {
   final bool displayAlbum;
   final bool displayLike;
 
+  final bool displayLastPlayed;
+  final bool displayPlayedCount;
+
   const DesktopTrackHeader({
     super.key,
     this.displayDateAdded = false,
     this.displayAlbum = true,
     this.displayLike = true,
+    this.displayLastPlayed = false,
+    this.displayPlayedCount = false,
   });
 
   @override
@@ -58,6 +63,32 @@ class DesktopTrackHeader extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (displayLastPlayed) const SizedBox(width: 8),
+              if (displayLastPlayed)
+                const SizedBox(
+                  width: 96,
+                  child: Text(
+                    "Last Played",
+                    style: TextStyle(
+                      fontSize: 14,
+                      letterSpacing: 14 * 0.03,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              if (displayPlayedCount)
+                const SizedBox(
+                  width: 40,
+                  child: Text(
+                    "Count",
+                    style: TextStyle(
+                      fontSize: 14,
+                      letterSpacing: 14 * 0.03,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              if (displayPlayedCount) const SizedBox(width: 24),
               if (displayDateAdded)
                 const SizedBox(
                   width: 96,

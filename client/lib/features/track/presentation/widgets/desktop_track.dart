@@ -16,6 +16,7 @@ import 'package:melodink_client/features/track/domain/providers/track_provider.d
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
+import 'package:melodink_client/features/tracker/domain/providers/played_track_provider.dart';
 
 class DesktopTrack extends HookConsumerWidget {
   final MinimalTrack track;
@@ -29,6 +30,9 @@ class DesktopTrack extends HookConsumerWidget {
   final bool displayLike;
   final bool displayMoreActions;
   final bool displayReorderable;
+
+  final bool displayLastPlayed;
+  final bool displayPlayedCount;
 
   final void Function(MinimalTrack track) playCallback;
 
@@ -61,6 +65,8 @@ class DesktopTrack extends HookConsumerWidget {
     this.displayLike = true,
     this.displayMoreActions = true,
     this.displayReorderable = false,
+    this.displayLastPlayed = false,
+    this.displayPlayedCount = false,
     this.selectCallback,
     this.selected = false,
     this.selectedTracks = const [],
@@ -75,6 +81,18 @@ class DesktopTrack extends HookConsumerWidget {
     final downloadedTrack = ref
         .watch(
           isTrackDownloadedProvider(track.id),
+        )
+        .valueOrNull;
+
+    final lastPlayedDate = ref
+        .watch(
+          lastPlayedTrackDateProvider(track.id),
+        )
+        .valueOrNull;
+
+    final trackPlayedCount = ref
+        .watch(
+          trackPlayedCountProvider(track.id),
         )
         .valueOrNull;
 
@@ -250,6 +268,35 @@ class DesktopTrack extends HookConsumerWidget {
                         ),
                       ),
                     ),
+                  if (displayLastPlayed) const SizedBox(width: 8),
+                  if (displayLastPlayed)
+                    SizedBox(
+                      width: 96,
+                      child: Text(
+                        lastPlayedDate == null
+                            ? "Never"
+                            : formatTimeago(lastPlayedDate),
+                        style: TextStyle(
+                          fontSize: 12,
+                          letterSpacing: 14 * 0.03,
+                          color: Colors.grey[350],
+                        ),
+                      ),
+                    ),
+                  if (displayPlayedCount)
+                    SizedBox(
+                      width: 40,
+                      child: Text(
+                        trackPlayedCount == 0 ? "Never" : "$trackPlayedCount",
+                        style: TextStyle(
+                          fontSize: 12,
+                          letterSpacing: 14 * 0.03,
+                          color: Colors.grey[350],
+                        ),
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
+                  if (displayPlayedCount) const SizedBox(width: 24),
                   if (displayDateAdded)
                     SizedBox(
                       width: 96,

@@ -131,7 +131,10 @@ class PlaylistPage extends ConsumerWidget {
                       ),
                     ),
                     child: size == AppScreenTypeLayout.desktop
-                        ? const DesktopTrackHeader()
+                        ? const DesktopTrackHeader(
+                            displayLastPlayed: true,
+                            displayPlayedCount: true,
+                          )
                         : const SizedBox.shrink(),
                   ),
                 ),
@@ -146,6 +149,8 @@ class PlaylistPage extends ConsumerWidget {
                   tracks: tracks,
                   size: size,
                   displayTrackIndex: false,
+                  displayLastPlayed: true,
+                  displayPlayedCount: true,
                   singleCustomActionsBuilder: (
                     context,
                     menuController,

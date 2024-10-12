@@ -128,6 +128,8 @@ class AlbumPage extends ConsumerWidget {
                     child: size == AppScreenTypeLayout.desktop
                         ? const DesktopTrackHeader(
                             displayAlbum: false,
+                            displayLastPlayed: true,
+                            displayPlayedCount: true,
                           )
                         : const SizedBox.shrink(),
                   ),
@@ -144,6 +146,8 @@ class AlbumPage extends ConsumerWidget {
                   size: size,
                   displayImage: false,
                   displayAlbum: false,
+                  displayLastPlayed: true,
+                  displayPlayedCount: true,
                 ),
               ),
               const SliverToBoxAdapter(
