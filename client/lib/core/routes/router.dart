@@ -141,36 +141,30 @@ final appRouterProvider = Provider((ref) {
                       const GradientBackground(),
                       Scaffold(
                         backgroundColor: Colors.transparent,
-                        body: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        body: Stack(
                           children: [
                             Container(
-                              width: DesktopSidebar.width,
-                              color: const Color.fromRGBO(0, 0, 0, 0.08),
+                              color: const Color.fromRGBO(0, 0, 0, 0.15),
                               height: MediaQuery.paddingOf(context).top,
                             ),
-                            Expanded(
-                              child: SafeArea(
-                                top: false,
-                                bottom: false,
-                                child: NotificationListener<
-                                    OverscrollIndicatorNotification>(
-                                  onNotification:
-                                      (OverscrollIndicatorNotification
-                                          overscroll) {
-                                    overscroll.disallowIndicator();
-                                    return true;
-                                  },
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const DesktopSidebar(),
-                                      Expanded(
-                                        child: child,
-                                      ),
-                                    ],
-                                  ),
+                            SafeArea(
+                              top: true,
+                              bottom: false,
+                              child: NotificationListener<
+                                  OverscrollIndicatorNotification>(
+                                onNotification: (OverscrollIndicatorNotification
+                                    overscroll) {
+                                  overscroll.disallowIndicator();
+                                  return true;
+                                },
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const DesktopSidebar(),
+                                    Expanded(
+                                      child: child,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
