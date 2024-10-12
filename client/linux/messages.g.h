@@ -459,6 +459,48 @@ const gchar* pigeon_melodink_melodink_host_player_api_info_update_state_response
  */
 FlValue* pigeon_melodink_melodink_host_player_api_info_update_state_response_get_error_details(PigeonMelodinkMelodinkHostPlayerApiInfoUpdateStateResponse* response);
 
+G_DECLARE_FINAL_TYPE(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse, pigeon_melodink_melodink_host_player_api_info_external_pause_response, PIGEON_MELODINK, MELODINK_HOST_PLAYER_API_INFO_EXTERNAL_PAUSE_RESPONSE, GObject)
+
+/**
+ * pigeon_melodink_melodink_host_player_api_info_external_pause_response_is_error:
+ * @response: a #PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse.
+ *
+ * Checks if a response to MelodinkHostPlayerApiInfo.externalPause is an error.
+ *
+ * Returns: a %TRUE if this response is an error.
+ */
+gboolean pigeon_melodink_melodink_host_player_api_info_external_pause_response_is_error(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* response);
+
+/**
+ * pigeon_melodink_melodink_host_player_api_info_external_pause_response_get_error_code:
+ * @response: a #PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse.
+ *
+ * Get the error code for this response.
+ *
+ * Returns: an error code or %NULL if not an error.
+ */
+const gchar* pigeon_melodink_melodink_host_player_api_info_external_pause_response_get_error_code(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* response);
+
+/**
+ * pigeon_melodink_melodink_host_player_api_info_external_pause_response_get_error_message:
+ * @response: a #PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse.
+ *
+ * Get the error message for this response.
+ *
+ * Returns: an error message.
+ */
+const gchar* pigeon_melodink_melodink_host_player_api_info_external_pause_response_get_error_message(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* response);
+
+/**
+ * pigeon_melodink_melodink_host_player_api_info_external_pause_response_get_error_details:
+ * @response: a #PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse.
+ *
+ * Get the error details for this response.
+ *
+ * Returns: (allow-none): an error details or %NULL.
+ */
+FlValue* pigeon_melodink_melodink_host_player_api_info_external_pause_response_get_error_details(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* response);
+
 /**
  * PigeonMelodinkMelodinkHostPlayerApiInfo:
  *
@@ -522,6 +564,28 @@ void pigeon_melodink_melodink_host_player_api_info_update_state(PigeonMelodinkMe
  * Returns: a #PigeonMelodinkMelodinkHostPlayerApiInfoUpdateStateResponse or %NULL on error.
  */
 PigeonMelodinkMelodinkHostPlayerApiInfoUpdateStateResponse* pigeon_melodink_melodink_host_player_api_info_update_state_finish(PigeonMelodinkMelodinkHostPlayerApiInfo* api, GAsyncResult* result, GError** error);
+
+/**
+ * pigeon_melodink_melodink_host_player_api_info_external_pause:
+ * @api: a #PigeonMelodinkMelodinkHostPlayerApiInfo.
+ * @cancellable: (allow-none): a #GCancellable or %NULL.
+ * @callback: (scope async): (allow-none): a #GAsyncReadyCallback to call when the call is complete or %NULL to ignore the response.
+ * @user_data: (closure): user data to pass to @callback.
+ *
+ */
+void pigeon_melodink_melodink_host_player_api_info_external_pause(PigeonMelodinkMelodinkHostPlayerApiInfo* api, GCancellable* cancellable, GAsyncReadyCallback callback, gpointer user_data);
+
+/**
+ * pigeon_melodink_melodink_host_player_api_info_external_pause_finish:
+ * @api: a #PigeonMelodinkMelodinkHostPlayerApiInfo.
+ * @result: a #GAsyncResult.
+ * @error: (allow-none): #GError location to store the error occurring, or %NULL to ignore.
+ *
+ * Completes a pigeon_melodink_melodink_host_player_api_info_external_pause() call.
+ *
+ * Returns: a #PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse or %NULL on error.
+ */
+PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* pigeon_melodink_melodink_host_player_api_info_external_pause_finish(PigeonMelodinkMelodinkHostPlayerApiInfo* api, GAsyncResult* result, GError** error);
 
 G_END_DECLS
 

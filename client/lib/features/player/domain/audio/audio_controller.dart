@@ -465,6 +465,11 @@ class AudioController extends BaseAudioHandler
     });
   }
 
+  @override
+  Future<void> externalPause() async {
+    await pause();
+  }
+
   Future<void> _updatePlaybackState() async {
     final status = await api.fetchStatus();
 

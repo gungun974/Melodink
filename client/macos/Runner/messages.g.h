@@ -89,6 +89,7 @@ extern void SetUpPGNMelodinkHostPlayerApiWithSuffix(id<FlutterBinaryMessenger> b
 - (instancetype)initWithBinaryMessenger:(id<FlutterBinaryMessenger>)binaryMessenger messageChannelSuffix:(nullable NSString *)messageChannelSuffix;
 - (void)audioChangedPos:(NSInteger)pos completion:(void (^)(FlutterError *_Nullable))completion;
 - (void)updateStateState:(PGNMelodinkHostPlayerProcessingState)state completion:(void (^)(FlutterError *_Nullable))completion;
+- (void)externalPauseWithCompletion:(void (^)(FlutterError *_Nullable))completion;
 @end
 
 NS_ASSUME_NONNULL_END

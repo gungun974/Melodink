@@ -336,6 +336,7 @@ class MelodinkHostPlayerApiSetup {
 protocol MelodinkHostPlayerApiInfoProtocol {
   func audioChanged(pos posArg: Int64, completion: @escaping (Result<Void, PigeonError>) -> Void)
   func updateState(state stateArg: MelodinkHostPlayerProcessingState, completion: @escaping (Result<Void, PigeonError>) -> Void)
+  func externalPause(completion: @escaping (Result<Void, PigeonError>) -> Void)
 }
 class MelodinkHostPlayerApiInfo: MelodinkHostPlayerApiInfoProtocol {
   private let binaryMessenger: FlutterBinaryMessenger
@@ -369,6 +370,24 @@ class MelodinkHostPlayerApiInfo: MelodinkHostPlayerApiInfoProtocol {
     let channelName: String = "dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApiInfo.updateState\(messageChannelSuffix)"
     let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
     channel.sendMessage([stateArg] as [Any?]) { response in
+      guard let listResponse = response as? [Any?] else {
+        completion(.failure(createConnectionError(withChannelName: channelName)))
+        return
+      }
+      if listResponse.count > 1 {
+        let code: String = listResponse[0] as! String
+        let message: String? = nilOrValue(listResponse[1])
+        let details: String? = nilOrValue(listResponse[2])
+        completion(.failure(PigeonError(code: code, message: message, details: details)))
+      } else {
+        completion(.success(Void()))
+      }
+    }
+  }
+  func externalPause(completion: @escaping (Result<Void, PigeonError>) -> Void) {
+    let channelName: String = "dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApiInfo.externalPause\(messageChannelSuffix)"
+    let channel = FlutterBasicMessageChannel(name: channelName, binaryMessenger: binaryMessenger, codec: codec)
+    channel.sendMessage(nil) { response in
       guard let listResponse = response as? [Any?] else {
         completion(.failure(createConnectionError(withChannelName: channelName)))
         return

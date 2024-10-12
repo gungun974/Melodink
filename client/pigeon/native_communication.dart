@@ -91,4 +91,6 @@ abstract class MelodinkHostPlayerApiInfo {
   void audioChanged(int pos);
 
   void updateState(MelodinkHostPlayerProcessingState state);
+
+  void externalPause();
 }

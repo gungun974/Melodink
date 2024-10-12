@@ -197,6 +197,9 @@ class MelodinkHostPlayerApiInfo {
     const MelodinkHostPlayerProcessingState& state,
     std::function<void(void)>&& on_success,
     std::function<void(const FlutterError&)>&& on_error);
+  void ExternalPause(
+    std::function<void(void)>&& on_success,
+    std::function<void(const FlutterError&)>&& on_error);
 
  private:
   flutter::BinaryMessenger* binary_messenger_;

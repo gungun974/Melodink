@@ -388,5 +388,24 @@ void SetUpPGNMelodinkHostPlayerApiWithSuffix(id<FlutterBinaryMessenger> binaryMe
     } 
   }];
 }
+- (void)externalPauseWithCompletion:(void (^)(FlutterError *_Nullable))completion {
+  NSString *channelName = [NSString stringWithFormat:@"%@%@", @"dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApiInfo.externalPause", _messageChannelSuffix];
+  FlutterBasicMessageChannel *channel =
+    [FlutterBasicMessageChannel
+      messageChannelWithName:channelName
+      binaryMessenger:self.binaryMessenger
+      codec:PGNGetMessagesCodec()];
+  [channel sendMessage:nil reply:^(NSArray<id> *reply) {
+    if (reply != nil) {
+      if (reply.count > 1) {
+        completion([FlutterError errorWithCode:reply[0] message:reply[1] details:reply[2]]);
+      } else {
+        completion(nil);
+      }
+    } else {
+      completion(createConnectionError(channelName));
+    } 
+  }];
+}
 @end
 

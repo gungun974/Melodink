@@ -991,3 +991,81 @@ PigeonMelodinkMelodinkHostPlayerApiInfoUpdateStateResponse* pigeon_melodink_melo
   }
   return pigeon_melodink_melodink_host_player_api_info_update_state_response_new(response);
 }
+
+struct _PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse {
+  GObject parent_instance;
+
+  FlValue* error;
+};
+
+G_DEFINE_TYPE(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse, pigeon_melodink_melodink_host_player_api_info_external_pause_response, G_TYPE_OBJECT)
+
+static void pigeon_melodink_melodink_host_player_api_info_external_pause_response_dispose(GObject* object) {
+  PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* self = PIGEON_MELODINK_MELODINK_HOST_PLAYER_API_INFO_EXTERNAL_PAUSE_RESPONSE(object);
+  g_clear_pointer(&self->error, fl_value_unref);
+  G_OBJECT_CLASS(pigeon_melodink_melodink_host_player_api_info_external_pause_response_parent_class)->dispose(object);
+}
+
+static void pigeon_melodink_melodink_host_player_api_info_external_pause_response_init(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* self) {
+}
+
+static void pigeon_melodink_melodink_host_player_api_info_external_pause_response_class_init(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponseClass* klass) {
+  G_OBJECT_CLASS(klass)->dispose = pigeon_melodink_melodink_host_player_api_info_external_pause_response_dispose;
+}
+
+static PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* pigeon_melodink_melodink_host_player_api_info_external_pause_response_new(FlValue* response) {
+  PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* self = PIGEON_MELODINK_MELODINK_HOST_PLAYER_API_INFO_EXTERNAL_PAUSE_RESPONSE(g_object_new(pigeon_melodink_melodink_host_player_api_info_external_pause_response_get_type(), nullptr));
+  if (fl_value_get_length(response) > 1) {
+    self->error = fl_value_ref(response);
+  }
+  return self;
+}
+
+gboolean pigeon_melodink_melodink_host_player_api_info_external_pause_response_is_error(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* self) {
+  g_return_val_if_fail(PIGEON_MELODINK_IS_MELODINK_HOST_PLAYER_API_INFO_EXTERNAL_PAUSE_RESPONSE(self), FALSE);
+  return self->error != nullptr;
+}
+
+const gchar* pigeon_melodink_melodink_host_player_api_info_external_pause_response_get_error_code(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* self) {
+  g_return_val_if_fail(PIGEON_MELODINK_IS_MELODINK_HOST_PLAYER_API_INFO_EXTERNAL_PAUSE_RESPONSE(self), nullptr);
+  g_assert(pigeon_melodink_melodink_host_player_api_info_external_pause_response_is_error(self));
+  return fl_value_get_string(fl_value_get_list_value(self->error, 0));
+}
+
+const gchar* pigeon_melodink_melodink_host_player_api_info_external_pause_response_get_error_message(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* self) {
+  g_return_val_if_fail(PIGEON_MELODINK_IS_MELODINK_HOST_PLAYER_API_INFO_EXTERNAL_PAUSE_RESPONSE(self), nullptr);
+  g_assert(pigeon_melodink_melodink_host_player_api_info_external_pause_response_is_error(self));
+  return fl_value_get_string(fl_value_get_list_value(self->error, 1));
+}
+
+FlValue* pigeon_melodink_melodink_host_player_api_info_external_pause_response_get_error_details(PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* self) {
+  g_return_val_if_fail(PIGEON_MELODINK_IS_MELODINK_HOST_PLAYER_API_INFO_EXTERNAL_PAUSE_RESPONSE(self), nullptr);
+  g_assert(pigeon_melodink_melodink_host_player_api_info_external_pause_response_is_error(self));
+  return fl_value_get_list_value(self->error, 2);
+}
+
+static void pigeon_melodink_melodink_host_player_api_info_external_pause_cb(GObject* object, GAsyncResult* result, gpointer user_data) {
+  GTask* task = G_TASK(user_data);
+  g_task_return_pointer(task, result, g_object_unref);
+}
+
+void pigeon_melodink_melodink_host_player_api_info_external_pause(PigeonMelodinkMelodinkHostPlayerApiInfo* self, GCancellable* cancellable, GAsyncReadyCallback callback, gpointer user_data) {
+  g_autoptr(FlValue) args = fl_value_new_list();
+  g_autofree gchar* channel_name = g_strdup_printf("dev.flutter.pigeon.pigeon_melodink.MelodinkHostPlayerApiInfo.externalPause%s", self->suffix);
+  g_autoptr(PigeonMelodinkMessageCodec) codec = pigeon_melodink_message_codec_new();
+  FlBasicMessageChannel* channel = fl_basic_message_channel_new(self->messenger, channel_name, FL_MESSAGE_CODEC(codec));
+  GTask* task = g_task_new(self, cancellable, callback, user_data);
+  g_task_set_task_data(task, channel, g_object_unref);
+  fl_basic_message_channel_send(channel, args, cancellable, pigeon_melodink_melodink_host_player_api_info_external_pause_cb, task);
+}
+
+PigeonMelodinkMelodinkHostPlayerApiInfoExternalPauseResponse* pigeon_melodink_melodink_host_player_api_info_external_pause_finish(PigeonMelodinkMelodinkHostPlayerApiInfo* self, GAsyncResult* result, GError** error) {
+  g_autoptr(GTask) task = G_TASK(result);
+  GAsyncResult* r = G_ASYNC_RESULT(g_task_propagate_pointer(task, nullptr));
+  FlBasicMessageChannel* channel = FL_BASIC_MESSAGE_CHANNEL(g_task_get_task_data(task));
+  g_autoptr(FlValue) response = fl_basic_message_channel_send_finish(channel, r, error);
+  if (response == nullptr) { 
+    return nullptr;
+  }
+  return pigeon_melodink_melodink_host_player_api_info_external_pause_response_new(response);
+}

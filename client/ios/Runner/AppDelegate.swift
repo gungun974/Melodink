@@ -5,8 +5,17 @@ import UIKit
 private class MelodinkHostApiImplementation: MelodinkHostPlayerApi {
     var player: AudioPlayer!
 
+    var flutterAPI: MelodinkHostPlayerApiInfo
+
     init(flutterAPI: MelodinkHostPlayerApiInfo) {
         self.player = AudioPlayer(flutterAPI: flutterAPI)
+        self.flutterAPI = flutterAPI
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAudioSessionInterruption),
+            name: AVAudioSession.interruptionNotification,
+            object: nil)
     }
 
     func play() throws {
@@ -49,6 +58,33 @@ private class MelodinkHostApiImplementation: MelodinkHostPlayerApi {
 
     func setAuthToken(authToken: String) throws {
         player.setAuthToken(authToken: authToken)
+    }
+
+    @objc func handleAudioSessionInterruption(notification: Notification) {
+        guard let userInfo = notification.userInfo,
+            let typeValue = userInfo[AVAudioSessionInterruptionTypeKey]
+                as? UInt,
+            let type = AVAudioSession.InterruptionType(rawValue: typeValue)
+        else {
+            return
+        }
+
+        switch type {
+        case .began:
+            DispatchQueue.main.async { [self] in
+                flutterAPI.externalPause { _ in
+                }
+            }
+
+        case .ended:
+            do {
+                try AVAudioSession.sharedInstance().setActive(true)
+            } catch {
+            }
+
+        @unknown default:
+            break
+        }
     }
 
 }
