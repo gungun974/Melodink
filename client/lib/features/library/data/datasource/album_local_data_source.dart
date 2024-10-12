@@ -13,10 +13,15 @@ import 'package:melodink_client/features/track/data/models/minimal_track_model.d
 import 'package:path_provider/path_provider.dart';
 
 class AlbumLocalDataSource {
-  static Album decodeDownloadTrack(Map<String, Object?> data) {
+  static Album decodeDownloadTrack(
+      Map<String, Object?> data, String applicationSupportDirectory) {
+    final rawImageFile = data["image_file"] as String?;
+
     return Album(
       id: data["album_id"] as String,
-      localCover: data["image_file"] as String?,
+      localCover: rawImageFile != null
+          ? "$applicationSupportDirectory/$rawImageFile"
+          : null,
       name: data["name"] as String,
       albumArtists: (json.decode(data["album_artists"] as String) as List)
           .map(
@@ -36,11 +41,15 @@ class AlbumLocalDataSource {
   Future<List<Album>> getAllAlbums() async {
     final db = await DatabaseService.getDatabase();
 
+    final applicationSupportDirectory =
+        (await getApplicationSupportDirectory()).path;
+
     try {
       final data = await db.rawQuery("SELECT * FROM album_download");
 
       return data
-          .map((downloadTrack) => decodeDownloadTrack(downloadTrack))
+          .map((downloadTrack) =>
+              decodeDownloadTrack(downloadTrack, applicationSupportDirectory))
           .toList();
     } catch (e) {
       mainLogger.e(e);
@@ -50,6 +59,9 @@ class AlbumLocalDataSource {
 
   Future<Album?> getAlbumById(String id) async {
     final db = await DatabaseService.getDatabase();
+
+    final applicationSupportDirectory =
+        (await getApplicationSupportDirectory()).path;
 
     try {
       final data = await db
@@ -61,7 +73,7 @@ class AlbumLocalDataSource {
         return null;
       }
 
-      return decodeDownloadTrack(downloadTrack);
+      return decodeDownloadTrack(downloadTrack, applicationSupportDirectory);
     } catch (e) {
       mainLogger.e(e);
       throw ServerUnknownException();
@@ -74,14 +86,16 @@ class AlbumLocalDataSource {
     try {
       final savedAlbum = await getAlbumById(album.id);
 
-      final downloadPath =
-          "${(await getApplicationSupportDirectory()).path}/download-album/${album.id}";
+      final applicationSupportDirectory =
+          (await getApplicationSupportDirectory()).path;
+
+      final downloadPath = "/download-album/${album.id}";
       String? downloadImagePath = "$downloadPath-image";
 
       try {
         await AppApi().dio.download(
               "/album/${album.id}/cover",
-              downloadImagePath,
+              "$applicationSupportDirectory/$downloadImagePath",
             );
       } on DioException catch (e) {
         final response = e.response;

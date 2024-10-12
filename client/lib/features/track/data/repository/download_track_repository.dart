@@ -13,11 +13,17 @@ import 'package:melodink_client/features/track/domain/entities/download_track.da
 import 'package:path_provider/path_provider.dart';
 
 class DownloadTrackRepository {
-  static DownloadTrack decodeDownloadTrack(Map<String, Object?> data) {
+  static DownloadTrack decodeDownloadTrack(
+      Map<String, Object?> data, String applicationSupportDirectory) {
+    final rawAudioFile = data["audio_file"] as String;
+    final rawImageFile = data["image_file"] as String?;
+
     return DownloadTrack(
       trackId: data["track_id"] as int,
-      audioFile: data["audio_file"] as String,
-      imageFile: data["image_file"] as String?,
+      audioFile: "$applicationSupportDirectory/$rawAudioFile",
+      imageFile: rawImageFile != null
+          ? "$applicationSupportDirectory/$rawImageFile"
+          : null,
       fileSignature: data["file_signature"] as String,
     );
   }
@@ -35,7 +41,11 @@ class DownloadTrackRepository {
         return null;
       }
 
-      final downloadTrack = decodeDownloadTrack(rawDownloadTrack);
+      final applicationSupportDirectory =
+          (await getApplicationSupportDirectory()).path;
+
+      final downloadTrack =
+          decodeDownloadTrack(rawDownloadTrack, applicationSupportDirectory);
 
       final audioFile = File(downloadTrack.audioFile);
 
@@ -71,20 +81,22 @@ class DownloadTrackRepository {
         return;
       }
 
-      final downloadPath =
-          "${(await getApplicationSupportDirectory()).path}/download/$trackId";
+      final applicationSupportDirectory =
+          (await getApplicationSupportDirectory()).path;
+
+      final downloadPath = "/download/$trackId";
       final downloadAudioPath = "$downloadPath-audio";
       String? downloadImagePath = "$downloadPath-image";
 
       await AppApi().dio.download(
             "/track/$trackId/audio",
-            downloadAudioPath,
+            "$applicationSupportDirectory/$downloadAudioPath",
           );
 
       try {
         await AppApi().dio.download(
               "/track/$trackId/cover",
-              downloadImagePath,
+              "$applicationSupportDirectory/$downloadImagePath",
             );
       } on DioException catch (e) {
         final response = e.response;
@@ -132,6 +144,9 @@ class DownloadTrackRepository {
   Future<List<DownloadTrack>> getOrphanTracks() async {
     final db = await DatabaseService.getDatabase();
 
+    final applicationSupportDirectory =
+        (await getApplicationSupportDirectory()).path;
+
     try {
       final albumTracksData =
           await db.rawQuery("SELECT tracks FROM album_download");
@@ -160,8 +175,9 @@ class DownloadTrackRepository {
         "SELECT * FROM track_download WHERE track_id NOT IN (${trackIds.join(",")})",
       );
 
-      final orphans =
-          orphansData.map((data) => decodeDownloadTrack(data)).toList();
+      final orphans = orphansData
+          .map((data) => decodeDownloadTrack(data, applicationSupportDirectory))
+          .toList();
 
       return orphans;
     } catch (e) {

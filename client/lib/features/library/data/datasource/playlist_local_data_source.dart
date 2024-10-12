@@ -12,10 +12,15 @@ import 'package:melodink_client/features/track/data/models/minimal_track_model.d
 import 'package:path_provider/path_provider.dart';
 
 class PlaylistLocalDataSource {
-  static Playlist decodeDownloadTrack(Map<String, Object?> data) {
+  static Playlist decodeDownloadTrack(
+      Map<String, Object?> data, String applicationSupportDirectory) {
+    final rawImageFile = data["image_file"] as String?;
+
     return Playlist(
       id: data["playlist_id"] as int,
-      localCover: data["image_file"] as String?,
+      localCover: rawImageFile != null
+          ? "$applicationSupportDirectory/$rawImageFile"
+          : null,
       name: data["name"] as String,
       description: data["description"] as String,
       tracks: (json.decode(data["tracks"] as String) as List)
@@ -30,11 +35,15 @@ class PlaylistLocalDataSource {
   Future<List<Playlist>> getAllPlaylists() async {
     final db = await DatabaseService.getDatabase();
 
+    final applicationSupportDirectory =
+        (await getApplicationSupportDirectory()).path;
+
     try {
       final data = await db.rawQuery("SELECT * FROM playlist_download");
 
       return data
-          .map((downloadTrack) => decodeDownloadTrack(downloadTrack))
+          .map((downloadTrack) =>
+              decodeDownloadTrack(downloadTrack, applicationSupportDirectory))
           .toList();
     } catch (e) {
       mainLogger.e(e);
@@ -44,6 +53,9 @@ class PlaylistLocalDataSource {
 
   Future<Playlist?> getPlaylistById(int id) async {
     final db = await DatabaseService.getDatabase();
+
+    final applicationSupportDirectory =
+        (await getApplicationSupportDirectory()).path;
 
     try {
       final data = await db.rawQuery(
@@ -55,7 +67,7 @@ class PlaylistLocalDataSource {
         return null;
       }
 
-      return decodeDownloadTrack(downloadTrack);
+      return decodeDownloadTrack(downloadTrack, applicationSupportDirectory);
     } catch (e) {
       mainLogger.e(e);
       throw ServerUnknownException();
@@ -68,14 +80,16 @@ class PlaylistLocalDataSource {
     try {
       final savedPlaylist = await getPlaylistById(playlist.id);
 
-      final downloadPath =
-          "${(await getApplicationSupportDirectory()).path}/download-playlist/${playlist.id}";
+      final applicationSupportDirectory =
+          (await getApplicationSupportDirectory()).path;
+
+      final downloadPath = "/download-playlist/${playlist.id}";
       String? downloadImagePath = "$downloadPath-image";
 
       try {
         await AppApi().dio.download(
               "/playlist/${playlist.id}/cover",
-              downloadImagePath,
+              "$applicationSupportDirectory/$downloadImagePath",
             );
       } on DioException catch (e) {
         final response = e.response;
