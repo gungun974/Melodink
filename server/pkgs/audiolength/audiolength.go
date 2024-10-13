@@ -36,7 +36,10 @@ func GetAudioDuration(path string) (int, error) {
 	case tag.MP3:
 		duration, err = getMp3Duration(path)
 	case tag.OGG:
-		duration, err = getOggDuration(path)
+		duration, err = getOggVorbisDuration(path)
+		if err != nil {
+			duration, err = getOggOpusDuration(path)
+		}
 	case tag.M4A:
 		duration, err = getM4aDuration(path)
 	case tag.FLAC:

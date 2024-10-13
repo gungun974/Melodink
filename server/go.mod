@@ -21,6 +21,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/mewkiz/flac v1.0.11
+	github.com/pion/opus v0.0.0-20240826153031-e8536fe9e4ca
 	github.com/sirupsen/logrus v1.9.3
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	go.uploadedlobster.com/musicbrainzws2 v0.9.1
