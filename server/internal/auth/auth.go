@@ -3,12 +3,12 @@ package auth
 import (
 	"context"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/gungun974/Melodink/server/internal"
+	config_key "github.com/gungun974/Melodink/server/internal/config"
 	context_key "github.com/gungun974/Melodink/server/internal/context"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/logger"
@@ -22,13 +22,18 @@ func AuthMiddleware(c internal.Container) func(next http.Handler) http.Handler {
 				return
 			}
 
+			jwtKey, err := c.ConfigRepository.GetString(config_key.CONFIG_KEY_JWT)
+			if err != nil {
+				logger.MainLogger.Fatalf("Can't find config JWT key %v", err)
+			}
+
 			auth, err := r.Cookie("access_token")
 			if err != nil {
 				handleNotLogged(next, w, r)
 				return
 			}
 
-			token, err := parseToken(auth.Value)
+			token, err := parseToken(auth.Value, jwtKey)
 			if err != nil {
 				handleNotLogged(next, w, r)
 				return
@@ -103,14 +108,14 @@ func SetAuthCookie(w http.ResponseWriter, key string, exp time.Time) {
 	http.SetCookie(w, &authCookie)
 }
 
-func parseToken(tokenString string) (claims *entities.UserJWTClaims, err error) {
+func parseToken(tokenString string, key string) (claims *entities.UserJWTClaims, err error) {
 	parser := jwt.NewParser(jwt.WithoutClaimsValidation())
 
 	token, err := parser.ParseWithClaims(
 		tokenString,
 		&entities.UserJWTClaims{},
 		func(token *jwt.Token) (interface{}, error) {
-			return []byte(os.Getenv("APP_JWT_KEY")), nil
+			return []byte(key), nil
 		},
 	)
 	if err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -18,15 +19,13 @@ func main() {
 		logger.MainLogger.Info("Loading .env file")
 	}
 
-	if os.Getenv("APP_JWT_KEY") == "" {
-		logger.DatabaseLogger.Fatalln("APP_JWT_KEY is not set")
-	}
-
 	logger.MainLogger.Info("Melodink Server")
 
 	db := database.Connect()
 
 	container := internal.NewContainer(db)
+
+	container.ConfigController.SetupDefaultKeys(context.Background())
 
 	port := os.Getenv("PORT")
 

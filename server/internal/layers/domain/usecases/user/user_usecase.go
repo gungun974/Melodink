@@ -6,16 +6,19 @@ import (
 )
 
 type UserUsecase struct {
-	userRepository repository.UserRepository
-	userPresenter  presenter.UserPresenter
+	userRepository   repository.UserRepository
+	configRepository repository.ConfigRepository
+	userPresenter    presenter.UserPresenter
 }
 
 func NewUserUsecase(
 	userRepository repository.UserRepository,
+	configRepository repository.ConfigRepository,
 	userPresenter presenter.UserPresenter,
 ) UserUsecase {
 	return UserUsecase{
 		userRepository,
+		configRepository,
 		userPresenter,
 	}
 }
