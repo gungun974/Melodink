@@ -23,6 +23,12 @@ class MinimalTrackModel {
   final List<MinimalArtistModel> albumArtists;
   final String composer;
 
+  final String fileType;
+
+  final int sampleRate;
+  final int? bitRate;
+  final int? bitsPerRawSample;
+
   final DateTime dateAdded;
 
   const MinimalTrackModel({
@@ -39,6 +45,10 @@ class MinimalTrackModel {
     required this.artists,
     required this.albumArtists,
     required this.composer,
+    required this.fileType,
+    required this.sampleRate,
+    required this.bitRate,
+    required this.bitsPerRawSample,
     required this.dateAdded,
   });
 
@@ -65,6 +75,10 @@ class MinimalTrackModel {
           )
           .toList(),
       composer: composer,
+      fileType: fileType,
+      sampleRate: sampleRate,
+      bitRate: bitRate,
+      bitsPerRawSample: bitsPerRawSample,
       dateAdded: dateAdded,
     );
   }
@@ -92,6 +106,10 @@ class MinimalTrackModel {
           )
           .toList(),
       composer: track.composer,
+      fileType: track.fileType,
+      sampleRate: track.sampleRate,
+      bitRate: track.bitRate,
+      bitsPerRawSample: track.bitsPerRawSample,
       dateAdded: track.dateAdded,
     );
   }
@@ -119,6 +137,13 @@ class MinimalTrackModel {
           )
           .toList(),
       composer: json['composer'],
+      fileType: json['file_type'],
+      sampleRate: (json['sample_rate'] as num).toInt(),
+      bitRate:
+          json['bit_rate'] != null ? (json['bit_rate'] as num).toInt() : null,
+      bitsPerRawSample: json['bits_per_raw_sample'] != null
+          ? (json['bits_per_raw_sample'] as num).toInt()
+          : null,
       dateAdded: DateTime.parse(json['date_added']),
     );
   }
@@ -146,6 +171,10 @@ class MinimalTrackModel {
           )
           .toList(),
       'composer': composer,
+      'file_type': fileType,
+      'sample_rate': sampleRate,
+      'bit_rate': bitRate,
+      'bits_per_raw_sample': bitsPerRawSample,
       'date_added': dateAdded.toIso8601String(),
     };
   }

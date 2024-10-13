@@ -25,6 +25,7 @@ class TrackList extends HookConsumerWidget {
 
   final bool displayLastPlayed;
   final bool displayPlayedCount;
+  final bool displayQuality;
 
   final List<Widget> Function(
     BuildContext context,
@@ -54,6 +55,7 @@ class TrackList extends HookConsumerWidget {
     this.displayTrackIndex = true,
     this.displayLastPlayed = false,
     this.displayPlayedCount = false,
+    this.displayQuality = false,
     this.singleCustomActionsBuilder,
     this.multiCustomActionsBuilder,
   });
@@ -180,6 +182,7 @@ class TrackList extends HookConsumerWidget {
               displayLike: displayLike,
               displayLastPlayed: displayLastPlayed,
               displayPlayedCount: displayPlayedCount,
+              displayQuality: displayQuality,
               selected: selected,
               selectedTracks: selectedTracks,
               selectCallback: selectCallback,

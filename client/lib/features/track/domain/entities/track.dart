@@ -15,6 +15,10 @@ class Track extends Equatable {
 
   final TrackMetadata metadata;
 
+  final int sampleRate;
+  final int? bitRate;
+  final int? bitsPerRawSample;
+
   final DateTime dateAdded;
 
   const Track({
@@ -25,6 +29,9 @@ class Track extends Equatable {
     required this.fileType,
     required this.fileSignature,
     required this.metadata,
+    required this.sampleRate,
+    required this.bitRate,
+    required this.bitsPerRawSample,
     required this.dateAdded,
   });
 
@@ -36,6 +43,9 @@ class Track extends Equatable {
     String? fileType,
     String? fileSignature,
     TrackMetadata? metadata,
+    int? sampleRate,
+    int? bitRate,
+    int? bitsPerRawSample,
     DateTime? dateAdded,
   }) {
     return Track(
@@ -46,6 +56,9 @@ class Track extends Equatable {
       fileType: fileType ?? this.fileType,
       fileSignature: fileSignature ?? this.fileSignature,
       metadata: metadata ?? this.metadata,
+      sampleRate: sampleRate ?? this.sampleRate,
+      bitRate: bitRate ?? this.bitRate,
+      bitsPerRawSample: bitsPerRawSample ?? this.bitsPerRawSample,
       dateAdded: dateAdded ?? this.dateAdded,
     );
   }
@@ -59,6 +72,9 @@ class Track extends Equatable {
         fileType,
         fileSignature,
         metadata,
+        sampleRate,
+        bitRate,
+        bitsPerRawSample,
         dateAdded,
       ];
 

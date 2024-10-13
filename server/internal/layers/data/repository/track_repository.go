@@ -142,10 +142,17 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
         metadata_album_artists,
         metadata_artists_roles,
 
-        metadata_composer
+        metadata_composer,
+
+        sample_rate,
+        bit_rate,
+        bits_per_raw_sample
       )
     VALUES
       (
+        ?,
+        ?,
+        ?,
         ?,
         ?,
         ?,
@@ -211,6 +218,10 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 		artistsRoles,
 
 		track.Metadata.Composer,
+
+		track.SampleRate,
+		track.BitRate,
+		track.BitsPerRawSample,
 	)
 	if err != nil {
 		logger.DatabaseLogger.Error(err)
@@ -290,7 +301,11 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
         metadata_album_artists = ?,
         metadata_artists_roles = ?,
 
-        metadata_composer = ?
+        metadata_composer = ?,
+
+        sample_rate = ?,
+        bit_rate = ?,
+        bits_per_raw_sample = ?
     WHERE
       id = ?
     RETURNING *
@@ -332,6 +347,10 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 		artistsRoles,
 
 		track.Metadata.Composer,
+
+		track.SampleRate,
+		track.BitRate,
+		track.BitsPerRawSample,
 
 		track.Id,
 	)

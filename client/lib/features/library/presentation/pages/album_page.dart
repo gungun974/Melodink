@@ -130,6 +130,7 @@ class AlbumPage extends ConsumerWidget {
                             displayAlbum: false,
                             displayLastPlayed: true,
                             displayPlayedCount: true,
+                            displayQuality: true,
                           )
                         : const SizedBox.shrink(),
                   ),
@@ -148,6 +149,7 @@ class AlbumPage extends ConsumerWidget {
                   displayAlbum: false,
                   displayLastPlayed: true,
                   displayPlayedCount: true,
+                  displayQuality: true,
                 ),
               ),
               const SliverToBoxAdapter(

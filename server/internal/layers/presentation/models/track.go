@@ -22,6 +22,10 @@ type TrackViewModel struct {
 
 	Metadata TrackMetadataViewModel `json:"metadata"`
 
+	SampleRate       int  `json:"sample_rate"`
+	BitRate          *int `json:"bit_rate"`
+	BitsPerRawSample *int `json:"bits_per_raw_sample"`
+
 	DateAdded time.Time `json:"date_added"`
 }
 
@@ -45,6 +49,10 @@ func ConvertToTrackViewModel(
 		DateAdded: track.DateAdded,
 
 		Metadata: ConvertToTrackMetadataViewModel(track.Metadata),
+
+		SampleRate:       track.SampleRate,
+		BitRate:          track.BitRate,
+		BitsPerRawSample: track.BitsPerRawSample,
 	}
 }
 
@@ -172,6 +180,12 @@ type MinimalTrackViewModel struct {
 	AlbumArtists []MinimalArtistViewModel `json:"album_artists"`
 	Composer     string                   `json:"composer"`
 
+	FileType string `json:"file_type"`
+
+	SampleRate       int  `json:"sample_rate"`
+	BitRate          *int `json:"bit_rate"`
+	BitsPerRawSample *int `json:"bits_per_raw_sample"`
+
 	DateAdded time.Time `json:"date_added"`
 }
 
@@ -208,6 +222,12 @@ func ConvertToMinimalTrackViewModel(
 
 		Artists:      ConvertToMinimalArtistsViewModel(track.Metadata.Artists),
 		AlbumArtists: ConvertToMinimalArtistsViewModel(track.Metadata.AlbumArtists),
+
+		FileType: track.FileType,
+
+		SampleRate:       track.SampleRate,
+		BitRate:          track.BitRate,
+		BitsPerRawSample: track.BitsPerRawSample,
 
 		DateAdded: track.DateAdded,
 	}

@@ -33,6 +33,7 @@ class DesktopTrack extends HookConsumerWidget {
 
   final bool displayLastPlayed;
   final bool displayPlayedCount;
+  final bool displayQuality;
 
   final void Function(MinimalTrack track) playCallback;
 
@@ -67,6 +68,7 @@ class DesktopTrack extends HookConsumerWidget {
     this.displayReorderable = false,
     this.displayLastPlayed = false,
     this.displayPlayedCount = false,
+    this.displayQuality = false,
     this.selectCallback,
     this.selected = false,
     this.selectedTracks = const [],
@@ -309,7 +311,21 @@ class DesktopTrack extends HookConsumerWidget {
                         ),
                       ),
                     ),
-                  if (displayDateAdded) const SizedBox(width: 24),
+                  if (displayDateAdded && !displayQuality)
+                    const SizedBox(width: 24),
+                  if (displayQuality)
+                    SizedBox(
+                      width: 128,
+                      child: Text(
+                        track.getQualityText(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          letterSpacing: 14 * 0.03,
+                          color: Colors.grey[350],
+                        ),
+                      ),
+                    ),
+                  if (displayQuality) const SizedBox(width: 24),
                   SizedBox(
                     width: 60,
                     child: Text(

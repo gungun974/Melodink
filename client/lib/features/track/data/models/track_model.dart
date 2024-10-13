@@ -14,6 +14,10 @@ class TrackModel {
 
   final TrackMetadataModel metadata;
 
+  final int sampleRate;
+  final int? bitRate;
+  final int? bitsPerRawSample;
+
   final DateTime dateAdded;
 
   const TrackModel({
@@ -24,6 +28,9 @@ class TrackModel {
     required this.fileType,
     required this.fileSignature,
     required this.metadata,
+    required this.sampleRate,
+    required this.bitRate,
+    required this.bitsPerRawSample,
     required this.dateAdded,
   });
 
@@ -36,6 +43,9 @@ class TrackModel {
       fileType: fileType,
       fileSignature: fileSignature,
       metadata: metadata.toTrackMetadata(),
+      sampleRate: sampleRate,
+      bitRate: bitRate,
+      bitsPerRawSample: bitsPerRawSample,
       dateAdded: dateAdded,
     );
   }
@@ -49,6 +59,12 @@ class TrackModel {
       fileType: json['file_type'],
       fileSignature: json['file_signature'],
       metadata: TrackMetadataModel.fromJson(json['metadata']),
+      sampleRate: (json['sample_rate'] as num).toInt(),
+      bitRate:
+          json['bit_rate'] != null ? (json['bit_rate'] as num).toInt() : null,
+      bitsPerRawSample: json['bits_per_raw_sample'] != null
+          ? (json['bits_per_raw_sample'] as num).toInt()
+          : null,
       dateAdded: DateTime.parse(json['date_added']),
     );
   }

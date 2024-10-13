@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/helpers/double_to_string_without_zero.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 
 class MinimalTrack extends Equatable {
@@ -23,6 +24,12 @@ class MinimalTrack extends Equatable {
   final List<MinimalArtist> albumArtists;
   final String composer;
 
+  final String fileType;
+
+  final int sampleRate;
+  final int? bitRate;
+  final int? bitsPerRawSample;
+
   final DateTime dateAdded;
 
   const MinimalTrack({
@@ -39,6 +46,10 @@ class MinimalTrack extends Equatable {
     required this.artists,
     required this.albumArtists,
     required this.composer,
+    required this.fileType,
+    required this.sampleRate,
+    required this.bitRate,
+    required this.bitsPerRawSample,
     required this.dateAdded,
   });
 
@@ -56,6 +67,10 @@ class MinimalTrack extends Equatable {
     List<MinimalArtist>? artists,
     List<MinimalArtist>? albumArtists,
     String? composer,
+    String? fileType,
+    int? sampleRate,
+    int? bitRate,
+    int? bitsPerRawSample,
     DateTime? dateAdded,
   }) {
     return MinimalTrack(
@@ -72,6 +87,10 @@ class MinimalTrack extends Equatable {
       artists: artists ?? this.artists,
       albumArtists: albumArtists ?? this.albumArtists,
       composer: composer ?? this.composer,
+      fileType: fileType ?? this.fileType,
+      sampleRate: sampleRate ?? this.sampleRate,
+      bitRate: bitRate ?? this.bitRate,
+      bitsPerRawSample: bitsPerRawSample ?? this.bitsPerRawSample,
       dateAdded: dateAdded ?? this.dateAdded,
     );
   }
@@ -91,6 +110,10 @@ class MinimalTrack extends Equatable {
         artists,
         albumArtists,
         composer,
+        fileType,
+        sampleRate,
+        bitRate,
+        bitsPerRawSample,
         dateAdded,
       ];
 
@@ -121,5 +144,17 @@ class MinimalTrack extends Equatable {
       return uri;
     }
     return Uri.parse("file://$url");
+  }
+
+  String getQualityText() {
+    if (bitsPerRawSample != null) {
+      return "$bitsPerRawSample-Bit ${doubleToStringWithoutZero(sampleRate / 1000)}KHz $fileType";
+    }
+
+    if (bitRate != null) {
+      return "${doubleToStringWithoutZero(bitRate! / 1000)} kbps $fileType";
+    }
+
+    return "Unknown $fileType";
   }
 }

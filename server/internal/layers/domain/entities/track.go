@@ -25,6 +25,10 @@ type Track struct {
 
 	Metadata TrackMetadata
 
+	SampleRate       int
+	BitRate          *int
+	BitsPerRawSample *int
+
 	DateAdded time.Time
 }
 

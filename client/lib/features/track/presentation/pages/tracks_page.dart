@@ -155,6 +155,7 @@ class TracksPage extends HookConsumerWidget {
                                   displayDateAdded: true,
                                   displayLastPlayed: true,
                                   displayPlayedCount: true,
+                                  displayQuality: true,
                                 )
                               : const SizedBox.shrink(),
                         ),
@@ -174,6 +175,7 @@ class TracksPage extends HookConsumerWidget {
                         displayDateAdded: true,
                         displayLastPlayed: true,
                         displayPlayedCount: true,
+                        displayQuality: true,
                       ),
                     ),
                     const SliverToBoxAdapter(

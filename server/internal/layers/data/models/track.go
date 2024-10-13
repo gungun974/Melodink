@@ -61,6 +61,10 @@ type TrackModel struct {
 
 	MetadataComposer string `db:"metadata_composer"`
 
+	SampleRate       int  `db:"sample_rate"`
+	BitRate          *int `db:"bit_rate"`
+	BitsPerRawSample *int `db:"bits_per_raw_sample"`
+
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt *time.Time `db:"updated_at"`
 }
@@ -135,6 +139,10 @@ func (m *TrackModel) ToTrack() entities.Track {
 
 			Composer: m.MetadataComposer,
 		},
+
+		SampleRate:       m.SampleRate,
+		BitRate:          m.BitRate,
+		BitsPerRawSample: m.BitsPerRawSample,
 	}
 }
 

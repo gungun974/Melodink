@@ -10,7 +10,9 @@ import (
 	"github.com/dhowden/tag"
 	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
+	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/gungun974/Melodink/server/pkgs/audiolength"
+	"github.com/gungun974/Melodink/server/pkgs/audioquality"
 )
 
 func makeFileSignature(path string) (string, error) {
@@ -48,6 +50,11 @@ func scanAudio(path string) (entities.Track, error) {
 	}
 
 	duration, _ := audiolength.GetAudioDuration(path)
+
+	quality, err := audioquality.GetAudioQuality(path)
+	if err != nil {
+		logger.MainLogger.Warn(err)
+	}
 
 	tn, tt := metadata.Track()
 	dn, td := metadata.Disc()
@@ -154,5 +161,9 @@ func scanAudio(path string) (entities.Track, error) {
 			AlbumArtists: albumArtists,
 			Composer:     metadata.Composer(),
 		},
+
+		SampleRate:       quality.SampleRate,
+		BitRate:          quality.BitRate,
+		BitsPerRawSample: quality.BitsPerRawSample,
 	}, nil
 }
