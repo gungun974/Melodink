@@ -4,6 +4,8 @@ go 1.22.5
 
 replace git.sr.ht/~gungun974/go-musicbrainzws2 => go.uploadedlobster.com/musicbrainzws2 v0.9.1
 
+replace gungun974/tag/tree/master => github.com/dhowden/tag v0.0.0-20240417053706-3d75831295e8
+
 require (
 	github.com/alfg/mp4 v0.0.0-20210728035756-55ea58c08aeb
 	github.com/dhowden/tag v0.0.0-20240417053706-3d75831295e8
@@ -26,6 +28,7 @@ require (
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	go.uploadedlobster.com/musicbrainzws2 v0.9.1
 	golang.org/x/crypto v0.25.0
+	gopkg.in/vansante/go-ffprobe.v2 v2.2.0
 )
 
 require (
@@ -42,5 +45,4 @@ require (
 	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
-	gopkg.in/vansante/go-ffprobe.v2 v2.2.0 // indirect
 )
