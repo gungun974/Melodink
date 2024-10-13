@@ -27,7 +27,7 @@ class ShowTrackModal extends ConsumerWidget {
       return const AppPageLoader();
     }
 
-    final DateFormat formatter = DateFormat('yyyy-MM-dd hh:mm');
+    final DateFormat formatter = DateFormat('yyyy-MM-dd HH:mm');
 
     return AppModal(
       title: Text(track.title),

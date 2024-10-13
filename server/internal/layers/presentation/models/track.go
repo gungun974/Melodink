@@ -26,7 +26,7 @@ type TrackViewModel struct {
 	BitRate          *int `json:"bit_rate"`
 	BitsPerRawSample *int `json:"bits_per_raw_sample"`
 
-	DateAdded time.Time `json:"date_added"`
+	DateAdded string `json:"date_added"`
 }
 
 func ConvertToTrackViewModel(
@@ -46,7 +46,7 @@ func ConvertToTrackViewModel(
 		Path:          track.Path,
 		FileSignature: track.FileSignature,
 
-		DateAdded: track.DateAdded,
+		DateAdded: track.DateAdded.UTC().Format(time.RFC3339),
 
 		Metadata: ConvertToTrackMetadataViewModel(track.Metadata),
 
@@ -186,7 +186,7 @@ type MinimalTrackViewModel struct {
 	BitRate          *int `json:"bit_rate"`
 	BitsPerRawSample *int `json:"bits_per_raw_sample"`
 
-	DateAdded time.Time `json:"date_added"`
+	DateAdded string `json:"date_added"`
 }
 
 func ConvertToMinimalTrackViewModel(
@@ -229,6 +229,6 @@ func ConvertToMinimalTrackViewModel(
 		BitRate:          track.BitRate,
 		BitsPerRawSample: track.BitsPerRawSample,
 
-		DateAdded: track.DateAdded,
+		DateAdded: track.DateAdded.UTC().Format(time.RFC3339),
 	}
 }

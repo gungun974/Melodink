@@ -144,7 +144,7 @@ class MinimalTrackModel {
       bitsPerRawSample: json['bits_per_raw_sample'] != null
           ? (json['bits_per_raw_sample'] as num).toInt()
           : null,
-      dateAdded: DateTime.parse(json['date_added']),
+      dateAdded: DateTime.parse(json['date_added']).toLocal(),
     );
   }
 
