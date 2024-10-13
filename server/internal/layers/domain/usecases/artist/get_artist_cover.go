@@ -1,16 +1,14 @@
 package artist_usecase
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"os"
 
-	"github.com/dhowden/tag"
 	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/models"
+	"github.com/gungun974/Melodink/server/pkgs/audioimage"
 )
 
 func (u *ArtistUsecase) GetArtistCover(
@@ -38,70 +36,31 @@ func (u *ArtistUsecase) GetArtistCover(
 	}
 
 	for _, track := range artist.AllTracks {
-		file, err := os.Open(track.Path)
-		if err != nil {
-			return nil, entities.NewInternalError(err)
-		}
-
-		defer file.Close()
-
-		metadata, err := tag.ReadFrom(file)
-		if err != nil {
-			return nil, entities.NewInternalError(err)
-		}
-
-		picture := metadata.Picture()
-
-		if picture != nil {
+		image, err := audioimage.GetAudioImage(track.Path)
+		if err == nil {
 			return &models.ImageAPIResponse{
-				MIMEType: picture.MIMEType,
-				Data:     *bytes.NewBuffer(picture.Data),
+				MIMEType: image.MIMEType,
+				Data:     image.Data,
 			}, nil
 		}
 	}
 
 	for _, track := range artist.AllAppearTracks {
-		file, err := os.Open(track.Path)
-		if err != nil {
-			return nil, entities.NewInternalError(err)
-		}
-
-		defer file.Close()
-
-		metadata, err := tag.ReadFrom(file)
-		if err != nil {
-			return nil, entities.NewInternalError(err)
-		}
-
-		picture := metadata.Picture()
-
-		if picture != nil {
+		image, err := audioimage.GetAudioImage(track.Path)
+		if err == nil {
 			return &models.ImageAPIResponse{
-				MIMEType: picture.MIMEType,
-				Data:     *bytes.NewBuffer(picture.Data),
+				MIMEType: image.MIMEType,
+				Data:     image.Data,
 			}, nil
 		}
 	}
 
 	for _, track := range artist.AllHasRoleTracks {
-		file, err := os.Open(track.Path)
-		if err != nil {
-			return nil, entities.NewInternalError(err)
-		}
-
-		defer file.Close()
-
-		metadata, err := tag.ReadFrom(file)
-		if err != nil {
-			return nil, entities.NewInternalError(err)
-		}
-
-		picture := metadata.Picture()
-
-		if picture != nil {
+		image, err := audioimage.GetAudioImage(track.Path)
+		if err == nil {
 			return &models.ImageAPIResponse{
-				MIMEType: picture.MIMEType,
-				Data:     *bytes.NewBuffer(picture.Data),
+				MIMEType: image.MIMEType,
+				Data:     image.Data,
 			}, nil
 		}
 	}
