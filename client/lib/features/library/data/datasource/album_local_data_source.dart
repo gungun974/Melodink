@@ -5,12 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
+import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/library/data/models/artist_model.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/track/data/models/minimal_track_model.dart';
-import 'package:path_provider/path_provider.dart';
 
 class AlbumLocalDataSource {
   static Album decodeDownloadTrack(
@@ -42,7 +42,7 @@ class AlbumLocalDataSource {
     final db = await DatabaseService.getDatabase();
 
     final applicationSupportDirectory =
-        (await getApplicationSupportDirectory()).path;
+        (await getMelodinkInstanceSupportDirectory()).path;
 
     try {
       final data = await db.rawQuery("SELECT * FROM album_download");
@@ -61,7 +61,7 @@ class AlbumLocalDataSource {
     final db = await DatabaseService.getDatabase();
 
     final applicationSupportDirectory =
-        (await getApplicationSupportDirectory()).path;
+        (await getMelodinkInstanceSupportDirectory()).path;
 
     try {
       final data = await db
@@ -87,7 +87,7 @@ class AlbumLocalDataSource {
       final savedAlbum = await getAlbumById(album.id);
 
       final applicationSupportDirectory =
-          (await getApplicationSupportDirectory()).path;
+          (await getMelodinkInstanceSupportDirectory()).path;
 
       final downloadPath = "/download-album/${album.id}";
       String? downloadImagePath = "$downloadPath-image";

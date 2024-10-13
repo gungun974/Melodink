@@ -7,11 +7,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/helpers/app_path_provider.dart';
 
 import 'dart:async';
 import 'dart:ui' as ui;
-
-import 'package:path_provider/path_provider.dart';
 
 String createUrlHash(String url) {
   final bytes = utf8.encode(url);
@@ -79,7 +78,7 @@ class AppImageCacheProvider extends ImageProvider<AppImageCacheProvider> {
       assert(key == this);
 
       final cacheLocation = File(
-        "${(await getTemporaryDirectory()).path}/imacheCache/$cacheId",
+        "${(await getMelodinkInstanceCacheDirectory()).path}/imacheCache/$cacheId",
       );
 
       if (await cacheLocation.exists()) {

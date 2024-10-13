@@ -33,6 +33,10 @@ class AuthRepository {
 
       await AppApi().setServerUrl("$serverUrl/");
 
+      final uuidResponse = await AppApi().dio.get("/uuid");
+
+      await AppApi().setServerUUID(uuidResponse.data);
+
       return serverUrl;
     } on DioException catch (e) {
       if (e.response == null) {

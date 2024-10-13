@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:melodink_client/core/database/database.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -63,6 +64,18 @@ class AppApi {
 
   String getServerUrl() {
     return dio.options.baseUrl;
+  }
+
+  Future<void> setServerUUID(String uuid) async {
+    await asyncPrefs.setString("serverUUID", uuid);
+    try {
+      await DatabaseService.disconnectDatabase();
+      await DatabaseService.getDatabase();
+    } catch (_) {}
+  }
+
+  Future<String?> getServerUUID() {
+    return asyncPrefs.getString("serverUUID");
   }
 
   Future<List<Cookie>> getCookies() async {

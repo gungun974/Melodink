@@ -35,7 +35,9 @@ void main() async {
     windowManager.waitUntilReadyToShow(windowOptions);
   }
 
-  await DatabaseService.getDatabase();
+  try {
+    await DatabaseService.getDatabase();
+  } catch (_) {}
 
   await AppApi().setupCookieJar();
 

@@ -6,11 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
+import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/track/data/models/minimal_track_model.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
-import 'package:path_provider/path_provider.dart';
 
 class DownloadTrackRepository {
   static DownloadTrack decodeDownloadTrack(
@@ -42,7 +42,7 @@ class DownloadTrackRepository {
       }
 
       final applicationSupportDirectory =
-          (await getApplicationSupportDirectory()).path;
+          (await getMelodinkInstanceSupportDirectory()).path;
 
       final downloadTrack =
           decodeDownloadTrack(rawDownloadTrack, applicationSupportDirectory);
@@ -82,7 +82,7 @@ class DownloadTrackRepository {
       }
 
       final applicationSupportDirectory =
-          (await getApplicationSupportDirectory()).path;
+          (await getMelodinkInstanceSupportDirectory()).path;
 
       final downloadPath = "/download/$trackId";
       final downloadAudioPath = "$downloadPath-audio";
@@ -145,7 +145,7 @@ class DownloadTrackRepository {
     final db = await DatabaseService.getDatabase();
 
     final applicationSupportDirectory =
-        (await getApplicationSupportDirectory()).path;
+        (await getMelodinkInstanceSupportDirectory()).path;
 
     try {
       final albumTracksData =

@@ -157,5 +157,8 @@ func handleNotLogged(
 
 func isAuthProtectedRoute(path string) bool {
 	return !strings.HasPrefix(path, "/login") && !strings.HasPrefix(path, "/register") &&
-		!strings.HasPrefix(path, "/check") && !strings.HasPrefix(path, "/health")
+		!strings.HasPrefix(
+			path,
+			"/check",
+		) && !strings.HasPrefix(path, "/health") && !strings.HasPrefix(path, "/uuid")
 }

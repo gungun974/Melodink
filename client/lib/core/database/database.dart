@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseMigrationFile {
@@ -26,9 +26,16 @@ class DatabaseService {
     final String databasePath;
 
     if (!kIsWeb) {
-      final appDir = await getApplicationSupportDirectory();
+      try {
+        final appDir = await getMelodinkInstanceSupportDirectory();
 
-      databasePath = join(appDir.path, "databases", "melodink.db");
+        databasePath = join(appDir.path, "databases", "melodink.db");
+      } catch (_) {
+        databaseLogger
+            .w("Database can't be open when no instance is available");
+
+        rethrow;
+      }
     } else {
       databasePath = "melodink-web.db";
     }
@@ -61,6 +68,17 @@ class DatabaseService {
     _database = database;
 
     return database;
+  }
+
+  static disconnectDatabase() async {
+    if (_database == null) {
+      return;
+    }
+
+    await _database!.close();
+    _database = null;
+
+    databaseLogger.i("📀 Database connection have been close");
   }
 
   static Future<List<DatabaseMigrationFile>> _getUpMigrationsFiles() async {

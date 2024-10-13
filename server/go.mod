@@ -13,6 +13,7 @@ require (
 	github.com/go-resty/resty/v2 v2.15.3
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.17.1
+	github.com/google/uuid v1.6.0
 	github.com/gungun974/validator v0.0.0-20240603034929-08715340e062
 	github.com/jfreymuth/oggvorbis v1.0.5
 	github.com/jmoiron/sqlx v1.4.0
@@ -28,7 +29,6 @@ require (
 )
 
 require (
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/icza/bitio v1.1.0 // indirect

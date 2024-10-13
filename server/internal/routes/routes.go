@@ -43,6 +43,12 @@ func MainRouter(container internal.Container) http.Handler {
 		_, _ = w.Write([]byte("IamAMelodinkCompatibleServer"))
 	})
 
+	router.Get("/uuid", func(w http.ResponseWriter, r *http.Request) {
+		response := container.ConfigController.GetServerUUID(r.Context())
+
+		response.WriteResponse(w, r)
+	})
+
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {})
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
