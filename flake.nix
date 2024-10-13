@@ -54,7 +54,7 @@
           name = "melodink-server";
           src = gitignore.lib.gitignoreSource ./.;
           subPackages = ["cmd/api"];
-          vendorHash = "sha256-gU+wlvrLv1AKjqPiyU//skNA16XXKAmvWb3chrNUnEU=";
+          vendorHash = "sha256-GVANBY/oYPJPF0a4jrGj2BpI7GEEa/9DK9MvZG6toxI=";
           CGO_ENABLED = 1;
 
           buildInputs = with pkgs; [
