@@ -49,10 +49,12 @@ void main() async {
     ..maximumSize = 10000
     ..maximumSizeBytes = 750 * 1024 * 1024; // 750 MB
 
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.manual,
-    overlays: [SystemUiOverlay.top],
-  );
+  if (!kIsWeb && Platform.isIOS) {
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: [SystemUiOverlay.top],
+    );
+  }
 
   runApp(const ProviderScope(
     child: MyApp(),
