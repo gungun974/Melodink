@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/gungun974/Melodink/server/internal/logger"
 
@@ -34,7 +34,7 @@ func getMigrateInstance(db *sqlx.DB) *migrate.Migrate {
 		logger.DatabaseLogger.Fatalf("Unable to open migrations embedded directory: %v", err)
 	}
 
-	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
+	driver, err := sqlite3.WithInstance(db.DB, &sqlite3.Config{})
 	if err != nil {
 		logger.DatabaseLogger.Fatalf("Unable to get migrate instance: %v", err)
 	}
@@ -42,7 +42,7 @@ func getMigrateInstance(db *sqlx.DB) *migrate.Migrate {
 	m, err := migrate.NewWithInstance(
 		"iofs",
 		d,
-		"postgres",
+		"sqlite3",
 		driver,
 	)
 	if err != nil {

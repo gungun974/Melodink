@@ -33,7 +33,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/icza/bitio v1.1.0 // indirect
 	github.com/jfreymuth/vorbis v1.0.2 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/mewkiz/pkg v0.0.0-20230226050401-4010bf0fec14 // indirect
 	github.com/nyaruka/phonenumbers v1.3.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect

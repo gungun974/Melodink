@@ -23,6 +23,8 @@ func main() {
 
 	db := database.Connect()
 
+	database.MigrateUp(db)
+
 	container := internal.NewContainer(db)
 
 	container.ConfigController.SetupDefaultKeys(context.Background())

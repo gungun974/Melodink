@@ -49,18 +49,20 @@
         ]);
       pinnedJDK = pkgs.jdk17;
     in {
-      packages = {
+      packages = rec {
         melodink-server = pkgs.buildGo122Module rec {
           name = "melodink-server";
           src = gitignore.lib.gitignoreSource ./.;
           subPackages = ["cmd/api"];
-          vendorHash = "sha256-GVANBY/oYPJPF0a4jrGj2BpI7GEEa/9DK9MvZG6toxI=";
+          vendorHash = "sha256-2V5ACIHsGSTkxryZrTZ591m5Xouyej9NioFjROVnou0=";
           CGO_ENABLED = 1;
 
           buildInputs = with pkgs; [
             pkg-config
             gcc
-            glibc.static
+
+            chromaprint
+            fftw
           ];
 
           nativeBuildInputs = buildInputs;
@@ -71,7 +73,6 @@
           ldflags = [
             "-s"
             "-w"
-            "-extldflags -static"
           ];
           preBuild = ''
             cd server
@@ -83,6 +84,21 @@
             mkdir -p public
             cp -r ./public/ $out/bin/
             mv $out/bin/api $out/bin/melodink_server
+          '';
+        };
+
+        melodink-server-docker = pkgs.dockerTools.buildLayeredImage {
+          name = "melodink-server";
+          contents = [
+            melodink-server
+            pkgs.cacert
+
+            pkgs.ffmpeg-full
+          ];
+          config.Cmd = ["${melodink-server}/bin/melodink_server"];
+
+          fakeRootCommands = ''
+            mkdir -p data
           '';
         };
 
