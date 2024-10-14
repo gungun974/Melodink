@@ -222,6 +222,37 @@ Future<List<MinimalTrack>> allFilteredAlbumsTracks(
   return tracks;
 }
 
+@riverpod
+Future<List<MinimalTrack>> allSortedTracks(
+  AllSortedTracksRef ref,
+) async {
+  final allFilteredTracks =
+      await ref.watch(allFilteredAlbumsTracksProvider.future);
+
+  final tracks = [...allFilteredTracks];
+
+  tracks.sort((a, b) {
+    int dateCompare = b.dateAdded.compareTo(a.dateAdded);
+    if (dateCompare != 0) {
+      return dateCompare;
+    }
+
+    int discCompare = a.discNumber.compareTo(b.discNumber);
+    if (discCompare != 0) {
+      return discCompare;
+    }
+
+    int trackCompare = a.trackNumber.compareTo(b.trackNumber);
+    if (trackCompare != 0) {
+      return trackCompare;
+    }
+
+    return a.title.compareTo(b.title);
+  });
+
+  return tracks;
+}
+
 @Riverpod()
 Future<DownloadTrack?> isTrackDownloaded(
   IsTrackDownloadedRef ref,

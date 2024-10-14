@@ -20,7 +20,7 @@ class TracksPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncTracks = ref.watch(allFilteredAlbumsTracksProvider);
+    final asyncTracks = ref.watch(allSortedTracksProvider);
 
     final tracks = asyncTracks.valueOrNull;
 
