@@ -88,14 +88,17 @@ class MobilePlaylistHeader extends ConsumerWidget {
                   ),
                   children: [
                     ...getArtistsLinksTextSpans(
-                        context,
-                        artists,
-                        const TextStyle(
-                          fontSize: 14,
-                          letterSpacing: 14 * 0.03,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        false),
+                      context,
+                      artists,
+                      const TextStyle(
+                        fontSize: 14,
+                        letterSpacing: 14 * 0.03,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      false,
+                      null,
+                      TextOverflow.ellipsis,
+                    ),
                     TextSpan(
                       text: [
                         if (artists.isNotEmpty) "",

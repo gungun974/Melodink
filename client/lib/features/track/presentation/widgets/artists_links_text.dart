@@ -35,6 +35,8 @@ class ArtistsLinksText extends StatelessWidget {
       artists,
       style,
       noInteraction,
+      maxLines,
+      overflow,
     );
 
     final text = RichText(
@@ -72,6 +74,8 @@ List<InlineSpan> getArtistsLinksTextSpans(
   List<MinimalArtist> artists,
   TextStyle style,
   bool noInteraction,
+  int? maxLines,
+  TextOverflow? overflow,
 ) {
   final List<InlineSpan> texts = [];
 
@@ -107,6 +111,8 @@ List<InlineSpan> getArtistsLinksTextSpans(
             child: HoverableText(
               text: artist.name,
               style: style,
+              maxLines: maxLines,
+              overflow: overflow,
               hoverStyle: noInteraction
                   ? null
                   : style.copyWith(
