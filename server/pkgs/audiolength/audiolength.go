@@ -1,60 +1,41 @@
 package audiolength
 
 import (
+	"context"
 	"errors"
-	"os"
-	"path/filepath"
+	"strconv"
 	"time"
 
-	"github.com/dhowden/tag"
-	"github.com/gungun974/Melodink/server/internal/logger"
+	"gopkg.in/vansante/go-ffprobe.v2"
 )
 
-var ErrUnsupportedAudioFormat = errors.New("Unsupported Audio Format")
+var ErrAudioStreamNotFound = errors.New("Audio stream was not found")
+
+var ErrCantGetAudioStreamDuration = errors.New(
+	"Failed to get the Duration of the first audio stream",
+)
 
 func GetAudioDuration(path string) (int, error) {
-	file, err := os.Open(path)
+	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelFn()
+
+	data, err := ffprobe.ProbeURL(ctx, path)
 	if err != nil {
 		return 0, err
 	}
-	defer file.Close()
 
-	metadata, err := tag.ReadFrom(file)
-	if err != nil {
-		return 0, err
-	}
-
-	fileType := metadata.FileType()
-
-	duration := time.Duration(0)
-
-	if filepath.Ext(path) == ".m4a" {
-		fileType = tag.M4A
-	}
-
-	switch fileType {
-	case tag.MP3:
-		duration, err = getMp3Duration(path)
-	case tag.OGG:
-		duration, err = getOggVorbisDuration(path)
-		if err != nil {
-			duration, err = getOggOpusDuration(path)
+	for _, stream := range data.Streams {
+		if stream.CodecType != "audio" {
+			continue
 		}
-	case tag.M4A:
-		duration, err = getM4aDuration(path)
-	case tag.FLAC:
-		duration, err = getFlacDuration(path)
-	default:
-		logger.MainLogger.Warnf(
-			"An unsupported audio format have been pass to audiolength : %s",
-			fileType,
-		)
-		return 0, ErrUnsupportedAudioFormat
+
+		durationS, err := strconv.ParseFloat(stream.Duration, 64)
+		if err != nil {
+			return 0, ErrCantGetAudioStreamDuration
+		}
+
+		return int(durationS * 1000), nil
 	}
 
-	if err != nil {
-		return 0, err
-	}
-
-	return int(duration.Milliseconds()), nil
+	return 0, ErrAudioStreamNotFound
 }
