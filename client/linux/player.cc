@@ -49,6 +49,7 @@ private:
   std::thread event_thread;
   std::atomic<bool> stop_event_thread;
   std::atomic<bool> dont_send_audio_changed;
+  std::atomic<bool> is_buffering_state_change_allowed;
 
   PigeonMelodinkMelodinkHostPlayerApiInfo *flutter_api;
 
@@ -124,6 +125,19 @@ private:
           }
         }
 
+        if (strcmp(prop->name, "core-idle") == 0) {
+          int buffering = *(int *)prop->data;
+          if (buffering && is_buffering_state_change_allowed.load()) {
+            set_player_state(
+                PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_BUFFERING);
+          } else {
+            set_player_state(
+                PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_READY);
+          }
+
+          is_buffering_state_change_allowed.store(true);
+        }
+
         if (strcmp(prop->name, "eof-reached") == 0) {
           int eof = has_eof_reached();
           if (eof) {
@@ -170,6 +184,7 @@ public:
     mpv_observe_property(mpv, 0, "playlist-playing-pos", MPV_FORMAT_INT64);
     mpv_observe_property(mpv, 0, "pause", MPV_FORMAT_FLAG);
     mpv_observe_property(mpv, 0, "idle-active", MPV_FORMAT_FLAG);
+    mpv_observe_property(mpv, 0, "core-idle", MPV_FORMAT_FLAG);
     mpv_observe_property(mpv, 0, "eof-reached", MPV_FORMAT_FLAG);
 
     event_thread = std::thread(&AudioPlayer::event_loop, this);
@@ -190,6 +205,7 @@ public:
   }
 
   void pause() {
+    is_buffering_state_change_allowed.store(false);
     const char *cmd[] = {"set", "pause", "yes", NULL};
     mpv_command(mpv, cmd);
   }

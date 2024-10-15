@@ -106,6 +106,8 @@ class AudioPlayer {
 
     private var dontSendAudioChanged = false
 
+    private var isBufferingStateChangeAllowed = false
+
     func eventLoop() {
         while !stopEventThread {
             let event = mpv_wait_event(mpv, -1)
@@ -186,6 +188,21 @@ class AudioPlayer {
                         continue
                     }
 
+                    if propertyName == "core-idle" {
+                        let buffering = Int(
+                            property.data.assumingMemoryBound(to: Int64.self)
+                                .pointee)
+
+                        if buffering != 0 && isBufferingStateChangeAllowed {
+                            setPlayerState(.buffering)
+                        } else {
+                            setPlayerState(.ready)
+                        }
+
+                        isBufferingStateChangeAllowed = true
+                        continue
+                    }
+
                     if propertyName == "eof-reached" {
                         let eof = hasEofReached()
 
@@ -233,6 +250,7 @@ class AudioPlayer {
         mpv_observe_property(mpv, 0, "playlist-playing-pos", MPV_FORMAT_INT64)
         mpv_observe_property(mpv, 0, "pause", MPV_FORMAT_FLAG)
         mpv_observe_property(mpv, 0, "idle-active", MPV_FORMAT_FLAG)
+        mpv_observe_property(mpv, 0, "core-idle", MPV_FORMAT_FLAG)
         mpv_observe_property(mpv, 0, "eof-reached", MPV_FORMAT_FLAG)
 
         eventLoopThread = Thread {
@@ -257,6 +275,7 @@ class AudioPlayer {
     }
 
     func pause() {
+        isBufferingStateChangeAllowed = false
         command("set", args: ["pause", "yes"])
     }
 
