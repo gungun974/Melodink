@@ -74,6 +74,11 @@ private:
         break;
       }
 
+      if (event->event_id == MPV_EVENT_START_FILE) {
+        set_player_state(
+            PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_BUFFERING);
+      }
+
       if (event->event_id == MPV_EVENT_PLAYBACK_RESTART) {
         set_player_state(
             PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_READY);
@@ -81,7 +86,7 @@ private:
 
       if (event->event_id == MPV_EVENT_SEEK) {
         set_player_state(
-            PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_READY);
+            PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_BUFFERING);
       }
 
       if (event->event_id == MPV_EVENT_PROPERTY_CHANGE) {
@@ -109,9 +114,6 @@ private:
           if (paused) {
             continue;
           }
-
-          set_player_state(
-              PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_READY);
         }
 
         if (strcmp(prop->name, "idle-active") == 0) {
@@ -240,9 +242,6 @@ public:
                   std::vector<const char *> next_urls) {
     char result[255];
 
-    set_player_state(
-        PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_IDLE);
-
     dont_send_audio_changed.store(true);
 
     //!
@@ -368,9 +367,6 @@ public:
       const char *cmd[] = {"playlist-remove", cstr, NULL};
       mpv_command(mpv, cmd);
     }
-
-    set_player_state(
-        PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_READY);
 
     dont_send_audio_changed.store(false);
   }

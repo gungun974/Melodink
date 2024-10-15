@@ -536,10 +536,7 @@ class AudioController extends BaseAudioHandler
       playing: status.state == MelodinkHostPlayerProcessingState.idle
           ? false
           : status.playing,
-      updatePosition: status.state == MelodinkHostPlayerProcessingState.idle
-          ? currentTrack.valueOrNull?.duration ??
-              Duration(milliseconds: status.positionMs)
-          : Duration(milliseconds: status.positionMs),
+      updatePosition: Duration(milliseconds: status.positionMs),
       bufferedPosition: Duration(milliseconds: status.bufferedPositionMs),
       speed: 1.0,
       repeatMode: const {
@@ -578,6 +575,20 @@ class AudioController extends BaseAudioHandler
             },
           )
         : null);
+
+    // Fix tiny wrong start delay
+    Future.delayed(const Duration(milliseconds: 200)).then(
+      (_) => _updateTinyCurrentPosition(),
+    );
+  }
+
+  Future<void> _updateTinyCurrentPosition() async {
+    final status = await api.fetchStatus();
+
+    playbackState.add(playbackState.value.copyWith(
+      updatePosition: Duration(milliseconds: status.positionMs),
+      bufferedPosition: Duration(milliseconds: status.bufferedPositionMs),
+    ));
   }
 
   final BehaviorSubject<List<MinimalTrack>> previousTracks =

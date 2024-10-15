@@ -119,13 +119,18 @@ class AudioPlayer {
                 break
             }
 
+            if event!.pointee.event_id == MPV_EVENT_START_FILE {
+                setPlayerState(.buffering)
+                continue
+            }
+
             if event!.pointee.event_id == MPV_EVENT_PLAYBACK_RESTART {
                 setPlayerState(.ready)
                 continue
             }
 
             if event!.pointee.event_id == MPV_EVENT_SEEK {
-                setPlayerState(.ready)
+                setPlayerState(.buffering)
                 continue
             }
 
@@ -167,7 +172,6 @@ class AudioPlayer {
                             continue
                         }
 
-                        setPlayerState(.ready)
                         continue
                     }
 
@@ -284,8 +288,6 @@ class AudioPlayer {
 
     func setAudios(previousUrls: [String], nextUrls: [String]) {
 
-        setPlayerState(.idle)
-
         dontSendAudioChanged = true
 
         //!
@@ -391,8 +393,6 @@ class AudioPlayer {
 
             command("playlist-remove", args: [str])
         }
-
-        setPlayerState(.ready)
 
         dontSendAudioChanged = false
     }
