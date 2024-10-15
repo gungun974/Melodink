@@ -54,6 +54,24 @@ class MobilePlayerPage extends ConsumerWidget {
                     StreamBuilder(
                       stream: audioController.currentTrack.stream,
                       builder: (context, snapshot) {
+                        audioController.previousTracks.valueOrNull
+                            ?.take(5)
+                            .forEach(
+                          (track) {
+                            precacheImage(
+                                AppImageCacheProvider(track.getCoverUri()),
+                                context);
+                          },
+                        );
+
+                        audioController.nextTracks.valueOrNull?.take(5).forEach(
+                          (track) {
+                            precacheImage(
+                                AppImageCacheProvider(track.getCoverUri()),
+                                context);
+                          },
+                        );
+
                         return Consumer(
                           builder: (context, ref, child) {
                             String title = "";
