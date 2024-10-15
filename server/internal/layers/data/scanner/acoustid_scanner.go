@@ -26,6 +26,8 @@ import (
 
 const ACOUSTID_CLIENT_ID = "YpyZARNugs"
 
+var acoustIdMainMutex = sync.Mutex{}
+
 func NewAcoustIdScanner() AcoustIdScanner {
 	client := resty.New()
 
@@ -40,13 +42,11 @@ func NewAcoustIdScanner() AcoustIdScanner {
 
 	return AcoustIdScanner{
 		client: client,
-		mutex:  sync.Mutex{},
 	}
 }
 
 type AcoustIdScanner struct {
 	client *resty.Client
-	mutex  sync.Mutex
 }
 
 type AcoustIdRelease struct {
@@ -152,7 +152,7 @@ func (s *AcoustIdScanner) ScanAcoustId(path string) (AcoustIdResponse, error) {
 		return AcoustIdResponse{}, err
 	}
 
-	s.mutex.Lock()
+	acoustIdMainMutex.Lock()
 
 	logger.ScannerLogger.Infof("Perform an acoustid lookup for %s", path)
 
@@ -163,13 +163,13 @@ func (s *AcoustIdScanner) ScanAcoustId(path string) (AcoustIdResponse, error) {
 		Post("https://api.acoustid.org/v2/lookup")
 	if err != nil {
 		time.Sleep(time.Millisecond * 1100)
-		s.mutex.Unlock()
+		acoustIdMainMutex.Unlock()
 
 		return AcoustIdResponse{}, err
 	}
 
 	time.Sleep(time.Millisecond * 1100)
-	s.mutex.Unlock()
+	acoustIdMainMutex.Unlock()
 
 	if resp.StatusCode() == http.StatusNotFound {
 		return AcoustIdResponse{}, AcoustIdNotFoundError

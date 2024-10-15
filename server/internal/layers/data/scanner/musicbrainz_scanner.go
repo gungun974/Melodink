@@ -11,15 +11,13 @@ import (
 	"go.uploadedlobster.com/musicbrainzws2"
 )
 
+var musicBrainzMainMutex = sync.Mutex{}
+
 func NewMusicBrainzScanner() MusicBrainzScanner {
-	return MusicBrainzScanner{
-		mutex: sync.Mutex{},
-	}
+	return MusicBrainzScanner{}
 }
 
-type MusicBrainzScanner struct {
-	mutex sync.Mutex
-}
+type MusicBrainzScanner struct{}
 
 type MusicBrainzScanResult struct {
 	Title string
@@ -101,7 +99,7 @@ func (s *MusicBrainzScanner) FetchRecordingInfoFromRelease(
 		},
 	}
 
-	s.mutex.Lock()
+	musicBrainzMainMutex.Lock()
 
 	logger.ScannerLogger.Infof("Perform a musicbrainz lookup for release %s", releaseId)
 
@@ -114,13 +112,13 @@ func (s *MusicBrainzScanner) FetchRecordingInfoFromRelease(
 		)
 
 		time.Sleep(time.Millisecond * 1100)
-		s.mutex.Unlock()
+		musicBrainzMainMutex.Unlock()
 
 		return MusicBrainzScanResult{}, MusicBrainzReleaseNotFoundError
 	}
 
 	time.Sleep(time.Millisecond * 1100)
-	s.mutex.Unlock()
+	musicBrainzMainMutex.Unlock()
 
 	var track *musicbrainzws2.Track
 	var media musicbrainzws2.Medium
@@ -191,7 +189,7 @@ outerloop:
 		},
 	}
 
-	s.mutex.Lock()
+	musicBrainzMainMutex.Lock()
 
 	logger.ScannerLogger.Infof("Perform a musicbrainz lookup for recording %s", track.Recording.ID)
 
@@ -204,13 +202,13 @@ outerloop:
 		)
 
 		time.Sleep(time.Millisecond * 1100)
-		s.mutex.Unlock()
+		musicBrainzMainMutex.Unlock()
 
 		return MusicBrainzScanResult{}, MusicBrainzRecordingNotFoundError
 	}
 
 	time.Sleep(time.Millisecond * 1100)
-	s.mutex.Unlock()
+	musicBrainzMainMutex.Unlock()
 
 	artistsRoles := []entities.TrackArtistRole{}
 
