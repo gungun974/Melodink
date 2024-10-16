@@ -76,6 +76,8 @@ class MobilePlayerPage extends ConsumerWidget {
                           builder: (context, ref, child) {
                             String title = "";
 
+                            int? trackId;
+
                             List<MinimalArtist> artists = [];
 
                             String album = "";
@@ -89,6 +91,8 @@ class MobilePlayerPage extends ConsumerWidget {
 
                             if (currentTrack != null) {
                               title = currentTrack.title;
+
+                              trackId = currentTrack.id;
 
                               artists.addAll(currentTrack.artists);
 
@@ -149,6 +153,8 @@ class MobilePlayerPage extends ConsumerWidget {
                                                 fontSize: 16,
                                                 letterSpacing: 16 * 0.03,
                                               ),
+                                              openWithScrollOnSpecificTrackId:
+                                                  trackId,
                                             ),
                                             const SizedBox(height: 4),
                                             ArtistsLinksText(

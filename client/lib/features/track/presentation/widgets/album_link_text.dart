@@ -14,6 +14,7 @@ class AlbumLinkText extends StatelessWidget {
     this.overflow = TextOverflow.clip,
     this.withTooltip = true,
     this.noInteraction = false,
+    this.openWithScrollOnSpecificTrackId,
   });
 
   final String text;
@@ -28,6 +29,8 @@ class AlbumLinkText extends StatelessWidget {
   final bool withTooltip;
 
   final bool noInteraction;
+
+  final int? openWithScrollOnSpecificTrackId;
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +57,10 @@ class AlbumLinkText extends StatelessWidget {
                     GoRouter.of(context).pop();
                   }
 
-                  GoRouter.of(context).push("/album/$albumId");
+                  GoRouter.of(context).push("/album/$albumId", extra: {
+                    "openWithScrollOnSpecificTrackId":
+                        openWithScrollOnSpecificTrackId,
+                  });
                 },
           child: HoverableText(
             text: text,

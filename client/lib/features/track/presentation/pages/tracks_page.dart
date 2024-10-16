@@ -29,6 +29,8 @@ class TracksPage extends HookConsumerWidget {
 
     final showFilterPanel = useState(false);
 
+    final scrollController = useScrollController();
+
     if (tracks == null) {
       return AppNavigationHeader(
         title: AppScreenTypeLayoutBuilders(
@@ -133,6 +135,7 @@ class TracksPage extends HookConsumerWidget {
               ),
               Expanded(
                 child: CustomScrollView(
+                  controller: scrollController,
                   slivers: [
                     SliverContainer(
                       maxWidth: maxWidth,
@@ -176,6 +179,8 @@ class TracksPage extends HookConsumerWidget {
                         displayLastPlayed: true,
                         displayPlayedCount: true,
                         displayQuality: true,
+                        scrollController: scrollController,
+                        autoScrollToCurrentTrack: true,
                       ),
                     ),
                     const SliverToBoxAdapter(

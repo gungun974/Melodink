@@ -71,6 +71,7 @@ class DesktopCurrentTrack extends ConsumerWidget {
                       fontWeight: FontWeight.w500,
                       letterSpacing: 14 * 0.03,
                     ),
+                    openWithScrollOnSpecificTrackId: currentTrack.id,
                   ),
                   const SizedBox(height: 4),
                   ArtistsLinksText(

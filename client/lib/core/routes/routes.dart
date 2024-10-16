@@ -52,9 +52,17 @@ final List<RouteBase> appRoutesWithShell = [
         pageBuilder: (BuildContext context, GoRouterState state) {
           final id = state.pathParameters['id']!;
 
+          final extraData = state.extra as Map<String, dynamic>?;
+
+          final int? trackId =
+              extraData?['openWithScrollOnSpecificTrackId'] as int?;
+
           return NoTransitionPage(
             key: state.pageKey,
-            child: AlbumPage(albumId: id),
+            child: AlbumPage(
+              albumId: id,
+              openWithScrollOnSpecificTrackId: trackId,
+            ),
           );
         },
       ),

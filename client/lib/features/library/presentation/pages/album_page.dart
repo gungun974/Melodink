@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
@@ -10,12 +11,15 @@ import 'package:melodink_client/features/player/domain/audio/audio_controller.da
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 
-class AlbumPage extends ConsumerWidget {
+class AlbumPage extends HookConsumerWidget {
   final String albumId;
+
+  final int? openWithScrollOnSpecificTrackId;
 
   const AlbumPage({
     super.key,
     required this.albumId,
+    this.openWithScrollOnSpecificTrackId,
   });
 
   @override
@@ -27,6 +31,8 @@ class AlbumPage extends ConsumerWidget {
     final tracks = ref.watch(albumSortedTracksProvider(albumId));
 
     final album = asyncAlbum.valueOrNull;
+
+    final scrollController = useScrollController();
 
     if (album == null) {
       return AppNavigationHeader(
@@ -49,6 +55,7 @@ class AlbumPage extends ConsumerWidget {
           final separator = size == AppScreenTypeLayout.desktop ? 16.0 : 12.0;
 
           return CustomScrollView(
+            controller: scrollController,
             slivers: [
               SliverContainer(
                 maxWidth: maxWidth,
@@ -150,6 +157,8 @@ class AlbumPage extends ConsumerWidget {
                   displayLastPlayed: true,
                   displayPlayedCount: true,
                   displayQuality: true,
+                  scrollController: scrollController,
+                  scrollToTrackIdOnMounted: openWithScrollOnSpecificTrackId,
                 ),
               ),
               const SliverToBoxAdapter(
