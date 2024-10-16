@@ -134,7 +134,14 @@
 
           postFixup = ''
             rm $out/bin/melodink_client
-            makeWrapper $out/app/melodink_client $out/bin/melodink_client \
+
+            # Move Melodink App data to sub directory to prevent issue with Home manager
+            # https://github.com/nix-community/home-manager/issues/5173
+            mkdir -p $out/melodink
+            mv $out/app/* $out/melodink/
+            mv $out/melodink $out/app/melodink
+
+            makeWrapper $out/app/melodink/melodink_client $out/bin/melodink_client \
                 "''${gappsWrapperArgs[@]}" \
                 --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped pkgs.sqlite]}
           '';
