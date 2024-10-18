@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
+import 'package:melodink_client/core/helpers/split_hash_to_path.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/library/data/models/artist_model.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
@@ -89,8 +91,8 @@ class AlbumLocalDataSource {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final downloadPath = "/download-album/${album.id}";
-      String? downloadImagePath = "$downloadPath-image";
+      final downloadPath = "/download-album/${splitHashToPath(album.id)}";
+      String? downloadImagePath = "$downloadPath/image";
 
       try {
         await AppApi().dio.download(
@@ -169,6 +171,14 @@ class AlbumLocalDataSource {
 
       if (savedAlbum == null) {
         throw AlbumNotFoundException();
+      }
+
+      final imageFile = savedAlbum.localCover;
+
+      if (imageFile != null) {
+        try {
+          await File(imageFile).delete();
+        } catch (_) {}
       }
 
       await db.delete(

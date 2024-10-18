@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
+import 'package:melodink_client/core/helpers/split_id_to_path.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
@@ -83,8 +85,8 @@ class PlaylistLocalDataSource {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final downloadPath = "/download-playlist/${playlist.id}";
-      String? downloadImagePath = "$downloadPath-image";
+      final downloadPath = "/download-playlist/${splitIdToPath(playlist.id)}";
+      String? downloadImagePath = "$downloadPath/image";
 
       try {
         await AppApi().dio.download(
@@ -156,6 +158,14 @@ class PlaylistLocalDataSource {
 
       if (savedPlaylist == null) {
         throw PlaylistNotFoundException();
+      }
+
+      final imageFile = savedPlaylist.localCover;
+
+      if (imageFile != null) {
+        try {
+          await File(imageFile).delete();
+        } catch (_) {}
       }
 
       await db.delete(

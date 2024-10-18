@@ -7,6 +7,7 @@ import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
+import 'package:melodink_client/core/helpers/split_id_to_path.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/track/data/models/minimal_track_model.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
@@ -84,9 +85,10 @@ class DownloadTrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final downloadPath = "/download/$trackId";
-      final downloadAudioPath = "$downloadPath-audio";
-      String? downloadImagePath = "$downloadPath-image";
+      final downloadPath = "/download/${splitIdToPath(trackId)}";
+
+      final downloadAudioPath = "$downloadPath/audio";
+      String? downloadImagePath = "$downloadPath/image";
 
       await AppApi().dio.download(
             "/track/$trackId/audio",

@@ -12,6 +12,8 @@ import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:melodink_client/core/helpers/split_hash_to_path.dart';
+
 String createUrlHash(String url) {
   final bytes = utf8.encode(url);
 
@@ -20,21 +22,11 @@ String createUrlHash(String url) {
   return digest.toString();
 }
 
-String createDirectoryTree(String hash) {
-  return [
-    hash.substring(0, 2),
-    hash.substring(2, 4),
-    hash.substring(4, 6),
-    hash.substring(6, 8),
-    hash.substring(8, 10)
-  ].join("/");
-}
-
 @immutable
 class AppImageCacheProvider extends ImageProvider<AppImageCacheProvider> {
   AppImageCacheProvider(this.url, {this.scale = 1.0})
       : dio = AppApi().dio,
-        cacheId = createDirectoryTree(createUrlHash(url.toString()));
+        cacheId = splitHashToPath(createUrlHash(url.toString()));
 
   final Uri url;
 
