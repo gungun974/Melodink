@@ -42,14 +42,31 @@ func (u *TrackUsecase) UploadTrack(
 
 	track.UserId = &user.Id
 
-	err = u.trackStorage.MoveAudioFile(&track)
-	if err != nil {
-		logger.MainLogger.Error("Failed to move audio to sorted directory")
-	}
-
 	err = u.trackRepository.CreateTrack(&track)
 	if err != nil {
 		logger.MainLogger.Error("Failed to save audio data in database")
+		return nil, err
+	}
+
+	err = u.trackStorage.MoveAudioFile(&track)
+	if err != nil {
+		logger.MainLogger.Error("Failed to move audio to sorted directory")
+		if err := u.trackRepository.DeleteTrack(&track); err != nil {
+			logger.MainLogger.Error("Failed to delete broken track from database")
+			return nil, err
+		}
+		return nil, err
+	}
+
+	err = u.trackRepository.UpdateTrackPath(&track)
+	if err != nil {
+		logger.MainLogger.Error("Failed to update track path in database")
+
+		if err := u.trackRepository.DeleteTrack(&track); err != nil {
+			logger.MainLogger.Error("Failed to delete broken track from database")
+			return nil, err
+		}
+		return nil, err
 	}
 
 	return u.trackPresenter.ShowDetailedTrack(track), nil
