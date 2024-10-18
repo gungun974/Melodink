@@ -94,8 +94,8 @@ func (s *TrackStorage) MoveAudioFile(track *entities.Track) error {
 	var newFileLocation string
 
 	for {
-		targetFilename := filename + path.Ext(track.Path)
-		newFileLocation = helpers.SafeJoin(directory, targetFilename)
+		targetFilename := filename
+		newFileLocation = helpers.SafeJoin(directory, targetFilename) + path.Ext(track.Path)
 
 		if _, err := os.Stat(newFileLocation); errors.Is(err, os.ErrNotExist) {
 			break

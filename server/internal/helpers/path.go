@@ -5,9 +5,7 @@ import (
 	"strings"
 )
 
-var windowsInvalidChars = []string{"<", ">", ":", "\"", "/", "\\", "|", "?", "*"}
-
-var linuxInvalidChars = []string{"/"}
+var invalidChars = []string{"<", ">", ":", "\"", "/", "\\", "|", "?", "*", ",", ".", " "}
 
 const replacementChar = "_"
 
@@ -26,8 +24,7 @@ func SafeJoin(basePath, addPath string) string {
 		cleanedPath = strings.TrimPrefix(cleanedPath, string(filepath.Separator))
 	}
 
-	cleanedPath = replaceInvalidChars(cleanedPath, windowsInvalidChars)
-	cleanedPath = replaceInvalidChars(cleanedPath, linuxInvalidChars)
+	cleanedPath = replaceInvalidChars(cleanedPath, invalidChars)
 
 	fullPath := filepath.Join(basePath, cleanedPath)
 
