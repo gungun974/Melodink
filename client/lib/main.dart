@@ -8,7 +8,6 @@ import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/tracker/domain/providers/player_tracker_manager_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -110,7 +109,6 @@ class _EagerInitialization extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(audioControllerProvider);
-    ref.watch(playerTrackerManagerNotifierProvider);
     return child;
   }
 }

@@ -6,6 +6,7 @@ import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:melodink_client/generated/messages.g.dart';
 import 'package:mutex/mutex.dart';
 import 'package:rxdart/rxdart.dart';
@@ -39,6 +40,8 @@ class AudioController extends BaseAudioHandler
   final api = MelodinkHostPlayerApi();
 
   DownloadTrackRepository? downloadTrackRepository;
+
+  PlayerTrackerManager? playerTrackerManager;
 
   final playlistTracksMutex = Mutex();
   final playerTracksMutex = Mutex();
@@ -511,10 +514,7 @@ class AudioController extends BaseAudioHandler
 
     _updateUiTrackLists();
 
-    // print(
-    //     "CONTROLLER_A: ${_previousTracks.lastOrNull?.id} / ${DateTime.now().millisecond} ${StackTrace.current}");
-
-    playbackState.add(playbackState.value.copyWith(
+    final newState = playbackState.value.copyWith(
       controls: [
         MediaControl.skipToPrevious,
         if (status.playing) MediaControl.pause else MediaControl.play,
@@ -549,7 +549,15 @@ class AudioController extends BaseAudioHandler
       shuffleMode: isShuffled
           ? AudioServiceShuffleMode.all
           : AudioServiceShuffleMode.none,
-    ));
+    );
+
+    playerTrackerManager?.watchState(
+      playbackState.value,
+      newState,
+      _previousTracks.lastOrNull,
+    );
+
+    playbackState.add(newState);
 
     final track = _previousTracks.lastOrNull;
 
@@ -585,10 +593,18 @@ class AudioController extends BaseAudioHandler
   Future<void> _updateTinyCurrentPosition() async {
     final status = await api.fetchStatus();
 
-    playbackState.add(playbackState.value.copyWith(
+    final newState = playbackState.value.copyWith(
       updatePosition: Duration(milliseconds: status.positionMs),
       bufferedPosition: Duration(milliseconds: status.bufferedPositionMs),
-    ));
+    );
+
+    playerTrackerManager?.watchState(
+      playbackState.value,
+      newState,
+      _previousTracks.lastOrNull,
+    );
+
+    playbackState.add(newState);
   }
 
   final BehaviorSubject<List<MinimalTrack>> previousTracks =
@@ -617,6 +633,9 @@ class AudioController extends BaseAudioHandler
 final audioControllerProvider = Provider((ref) {
   _audioController.downloadTrackRepository =
       ref.watch(downloadTrackRepositoryProvider);
+
+  _audioController.playerTrackerManager =
+      ref.watch(playerTrackerManagerProvider);
 
   return _audioController;
 });
