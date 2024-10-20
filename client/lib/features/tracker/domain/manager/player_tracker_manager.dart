@@ -36,10 +36,6 @@ class PlayerTrackerManager {
     final hasChangedQueueIndex =
         currentState.queueIndex != lastState.queueIndex;
 
-    if (hasPositionLargelyChanged) {
-      _resetAntiEndSpam = false;
-    }
-
     if (_startTrackingTrack &&
         (hasPositionLargelyChanged || hasChangedQueueIndex)) {
       _finishTrackTracking(lastPosition);
@@ -47,6 +43,10 @@ class PlayerTrackerManager {
 
     if (_startTrackingTrack && !currentState.playing) {
       _finishTrackTracking(currentPosition);
+    }
+
+    if (hasPositionLargelyChanged) {
+      _resetAntiEndSpam = false;
     }
 
     if (!_startTrackingTrack && currentState.playing) {
