@@ -25,7 +25,7 @@ class AudioControllerPositionData {
   });
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<AudioControllerPositionData> audioControllerPositionDataStream(
   AudioControllerPositionDataStreamRef ref,
 ) {
@@ -46,7 +46,7 @@ Stream<AudioControllerPositionData> audioControllerPositionDataStream(
   );
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<MinimalTrack?> currentTrackStream(CurrentTrackStreamRef ref) async* {
   final audioController = ref.watch(audioControllerProvider);
 
