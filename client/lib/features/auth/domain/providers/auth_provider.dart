@@ -188,3 +188,18 @@ Future<bool> isUserAuthenticated(IsUserAuthenticatedRef ref) async {
     return false;
   }
 }
+
+@riverpod
+Future<User?> loggedUser(LoggedUserRef ref) async {
+  try {
+    final auth = await ref.watch(authNotifierProvider.future);
+
+    if (auth is! AuthLoaded) {
+      return null;
+    }
+
+    return auth.user;
+  } catch (e) {
+    return null;
+  }
+}

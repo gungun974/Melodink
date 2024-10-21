@@ -13,6 +13,7 @@ import 'package:melodink_client/features/library/presentation/pages/playlist_pag
 import 'package:melodink_client/features/library/presentation/pages/playlists_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/mobile_player_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_and_history_page.dart';
+import 'package:melodink_client/features/settings/presentation/pages/settings_page.dart';
 import 'package:melodink_client/features/track/presentation/pages/tracks_page.dart';
 
 final List<RouteBase> appRoutesWithShell = [
@@ -115,6 +116,16 @@ final List<RouteBase> appRoutesWithShell = [
         },
       ),
     ],
+  ),
+  GoRoute(
+    path: '/settings',
+    name: "/settings",
+    pageBuilder: (BuildContext context, GoRouterState state) {
+      return NoTransitionPage(
+        key: state.pageKey,
+        child: const SettingsPage(),
+      );
+    },
   ),
 ];
 

@@ -49,6 +49,8 @@ dependencies:
       url: https://github.com/makromusic/color_thief_flutter
       ref: 951766094653f70655f8a5f4609c12f8e95db28b
   super_sliver_list: ^0.4.1
+  flutter_switch: ^0.3.2
+  dropdown_button2: ^2.3.9
 
 dev_dependencies:
   flutter_test:

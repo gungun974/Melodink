@@ -79,13 +79,15 @@ class DesktopSidebar extends ConsumerWidget {
                     active: currentUrl == "/artist",
                   ),
                   DesktopSidebarItem(
-                    label: "Me",
+                    label: "Settings",
                     icon: const AdwaitaIcon(
-                      AdwaitaIcons.person2,
+                      AdwaitaIcons.gear,
                       size: 24.0,
                     ),
-                    onTap: () {},
-                    active: currentUrl == "/user",
+                    onTap: () {
+                      GoRouter.of(context).go("/settings");
+                    },
+                    active: currentUrl == "/settings",
                   ),
                 ],
               ),
