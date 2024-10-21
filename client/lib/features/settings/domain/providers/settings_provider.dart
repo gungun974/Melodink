@@ -23,3 +23,16 @@ class AppSettingsNotifier extends _$AppSettingsNotifier {
     state = AsyncData(await _settingsRepository.getSettings());
   }
 }
+
+@riverpod
+AppSettingTheme currentAppTheme(
+  CurrentAppThemeRef ref,
+) {
+  final currentSettings = ref.watch(appSettingsNotifierProvider).valueOrNull;
+
+  if (currentSettings == null) {
+    return AppSettingTheme.dynamic;
+  }
+
+  return currentSettings.theme;
+}

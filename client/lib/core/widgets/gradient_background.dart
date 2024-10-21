@@ -3,6 +3,20 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
+import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+
+const defaultTheme = [
+  Color.fromRGBO(58, 91, 111, 1),
+  Color.fromRGBO(216, 232, 238, 1),
+  Color.fromRGBO(151, 201, 218, 1),
+];
+
+const darkTheme = [
+  Color.fromRGBO(50, 40, 50, 1),
+  Color.fromRGBO(20, 20, 30, 1),
+  Color.fromRGBO(60, 80, 80, 1),
+];
 
 class GradientBackground extends ConsumerWidget {
   const GradientBackground({
@@ -34,22 +48,46 @@ class GradientBackground extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentTheme = ref.watch(currentAppThemeProvider);
+
     final asyncPalette = ref.watch(currentTrackPaletteProvider);
 
     final palette = asyncPalette.valueOrNull;
 
-    final colorA = palette != null
-        ? adjustColorLightness(
-            Color.fromRGBO(palette[1][0], palette[1][1], palette[1][2], 1))
-        : const Color.fromRGBO(58, 91, 111, 1);
-    final colorB = palette != null
-        ? adjustColorLightness(
-            Color.fromRGBO(palette[3][0], palette[3][1], palette[3][2], 1))
-        : const Color.fromRGBO(216, 232, 238, 1);
-    final colorC = palette != null
-        ? adjustColorLightness(
-            Color.fromRGBO(palette[0][0], palette[0][1], palette[0][2], 1))
-        : const Color.fromRGBO(151, 201, 218, 1);
+    List<Color> appliedTheme = defaultTheme;
+
+    if (currentTheme == AppSettingTheme.dark) {
+      appliedTheme = darkTheme;
+    } else if (currentTheme == AppSettingTheme.dynamic) {
+      if (palette != null) {
+        appliedTheme = [
+          adjustColorLightness(
+            Color.fromRGBO(
+              palette[1][0],
+              palette[1][1],
+              palette[1][2],
+              1,
+            ),
+          ),
+          adjustColorLightness(
+            Color.fromRGBO(
+              palette[3][0],
+              palette[3][1],
+              palette[3][2],
+              1,
+            ),
+          ),
+          adjustColorLightness(
+            Color.fromRGBO(
+              palette[0][0],
+              palette[0][1],
+              palette[0][2],
+              1,
+            ),
+          ),
+        ];
+      }
+    }
 
     return Stack(
       children: [
@@ -65,8 +103,18 @@ class GradientBackground extends ConsumerWidget {
               end: gradientEndPoint(127),
               stops: const [0.0, 0.9],
               colors: [
-                Color.fromRGBO(colorA.red, colorA.green, colorA.blue, 0.55),
-                Color.fromRGBO(colorA.red, colorA.green, colorA.blue, 0),
+                Color.fromRGBO(
+                  appliedTheme[0].red,
+                  appliedTheme[0].green,
+                  appliedTheme[0].blue,
+                  0.55,
+                ),
+                Color.fromRGBO(
+                  appliedTheme[0].red,
+                  appliedTheme[0].green,
+                  appliedTheme[0].blue,
+                  0,
+                ),
               ],
             ),
           ),
@@ -80,8 +128,18 @@ class GradientBackground extends ConsumerWidget {
               end: gradientEndPoint(217),
               stops: const [0.0, 0.8],
               colors: [
-                Color.fromRGBO(colorB.red, colorB.green, colorB.blue, 0.55),
-                Color.fromRGBO(colorB.red, colorB.green, colorB.blue, 0.10),
+                Color.fromRGBO(
+                  appliedTheme[1].red,
+                  appliedTheme[1].green,
+                  appliedTheme[1].blue,
+                  0.55,
+                ),
+                Color.fromRGBO(
+                  appliedTheme[1].red,
+                  appliedTheme[1].green,
+                  appliedTheme[1].blue,
+                  0.10,
+                ),
               ],
             ),
           ),
@@ -95,8 +153,18 @@ class GradientBackground extends ConsumerWidget {
               end: gradientEndPoint(336),
               stops: const [0.0, 1],
               colors: [
-                Color.fromRGBO(colorC.red, colorC.green, colorC.blue, 0.55),
-                Color.fromRGBO(colorC.red, colorC.green, colorC.blue, 0.05),
+                Color.fromRGBO(
+                  appliedTheme[2].red,
+                  appliedTheme[2].green,
+                  appliedTheme[2].blue,
+                  0.55,
+                ),
+                Color.fromRGBO(
+                  appliedTheme[2].red,
+                  appliedTheme[2].green,
+                  appliedTheme[2].blue,
+                  0.05,
+                ),
               ],
             ),
           ),
