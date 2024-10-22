@@ -4,18 +4,27 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/routes/provider.dart';
 import 'package:melodink_client/features/player/presentation/widgets/desktop_current_track.dart';
+import 'package:melodink_client/features/player/presentation/widgets/side_player_bar.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
+import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 
 class DesktopSidebar extends ConsumerWidget {
   const DesktopSidebar({super.key});
 
   static const width = 220.0;
+  static const largeWidth = 280.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUrl = ref.watch(appRouterCurrentUrl);
 
+    final currentPlayerBarPosition =
+        ref.watch(currentPlayerBarPositionProvider);
+
     return Container(
-      width: width,
+      width: currentPlayerBarPosition == AppSettingPlayerBarPosition.side
+          ? largeWidth
+          : width,
       color: const Color.fromRGBO(0, 0, 0, 0.08),
       child: Column(
         children: [
@@ -94,6 +103,8 @@ class DesktopSidebar extends ConsumerWidget {
             ),
           ),
           const DesktopCurrentTrack(),
+          if (currentPlayerBarPosition == AppSettingPlayerBarPosition.side)
+            const SidePlayerBar(),
         ],
       ),
     );

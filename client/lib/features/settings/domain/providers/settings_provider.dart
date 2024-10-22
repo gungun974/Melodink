@@ -36,3 +36,16 @@ AppSettingTheme currentAppTheme(
 
   return currentSettings.theme;
 }
+
+@riverpod
+AppSettingPlayerBarPosition currentPlayerBarPosition(
+  CurrentPlayerBarPositionRef ref,
+) {
+  final currentSettings = ref.watch(appSettingsNotifierProvider).valueOrNull;
+
+  if (currentSettings == null) {
+    return AppSettingPlayerBarPosition.bottom;
+  }
+
+  return currentSettings.playerBarPosition;
+}

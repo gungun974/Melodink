@@ -11,6 +11,8 @@ import 'package:melodink_client/features/home/presentation/widgets/desktop_sideb
 import 'package:melodink_client/features/home/presentation/widgets/mobile_navbar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/desktop_player_bar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/mobile_current_track.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
+import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -116,15 +118,26 @@ final appRouterProvider = Provider((ref) {
           return AppScreenTypeLayoutBuilders(
             mobile: (BuildContext context) => child,
             desktop: (BuildContext context) {
-              return Scaffold(
-                body: Column(
-                  children: [
-                    Expanded(
-                      child: child,
+              return Consumer(
+                builder: (context, ref, _) {
+                  final currentPlayerBarPosition =
+                      ref.watch(currentPlayerBarPositionProvider);
+                  return Scaffold(
+                    body: Column(
+                      children: [
+                        if (currentPlayerBarPosition ==
+                            AppSettingPlayerBarPosition.top)
+                          const DesktopPlayerBar(),
+                        Expanded(
+                          child: child,
+                        ),
+                        if (currentPlayerBarPosition ==
+                            AppSettingPlayerBarPosition.bottom)
+                          const DesktopPlayerBar(),
+                      ],
                     ),
-                    const DesktopPlayerBar(),
-                  ],
-                ),
+                  );
+                },
               );
             },
           );

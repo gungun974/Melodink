@@ -10,6 +10,8 @@ import 'package:melodink_client/features/player/domain/audio/audio_controller.da
 import 'package:melodink_client/features/player/presentation/pages/history_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_page.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_queue_controls.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
+import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 
 class QueueAndHistoryPage extends HookConsumerWidget {
   const QueueAndHistoryPage({
@@ -20,6 +22,9 @@ class QueueAndHistoryPage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final audioController = ref.watch(audioControllerProvider);
 
+    final currentPlayerBarPosition =
+        ref.watch(currentPlayerBarPositionProvider);
+
     final isInQueuePage = useState(true);
 
     return AppScreenTypeLayoutBuilder(builder: (context, size) {
@@ -28,7 +33,8 @@ class QueueAndHistoryPage extends HookConsumerWidget {
           const GradientBackground(),
           Scaffold(
             backgroundColor: Colors.transparent,
-            appBar: size == AppScreenTypeLayout.mobile
+            appBar: size == AppScreenTypeLayout.mobile ||
+                    currentPlayerBarPosition == AppSettingPlayerBarPosition.side
                 ? AppBar(
                     leading: IconButton(
                       icon: SvgPicture.asset(
@@ -87,7 +93,9 @@ class QueueAndHistoryPage extends HookConsumerWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    if (size == AppScreenTypeLayout.desktop)
+                    if (size == AppScreenTypeLayout.desktop &&
+                        currentPlayerBarPosition !=
+                            AppSettingPlayerBarPosition.side)
                       Container(
                         constraints: const BoxConstraints(maxWidth: 1200 + 48),
                         padding: const EdgeInsets.only(
