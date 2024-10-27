@@ -79,14 +79,20 @@ class TrackList extends HookConsumerWidget {
 
     final listController = useListController();
 
-    ref.listen(currentTrackStreamProvider, (_, asyncCurrentTrack) {
+    ref.listen(currentTrackStreamProvider, (asyncPrevTrack, asyncCurrentTrack) {
       if (!autoScrollToCurrentTrack) {
         return;
       }
 
       final currentTrack = asyncCurrentTrack.valueOrNull;
 
+      final prevTrack = asyncPrevTrack?.valueOrNull;
+
       if (currentTrack == null) {
+        return;
+      }
+
+      if (prevTrack?.id == currentTrack.id) {
         return;
       }
 
@@ -99,6 +105,41 @@ class TrackList extends HookConsumerWidget {
 
       if (currentTrackIndex == -1) {
         return;
+      }
+
+      final visibleRange = listController.visibleRange;
+
+      if (visibleRange != null) {
+        final (startView, endView) = visibleRange;
+
+        if (startView + 3 >= currentTrackIndex &&
+            currentTrackIndex >= startView) {
+          listController.animateToItem(
+            index: currentTrackIndex,
+            scrollController: scrollController!,
+            alignment: 0.1,
+            curve: (_) => Curves.easeOutQuad,
+            duration: (_) => const Duration(milliseconds: 400),
+          );
+
+          return;
+        }
+
+        if (endView - 3 <= currentTrackIndex && currentTrackIndex <= endView) {
+          listController.animateToItem(
+            index: currentTrackIndex,
+            scrollController: scrollController!,
+            alignment: 0.9,
+            curve: (_) => Curves.easeOutQuad,
+            duration: (_) => const Duration(milliseconds: 400),
+          );
+
+          return;
+        }
+
+        if (startView <= currentTrackIndex && currentTrackIndex <= endView) {
+          return;
+        }
       }
 
       listController.jumpToItem(
