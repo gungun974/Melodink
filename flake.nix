@@ -54,7 +54,7 @@
           name = "melodink-server";
           src = gitignore.lib.gitignoreSource ./.;
           subPackages = ["cmd/api"];
-          vendorHash = "sha256-ys0VDicdna4h0y4f6pYfIP1mYKxjkHsvIpiWroOJCI0=";
+          vendorHash = "sha256-llfPPOlO/stm2KSzyWi/V6v2Hl1qAXIWqp+aTGqvJ3o=";
           CGO_ENABLED = 1;
 
           buildInputs = with pkgs; [
@@ -63,6 +63,8 @@
 
             chromaprint
             fftw
+
+            vips
           ];
 
           nativeBuildInputs = buildInputs;
@@ -187,6 +189,7 @@
 
           pkgs.chromaprint
           pkgs.fftw
+          pkgs.vips
         ];
       };
     });

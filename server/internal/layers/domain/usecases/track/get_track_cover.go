@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/models"
-	"github.com/gungun974/Melodink/server/pkgs/audioimage"
 )
 
 func (u *TrackUsecase) GetTrackCover(
@@ -32,13 +33,18 @@ func (u *TrackUsecase) GetTrackCover(
 		return nil, entities.NewUnauthorizedError()
 	}
 
-	image, err := audioimage.GetAudioImage(track.Path)
+	image, err := u.coverStorage.GetOriginalTrackCover(track)
 	if err != nil {
+		if errors.Is(err, storage.OriginalCoverNotFoundError) {
+			return nil, entities.NewNotFoundError("Orignal cover not found")
+		}
 		return nil, entities.NewInternalError(err)
 	}
 
+	mtype := mimetype.Detect(image.Bytes())
+
 	return &models.ImageAPIResponse{
-		MIMEType: image.MIMEType,
-		Data:     image.Data,
+		MIMEType: mtype.String(),
+		Data:     image,
 	}, nil
 }

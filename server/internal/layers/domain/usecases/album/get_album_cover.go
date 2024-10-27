@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/models"
-	"github.com/gungun974/Melodink/server/pkgs/audioimage"
 )
 
 func (u *AlbumUsecase) GetAlbumCover(
@@ -35,11 +35,14 @@ func (u *AlbumUsecase) GetAlbumCover(
 	}
 
 	for _, track := range album.Tracks {
-		image, err := audioimage.GetAudioImage(track.Path)
+		image, err := u.coverStorage.GetOriginalTrackCover(&track)
+
 		if err == nil {
+			mtype := mimetype.Detect(image.Bytes())
+
 			return &models.ImageAPIResponse{
-				MIMEType: image.MIMEType,
-				Data:     image.Data,
+				MIMEType: mtype.String(),
+				Data:     image,
 			}, nil
 		}
 	}

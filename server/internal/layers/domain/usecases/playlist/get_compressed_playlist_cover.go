@@ -11,9 +11,10 @@ import (
 	"github.com/gungun974/Melodink/server/internal/models"
 )
 
-func (u *PlaylistUsecase) GetPlaylistCover(
+func (u *PlaylistUsecase) GetCompressedPlaylistCover(
 	ctx context.Context,
 	playlistId int,
+	quality string,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
 	if err != nil {
@@ -39,7 +40,7 @@ func (u *PlaylistUsecase) GetPlaylistCover(
 	}
 
 	for _, track := range playlist.Tracks {
-		image, err := u.coverStorage.GetOriginalTrackCover(&track)
+		image, err := u.coverStorage.GetCompressedTrackCover(&track, quality)
 
 		if err == nil {
 			mtype := mimetype.Detect(image.Bytes())

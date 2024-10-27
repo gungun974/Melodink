@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/helpers/double_to_string_without_zero.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 
 class MinimalTrack extends Equatable {
   final int id;
@@ -133,12 +134,34 @@ class MinimalTrack extends Equatable {
     return "${AppApi().getServerUrl()}track/$id/audio";
   }
 
-  String getCoverUrl() {
+  String getOriginalCoverUrl() {
     return "${AppApi().getServerUrl()}track/$id/cover";
   }
 
-  Uri getCoverUri() {
-    final url = getCoverUrl();
+  String getCompressedCoverUrl(TrackCompressedCoverQuality quality) {
+    switch (quality) {
+      case TrackCompressedCoverQuality.small:
+        return "${AppApi().getServerUrl()}track/$id/cover/small";
+      case TrackCompressedCoverQuality.medium:
+        return "${AppApi().getServerUrl()}track/$id/cover/medium";
+      case TrackCompressedCoverQuality.high:
+        return "${AppApi().getServerUrl()}track/$id/cover/high";
+      default:
+        return "${AppApi().getServerUrl()}track/$id/cover";
+    }
+  }
+
+  Uri getOrignalCoverUri() {
+    final url = getOriginalCoverUrl();
+    Uri? uri = Uri.tryParse(url);
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+      return uri;
+    }
+    return Uri.parse("file://$url");
+  }
+
+  Uri getCompressedCoverUri(TrackCompressedCoverQuality quality) {
+    final url = getCompressedCoverUrl(quality);
     Uri? uri = Uri.tryParse(url);
     if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
       return uri;

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rxdart/rxdart.dart';
@@ -85,7 +86,10 @@ Future<List<List<int>>?> currentTrackPalette(
       )
       .valueOrNull;
 
-  final imageUrl = downloadedTrack?.getCoverUrl() ?? currentTrack.getCoverUrl();
+  final imageUrl = downloadedTrack?.getCoverUrl() ??
+      currentTrack.getCompressedCoverUrl(
+        TrackCompressedCoverQuality.medium,
+      );
 
   Uri? uri = Uri.tryParse(imageUrl);
 

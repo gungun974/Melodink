@@ -7,6 +7,7 @@ import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/tiny_player_seeker.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 
 class MobileCurrentTrackInfo extends ConsumerWidget {
@@ -26,13 +27,21 @@ class MobileCurrentTrackInfo extends ConsumerWidget {
 
         audioController.previousTracks.valueOrNull?.take(5).forEach(
           (track) {
-            precacheImage(AppImageCacheProvider(track.getCoverUri()), context);
+            precacheImage(
+                AppImageCacheProvider(track.getCompressedCoverUri(
+                  TrackCompressedCoverQuality.small,
+                )),
+                context);
           },
         );
 
         audioController.nextTracks.valueOrNull?.take(5).forEach(
           (track) {
-            precacheImage(AppImageCacheProvider(track.getCoverUri()), context);
+            precacheImage(
+                AppImageCacheProvider(track.getCompressedCoverUri(
+                  TrackCompressedCoverQuality.small,
+                )),
+                context);
           },
         );
 
@@ -65,7 +74,9 @@ class MobileCurrentTrackInfo extends ConsumerWidget {
                                 AuthCachedNetworkImage(
                                   height: 40,
                                   imageUrl: downloadedTrack?.getCoverUrl() ??
-                                      currentTrack.getCoverUrl(),
+                                      currentTrack.getCompressedCoverUrl(
+                                        TrackCompressedCoverQuality.small,
+                                      ),
                                   placeholder: (context, url) => Image.asset(
                                     "assets/melodink_track_cover_not_found.png",
                                     height: 40,

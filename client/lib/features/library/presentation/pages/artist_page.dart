@@ -7,6 +7,7 @@ import 'package:melodink_client/features/library/domain/providers/artist_provide
 import 'package:melodink_client/features/library/presentation/widgets/album_collections_grid.dart';
 import 'package:melodink_client/features/library/presentation/widgets/desktop_artist_header.dart';
 import 'package:melodink_client/features/library/presentation/widgets/mobile_artist_header.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 
 class ArtistPage extends ConsumerWidget {
   final String artistId;
@@ -55,11 +56,15 @@ class ArtistPage extends ConsumerWidget {
               sliver: size == AppScreenTypeLayout.desktop
                   ? DesktopArtistHeader(
                       name: artist.name,
-                      imageUrl: artist.getCoverUrl(),
+                      imageUrl: artist.getCompressedCoverUrl(
+                        TrackCompressedCoverQuality.high,
+                      ),
                     )
                   : MobileArtistHeader(
                       name: artist.name,
-                      imageUrl: artist.getCoverUrl(),
+                      imageUrl: artist.getCompressedCoverUrl(
+                        TrackCompressedCoverQuality.high,
+                      ),
                     ),
             ),
             if (artist.albums.isNotEmpty)

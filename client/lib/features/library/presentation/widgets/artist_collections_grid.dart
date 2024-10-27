@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 
 class ArtistCollectionsGrid extends StatelessWidget {
   final List<Artist> artists;
@@ -54,7 +55,9 @@ class ArtistCollectionsGrid extends StatelessWidget {
                     ClipRRect(
                       borderRadius: const BorderRadius.all(Radius.circular(20)),
                       child: AuthCachedNetworkImage(
-                        imageUrl: artist.getCoverUrl(),
+                        imageUrl: artist.getCompressedCoverUrl(
+                          TrackCompressedCoverQuality.medium,
+                        ),
                         placeholder: (context, url) => Image.asset(
                           "assets/melodink_track_cover_not_found.png",
                         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
@@ -23,13 +24,21 @@ class DesktopCurrentTrack extends ConsumerWidget {
 
         audioController.previousTracks.valueOrNull?.take(5).forEach(
           (track) {
-            precacheImage(AppImageCacheProvider(track.getCoverUri()), context);
+            precacheImage(
+                AppImageCacheProvider(track.getCompressedCoverUri(
+                  TrackCompressedCoverQuality.medium,
+                )),
+                context);
           },
         );
 
         audioController.nextTracks.valueOrNull?.take(5).forEach(
           (track) {
-            precacheImage(AppImageCacheProvider(track.getCoverUri()), context);
+            precacheImage(
+                AppImageCacheProvider(track.getCompressedCoverUri(
+                  TrackCompressedCoverQuality.medium,
+                )),
+                context);
           },
         );
 
@@ -51,7 +60,9 @@ class DesktopCurrentTrack extends ConsumerWidget {
                     aspectRatio: 1.0,
                     child: AuthCachedNetworkImage(
                       imageUrl: downloadedTrack?.getCoverUrl() ??
-                          currentTrack.getCoverUrl(),
+                          currentTrack.getCompressedCoverUrl(
+                            TrackCompressedCoverQuality.medium,
+                          ),
                       placeholder: (context, url) => Image.asset(
                         "assets/melodink_track_cover_not_found.png",
                       ),

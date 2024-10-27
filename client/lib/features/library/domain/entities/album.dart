@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 
 class Album extends Equatable {
   final String id;
@@ -51,12 +52,30 @@ class Album extends Equatable {
         localCover,
       ];
 
-  String getCoverUrl() {
+  String getOriginalCoverUrl() {
     final cover = localCover;
     if (cover != null) {
       return cover;
     }
 
     return "${AppApi().getServerUrl()}album/$id/cover";
+  }
+
+  String getCompressedCoverUrl(TrackCompressedCoverQuality quality) {
+    final cover = localCover;
+    if (cover != null) {
+      return cover;
+    }
+
+    switch (quality) {
+      case TrackCompressedCoverQuality.small:
+        return "${AppApi().getServerUrl()}album/$id/cover/small";
+      case TrackCompressedCoverQuality.medium:
+        return "${AppApi().getServerUrl()}album/$id/cover/medium";
+      case TrackCompressedCoverQuality.high:
+        return "${AppApi().getServerUrl()}album/$id/cover/high";
+      default:
+        return "${AppApi().getServerUrl()}album/$id/cover";
+    }
   }
 }

@@ -220,6 +220,7 @@ class AuthCachedNetworkImage extends StatelessWidget {
             }
           : null,
       gaplessPlayback: true,
+      filterQuality: FilterQuality.high,
     );
   }
 }

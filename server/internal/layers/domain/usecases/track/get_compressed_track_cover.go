@@ -6,14 +6,15 @@ import (
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
-	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/gungun974/Melodink/server/internal/models"
 )
 
-func (u *TrackUsecase) DeleteTrack(
+func (u *TrackUsecase) GetCompressedTrackCover(
 	ctx context.Context,
 	trackId int,
+	quality string,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
 	if err != nil {
@@ -32,19 +33,16 @@ func (u *TrackUsecase) DeleteTrack(
 		return nil, entities.NewUnauthorizedError()
 	}
 
-	if err := u.trackStorage.RemoveAudioFile(track); err != nil {
-		logger.MainLogger.Error("Couldn't delete audio file from storage", err, *track)
-		return nil, entities.NewInternalError(errors.New("Failed to delete track"))
+	image, err := u.coverStorage.GetCompressedTrackCover(track, quality)
+	if err != nil {
+		if errors.Is(err, storage.CoverQualityNotFoundError) {
+			return nil, entities.NewNotFoundError("Cover quality not found")
+		}
+		return nil, entities.NewInternalError(err)
 	}
 
-	if err := u.coverStorage.RemoveTrackCoverFiles(track); err != nil {
-		logger.MainLogger.Warn("Couldn't delete cover files from storage", err, *track)
-	}
-
-	if err := u.trackRepository.DeleteTrack(track); err != nil {
-		logger.MainLogger.Error("Couldn't delete track from Database", err, *track)
-		return nil, entities.NewInternalError(errors.New("Failed to delete track"))
-	}
-
-	return u.trackPresenter.ShowDetailedTrack(*track), nil
+	return &models.ImageAPIResponse{
+		MIMEType: "image/webp",
+		Data:     image,
+	}, nil
 }

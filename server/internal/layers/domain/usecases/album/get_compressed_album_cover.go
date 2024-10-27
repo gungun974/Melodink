@@ -1,4 +1,4 @@
-package playlist_usecase
+package album_usecase
 
 import (
 	"context"
@@ -11,35 +11,32 @@ import (
 	"github.com/gungun974/Melodink/server/internal/models"
 )
 
-func (u *PlaylistUsecase) GetPlaylistCover(
+func (u *AlbumUsecase) GetCompressedAlbumCover(
 	ctx context.Context,
-	playlistId int,
+	albumId string,
+	quality string,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	playlist, err := u.playlistRepository.GetPlaylist(playlistId)
+	album, err := u.albumRepository.GetAlbumByIdFromUser(user.Id, albumId)
 	if err != nil {
-		if errors.Is(err, repository.PlaylistNotFoundError) {
-			return nil, entities.NewNotFoundError("Playlist not found")
+		if errors.Is(err, repository.AlbumNotFoundError) {
+			return nil, entities.NewNotFoundError("Album not found")
 		}
 		return nil, entities.NewInternalError(err)
 	}
 
-	if playlist.UserId != nil && *playlist.UserId != user.Id {
-		return nil, entities.NewUnauthorizedError()
-	}
-
-	if len(playlist.Tracks) <= 0 {
+	if len(album.Tracks) <= 0 {
 		return nil, entities.NewNotFoundError(
-			"No image available for this playlist",
+			"No image available for this album",
 		)
 	}
 
-	for _, track := range playlist.Tracks {
-		image, err := u.coverStorage.GetOriginalTrackCover(&track)
+	for _, track := range album.Tracks {
+		image, err := u.coverStorage.GetCompressedTrackCover(&track, quality)
 
 		if err == nil {
 			mtype := mimetype.Detect(image.Bytes())
@@ -52,6 +49,6 @@ func (u *PlaylistUsecase) GetPlaylistCover(
 	}
 
 	return nil, entities.NewNotFoundError(
-		"No image available for this playlist",
+		"No image available for this album",
 	)
 }

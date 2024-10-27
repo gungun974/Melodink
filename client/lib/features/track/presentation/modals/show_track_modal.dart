@@ -46,7 +46,7 @@ class ShowTrackModal extends ConsumerWidget {
                           width: 256,
                           height: 256,
                           child: AuthCachedNetworkImage(
-                            imageUrl: track.getCoverUrl(),
+                            imageUrl: track.getOriginalCoverUrl(),
                             placeholder: (context, url) => Image.asset(
                               "assets/melodink_track_cover_not_found.png",
                             ),

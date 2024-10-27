@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 
 class PlaylistCollectionsGrid extends StatelessWidget {
   final List<Playlist> playlists;
@@ -53,7 +54,9 @@ class PlaylistCollectionsGrid extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AuthCachedNetworkImage(
-                      imageUrl: playlist.getCoverUrl(),
+                      imageUrl: playlist.getCompressedCoverUrl(
+                        TrackCompressedCoverQuality.medium,
+                      ),
                       placeholder: (context, url) => Image.asset(
                         "assets/melodink_track_cover_not_found.png",
                       ),

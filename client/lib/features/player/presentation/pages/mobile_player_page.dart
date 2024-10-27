@@ -10,6 +10,7 @@ import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_controls.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
@@ -59,7 +60,10 @@ class MobilePlayerPage extends ConsumerWidget {
                             .forEach(
                           (track) {
                             precacheImage(
-                                AppImageCacheProvider(track.getCoverUri()),
+                                AppImageCacheProvider(
+                                    track.getCompressedCoverUri(
+                                  TrackCompressedCoverQuality.small,
+                                )),
                                 context);
                           },
                         );
@@ -67,7 +71,10 @@ class MobilePlayerPage extends ConsumerWidget {
                         audioController.nextTracks.valueOrNull?.take(5).forEach(
                           (track) {
                             precacheImage(
-                                AppImageCacheProvider(track.getCoverUri()),
+                                AppImageCacheProvider(
+                                    track.getCompressedCoverUri(
+                                  TrackCompressedCoverQuality.small,
+                                )),
                                 context);
                           },
                         );
@@ -107,7 +114,9 @@ class MobilePlayerPage extends ConsumerWidget {
 
                               image = AuthCachedNetworkImage(
                                 imageUrl: downloadedTrack?.getCoverUrl() ??
-                                    currentTrack.getCoverUrl(),
+                                    currentTrack.getCompressedCoverUrl(
+                                      TrackCompressedCoverQuality.small,
+                                    ),
                                 placeholder: (context, url) => Image.asset(
                                   "assets/melodink_track_cover_not_found.png",
                                 ),

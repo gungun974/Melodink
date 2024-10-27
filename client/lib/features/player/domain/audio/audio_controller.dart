@@ -6,6 +6,7 @@ import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:melodink_client/generated/messages.g.dart';
 import 'package:mutex/mutex.dart';
@@ -577,7 +578,10 @@ class AudioController extends BaseAudioHandler
             title: track.title,
             artist: track.artists.map((artist) => artist.name).join(", "),
             duration: track.duration,
-            artUri: downloadedTrack?.getCoverUri() ?? track.getCoverUri(),
+            artUri: downloadedTrack?.getCoverUri() ??
+                track.getCompressedCoverUri(
+                  TrackCompressedCoverQuality.medium,
+                ),
             artHeaders: {
               'Cookie': AppApi().generateCookieHeader(),
             },

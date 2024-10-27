@@ -69,5 +69,10 @@ func (u *TrackUsecase) UploadTrack(
 		return nil, err
 	}
 
+	err = u.coverStorage.GenerateTrackCoverFromAudioFile(&track)
+	if err != nil {
+		logger.MainLogger.Warn("Failed to extract cover from audio file", err)
+	}
+
 	return u.trackPresenter.ShowDetailedTrack(track), nil
 }

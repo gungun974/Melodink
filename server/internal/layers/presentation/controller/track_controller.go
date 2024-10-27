@@ -90,6 +90,24 @@ func (c *TrackController) GetCover(
 	return c.trackUsecase.GetTrackCover(ctx, id)
 }
 
+func (c *TrackController) GetCompressedCover(
+	ctx context.Context,
+	rawId string,
+	quality string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.GetCompressedTrackCover(ctx, id, quality)
+}
+
 func (c *TrackController) GetTrackAudio(
 	ctx context.Context,
 	rawId string,

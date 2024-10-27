@@ -11,9 +11,10 @@ import (
 	"github.com/gungun974/Melodink/server/internal/models"
 )
 
-func (u *ArtistUsecase) GetArtistCover(
+func (u *ArtistUsecase) GetCompressedArtistCover(
 	ctx context.Context,
 	artistId string,
+	quality string,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
 	if err != nil {
@@ -36,7 +37,7 @@ func (u *ArtistUsecase) GetArtistCover(
 	}
 
 	for _, track := range artist.AllTracks {
-		image, err := u.coverStorage.GetOriginalTrackCover(&track)
+		image, err := u.coverStorage.GetCompressedTrackCover(&track, quality)
 
 		if err == nil {
 			mtype := mimetype.Detect(image.Bytes())
@@ -49,7 +50,7 @@ func (u *ArtistUsecase) GetArtistCover(
 	}
 
 	for _, track := range artist.AllAppearTracks {
-		image, err := u.coverStorage.GetOriginalTrackCover(&track)
+		image, err := u.coverStorage.GetCompressedTrackCover(&track, quality)
 
 		if err == nil {
 			mtype := mimetype.Detect(image.Bytes())
@@ -62,7 +63,7 @@ func (u *ArtistUsecase) GetArtistCover(
 	}
 
 	for _, track := range artist.AllHasRoleTracks {
-		image, err := u.coverStorage.GetOriginalTrackCover(&track)
+		image, err := u.coverStorage.GetCompressedTrackCover(&track, quality)
 
 		if err == nil {
 			mtype := mimetype.Detect(image.Bytes())

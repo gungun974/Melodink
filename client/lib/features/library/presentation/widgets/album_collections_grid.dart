@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 
 class AlbumCollectionsGrid extends StatelessWidget {
   final List<Album> albums;
@@ -53,7 +54,9 @@ class AlbumCollectionsGrid extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AuthCachedNetworkImage(
-                      imageUrl: album.getCoverUrl(),
+                      imageUrl: album.getCompressedCoverUrl(
+                        TrackCompressedCoverQuality.medium,
+                      ),
                       placeholder: (context, url) => Image.asset(
                         "assets/melodink_track_cover_not_found.png",
                       ),

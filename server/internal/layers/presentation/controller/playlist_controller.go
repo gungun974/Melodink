@@ -218,3 +218,21 @@ func (c *PlaylistController) GetPlaylistCover(
 
 	return c.playlistUsecase.GetPlaylistCover(ctx, id)
 }
+
+func (c *PlaylistController) GetCompressedPlaylistCover(
+	ctx context.Context,
+	rawId string,
+	quality string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.playlistUsecase.GetCompressedPlaylistCover(ctx, id, quality)
+}

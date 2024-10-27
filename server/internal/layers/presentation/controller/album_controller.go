@@ -60,3 +60,21 @@ func (c *AlbumController) GetUserAlbumCover(
 
 	return c.albumUsecase.GetAlbumCover(ctx, id)
 }
+
+func (c *AlbumController) GetCompressedUserAlbumCover(
+	ctx context.Context,
+	rawId string,
+	quality string,
+) (models.APIResponse, error) {
+	id, err := validator.ValidateString(
+		rawId,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.albumUsecase.GetCompressedAlbumCover(ctx, id, quality)
+}

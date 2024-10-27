@@ -42,6 +42,7 @@ func NewContainer(db *sqlx.DB) Container {
 	//! Storage
 
 	trackStorage := storage.NewTrackStorage()
+	coverStorage := storage.NewCoverStorage()
 
 	//! Scanner
 
@@ -71,6 +72,7 @@ func NewContainer(db *sqlx.DB) Container {
 	trackUsecase := track_usecase.NewTrackUsecase(
 		trackRepository,
 		trackStorage,
+		coverStorage,
 		acoustIdScanner,
 		musicBrainzScanner,
 		trackPresenter,
@@ -79,12 +81,17 @@ func NewContainer(db *sqlx.DB) Container {
 	playlistUsecase := playlist_usecase.NewPlaylistUsecase(
 		playlistRepository,
 		trackRepository,
+		coverStorage,
 		playlistPresenter,
 	)
 
-	albumUsecase := album_usecase.NewAlbumUsecase(albumRepository, albumPresenter)
+	albumUsecase := album_usecase.NewAlbumUsecase(albumRepository, coverStorage, albumPresenter)
 
-	artistUsecase := artist_usecase.NewArtistUsecase(artistRepository, artistPresenter)
+	artistUsecase := artist_usecase.NewArtistUsecase(
+		artistRepository,
+		coverStorage,
+		artistPresenter,
+	)
 
 	//! Controller
 

@@ -9,6 +9,7 @@ import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
@@ -136,7 +137,9 @@ class MobileTrack extends HookConsumerWidget {
                           if (displayImage)
                             AuthCachedNetworkImage(
                               imageUrl: downloadedTrack?.getCoverUrl() ??
-                                  track.getCoverUrl(),
+                                  track.getCompressedCoverUrl(
+                                    TrackCompressedCoverQuality.small,
+                                  ),
                               placeholder: (context, url) => Image.asset(
                                 "assets/melodink_track_cover_not_found.png",
                               ),
