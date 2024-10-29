@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/routes/provider.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
+import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_play_pause_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_repeat_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_shuffle_control.dart';
@@ -12,11 +13,17 @@ import 'package:melodink_client/features/player/presentation/widgets/controls/pl
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_skip_to_previous_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 
-class SidePlayerBar extends StatelessWidget {
+class SidePlayerBar extends ConsumerWidget {
   const SidePlayerBar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTrack = ref.watch(currentTrackStreamProvider).valueOrNull;
+
+    if (currentTrack == null) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       color: Colors.black,
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
