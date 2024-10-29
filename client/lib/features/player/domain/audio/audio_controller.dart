@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/logger/logger.dart';
+import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
@@ -11,6 +12,7 @@ import 'package:melodink_client/features/tracker/domain/manager/player_tracker_m
 import 'package:melodink_client/generated/messages.g.dart';
 import 'package:mutex/mutex.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 late final AudioController _audioController;
 
@@ -27,6 +29,8 @@ Future<AudioController> initAudioService() async {
 
   MelodinkHostPlayerApiInfo.setUp(_audioController);
 
+  await _audioController.restoreLastState();
+
   return _audioController;
 }
 
@@ -37,6 +41,8 @@ class AudioController extends BaseAudioHandler
           steps: 8000,
           minPeriod: const Duration(milliseconds: 16),
           maxPeriod: const Duration(milliseconds: 200));
+
+  final SharedPreferencesAsync _asyncPrefs = SharedPreferencesAsync();
 
   final api = MelodinkHostPlayerApi();
 
@@ -85,6 +91,43 @@ class AudioController extends BaseAudioHandler
 
     audioControllerLogger
         .d("\n---------------------------------------------\n");
+  }
+
+  Future<void> restoreLastState() async {
+    final config = await SettingsRepository().getSettings();
+
+    if (config.rememberLoopAndShuffleAcrossRestarts) {
+      final rawLastShuffleState = await _asyncPrefs.getString(
+        "audioPlayerLastShuffleState",
+      );
+
+      final rawLastLoopState = await _asyncPrefs.getString(
+        "audioPlayerLastLoopState",
+      );
+
+      AudioServiceShuffleMode? lastShuffleMode;
+      AudioServiceRepeatMode? lastLoopMode;
+
+      if (rawLastShuffleState != null) {
+        lastShuffleMode = AudioServiceShuffleMode.values
+            .where((value) => value.name == rawLastShuffleState)
+            .firstOrNull;
+      }
+
+      if (rawLastLoopState != null) {
+        lastLoopMode = AudioServiceRepeatMode.values
+            .where((value) => value.name == rawLastLoopState)
+            .firstOrNull;
+      }
+
+      if (lastShuffleMode != null) {
+        await setShuffleMode(lastShuffleMode);
+      }
+
+      if (lastLoopMode != null) {
+        await setRepeatMode(lastLoopMode);
+      }
+    }
   }
 
   @override
@@ -186,6 +229,11 @@ class AudioController extends BaseAudioHandler
     }[repeatMode]!);
 
     await _updatePlaybackState();
+
+    await _asyncPrefs.setString(
+      "audioPlayerLastLoopState",
+      repeatMode.name,
+    );
   }
 
   Future<void> toogleShufle() async {
@@ -356,6 +404,11 @@ class AudioController extends BaseAudioHandler
     }
 
     await _updatePlaybackState();
+
+    await _asyncPrefs.setString(
+      "audioPlayerLastShuffleState",
+      shuffleMode.name,
+    );
   }
 
   Future<void> _updatePlaylistTracks(int currentTrackIndex,

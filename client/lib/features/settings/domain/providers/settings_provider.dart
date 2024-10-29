@@ -6,21 +6,17 @@ part 'settings_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 class AppSettingsNotifier extends _$AppSettingsNotifier {
-  late final SettingsRepository _settingsRepository;
-
   @override
   Future<AppSettings> build() async {
-    _settingsRepository = ref.read(settingsRepositoryProvider);
-
-    return await _settingsRepository.getSettings();
+    return await SettingsRepository().getSettings();
   }
 
   setSettings(AppSettings newSettings) async {
-    await _settingsRepository.setSettings(
+    await SettingsRepository().setSettings(
       newSettings,
     );
 
-    state = AsyncData(await _settingsRepository.getSettings());
+    state = AsyncData(await SettingsRepository().getSettings());
   }
 }
 

@@ -1,8 +1,16 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsRepository {
+  SettingsRepository._privateConstructor();
+
+  static final SettingsRepository _instance =
+      SettingsRepository._privateConstructor();
+
+  factory SettingsRepository() {
+    return _instance;
+  }
+
   final SharedPreferencesAsync asyncPrefs = SharedPreferencesAsync();
 
   Future<AppSettings> getSettings() async {
@@ -84,7 +92,3 @@ class SettingsRepository {
     );
   }
 }
-
-final settingsRepositoryProvider = Provider(
-  (ref) => SettingsRepository(),
-);
