@@ -211,12 +211,21 @@ class MobileTrack extends HookConsumerWidget {
                   if (displayMoreActions)
                     GestureDetector(
                       onTap: () {},
-                      child: TrackContextMenuButton(
-                        trackContextMenuKey: trackContextMenuKey,
-                        menuController: trackContextMenuController,
-                        padding: const EdgeInsets.only(
-                          left: 16,
-                          right: 16,
+                      child: Listener(
+                        onPointerDown: (_) {
+                          final callback = selectCallback;
+
+                          if (callback != null) {
+                            callback(track);
+                          }
+                        },
+                        child: TrackContextMenuButton(
+                          trackContextMenuKey: trackContextMenuKey,
+                          menuController: trackContextMenuController,
+                          padding: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                          ),
                         ),
                       ),
                     ),
