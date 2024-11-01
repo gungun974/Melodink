@@ -1,6 +1,7 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.10)
 project(runner LANGUAGES CXX)
+project(melodink_player VERSION 1.0.0 LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
@@ -55,6 +56,8 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
+
+add_library(melodink_player SHARED ../melodink_player/melodink_player.cpp)
 
 # Define the application target. To change its name, change BINARY_NAME above,
 # not the value here, or `flutter run` will no longer work.
@@ -118,6 +121,12 @@ install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}
 
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
+
+install(TARGETS melodink_player
+    RUNTIME DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime 
+    LIBRARY DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime
+    ARCHIVE DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime
+)
 
 foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
   install(FILES "${bundled_library}"
@@ -232,7 +241,7 @@ pkg_check_modules(mpv IMPORTED_TARGET mpv)
 #   "${mpv_INCLUDE_DIRS}"
 # )
 
-target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::mpv)
+target_link_libraries(${BINARY_NAME} PRIVATE melodink_player PkgConfig::mpv)
 
 # ----
 

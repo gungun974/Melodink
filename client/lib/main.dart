@@ -10,6 +10,7 @@ import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/player/domain/audio/melodink_player.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -18,6 +19,8 @@ import 'package:window_manager/window_manager.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 void main() async {
+  MelodinkPlayer().init();
+
   WidgetsFlutterBinding.ensureInitialized();
 
   if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {

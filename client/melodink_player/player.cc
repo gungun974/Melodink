@@ -1,46 +1,27 @@
-#include <string>
+#pragma once
+
+#include <string.h>
 #include <vector>
 
 #include <atomic>
 #include <thread>
 
-#include <mpv/client.h>
+#include "client.h"
+#include "sendevent.cc"
 
-struct HostPlayerApiInfoAudioChangedMessageData {
-  PigeonMelodinkMelodinkHostPlayerApiInfo *flutter_api;
-  int64_t value;
-};
+typedef enum {
+  MELODINK_PROCESSING_STATE_IDLE = 0,
+  MELODINK_PROCESSING_STATE_LOADING = 0,
+  MELODINK_PROCESSING_STATE_BUFFERING = 2,
+  MELODINK_PROCESSING_STATE_READY = 3,
+  MELODINK_PROCESSING_STATE_COMPLETED = 4
+} MelodinkProcessingState;
 
-struct HostPlayerApiInfoUpdateStateMessageData {
-  PigeonMelodinkMelodinkHostPlayerApiInfo *flutter_api;
-  PigeonMelodinkMelodinkHostPlayerProcessingState value;
-};
-
-gboolean
-send_event_melodink_host_player_api_info_audio_changed(gpointer user_data) {
-  HostPlayerApiInfoAudioChangedMessageData *message_data =
-      static_cast<HostPlayerApiInfoAudioChangedMessageData *>(user_data);
-
-  pigeon_melodink_melodink_host_player_api_info_audio_changed(
-      message_data->flutter_api, message_data->value, nullptr, NULL, NULL);
-
-  delete message_data;
-
-  return FALSE;
-}
-
-gboolean
-send_event_melodink_host_player_api_info_update_state(gpointer user_data) {
-  HostPlayerApiInfoUpdateStateMessageData *message_data =
-      static_cast<HostPlayerApiInfoUpdateStateMessageData *>(user_data);
-
-  pigeon_melodink_melodink_host_player_api_info_update_state(
-      message_data->flutter_api, message_data->value, nullptr, NULL, NULL);
-
-  delete message_data;
-
-  return FALSE;
-}
+typedef enum {
+  MELODINK_LOOP_MODE_NONE = 0,
+  MELODINK_LOOP_MODE_ONE = 1,
+  MELODINK_LOOP_MODE_ALL = 2
+} MelodinkLoopMode;
 
 class AudioPlayer {
 private:
@@ -51,43 +32,32 @@ private:
   std::atomic<bool> dont_send_audio_changed;
   std::atomic<bool> is_buffering_state_change_allowed;
 
-  PigeonMelodinkMelodinkHostPlayerApiInfo *flutter_api;
+  MelodinkProcessingState state = MELODINK_PROCESSING_STATE_IDLE;
 
-  PigeonMelodinkMelodinkHostPlayerProcessingState state =
-      PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_IDLE;
-
-  void set_player_state(PigeonMelodinkMelodinkHostPlayerProcessingState state) {
+  void set_player_state(MelodinkProcessingState state) {
     this->state = state;
 
-    HostPlayerApiInfoUpdateStateMessageData *message_data =
-        new HostPlayerApiInfoUpdateStateMessageData{flutter_api, state};
-
-    g_idle_add(send_event_melodink_host_player_api_info_update_state,
-               message_data);
+    send_event_update_state(state);
   }
 
   void event_loop() {
     while (!stop_event_thread.load()) {
       mpv_event *event = mpv_wait_event(mpv, 1000);
       if (event->event_id == MPV_EVENT_SHUTDOWN) {
-        set_player_state(
-            PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_IDLE);
+        set_player_state(MELODINK_PROCESSING_STATE_IDLE);
         break;
       }
 
       if (event->event_id == MPV_EVENT_START_FILE) {
-        set_player_state(
-            PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_BUFFERING);
+        set_player_state(MELODINK_PROCESSING_STATE_BUFFERING);
       }
 
       if (event->event_id == MPV_EVENT_PLAYBACK_RESTART) {
-        set_player_state(
-            PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_READY);
+        set_player_state(MELODINK_PROCESSING_STATE_READY);
       }
 
       if (event->event_id == MPV_EVENT_SEEK) {
-        set_player_state(
-            PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_BUFFERING);
+        set_player_state(MELODINK_PROCESSING_STATE_BUFFERING);
       }
 
       if (event->event_id == MPV_EVENT_PROPERTY_CHANGE) {
@@ -103,14 +73,10 @@ private:
             continue;
           }
 
-          HostPlayerApiInfoAudioChangedMessageData *message_data =
-              new HostPlayerApiInfoAudioChangedMessageData{flutter_api, pos};
-
-          g_idle_add(send_event_melodink_host_player_api_info_audio_changed,
-                     message_data);
+          send_event_audio_changed(pos);
         }
         if (strcmp(prop->name, "pause") == 0) {
-          int paused = *(int *)prop->data;
+          int64_t paused = *(int64_t *)prop->data;
 
           if (paused) {
             continue;
@@ -118,31 +84,27 @@ private:
         }
 
         if (strcmp(prop->name, "idle-active") == 0) {
-          int idle = *(int *)prop->data;
+          int64_t idle = *(int64_t *)prop->data;
           if (idle) {
-            set_player_state(
-                PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_IDLE);
+            set_player_state(MELODINK_PROCESSING_STATE_IDLE);
           }
         }
 
         if (strcmp(prop->name, "core-idle") == 0) {
-          int buffering = *(int *)prop->data;
+          int64_t buffering = *(int64_t *)prop->data;
           if (buffering && is_buffering_state_change_allowed.load()) {
-            set_player_state(
-                PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_BUFFERING);
+            set_player_state(MELODINK_PROCESSING_STATE_BUFFERING);
           } else {
-            set_player_state(
-                PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_READY);
+            set_player_state(MELODINK_PROCESSING_STATE_READY);
           }
 
           is_buffering_state_change_allowed.store(true);
         }
 
         if (strcmp(prop->name, "eof-reached") == 0) {
-          int eof = has_eof_reached();
+          int64_t eof = has_eof_reached();
           if (eof) {
-            set_player_state(
-                PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_IDLE);
+            set_player_state(MELODINK_PROCESSING_STATE_IDLE);
           }
         }
       }
@@ -150,11 +112,7 @@ private:
   }
 
 public:
-  AudioPlayer(PigeonMelodinkMelodinkHostPlayerApiInfo *flutter_api) {
-    this->flutter_api = flutter_api;
-
-    setlocale(LC_ALL, "C");
-
+  AudioPlayer() {
     mpv = mpv_create();
     if (!mpv) {
       fprintf(stderr, "Could not create MPV context\n");
@@ -220,18 +178,17 @@ public:
     mpv_command(mpv, cmd);
   }
 
-  void seek(int position_ms) {
-    set_player_state(
-        PIGEON_MELODINK_MELODINK_HOST_PLAYER_PROCESSING_STATE_BUFFERING);
+  void seek(int64_t position_ms) {
+    set_player_state(MELODINK_PROCESSING_STATE_BUFFERING);
 
     double position_seconds = position_ms / 1000.0;
     mpv_set_property(mpv, "time-pos", MPV_FORMAT_DOUBLE, &position_seconds);
   }
 
-  void get_track_url_at(int index, char *result) {
+  void get_track_url_at(int64_t index, char *result) {
     char target[255];
 
-    sprintf(target, "playlist/%d/filename", index);
+    sprintf(target, "playlist/%ld/filename", index);
 
     char *filename = NULL;
     mpv_get_property(mpv, target, MPV_FORMAT_STRING, &filename);
@@ -247,10 +204,11 @@ public:
   void debug() {
     char result[255];
 
-    g_print("---------------\n");
+    fprintf(stderr, "---------------\n");
     for (int i = 0; i < this->get_playlist_length(); i++) {
       this->get_track_url_at(i, result);
-      g_print("%d : %s\n", i, result);
+
+      fprintf(stderr, "%d : %s\n", i, result);
     }
   }
 
@@ -387,50 +345,50 @@ public:
     dont_send_audio_changed.store(false);
   }
 
-  int get_current_track_pos() {
-    int pos = -1;
+  int64_t get_current_track_pos() {
+    int64_t pos = -1;
     mpv_get_property(mpv, "playlist-playing-pos", MPV_FORMAT_INT64, &pos);
     return pos;
   }
 
-  int get_playlist_length() {
-    int pos = -1;
+  int64_t get_playlist_length() {
+    int64_t pos = -1;
     mpv_get_property(mpv, "playlist-count", MPV_FORMAT_INT64, &pos);
     return pos;
   }
 
-  int get_current_position() {
+  int64_t get_current_position() {
     double position = 0.0;
     mpv_get_property(mpv, "time-pos", MPV_FORMAT_DOUBLE, &position);
-    return (int)(position * 1000);
+    return (int64_t)(position * 1000);
   }
 
-  int get_current_buffered_position() {
+  int64_t get_current_buffered_position() {
     double buffered_position = 0.0;
     mpv_get_property(mpv, "demuxer-cache-time", MPV_FORMAT_DOUBLE,
                      &buffered_position);
-    return (int)(buffered_position * 1000);
+    return (int64_t)(buffered_position * 1000);
   }
 
   bool get_current_playing() {
-    int is_paused = 0;
+    int64_t is_paused = 0;
     mpv_get_property(mpv, "pause", MPV_FORMAT_FLAG, &is_paused);
     return !is_paused;
   }
 
   bool has_eof_reached() {
-    int is_eof = 0;
+    int64_t is_eof = 0;
     mpv_get_property(mpv, "eof-reached", MPV_FORMAT_FLAG, &is_eof);
     return is_eof;
   }
 
-  void set_loop_mode(PigeonMelodinkMelodinkHostPlayerLoopMode loop) {
-    if (loop == PIGEON_MELODINK_MELODINK_HOST_PLAYER_LOOP_MODE_ONE) {
+  void set_loop_mode(MelodinkLoopMode loop) {
+    if (loop == MELODINK_LOOP_MODE_ONE) {
       mpv_set_property_string(mpv, "loop", "inf");
       mpv_set_property_string(mpv, "loop-playlist", "no");
       return;
     }
-    if (loop == PIGEON_MELODINK_MELODINK_HOST_PLAYER_LOOP_MODE_ALL) {
+    if (loop == MELODINK_LOOP_MODE_ALL) {
       mpv_set_property_string(mpv, "loop", "no");
       mpv_set_property_string(mpv, "loop-playlist", "inf");
       return;
@@ -439,7 +397,7 @@ public:
     mpv_set_property_string(mpv, "loop-playlist", "no");
   }
 
-  PigeonMelodinkMelodinkHostPlayerLoopMode get_current_loop_mode() {
+  MelodinkLoopMode get_current_loop_mode() {
     char *loop_mode;
     loop_mode = mpv_get_property_string(mpv, "loop");
 
@@ -450,25 +408,23 @@ public:
       mpv_free(loop_mode);
       mpv_free(loop_playlist_mode);
 
-      return PIGEON_MELODINK_MELODINK_HOST_PLAYER_LOOP_MODE_ONE;
+      return MELODINK_LOOP_MODE_ONE;
     }
 
     if (strcmp(loop_playlist_mode, "inf") == 0) {
       mpv_free(loop_mode);
       mpv_free(loop_playlist_mode);
 
-      return PIGEON_MELODINK_MELODINK_HOST_PLAYER_LOOP_MODE_ALL;
+      return MELODINK_LOOP_MODE_ALL;
     }
 
     mpv_free(loop_mode);
     mpv_free(loop_playlist_mode);
 
-    return PIGEON_MELODINK_MELODINK_HOST_PLAYER_LOOP_MODE_NONE;
+    return MELODINK_LOOP_MODE_NONE;
   }
 
-  PigeonMelodinkMelodinkHostPlayerProcessingState get_current_player_state() {
-    return state;
-  }
+  MelodinkProcessingState get_current_player_state() { return state; }
 
   void set_auth_token(const char *auth_token) {
     char auth_header[1024];

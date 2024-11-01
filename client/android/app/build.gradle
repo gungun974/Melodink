@@ -1,3 +1,8 @@
+import java.nio.file.Files
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.security.MessageDigest
+
 plugins {
     id "com.android.application"
     id "kotlin-android"
@@ -52,6 +57,13 @@ android {
         }
     }
 
+    externalNativeBuild {
+      cmake {
+        path file('cpp/CMakeLists.txt')
+        version '3.29.6'
+      }
+    }
+
     dependencies {
         def mediaVersion = "1.4.1"
 
@@ -59,9 +71,91 @@ android {
         implementation "androidx.media3:media3-exoplayer-dash:$mediaVersion"
         implementation "androidx.media3:media3-exoplayer-hls:$mediaVersion"
         implementation "androidx.media3:media3-exoplayer-smoothstreaming:$mediaVersion"
+    
+        implementation fileTree(dir: "$buildDir/output", include: "*.jar")
     }
 }
 
 flutter {
     source = "../.."
 }
+
+task downloadDependencies(type: Exec)  {
+    
+        def outputDir = file("$buildDir/output")
+        if (outputDir.exists()) {
+            outputDir.deleteDir()
+        }
+        outputDir.mkdirs()
+
+        def unzipDir = file("$buildDir/libmpv")
+        if (unzipDir.exists()) {
+            unzipDir.deleteDir()
+        }
+        unzipDir.mkdirs()
+
+        // Download all *.jar dependencies & verify their MD5 checksums.
+        def filesToDownload = [
+            ["url": "https://github.com/gungun974/melodink-libmpv-android-audio-build/releases/download/v0.38.0/default-arm64-v8a.jar", "md5": "e93e6e98b53a06d0fff3c92fe558fd29", "destination": file("$buildDir/v0.38.0/default-arm64-v8a.jar")],
+            ["url": "https://github.com/gungun974/melodink-libmpv-android-audio-build/releases/download/v0.38.0/default-armeabi-v7a.jar", "md5": "b5a048442d9df5edcdc38bbc1dc79a39", "destination": file("$buildDir/v0.38.0/default-armeabi-v7a.jar")],
+            ["url": "https://github.com/gungun974/melodink-libmpv-android-audio-build/releases/download/v0.38.0/default-x86_64.jar", "md5": "0982671e4149907663b069db07356224", "destination": file("$buildDir/v0.38.0/default-x86_64.jar")],
+            ["url": "https://github.com/gungun974/melodink-libmpv-android-audio-build/releases/download/v0.38.0/default-x86.jar", "md5": "f5ee61e461953514786bd18601871235", "destination": file("$buildDir/v0.38.0/default-x86.jar")]
+        ]
+
+        filesToDownload.each { fileInfo ->
+            def destFile = fileInfo.destination
+
+            if (destFile.exists()) {
+                def calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
+
+                if (calculatedMD5 != fileInfo.md5) {
+                    destFile.delete()
+                    println "MD5 mismatch. File deleted: ${destFile}"
+                }
+
+            }
+
+            if (!destFile.exists()) {
+                destFile.parentFile.mkdirs()
+                println "Downloading file from: ${fileInfo.url}"
+                destFile.withOutputStream { os ->
+                    os << new URL(fileInfo.url).openStream()
+                }
+                def calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
+                if (calculatedMD5 != fileInfo.md5) {
+                    throw new GradleException("MD5 verification failed for ${destFile}")
+                }
+               
+            }
+
+            copy {
+                from destFile
+                into outputDir
+            }
+
+            // Unzip the JAR file
+            unzip(destFile, unzipDir)
+        }
+    
+}
+
+// Helper method to unzip a file
+def unzip(File zipFile, File destinationDir) {
+    ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(zipFile))
+    ZipEntry entry
+
+    while ((entry = zipInputStream.nextEntry) != null) {
+        File outFile = new File(destinationDir, entry.name)
+        if (entry.isDirectory()) {
+            outFile.mkdirs()
+        } else {
+            outFile.parentFile.mkdirs()
+            outFile.withOutputStream { os ->
+                os << zipInputStream
+            }
+        }
+    }
+    zipInputStream.close()
+}
+
+assemble.dependsOn(downloadDependencies)

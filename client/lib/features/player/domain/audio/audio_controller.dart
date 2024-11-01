@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/logger/logger.dart';
+import 'package:melodink_client/features/player/domain/audio/melodink_player.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
@@ -42,9 +45,19 @@ class AudioController extends BaseAudioHandler
           minPeriod: const Duration(milliseconds: 16),
           maxPeriod: const Duration(milliseconds: 200));
 
+  AudioController() {
+    player.eventAudioChangedStream.listen((value) {
+      audioChanged(value);
+    });
+
+    player.eventUpdateStateStream.listen((value) {
+      updateState(value);
+    });
+  }
+
   final SharedPreferencesAsync _asyncPrefs = SharedPreferencesAsync();
 
-  final api = MelodinkHostPlayerApi();
+  final player = MelodinkPlayer();
 
   DownloadTrackRepository? downloadTrackRepository;
 
@@ -140,10 +153,10 @@ class AudioController extends BaseAudioHandler
         AudioProcessingState.idle) {
       await skipToQueueItem(0);
 
-      await api.seek(0);
+      player.seek(0);
     }
 
-    await api.play();
+    player.play();
 
     await _updatePlaybackState();
   }
@@ -154,7 +167,7 @@ class AudioController extends BaseAudioHandler
       return;
     }
 
-    await api.pause();
+    player.pause();
 
     await _updatePlaybackState();
   }
@@ -165,7 +178,7 @@ class AudioController extends BaseAudioHandler
       return;
     }
 
-    await api.pause();
+    player.pause();
 
     await _updatePlaybackState();
   }
@@ -176,9 +189,9 @@ class AudioController extends BaseAudioHandler
       return;
     }
 
-    await api.seek(position.inMilliseconds);
+    player.seek(position.inMilliseconds);
 
-    await api.play();
+    player.play();
 
     await _updatePlaybackState();
   }
@@ -190,12 +203,12 @@ class AudioController extends BaseAudioHandler
     }
 
     if (_previousTracks.length == 1) {
-      await api.seek(0);
+      player.seek(0);
     } else {
-      await api.skipToPrevious();
+      player.skipToPrevious();
     }
 
-    await api.play();
+    player.play();
   }
 
   @override
@@ -204,9 +217,9 @@ class AudioController extends BaseAudioHandler
       return;
     }
 
-    await api.skipToNext();
+    player.skipToNext();
 
-    await api.play();
+    player.play();
   }
 
   @override
@@ -217,15 +230,15 @@ class AudioController extends BaseAudioHandler
 
     await _updatePlaylistTracks(index);
 
-    await api.play();
+    player.play();
   }
 
   @override
   Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
-    await api.setLoopMode(const {
-      AudioServiceRepeatMode.none: MelodinkHostPlayerLoopMode.none,
-      AudioServiceRepeatMode.all: MelodinkHostPlayerLoopMode.all,
-      AudioServiceRepeatMode.one: MelodinkHostPlayerLoopMode.one,
+    player.setLoopMode(const {
+      AudioServiceRepeatMode.none: MelodinkLoopMode.none,
+      AudioServiceRepeatMode.all: MelodinkLoopMode.all,
+      AudioServiceRepeatMode.one: MelodinkLoopMode.one,
     }[repeatMode]!);
 
     await _updatePlaybackState();
@@ -281,7 +294,7 @@ class AudioController extends BaseAudioHandler
       }
 
       if (restart) {
-        await api.pause();
+        player.pause();
       }
 
       await _updatePlayerTracks();
@@ -289,7 +302,7 @@ class AudioController extends BaseAudioHandler
       if (restart) {
         await seek(Duration.zero);
 
-        await api.play();
+        player.play();
       }
 
       await _updatePlaybackState();
@@ -457,7 +470,7 @@ class AudioController extends BaseAudioHandler
 
   Future<void> _updatePlayerTracks() async {
     await playerTracksMutex.protect(() async {
-      await api.setAuthToken(
+      player.setAuthToken(
         AppApi().generateCookieHeader(),
       );
 
@@ -514,7 +527,7 @@ class AudioController extends BaseAudioHandler
       }
 
       if (prevUrls.isNotEmpty) {
-        await api.setAudios(
+        player.setAudios(
           prevUrls,
           nextUrls,
         );
@@ -536,8 +549,7 @@ class AudioController extends BaseAudioHandler
 
   final audioChangedDebouncer = Debouncer(milliseconds: 50);
 
-  @override
-  Future<void> audioChanged(int pos) async {
+  void audioChanged(int pos) {
     audioChangedDebouncer.run(() async {
       if (pos != _previousTracks.length - 1) {
         await _updatePlaylistTracks(pos);
@@ -545,16 +557,15 @@ class AudioController extends BaseAudioHandler
     });
   }
 
-  @override
-  Future<void> updateState(MelodinkHostPlayerProcessingState state) async {
+  void updateState(MelodinkProcessingState state) {
     audioChangedDebouncer.run(() async {
       if (_previousTracks.isEmpty) {
         return;
       }
 
-      final status = await api.fetchStatus();
+      final pos = player.getCurrentTrackPos();
 
-      await _updatePlaylistTracks(status.pos, updatePlayerTracks: false);
+      await _updatePlaylistTracks(pos, updatePlayerTracks: false);
     });
   }
 
@@ -564,14 +575,18 @@ class AudioController extends BaseAudioHandler
   }
 
   Future<void> _updatePlaybackState() async {
-    final status = await api.fetchStatus();
-
     _updateUiTrackLists();
+
+    final playerPlaying = player.getCurrentPlaying();
+    final playerState = player.getCurrentPlayerState();
+    final playerPositionMs = player.getCurrentPosition();
+    final playerBufferedPositionMs = player.getCurrentBufferedPosition();
+    final playerLoop = player.getCurrentLoopMode();
 
     final newState = playbackState.value.copyWith(
       controls: [
         MediaControl.skipToPrevious,
-        if (status.playing) MediaControl.pause else MediaControl.play,
+        if (playerPlaying) MediaControl.pause else MediaControl.play,
         MediaControl.skipToNext,
       ],
       systemActions: const {
@@ -579,27 +594,24 @@ class AudioController extends BaseAudioHandler
       },
       androidCompactActionIndices: const [0, 1, 2],
       processingState: const {
-        MelodinkHostPlayerProcessingState.idle: AudioProcessingState.idle,
-        MelodinkHostPlayerProcessingState.loading: AudioProcessingState.loading,
-        MelodinkHostPlayerProcessingState.buffering:
-            AudioProcessingState.buffering,
-        MelodinkHostPlayerProcessingState.ready: AudioProcessingState.ready,
-        MelodinkHostPlayerProcessingState.completed:
-            AudioProcessingState.completed,
-      }[status.state]!,
-      playing: status.state == MelodinkHostPlayerProcessingState.idle ||
-              _previousTracks.isEmpty
-          ? false
-          : status.playing,
-      updatePosition: Duration(milliseconds: status.positionMs),
-      bufferedPosition: Duration(milliseconds: status.bufferedPositionMs),
+        MelodinkProcessingState.idle: AudioProcessingState.idle,
+        MelodinkProcessingState.loading: AudioProcessingState.loading,
+        MelodinkProcessingState.buffering: AudioProcessingState.buffering,
+        MelodinkProcessingState.ready: AudioProcessingState.ready,
+        MelodinkProcessingState.completed: AudioProcessingState.completed,
+      }[playerState]!,
+      playing:
+          playerState == MelodinkProcessingState.idle || _previousTracks.isEmpty
+              ? false
+              : playerPlaying,
+      updatePosition: Duration(milliseconds: playerPositionMs),
+      bufferedPosition: Duration(milliseconds: playerBufferedPositionMs),
       speed: 1.0,
       repeatMode: const {
-        MelodinkHostPlayerLoopMode.none: AudioServiceRepeatMode.none,
-        MelodinkHostPlayerLoopMode.all: AudioServiceRepeatMode.all,
-        MelodinkHostPlayerLoopMode.one: AudioServiceRepeatMode.one,
-      }[status.loop]!,
-      // queueIndex: status.pos,
+        MelodinkLoopMode.none: AudioServiceRepeatMode.none,
+        MelodinkLoopMode.all: AudioServiceRepeatMode.all,
+        MelodinkLoopMode.one: AudioServiceRepeatMode.one,
+      }[playerLoop]!,
       queueIndex: _previousTracks.lastOrNull?.id,
       shuffleMode: isShuffled
           ? AudioServiceShuffleMode.all
@@ -649,11 +661,12 @@ class AudioController extends BaseAudioHandler
   }
 
   Future<void> _updateTinyCurrentPosition() async {
-    final status = await api.fetchStatus();
+    final positionMs = player.getCurrentPosition();
+    final bufferedPositionMs = player.getCurrentBufferedPosition();
 
     final newState = playbackState.value.copyWith(
-      updatePosition: Duration(milliseconds: status.positionMs),
-      bufferedPosition: Duration(milliseconds: status.bufferedPositionMs),
+      updatePosition: Duration(milliseconds: positionMs),
+      bufferedPosition: Duration(milliseconds: bufferedPositionMs),
     );
 
     playerTrackerManager?.watchState(

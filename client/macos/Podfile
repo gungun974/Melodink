@@ -30,7 +30,7 @@ target 'Runner' do
   use_frameworks!
   use_modular_headers!
 
-  pod 'LibMPV', :path => './LibMPV/LibMPV.podspec'
+  pod 'MelodinkPlayer', :path => './MelodinkPlayer/MelodinkPlayer.podspec'
 
   flutter_install_all_macos_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do

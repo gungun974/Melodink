@@ -1,16 +1,16 @@
 Pod::Spec.new do |s|
   system("make")
 
-  s.name         = 'LibMPV'
+  s.name         = 'MelodinkPlayer'
   s.version      = '1.0.0'
-  s.summary      = 'LibMPV binaries used for IOS and MacOS Melodink'
-  s.homepage     = 'https://github.com/karelrooted/libmpv'
+  s.summary      = 'LibMPV binaries & custom wrapper used for IOS and MacOS Melodink'
+  s.homepage     = 'https://github.com/gungun974/Melodink'
   s.license      = { :type => 'LGPL-3.0' }
   s.authors      = { 'Gungun974' => 'xfelix974@gmail.com' }
   s.source       = { :path => '.' }
 
-  s.platform = :osx, '10.9'
-  s.source_files = 'Src/**/*.{c,h}'
+  s.platform     = :ios, '12.0'
+  s.source_files = 'Src/**/*.{h,hpp,cpp,c,m,mm}'
 
   s.vendored_frameworks = [
     'Frameworks/Ass.xcframework',
@@ -33,8 +33,8 @@ Pod::Spec.new do |s|
     'Frameworks/Uchardet.xcframework',
     'Frameworks/Xml2.xcframework'
   ]
-
-  s.static_framework = true
+  
+  s.xcconfig = { 'OTHER_LDFLAGS' => '-framework mpv' }
 
   s.libraries = ['bz2', 'xml2', 'iconv', 'z', 'c++']
 
@@ -54,6 +54,8 @@ Pod::Spec.new do |s|
     'DEFINES_MODULE' => 'YES',
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
   }
+
+  s.static_framework = false
 
   s.swift_version = '5.0'
 end

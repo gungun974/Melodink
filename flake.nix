@@ -46,6 +46,7 @@
           platforms-android-31
           platforms-android-28
           system-images-android-34-google-apis-playstore-x86-64
+          ndk-23-1-7779620
         ]);
       pinnedJDK = pkgs.jdk17;
     in {

@@ -28,7 +28,6 @@
 		33CC10F62044A3C60003C045 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 33CC10F42044A3C60003C045 /* MainMenu.xib */; };
 		33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33CC11122044BFA00003C045 /* MainFlutterWindow.swift */; };
 		449F9BA44FFC9E843027CD01 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B5B85186CDA944CEC303FD3 /* Pods_Runner.framework */; };
-		918B4B792C9C47E00054FC5A /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918B4B782C9C47E00054FC5A /* AudioPlayer.swift */; };
 		918B4B7B2C9C481C0054FC5A /* Messages.g.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918B4B7A2C9C481C0054FC5A /* Messages.g.swift */; };
 		B03100115B4F857AE72D4BC4 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C186C467699012C1E5A79FC /* Pods_RunnerTests.framework */; };
 /* End PBXBuildFile section */
@@ -86,7 +85,6 @@
 		78E7852B69D64BC9CCC2EB9B /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		7C186C467699012C1E5A79FC /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		918B4B782C9C47E00054FC5A /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
 		918B4B7A2C9C481C0054FC5A /* Messages.g.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Messages.g.swift; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		9B5B85186CDA944CEC303FD3 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -179,7 +177,6 @@
 		33FAB671232836740065AC1E /* Runner */ = {
 			isa = PBXGroup;
 			children = (
-				918B4B782C9C47E00054FC5A /* AudioPlayer.swift */,
 				33CC10F02044A3C60003C045 /* AppDelegate.swift */,
 				33CC11122044BFA00003C045 /* MainFlutterWindow.swift */,
 				918B4B7A2C9C481C0054FC5A /* Messages.g.swift */,
@@ -446,7 +443,6 @@
 				33CC11132044BFA00003C045 /* MainFlutterWindow.swift in Sources */,
 				33CC10F12044A3C60003C045 /* AppDelegate.swift in Sources */,
 				335BBD1B22A9A15E00E9071D /* GeneratedPluginRegistrant.swift in Sources */,
-				918B4B792C9C47E00054FC5A /* AudioPlayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

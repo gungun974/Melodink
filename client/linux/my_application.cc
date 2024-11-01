@@ -8,8 +8,6 @@
 #include "flutter/generated_plugin_registrant.h"
 #include "messages.g.h"
 
-#include "player.cc"
-
 #include <iostream>
 #include <string>
 #include <vector>
@@ -17,134 +15,9 @@
 struct _MyApplication {
   GtkApplication parent_instance;
   char **dart_entrypoint_arguments;
-
-  AudioPlayer *player;
-
-  PigeonMelodinkMelodinkHostPlayerApiInfo *flutter_api;
 };
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
-
-std::vector<const char *> fl_value_to_vector_string(FlValue *fl_value) {
-  std::vector<const char *> result;
-
-  if (fl_value_get_type(fl_value) == FL_VALUE_TYPE_LIST) {
-    gsize list_length = fl_value_get_length(fl_value);
-
-    for (gsize i = 0; i < list_length; i++) {
-      FlValue *item = fl_value_get_list_value(fl_value, i);
-
-      if (fl_value_get_type(item) == FL_VALUE_TYPE_STRING) {
-        const gchar *str = fl_value_get_string(item);
-        result.push_back(str);
-      }
-    }
-  }
-
-  return result;
-}
-
-static PigeonMelodinkMelodinkHostPlayerApiPlayResponse *
-handle_play(gpointer user_data) {
-  MyApplication *app = MY_APPLICATION(user_data);
-
-  app->player->play();
-
-  return pigeon_melodink_melodink_host_player_api_play_response_new();
-}
-
-static PigeonMelodinkMelodinkHostPlayerApiPauseResponse *
-handle_pause(gpointer user_data) {
-  MyApplication *app = MY_APPLICATION(user_data);
-
-  app->player->pause();
-
-  return pigeon_melodink_melodink_host_player_api_pause_response_new();
-}
-
-static PigeonMelodinkMelodinkHostPlayerApiSeekResponse *
-handle_seek(int64_t position_ms, gpointer user_data) {
-  MyApplication *app = MY_APPLICATION(user_data);
-
-  app->player->seek(position_ms);
-
-  return pigeon_melodink_melodink_host_player_api_seek_response_new();
-}
-
-static PigeonMelodinkMelodinkHostPlayerApiSkipToPreviousResponse *
-handle_skip_to_previous(gpointer user_data) {
-  MyApplication *app = MY_APPLICATION(user_data);
-
-  app->player->prev();
-
-  return pigeon_melodink_melodink_host_player_api_skip_to_previous_response_new();
-}
-
-static PigeonMelodinkMelodinkHostPlayerApiSkipToNextResponse *
-handle_skip_to_next(gpointer user_data) {
-  MyApplication *app = MY_APPLICATION(user_data);
-
-  app->player->next();
-
-  return pigeon_melodink_melodink_host_player_api_skip_to_next_response_new();
-}
-
-static PigeonMelodinkMelodinkHostPlayerApiSetAudiosResponse *
-handle_set_audios(FlValue *previous_urls, FlValue *next_urls,
-                  gpointer user_data) {
-  MyApplication *app = MY_APPLICATION(user_data);
-
-  app->player->set_audios(fl_value_to_vector_string(previous_urls),
-                          fl_value_to_vector_string(next_urls));
-
-  return pigeon_melodink_melodink_host_player_api_set_audios_response_new();
-}
-
-static PigeonMelodinkMelodinkHostPlayerApiSetLoopModeResponse *
-handle_set_loop_mode(PigeonMelodinkMelodinkHostPlayerLoopMode loop,
-                     gpointer user_data) {
-  MyApplication *app = MY_APPLICATION(user_data);
-
-  app->player->set_loop_mode(loop);
-
-  return pigeon_melodink_melodink_host_player_api_set_loop_mode_response_new();
-}
-
-static PigeonMelodinkMelodinkHostPlayerApiFetchStatusResponse *
-handle_fetch_status(gpointer user_data) {
-  MyApplication *app = MY_APPLICATION(user_data);
-
-  return pigeon_melodink_melodink_host_player_api_fetch_status_response_new(
-      pigeon_melodink_player_status_new(
-          app->player->get_current_playing(),
-          app->player->get_current_track_pos(),
-          app->player->get_current_position(),
-          app->player->get_current_buffered_position(),
-          app->player->get_current_player_state(),
-          app->player->get_current_loop_mode()));
-}
-
-static PigeonMelodinkMelodinkHostPlayerApiSetAuthTokenResponse *
-handle_set_auth_token(const gchar *auth_token, gpointer user_data) {
-  MyApplication *app = MY_APPLICATION(user_data);
-
-  app->player->set_auth_token(auth_token);
-
-  return pigeon_melodink_melodink_host_player_api_set_auth_token_response_new();
-}
-
-static PigeonMelodinkMelodinkHostPlayerApiVTable
-    melodink_host_player_api_vtable = {
-        .play = handle_play,
-        .pause = handle_pause,
-        .seek = handle_seek,
-        .skip_to_next = handle_skip_to_next,
-        .skip_to_previous = handle_skip_to_previous,
-        .set_audios = handle_set_audios,
-        .set_loop_mode = handle_set_loop_mode,
-        .fetch_status = handle_fetch_status,
-        .set_auth_token = handle_set_auth_token,
-};
 
 // Implements GApplication::activate.
 static void my_application_activate(GApplication *application) {
@@ -190,19 +63,11 @@ static void my_application_activate(GApplication *application) {
   gtk_widget_show(GTK_WIDGET(view));
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(view));
 
-  FlBinaryMessenger *messenger =
-      fl_engine_get_binary_messenger(fl_view_get_engine(view));
-  pigeon_melodink_melodink_host_player_api_set_method_handlers(
-      messenger, nullptr, &melodink_host_player_api_vtable, self, nullptr);
-
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
 
   gtk_widget_grab_focus(GTK_WIDGET(view));
 
-  self->flutter_api =
-      pigeon_melodink_melodink_host_player_api_info_new(messenger, nullptr);
-
-  self->player = new AudioPlayer(self->flutter_api);
+  setlocale(LC_NUMERIC, "C");
 }
 
 // Implements GApplication::local_command_line.
@@ -248,7 +113,6 @@ static void my_application_shutdown(GApplication *application) {
 static void my_application_dispose(GObject *object) {
   MyApplication *self = MY_APPLICATION(object);
   g_clear_pointer(&self->dart_entrypoint_arguments, g_strfreev);
-  delete self->player;
   G_OBJECT_CLASS(my_application_parent_class)->dispose(object);
 }
 
