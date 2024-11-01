@@ -1,65 +1,111 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/routes/provider.dart';
 
-class MobileNavbar extends StatelessWidget {
+class MobileNavbar extends ConsumerWidget {
   const MobileNavbar({
     super.key,
   });
 
   @override
-  Widget build(BuildContext context) {
-    int currentIndex = 0;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUrl = ref.watch(appRouterCurrentUrl);
 
-    return BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: AdwaitaIcon(
-            AdwaitaIcons.heart_outline_thick,
+    return BottomAppBar(
+      color: Colors.black87,
+      height: 56,
+      child: Row(
+        children: [
+          MobileNavbarItem(
+            label: 'Search',
+            icon: const AdwaitaIcon(
+              AdwaitaIcons.system_search,
+              size: 24,
+            ),
+            onTap: () {
+              GoRouter.of(context).go("/track");
+            },
+            active: currentUrl == "/track",
           ),
-          label: 'Liked songs',
-        ),
-        BottomNavigationBarItem(
-          icon: AdwaitaIcon(
-            AdwaitaIcons.system_search,
+          MobileNavbarItem(
+            label: 'Library',
+            icon: const AdwaitaIcon(
+              AdwaitaIcons.library_music,
+              size: 24,
+            ),
+            onTap: () {
+              GoRouter.of(context).go("/album");
+            },
+            active: currentUrl == "/album",
           ),
-          label: 'Search',
-        ),
-        BottomNavigationBarItem(
-          icon: AdwaitaIcon(
-            AdwaitaIcons.library_music,
+          MobileNavbarItem(
+            label: 'Settings',
+            icon: const AdwaitaIcon(
+              AdwaitaIcons.gear,
+              size: 24,
+            ),
+            onTap: () {
+              GoRouter.of(context).go("/settings");
+            },
+            active: currentUrl == "/settings",
           ),
-          label: 'Library',
-        ),
-        BottomNavigationBarItem(
-          icon: AdwaitaIcon(
-            AdwaitaIcons.gear,
+        ],
+      ),
+    );
+  }
+}
+
+class MobileNavbarItem extends StatelessWidget {
+  final String label;
+
+  final Widget icon;
+
+  final GestureTapCallback? onTap;
+
+  final bool active;
+
+  const MobileNavbarItem({
+    super.key,
+    required this.label,
+    required this.icon,
+    this.onTap,
+    this.active = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active ? Theme.of(context).colorScheme.primary : Colors.white;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          color: Colors.transparent,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconTheme(
+                data: IconThemeData(
+                  color: color,
+                ),
+                child: icon,
+              ),
+              const SizedBox(height: 3.0),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: color,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: 13 * 0.03,
+                ),
+              ),
+            ],
           ),
-          label: 'Settings',
         ),
-      ],
-      currentIndex: currentIndex,
-      selectedFontSize: 13.0,
-      selectedItemColor: Theme.of(context).colorScheme.primary,
-      unselectedFontSize: 13.0,
-      backgroundColor: Colors.black87,
-      type: BottomNavigationBarType.fixed,
-      onTap: (int index) {
-        switch (index) {
-          case 0:
-            GoRouter.of(context).go("/liked");
-            break;
-          case 1:
-            GoRouter.of(context).go("/track");
-            break;
-          case 2:
-            GoRouter.of(context).go("/album");
-            break;
-          case 3:
-            GoRouter.of(context).go("/settings");
-            break;
-        }
-      },
+      ),
     );
   }
 }
