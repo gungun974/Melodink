@@ -175,7 +175,7 @@ class MobileTrack extends HookConsumerWidget {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const Spacer(),
                                 Row(
                                   children: [
                                     if (downloadedTrack != null)
