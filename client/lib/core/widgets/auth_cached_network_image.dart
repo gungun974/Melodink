@@ -210,6 +210,7 @@ class AuthCachedNetworkImage extends StatelessWidget {
       image: imageProvider,
       height: height,
       width: width,
+      fit: BoxFit.fitHeight,
       errorBuilder: localErrorWidget != null
           ? (BuildContext context, Object error, StackTrace? stackTrace) {
               return SizedBox(

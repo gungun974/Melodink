@@ -62,7 +62,7 @@ class MobilePlayerPage extends ConsumerWidget {
                             precacheImage(
                                 AppImageCacheProvider(
                                     track.getCompressedCoverUri(
-                                  TrackCompressedCoverQuality.small,
+                                  TrackCompressedCoverQuality.high,
                                 )),
                                 context);
                           },
@@ -73,7 +73,7 @@ class MobilePlayerPage extends ConsumerWidget {
                             precacheImage(
                                 AppImageCacheProvider(
                                     track.getCompressedCoverUri(
-                                  TrackCompressedCoverQuality.small,
+                                  TrackCompressedCoverQuality.high,
                                 )),
                                 context);
                           },
@@ -115,7 +115,7 @@ class MobilePlayerPage extends ConsumerWidget {
                               image = AuthCachedNetworkImage(
                                 imageUrl: downloadedTrack?.getCoverUrl() ??
                                     currentTrack.getCompressedCoverUrl(
-                                      TrackCompressedCoverQuality.small,
+                                      TrackCompressedCoverQuality.high,
                                     ),
                                 placeholder: (context, url) => Image.asset(
                                   "assets/melodink_track_cover_not_found.png",
