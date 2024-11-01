@@ -24,11 +24,6 @@ class TracksPage extends HookConsumerWidget {
 
     final tracks = asyncTracks.valueOrNull;
 
-    final searchTextController =
-        useTextEditingController(text: ref.watch(allTracksSearchInputProvider));
-
-    final showFilterPanel = useState(false);
-
     final scrollController = useScrollController();
 
     if (tracks == null) {
@@ -51,92 +46,22 @@ class TracksPage extends HookConsumerWidget {
 
           return Column(
             children: [
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: padding,
-                  vertical: 16,
+              if (size == AppScreenTypeLayout.desktop)
+                TracksPageSearchAndFilterHeader(
+                  maxWidth: maxWidth,
+                  padding: padding,
                 ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        AppButton(
-                          text: "Filter",
-                          type: showFilterPanel.value
-                              ? AppButtonType.primary
-                              : AppButtonType.neutral,
-                          onPressed: () {
-                            if (showFilterPanel.value) {
-                              ref
-                                  .read(allTracksArtistsSelectedOptionsProvider
-                                      .notifier)
-                                  .state = [];
-
-                              ref
-                                  .read(allTracksAlbumsSelectedOptionsProvider
-                                      .notifier)
-                                  .state = [];
-                            }
-
-                            showFilterPanel.value = !showFilterPanel.value;
-                          },
-                        ),
-                        const SizedBox(width: 16),
-                        AppButton(
-                          text: "View All",
-                          type: AppButtonType.primary,
-                          onPressed: () {
-                            searchTextController.clear();
-
-                            ref
-                                .read(allTracksSearchInputProvider.notifier)
-                                .state = "";
-
-                            ref
-                                .read(allTracksArtistsSelectedOptionsProvider
-                                    .notifier)
-                                .state = [];
-
-                            ref
-                                .read(allTracksAlbumsSelectedOptionsProvider
-                                    .notifier)
-                                .state = [];
-                          },
-                        ),
-                        const SizedBox(width: 16),
-                        const AppButton(
-                          text: "Import",
-                          type: AppButtonType.primary,
-                        ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: AppTextFormField(
-                            labelText: "Search",
-                            prefixIcon: const AdwaitaIcon(
-                              size: 20,
-                              AdwaitaIcons.system_search,
-                            ),
-                            controller: searchTextController,
-                            onChanged: (value) => ref
-                                .read(allTracksSearchInputProvider.notifier)
-                                .state = value,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (showFilterPanel.value)
-                      MaxContainer(
-                        maxWidth: maxWidth,
-                        padding: EdgeInsets.zero,
-                        child: const AllTrackFilterPanel(),
-                      ),
-                  ],
-                ),
-              ),
               Expanded(
                 child: CustomScrollView(
                   controller: scrollController,
                   slivers: [
+                    if (size == AppScreenTypeLayout.mobile)
+                      SliverToBoxAdapter(
+                        child: TracksPageSearchAndFilterHeader(
+                          maxWidth: maxWidth,
+                          padding: padding,
+                        ),
+                      ),
                     SliverContainer(
                       maxWidth: maxWidth,
                       padding: EdgeInsets.only(
@@ -193,6 +118,120 @@ class TracksPage extends HookConsumerWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class TracksPageSearchAndFilterHeader extends HookConsumerWidget {
+  const TracksPageSearchAndFilterHeader({
+    super.key,
+    required this.maxWidth,
+    required this.padding,
+  });
+
+  final int maxWidth;
+  final double padding;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final searchTextController =
+        useTextEditingController(text: ref.watch(allTracksSearchInputProvider));
+
+    final showFilterPanel = useState(false);
+
+    return AppScreenTypeLayoutBuilder(
+      builder: (context, size) {
+        final searchField = AppTextFormField(
+          labelText: "Search",
+          prefixIcon: const AdwaitaIcon(
+            size: 20,
+            AdwaitaIcons.system_search,
+          ),
+          controller: searchTextController,
+          onChanged: (value) =>
+              ref.read(allTracksSearchInputProvider.notifier).state = value,
+        );
+
+        return Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: padding,
+            vertical: 16,
+          ),
+          child: Column(
+            children: [
+              if (size == AppScreenTypeLayout.mobile)
+                if (size == AppScreenTypeLayout.mobile) searchField,
+              if (size == AppScreenTypeLayout.mobile)
+                const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: size == AppScreenTypeLayout.mobile
+                    ? MainAxisAlignment.spaceBetween
+                    : MainAxisAlignment.start,
+                children: [
+                  AppButton(
+                    text: "Filter",
+                    type: showFilterPanel.value
+                        ? AppButtonType.primary
+                        : AppButtonType.neutral,
+                    onPressed: () {
+                      if (showFilterPanel.value) {
+                        ref
+                            .read(allTracksArtistsSelectedOptionsProvider
+                                .notifier)
+                            .state = [];
+
+                        ref
+                            .read(
+                                allTracksAlbumsSelectedOptionsProvider.notifier)
+                            .state = [];
+                      }
+
+                      showFilterPanel.value = !showFilterPanel.value;
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  AppButton(
+                    text: "View All",
+                    type: AppButtonType.primary,
+                    onPressed: () {
+                      searchTextController.clear();
+
+                      ref.read(allTracksSearchInputProvider.notifier).state =
+                          "";
+
+                      ref
+                          .read(
+                              allTracksArtistsSelectedOptionsProvider.notifier)
+                          .state = [];
+
+                      ref
+                          .read(allTracksAlbumsSelectedOptionsProvider.notifier)
+                          .state = [];
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  const AppButton(
+                    text: "Import",
+                    type: AppButtonType.primary,
+                  ),
+                  if (size == AppScreenTypeLayout.desktop)
+                    const SizedBox(width: 24),
+                  if (size == AppScreenTypeLayout.desktop)
+                    Expanded(
+                      child: searchField,
+                    ),
+                ],
+              ),
+              if (showFilterPanel.value)
+                MaxContainer(
+                  maxWidth: maxWidth,
+                  padding: EdgeInsets.zero,
+                  child: const AllTrackFilterPanel(),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
