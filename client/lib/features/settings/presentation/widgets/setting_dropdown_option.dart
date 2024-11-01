@@ -24,10 +24,12 @@ class SettingDropdownOption<T> extends StatelessWidget {
       children: [
         Text(
           text,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             fontWeight: FontWeight.w300,
-            fontSize: 16,
-            letterSpacing: 16 * 0.04,
+            fontSize: 15,
+            letterSpacing: 15 * 0.04,
           ),
         ),
         const SizedBox(width: 8),

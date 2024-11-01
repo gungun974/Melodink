@@ -75,7 +75,7 @@ class SettingsPage extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const Divider(height: 24),
                       SettingDropdownOption(
                         text: "Desktop Player bar position :",
                         value: settings.playerBarPosition,
@@ -122,7 +122,7 @@ class SettingsPage extends ConsumerWidget {
                               );
                         },
                       ),
-                      const SizedBox(height: 8),
+                      const Divider(height: 24),
                       SettingToggleOption(
                         text: "Keep last playing list across restarts :",
                         value: settings.keepLastPlayingListAcrossRestarts,
@@ -136,7 +136,7 @@ class SettingsPage extends ConsumerWidget {
                               );
                         },
                       ),
-                      const SizedBox(height: 8),
+                      const Divider(height: 24),
                       SettingToggleOption(
                         text: "Auto scroll view to current track :",
                         value: settings.autoScrollViewToCurrentTrack,
@@ -169,7 +169,7 @@ class SettingsPage extends ConsumerWidget {
                               );
                         },
                       ),
-                      const SizedBox(height: 8),
+                      const Divider(height: 24),
                       SettingToggleOption(
                         text: "Share all history tracking to server :",
                         value: settings.shareAllHistoryTrackingToServer,
@@ -194,7 +194,7 @@ class SettingsPage extends ConsumerWidget {
                         action: "Download",
                         onPressed: () {},
                       ),
-                      const SizedBox(height: 8),
+                      const Divider(height: 0),
                       SettingButtonOption(
                         text: "Remove all offline tracks :",
                         action: "Remove all",

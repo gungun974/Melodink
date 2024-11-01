@@ -21,15 +21,19 @@ class SettingButtonOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(
-          text,
-          style: const TextStyle(
-            fontWeight: FontWeight.w300,
-            fontSize: 16,
-            letterSpacing: 16 * 0.04,
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontWeight: FontWeight.w300,
+              fontSize: 15,
+              letterSpacing: 15 * 0.04,
+            ),
           ),
         ),
-        const Spacer(),
+        const SizedBox(width: 8),
         TextButton(
           onPressed: onPressed,
           style: const ButtonStyle(
