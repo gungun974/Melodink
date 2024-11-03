@@ -8,6 +8,7 @@ import (
 	artist_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/artist"
 	config_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/config"
 	playlist_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/playlist"
+	shared_played_track_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/shared_played_track"
 	track_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/track"
 	user_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/user"
 	"github.com/gungun974/Melodink/server/internal/layers/presentation/controller"
@@ -18,12 +19,13 @@ import (
 type Container struct {
 	ConfigRepository repository.ConfigRepository
 
-	ConfigController   controller.ConfigController
-	UserController     controller.UserController
-	TrackController    controller.TrackController
-	PlaylistController controller.PlaylistController
-	AlbumController    controller.AlbumController
-	ArtistController   controller.ArtistController
+	ConfigController            controller.ConfigController
+	UserController              controller.UserController
+	TrackController             controller.TrackController
+	PlaylistController          controller.PlaylistController
+	AlbumController             controller.AlbumController
+	ArtistController            controller.ArtistController
+	SharedPlayedTrackController controller.SharedPlayedTrackController
 }
 
 func NewContainer(db *sqlx.DB) Container {
@@ -38,6 +40,7 @@ func NewContainer(db *sqlx.DB) Container {
 	playlistRepository := repository.NewPlaylistRepository(db, trackRepository)
 	albumRepository := repository.NewAlbumRepository(db, trackRepository)
 	artistRepository := repository.NewArtistRepository(db, trackRepository, albumRepository)
+	sharedPlayedTrackRepository := repository.NewSharedPlayedTrackRepository(db)
 
 	//! Storage
 
@@ -56,6 +59,7 @@ func NewContainer(db *sqlx.DB) Container {
 	playlistPresenter := presenter.NewPlaylistPresenter()
 	albumPresenter := presenter.NewAlbumPresenter()
 	artistPresenter := presenter.NewArtistPresenter()
+	sharedPlayedTrackPresenter := presenter.NewSharedPlayedTrackPresenter()
 
 	//! Usecase
 
@@ -93,6 +97,11 @@ func NewContainer(db *sqlx.DB) Container {
 		artistPresenter,
 	)
 
+	sharedPlayedTrackUsecase := shared_played_track_usecase.NewSharedPlayedTrackUsecase(
+		sharedPlayedTrackRepository,
+		sharedPlayedTrackPresenter,
+	)
+
 	//! Controller
 
 	container.ConfigController = controller.NewConfigController(configUsecase)
@@ -101,6 +110,9 @@ func NewContainer(db *sqlx.DB) Container {
 	container.PlaylistController = controller.NewPlaylistController(playlistUsecase)
 	container.AlbumController = controller.NewAlbumController(albumUsecase)
 	container.ArtistController = controller.NewArtistController(artistUsecase)
+	container.SharedPlayedTrackController = controller.NewSharedPlayedTrackController(
+		sharedPlayedTrackUsecase,
+	)
 
 	return container
 }

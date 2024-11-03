@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/logger/logger.dart';
+import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
 import 'package:melodink_client/features/tracker/domain/entities/played_track.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -22,17 +23,30 @@ class PlayedTrackRepository {
   Future<List<PlayedTrack>> getLastPlayedTracks() async {
     final db = await DatabaseService.getDatabase();
 
-    final data = await db.rawQuery("""
-      SELECT *
-      FROM (
-        SELECT *,
-              LAG(track_id) OVER (ORDER BY rowid) AS prev_track_id
-        FROM played_tracks
-      ) AS ranked_tracks
-      WHERE track_id != prev_track_id OR prev_track_id IS NULL;
-      """, []);
+    final deviceId = await SettingsRepository().getDeviceId();
 
     try {
+      final data = await db.rawQuery("""
+        SELECT *
+        FROM (
+          SELECT *,
+                LAG(track_id) OVER (
+                  ORDER BY finish_at ASC
+                ) AS prev_track_id
+          FROM (
+            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended
+            FROM played_tracks
+
+            UNION ALL
+
+            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended
+            FROM shared_played_tracks
+            WHERE device_id != ?
+          )
+        ) AS ranked_tracks
+        WHERE track_id != prev_track_id OR prev_track_id IS NULL;
+      """, [deviceId]);
+
       return data.map(PlayedTrackRepository.decodePlayedTrack).toList();
     } catch (e) {
       databaseLogger.e(e);
@@ -43,15 +57,30 @@ class PlayedTrackRepository {
   Future<PlayedTrack?> getLastFinishedPlayedTrackByTrackId(int trackId) async {
     final db = await DatabaseService.getDatabase();
 
-    final data = await db.rawQuery(
-        "SELECT * FROM played_tracks WHERE track_id = ? AND track_ended = 1 ORDER BY finish_at DESC LIMIT 1",
-        [trackId]);
-
-    if (data.firstOrNull == null) {
-      return null;
-    }
+    final deviceId = await SettingsRepository().getDeviceId();
 
     try {
+      final data = await db.rawQuery("""
+        SELECT * FROM (
+            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended 
+            FROM played_tracks 
+            
+            UNION ALL 
+            
+            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended 
+            FROM shared_played_tracks
+            WHERE device_id != ?
+        ) 
+        WHERE track_id = ? 
+            AND track_ended = 1 
+        ORDER BY finish_at DESC 
+        LIMIT 1
+        """, [deviceId, trackId]);
+
+      if (data.firstOrNull == null) {
+        return null;
+      }
+
       return PlayedTrackRepository.decodePlayedTrack(data.first);
     } catch (e) {
       databaseLogger.e(e);
@@ -62,15 +91,21 @@ class PlayedTrackRepository {
   Future<int> getTrackPlayedCountByTrackId(int trackId) async {
     final db = await DatabaseService.getDatabase();
 
-    final data = await db.rawQuery(
-        "SELECT COUNT(*) FROM played_tracks WHERE track_id = ? AND track_ended = 1",
-        [trackId]);
-
-    if (data.firstOrNull == null) {
-      return 0;
-    }
+    final deviceId = await SettingsRepository().getDeviceId();
 
     try {
+      final data = await db.rawQuery("""
+        SELECT (
+            SELECT COUNT(*) FROM played_tracks WHERE track_id = ? AND track_ended = 1
+        ) + (
+            SELECT COUNT(*) FROM shared_played_tracks WHERE track_id = ? AND track_ended = 1 AND device_id != ?
+        ) as total_plays;
+        """, [trackId, trackId, deviceId]);
+
+      if (data.firstOrNull == null) {
+        return 0;
+      }
+
       return Sqflite.firstIntValue(data)!;
     } catch (e) {
       databaseLogger.e(e);

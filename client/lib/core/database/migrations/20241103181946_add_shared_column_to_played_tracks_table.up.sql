@@ -1,0 +1,2 @@
+ALTER TABLE played_tracks
+ADD shared INTEGER DEFAULT 0 NOT NULL
