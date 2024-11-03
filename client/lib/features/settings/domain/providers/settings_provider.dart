@@ -45,3 +45,10 @@ AppSettingPlayerBarPosition currentPlayerBarPosition(
 
   return currentSettings.playerBarPosition;
 }
+
+@riverpod
+Future<String> deviceId(
+  DeviceIdRef ref,
+) {
+  return SettingsRepository().getDeviceId();
+}

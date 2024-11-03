@@ -1,5 +1,8 @@
+import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+import 'package:uuid/v4.dart';
 
 class SettingsRepository {
   SettingsRepository._privateConstructor();
@@ -90,5 +93,44 @@ class SettingsRepository {
       "settingShareAllHistoryTrackingToServer",
       settings.shareAllHistoryTrackingToServer,
     );
+  }
+
+  Future<String> getDeviceId() async {
+    final deviceId = await getConfigString("DEVICE_ID");
+
+    if (deviceId != null) {
+      return deviceId;
+    }
+
+    const uuid = Uuid();
+
+    final newDeviceId = uuid.v4();
+
+    await setConfigString("DEVICE_ID", newDeviceId);
+
+    return newDeviceId;
+  }
+
+  Future<void> setConfigString(String key, String value) async {
+    final db = await DatabaseService.getDatabase();
+
+    await db.rawInsert("""
+       INSERT OR REPLACE INTO config (key, value)
+       VALUES (?, ?);
+    """, [key, value]);
+  }
+
+  Future<String?> getConfigString(String key) async {
+    final db = await DatabaseService.getDatabase();
+
+    final result = await db.rawQuery("""
+       SELECT value FROM config WHERE key = ?;
+    """, [key]);
+
+    if (result.isEmpty) {
+      return null;
+    }
+
+    return result.first["value"] as String;
   }
 }
