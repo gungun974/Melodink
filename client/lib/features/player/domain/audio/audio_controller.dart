@@ -565,7 +565,10 @@ class AudioController extends BaseAudioHandler
 
       final pos = player.getCurrentTrackPos();
 
-      await _updatePlaylistTracks(pos, updatePlayerTracks: false);
+      await _updatePlaylistTracks(
+        pos,
+        updatePlayerTracks: pos != _previousTracks.length - 1,
+      );
     });
   }
 
