@@ -19,7 +19,8 @@ func (s SharedPlayedTrackModels) ToSharedPlayedTracks() []entities.SharedPlayedT
 }
 
 type SharedPlayedTrackModel struct {
-	Id int `db:"id"`
+	Id               int `db:"id"`
+	InternalDeviceId int `db:"internal_device_id"`
 
 	UserId   int    `db:"user_id"`
 	DeviceId string `db:"device_id"`
@@ -40,7 +41,8 @@ type SharedPlayedTrackModel struct {
 
 func (m *SharedPlayedTrackModel) ToSharedPlayedTrack() entities.SharedPlayedTrack {
 	return entities.SharedPlayedTrack{
-		Id: m.Id,
+		Id:               m.Id,
+		InternalDeviceId: m.InternalDeviceId,
 
 		UserId:   m.UserId,
 		DeviceId: m.DeviceId,

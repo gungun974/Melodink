@@ -12,6 +12,8 @@ import (
 )
 
 type UploadPlayedTrackParams struct {
+	InternalDeviceId int
+
 	DeviceId string
 
 	TrackId int
@@ -37,6 +39,8 @@ func (u *SharedPlayedTrackUsecase) UploadPlayedTrack(
 	}
 
 	newSharedPlayedTrack := entities.SharedPlayedTrack{
+		InternalDeviceId: params.InternalDeviceId,
+
 		UserId: user.Id,
 
 		DeviceId: params.DeviceId,

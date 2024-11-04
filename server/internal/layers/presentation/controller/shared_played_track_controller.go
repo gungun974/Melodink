@@ -43,6 +43,17 @@ func (c *SharedPlayedTrackController) UploadPlayedTrack(
 	ctx context.Context,
 	bodyData map[string]any,
 ) (models.APIResponse, error) {
+	internalDeviceId, err := validator.ValidateMapInt(
+		"internal_device_id",
+		bodyData,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
 	deviceId, err := validator.ValidateMapString(
 		"device_id",
 		bodyData,
@@ -136,6 +147,8 @@ func (c *SharedPlayedTrackController) UploadPlayedTrack(
 	return c.sharedPlayedTrackUsecase.UploadPlayedTrack(
 		ctx,
 		shared_played_track_usecase.UploadPlayedTrackParams{
+			InternalDeviceId: internalDeviceId,
+
 			DeviceId: deviceId,
 
 			TrackId: trackId,

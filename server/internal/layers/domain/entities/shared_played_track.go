@@ -5,7 +5,8 @@ import (
 )
 
 type SharedPlayedTrack struct {
-	Id int
+	Id               int
+	InternalDeviceId int
 
 	UserId   int
 	DeviceId string

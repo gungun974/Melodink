@@ -7,7 +7,8 @@ import (
 )
 
 type SharedPlayedTrackViewModel struct {
-	Id int `json:"id"`
+	Id               int `json:"id"`
+	InternalDeviceId int `json:"internal_device_id"`
 
 	UserId   int    `json:"user_id"`
 	DeviceId string `json:"device_id"`
@@ -31,7 +32,8 @@ func ConvertToSharedPlayedTrackViewModel(
 	playedTrack entities.SharedPlayedTrack,
 ) SharedPlayedTrackViewModel {
 	return SharedPlayedTrackViewModel{
-		Id: playedTrack.Id,
+		Id:               playedTrack.Id,
+		InternalDeviceId: playedTrack.InternalDeviceId,
 
 		UserId:   playedTrack.UserId,
 		DeviceId: playedTrack.DeviceId,

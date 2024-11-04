@@ -1,5 +1,6 @@
 class SharedPlayedTrackModel {
   final int id;
+  final int internalDeviceId;
 
   final String deviceId;
 
@@ -19,6 +20,7 @@ class SharedPlayedTrackModel {
 
   const SharedPlayedTrackModel({
     required this.id,
+    required this.internalDeviceId,
     required this.deviceId,
     required this.trackId,
     required this.startAt,
@@ -33,6 +35,7 @@ class SharedPlayedTrackModel {
   factory SharedPlayedTrackModel.fromJson(Map<String, dynamic> json) {
     return SharedPlayedTrackModel(
       id: json['id'] as int,
+      internalDeviceId: json['internal_device_id'] as int,
       deviceId: json['device_id'] as String,
       trackId: json['track_id'] as int,
       startAt: DateTime.parse(json['start_at'] as String),

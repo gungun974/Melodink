@@ -42,6 +42,7 @@ class SyncSharedPlayedTrackRepository {
           "shared_played_tracks",
           {
             "id": sharedPlayedTrack.id,
+            "internal_device_id": sharedPlayedTrack.internalDeviceId,
             "track_id": sharedPlayedTrack.trackId,
             "device_id": sharedPlayedTrack.deviceId,
             "start_at": sharedPlayedTrack.startAt.millisecondsSinceEpoch,
@@ -75,8 +76,12 @@ class SyncSharedPlayedTrackRepository {
     final data = await db.rawQuery("""
       SELECT *
       FROM played_tracks
-      WHERE shared = 0;
-      """);
+      WHERE id NOT IN (
+          SELECT internal_device_id 
+          FROM shared_played_tracks 
+          WHERE device_id = ?
+      )
+      """, [deviceId]);
 
     final playedTracks =
         data.map(PlayedTrackRepository.decodePlayedTrack).toList();
@@ -84,6 +89,7 @@ class SyncSharedPlayedTrackRepository {
     for (var playedTrack in playedTracks) {
       try {
         await AppApi().dio.post("/sharedPlayedTrack/upload", data: {
+          "internal_device_id": playedTrack.id,
           "track_id": playedTrack.trackId,
           "device_id": deviceId,
           "start_at": playedTrack.startAt.toUtc().toIso8601String(),
@@ -93,15 +99,6 @@ class SyncSharedPlayedTrackRepository {
           "shuffle": playedTrack.shuffle,
           "track_ended": playedTrack.trackEnded,
         });
-
-        await db.update(
-          "played_tracks",
-          {
-            "shared": 1,
-          },
-          where: "id = ?",
-          whereArgs: [playedTrack.id],
-        );
       } on DioException catch (e) {
         final response = e.response;
         if (response == null) {

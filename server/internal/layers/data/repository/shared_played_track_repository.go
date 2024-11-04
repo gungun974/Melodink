@@ -42,8 +42,47 @@ func (r *SharedPlayedTrackRepository) AddSharedPlayedTrack(
 	err := r.Database.Get(
 		&m,
 		`
-    INSERT INTO shared_played_tracks
+    UPDATE shared_played_tracks
+    SET 
+        user_id = ?,
+        track_id = ?,
+        start_at = ?,
+        finish_at = ?,
+        begin_at = ?,
+        ended_at = ?,
+        shuffle = ?,
+        track_ended = ?
+    WHERE internal_device_id = ? AND device_id = ?
+    RETURNING *;
+  `,
+		playedTrack.UserId,
+
+		playedTrack.TrackId,
+
+		playedTrack.StartAt,
+		playedTrack.FinishAt,
+
+		playedTrack.BeginAt,
+		playedTrack.EndedAt,
+
+		playedTrack.Shuffle,
+		playedTrack.TrackEnded,
+
+		playedTrack.InternalDeviceId,
+		playedTrack.DeviceId,
+	)
+	if err == nil {
+		*playedTrack = m.ToSharedPlayedTrack()
+
+		return nil
+	}
+
+	err = r.Database.Get(
+		&m,
+		`
+    INSERT OR REPLACE INTO shared_played_tracks
       (
+        internal_device_id,
         user_id,
         device_id,
 
@@ -68,10 +107,13 @@ func (r *SharedPlayedTrackRepository) AddSharedPlayedTrack(
         ?,
         ?,
         ?,
+        ?,
         ?
       )
     RETURNING *
   `,
+		playedTrack.InternalDeviceId,
+
 		playedTrack.UserId,
 		playedTrack.DeviceId,
 
