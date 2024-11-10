@@ -102,6 +102,7 @@
 
           fakeRootCommands = ''
             mkdir -p data
+            mkdir -m 0777 tmp
           '';
         };
 
