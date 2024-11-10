@@ -152,7 +152,17 @@ class DatabaseService {
         hasStartedMigration = true;
         try {
           await database.transaction((txn) async {
-            await txn.execute(await rootBundle.loadString(migrationFile.path));
+            final rawQueries = await rootBundle.loadString(migrationFile.path);
+
+            List<String> queries = rawQueries
+                .split(';')
+                .map((q) => q.trim())
+                .where((q) => q.isNotEmpty)
+                .toList();
+
+            for (String query in queries) {
+              await txn.execute(query);
+            }
 
             await _setDatabaseVersion(txn, migrationFile.version);
           });
