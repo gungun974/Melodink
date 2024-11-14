@@ -32,25 +32,3 @@ Future<List<MinimalTrack>> lastHistoryTracks(LastHistoryTracksRef ref) async {
 
   return previousTracks;
 }
-
-@riverpod
-Future<DateTime?> lastPlayedTrackDate(
-    LastPlayedTrackDateRef ref, int trackId) async {
-  final playedTrackRepository = ref.read(playedTrackRepositoryProvider);
-
-  final lastPlayed =
-      await playedTrackRepository.getLastFinishedPlayedTrackByTrackId(trackId);
-
-  if (lastPlayed == null) {
-    return null;
-  }
-
-  return lastPlayed.finishAt;
-}
-
-@riverpod
-Future<int> trackPlayedCount(TrackPlayedCountRef ref, int trackId) async {
-  final playedTrackRepository = ref.read(playedTrackRepositoryProvider);
-
-  return await playedTrackRepository.getTrackPlayedCountByTrackId(trackId);
-}

@@ -3,6 +3,8 @@ import 'package:melodink_client/features/library/data/repository/album_repositor
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
+import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
+import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'album_provider.g.dart';
@@ -15,12 +17,42 @@ Future<List<Album>> allAlbums(AllAlbumsRef ref) async {
 }
 
 @riverpod
-Future<Album> albumById(AlbumByIdRef ref, String id) async {
-  final albumRepository = ref.watch(albumRepositoryProvider);
+class AlbumById extends _$AlbumById {
+  late final PlayedTrackRepository _playedTrackRepository;
 
-  final album = await albumRepository.getAlbumById(id);
+  @override
+  Future<Album> build(String id) async {
+    final albumRepository = ref.watch(albumRepositoryProvider);
+    _playedTrackRepository = ref.read(playedTrackRepositoryProvider);
 
-  return album;
+    final manager = ref.read(playerTrackerManagerProvider);
+
+    final subscription = manager.newPlayedTrack.listen((playedTrack) {
+      reloadTrackHistoryInfo(playedTrack.trackId);
+    });
+
+    ref.onDispose(() {
+      subscription.cancel();
+    });
+
+    final album = await albumRepository.getAlbumById(id);
+
+    return album;
+  }
+
+  reloadTrackHistoryInfo(int trackId) async {
+    final info = await _playedTrackRepository.getTrackHistoryInfo(trackId);
+
+    final album = await future;
+
+    final updatedTracks = album.tracks.map((track) {
+      return track.id == trackId
+          ? track.copyWith(historyInfo: () => info)
+          : track;
+    }).toList();
+
+    state = AsyncData(album.copyWith(tracks: updatedTracks));
+  }
 }
 
 class AlbumDownloadState extends Equatable {

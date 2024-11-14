@@ -87,18 +87,6 @@ class DesktopTrack extends HookConsumerWidget {
         )
         .valueOrNull;
 
-    final lastPlayedDate = ref
-        .watch(
-          lastPlayedTrackDateProvider(track.id),
-        )
-        .valueOrNull;
-
-    final trackPlayedCount = ref
-        .watch(
-          trackPlayedCountProvider(track.id),
-        )
-        .valueOrNull;
-
     final trackContextMenuController = useMemoized(() => MenuController());
 
     final tracksContextMenuController = useMemoized(() => MenuController());
@@ -278,9 +266,9 @@ class DesktopTrack extends HookConsumerWidget {
                     SizedBox(
                       width: 96,
                       child: Text(
-                        lastPlayedDate == null
+                        track.historyInfo?.lastPlayedDate == null
                             ? "Never"
-                            : formatTimeago(lastPlayedDate),
+                            : formatTimeago(track.historyInfo!.lastPlayedDate!),
                         style: TextStyle(
                           fontSize: 12,
                           letterSpacing: 14 * 0.03,
@@ -292,7 +280,9 @@ class DesktopTrack extends HookConsumerWidget {
                     SizedBox(
                       width: 40,
                       child: Text(
-                        trackPlayedCount == 0 ? "Never" : "$trackPlayedCount",
+                        track.historyInfo?.playedCount == 0
+                            ? "Never"
+                            : "${track.historyInfo?.playedCount}",
                         style: TextStyle(
                           fontSize: 12,
                           letterSpacing: 14 * 0.03,

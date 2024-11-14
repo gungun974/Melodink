@@ -3,6 +3,7 @@ import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/helpers/double_to_string_without_zero.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
+import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
 
 class MinimalTrack extends Equatable {
   final int id;
@@ -33,6 +34,8 @@ class MinimalTrack extends Equatable {
 
   final DateTime dateAdded;
 
+  final TrackHistoryInfo? historyInfo;
+
   const MinimalTrack({
     required this.id,
     required this.title,
@@ -52,6 +55,7 @@ class MinimalTrack extends Equatable {
     required this.bitRate,
     required this.bitsPerRawSample,
     required this.dateAdded,
+    this.historyInfo,
   });
 
   MinimalTrack copyWith({
@@ -73,6 +77,7 @@ class MinimalTrack extends Equatable {
     int? bitRate,
     int? bitsPerRawSample,
     DateTime? dateAdded,
+    TrackHistoryInfo? Function()? historyInfo,
   }) {
     return MinimalTrack(
       id: id ?? this.id,
@@ -93,6 +98,7 @@ class MinimalTrack extends Equatable {
       bitRate: bitRate ?? this.bitRate,
       bitsPerRawSample: bitsPerRawSample ?? this.bitsPerRawSample,
       dateAdded: dateAdded ?? this.dateAdded,
+      historyInfo: historyInfo != null ? historyInfo() : this.historyInfo,
     );
   }
 
@@ -116,6 +122,7 @@ class MinimalTrack extends Equatable {
         bitRate,
         bitsPerRawSample,
         dateAdded,
+        historyInfo,
       ];
 
   List<MinimalArtist> getVirtualAlbumArtists() {

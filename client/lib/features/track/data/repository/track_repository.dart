@@ -4,6 +4,7 @@ import 'package:melodink_client/features/track/data/datasource/track_local_data_
 import 'package:melodink_client/features/track/data/datasource/track_remote_data_source.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 
 class TrackNotFoundException implements Exception {}
 
@@ -11,28 +12,42 @@ class TrackRepository {
   final TrackRemoteDataSource trackRemoteDataSource;
   final TrackLocalDataSource trackLocalDataSource;
 
+  final PlayedTrackRepository playedTrackRepository;
+
   final NetworkInfo networkInfo;
 
   TrackRepository({
     required this.trackRemoteDataSource,
     required this.trackLocalDataSource,
+    required this.playedTrackRepository,
     required this.networkInfo,
   });
 
   Future<List<MinimalTrack>> getAllTracks() async {
+    List<MinimalTrack> tracks;
+
     if (networkInfo.isServerRecheable()) {
       try {
-        return await trackRemoteDataSource.getAllTracks();
+        tracks = await trackRemoteDataSource.getAllTracks();
       } catch (_) {
-        return await trackLocalDataSource.getAllTracks();
+        tracks = await trackLocalDataSource.getAllTracks();
       }
+    } else {
+      tracks = await trackLocalDataSource.getAllTracks();
     }
 
-    return await trackLocalDataSource.getAllTracks();
+    await playedTrackRepository.loadTrackHistoryIntoMinimalTracks(tracks);
+
+    return tracks;
   }
 
   Future<Track> getTrackById(int id) async {
-    return await trackRemoteDataSource.getTrackById(id);
+    final track = await trackRemoteDataSource.getTrackById(id);
+    final info = await playedTrackRepository.getTrackHistoryInfo(id);
+
+    return track.copyWith(
+      historyInfo: () => info,
+    );
   }
 }
 
@@ -43,6 +58,9 @@ final trackRepositoryProvider = Provider(
     ),
     trackLocalDataSource: ref.watch(
       trackLocalDataSourceProvider,
+    ),
+    playedTrackRepository: ref.watch(
+      playedTrackRepositoryProvider,
     ),
     networkInfo: ref.watch(
       networkInfoProvider,

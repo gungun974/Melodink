@@ -2,15 +2,18 @@ import 'dart:async';
 
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
+import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:melodink_client/features/tracker/data/repository/sync_shared_played_track_repository.dart';
 
 class SharedPlayedTrackerManager {
   Timer? _timer;
   bool _shouldStop = false;
 
+  final PlayedTrackRepository playedTrackRepository;
   final SyncSharedPlayedTrackRepository syncSharedPlayedTrackRepository;
 
   SharedPlayedTrackerManager({
+    required this.playedTrackRepository,
     required this.syncSharedPlayedTrackRepository,
   }) {
     _scheduleSync();
@@ -25,6 +28,12 @@ class SharedPlayedTrackerManager {
 
       try {
         await syncSharedPlayedTrackRepository.fetchSharedPlayedTracks();
+      } catch (e) {
+        mainLogger.e(e);
+      }
+
+      try {
+        await playedTrackRepository.checkAndUpdateAllTrackHistoryCache();
       } catch (e) {
         mainLogger.e(e);
       }

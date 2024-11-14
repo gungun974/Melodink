@@ -1,5 +1,6 @@
 import 'package:melodink_client/features/library/data/models/artist_model.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
 
 class MinimalTrackModel {
   final int id;

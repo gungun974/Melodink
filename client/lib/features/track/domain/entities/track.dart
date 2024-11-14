@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
+import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
 
 class Track extends Equatable {
   final int id;
@@ -22,6 +23,8 @@ class Track extends Equatable {
 
   final DateTime dateAdded;
 
+  final TrackHistoryInfo? historyInfo;
+
   const Track({
     required this.id,
     required this.title,
@@ -34,6 +37,7 @@ class Track extends Equatable {
     required this.bitRate,
     required this.bitsPerRawSample,
     required this.dateAdded,
+    this.historyInfo,
   });
 
   Track copyWith({
@@ -48,6 +52,7 @@ class Track extends Equatable {
     int? bitRate,
     int? bitsPerRawSample,
     DateTime? dateAdded,
+    TrackHistoryInfo? Function()? historyInfo,
   }) {
     return Track(
       id: id ?? this.id,
@@ -61,6 +66,7 @@ class Track extends Equatable {
       bitRate: bitRate ?? this.bitRate,
       bitsPerRawSample: bitsPerRawSample ?? this.bitsPerRawSample,
       dateAdded: dateAdded ?? this.dateAdded,
+      historyInfo: historyInfo != null ? historyInfo() : this.historyInfo,
     );
   }
 
@@ -77,6 +83,7 @@ class Track extends Equatable {
         bitRate,
         bitsPerRawSample,
         dateAdded,
+        historyInfo,
       ];
 
   String getOriginalCoverUrl() {

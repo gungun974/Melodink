@@ -3,8 +3,7 @@ import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/datasource/album_local_data_source.dart';
 import 'package:melodink_client/features/library/data/datasource/album_remote_data_source.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
-import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 
 class AlbumNotFoundException implements Exception {}
 
@@ -12,11 +11,14 @@ class AlbumRepository {
   final AlbumRemoteDataSource albumRemoteDataSource;
   final AlbumLocalDataSource albumLocalDataSource;
 
+  final PlayedTrackRepository playedTrackRepository;
+
   final NetworkInfo networkInfo;
 
   AlbumRepository({
     required this.albumRemoteDataSource,
     required this.albumLocalDataSource,
+    required this.playedTrackRepository,
     required this.networkInfo,
   });
 
@@ -47,12 +49,17 @@ class AlbumRepository {
 
     album ??= await albumRemoteDataSource.getAlbumById(id);
 
+    await playedTrackRepository.loadTrackHistoryIntoMinimalTracks(album.tracks);
+
     return album;
   }
 
   Future<Album> updateAndStoreAlbum(String id) async {
     final album = await albumRemoteDataSource.getAlbumById(id);
     await albumLocalDataSource.storeAlbum(album);
+
+    await playedTrackRepository.loadTrackHistoryIntoMinimalTracks(album.tracks);
+
     return album;
   }
 
@@ -74,6 +81,9 @@ final albumRepositoryProvider = Provider(
     ),
     albumLocalDataSource: ref.watch(
       albumLocalDataSourceProvider,
+    ),
+    playedTrackRepository: ref.watch(
+      playedTrackRepositoryProvider,
     ),
     networkInfo: ref.watch(
       networkInfoProvider,

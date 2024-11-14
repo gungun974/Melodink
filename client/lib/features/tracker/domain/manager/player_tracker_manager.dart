@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/tracker/domain/providers/played_track_provider.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:audio_service/audio_service.dart';
@@ -175,8 +176,6 @@ final playerTrackerManagerProvider = Provider(
 
     final subscription = manager.newPlayedTrack.listen((playedTrack) {
       ref.invalidate(lastHistoryTracksProvider);
-      ref.invalidate(lastPlayedTrackDateProvider(playedTrack.trackId));
-      ref.invalidate(trackPlayedCountProvider(playedTrack.trackId));
     });
 
     ref.onDispose(() {

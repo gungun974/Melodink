@@ -5,15 +5,47 @@ import 'package:melodink_client/features/track/data/repository/track_repository.
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
+import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'track_provider.g.dart';
 
 @riverpod
-Future<List<MinimalTrack>> allTracks(AllTracksRef ref) async {
-  final trackRepository = ref.read(trackRepositoryProvider);
+class AllTracks extends _$AllTracks {
+  late final PlayedTrackRepository _playedTrackRepository;
 
-  return await trackRepository.getAllTracks();
+  @override
+  Future<List<MinimalTrack>> build() async {
+    final trackRepository = ref.read(trackRepositoryProvider);
+    _playedTrackRepository = ref.read(playedTrackRepositoryProvider);
+
+    final manager = ref.read(playerTrackerManagerProvider);
+
+    final subscription = manager.newPlayedTrack.listen((playedTrack) {
+      reloadTrackHistoryInfo(playedTrack.trackId);
+    });
+
+    ref.onDispose(() {
+      subscription.cancel();
+    });
+
+    return await trackRepository.getAllTracks();
+  }
+
+  reloadTrackHistoryInfo(int trackId) async {
+    final info = await _playedTrackRepository.getTrackHistoryInfo(trackId);
+
+    final tracks = await future;
+
+    final updatedTracks = tracks.map((track) {
+      return track.id == trackId
+          ? track.copyWith(historyInfo: () => info)
+          : track;
+    }).toList();
+
+    state = AsyncData(updatedTracks);
+  }
 }
 
 @riverpod

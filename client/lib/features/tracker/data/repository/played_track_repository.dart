@@ -3,7 +3,9 @@ import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/tracker/domain/entities/played_track.dart';
+import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
 import 'package:sqflite/sqflite.dart';
 
 class PlayedTrackRepository {
@@ -17,6 +19,18 @@ class PlayedTrackRepository {
       endedAt: Duration(milliseconds: data["ended_at"] as int),
       shuffle: data["shuffle"] == 0 ? false : true,
       trackEnded: data["track_ended"] == 0 ? false : true,
+    );
+  }
+
+  static TrackHistoryInfo decodeTrackHistoryInfo(Map<String, Object?> data) {
+    final lastFinishedRaw = data["last_finished"] as int?;
+
+    return TrackHistoryInfo(
+      trackId: data["track_id"] as int,
+      lastPlayedDate: lastFinishedRaw != null
+          ? DateTime.fromMillisecondsSinceEpoch(lastFinishedRaw)
+          : null,
+      playedCount: data["played_count"] as int,
     );
   }
 
@@ -148,9 +162,140 @@ class PlayedTrackRepository {
       "track_ended": trackEnded ? 1 : 0,
     });
 
+    await updateTrackHistoryInfoCache(trackId);
+
     return getPlayedTrackById(id);
+  }
+
+  Future<List<TrackHistoryInfo>> getMultipleTracksHistoryInfo(
+    List<int> trackIds,
+  ) async {
+    final db = await DatabaseService.getDatabase();
+
+    final data = await db.query(
+      'track_history_info_cache',
+      where: 'track_id IN (${List.filled(trackIds.length, '?').join(',')})',
+      whereArgs: trackIds,
+    );
+
+    final List<TrackHistoryInfo> results = [];
+
+    try {
+      for (final row in data) {
+        results.add(
+          PlayedTrackRepository.decodeTrackHistoryInfo(row),
+        );
+      }
+    } catch (e) {
+      databaseLogger.e(e);
+      throw ServerUnknownException();
+    }
+
+    if (results.length != trackIds.length) {
+      for (final trackId in trackIds) {
+        final isResultMissing = !results.any(
+          (result) => result.trackId == trackId,
+        );
+
+        if (isResultMissing) {
+          results.add(
+            await updateTrackHistoryInfoCache(trackId),
+          );
+        }
+      }
+    }
+
+    return results;
+  }
+
+  Future<TrackHistoryInfo> getTrackHistoryInfo(int trackId) async {
+    final db = await DatabaseService.getDatabase();
+
+    final data = await db.rawQuery(
+        "SELECT * FROM track_history_info_cache WHERE track_id = ?", [trackId]);
+
+    if (data.isEmpty) {
+      return updateTrackHistoryInfoCache(trackId);
+    }
+
+    try {
+      return PlayedTrackRepository.decodeTrackHistoryInfo(data.first);
+    } catch (e) {
+      databaseLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<TrackHistoryInfo> updateTrackHistoryInfoCache(int trackId) async {
+    final db = await DatabaseService.getDatabase();
+
+    final info = TrackHistoryInfo(
+      trackId: trackId,
+      lastPlayedDate:
+          (await getLastFinishedPlayedTrackByTrackId(trackId))?.finishAt,
+      playedCount: await getTrackPlayedCountByTrackId(trackId),
+    );
+
+    try {
+      await db.insert(
+        "track_history_info_cache",
+        {
+          "track_id": trackId,
+          "last_finished": info.lastPlayedDate?.millisecondsSinceEpoch,
+          "played_count": info.playedCount,
+          "updated_at": DateTime.now().millisecondsSinceEpoch
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e) {
+      databaseLogger.e(e);
+      throw ServerUnknownException();
+    }
+
+    return info;
+  }
+
+  Future<void> checkAndUpdateAllTrackHistoryCache() async {
+    final db = await DatabaseService.getDatabase();
+
+    final data = await db.rawQuery("""
+      SELECT track_history_info_cache.track_id
+      FROM track_history_info_cache
+              INNER JOIN (
+          SELECT track_id, MAX(created_at) as last_created
+          FROM (
+                  SELECT track_id, created_at FROM played_tracks
+                  UNION ALL
+                  SELECT track_id, created_at FROM shared_played_tracks
+        )
+        GROUP BY track_id
+      ) combined ON track_history_info_cache.track_id = combined.track_id
+      WHERE track_history_info_cache.updated_at < combined.last_created OR track_history_info_cache.updated_at IS NULL;
+      """);
+
+    for (final row in data) {
+      final trackId = row["track_id"] as int;
+
+      await updateTrackHistoryInfoCache(trackId);
+    }
+  }
+
+  loadTrackHistoryIntoMinimalTracks(List<MinimalTrack> tracks) async {
+    final infos = await getMultipleTracksHistoryInfo(
+      tracks.map((track) => track.id).toList(),
+    );
+
+    for (final (index, track) in tracks.indexed) {
+      final infoIndex = infos.indexWhere((info) => info.trackId == track.id);
+      if (infoIndex >= 0) {
+        tracks[index] = track.copyWith(
+          historyInfo: () => infos[infoIndex],
+        );
+      }
+    }
   }
 }
 
-final playedTrackRepositoryProvider =
-    Provider((ref) => PlayedTrackRepository());
+final playedTrackRepositoryProvider = Provider(
+  (ref) => PlayedTrackRepository(),
+);

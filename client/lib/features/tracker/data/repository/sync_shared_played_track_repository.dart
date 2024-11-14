@@ -113,5 +113,6 @@ class SyncSharedPlayedTrackRepository {
   }
 }
 
-final syncSharedPlayedTrackRepositoryProvider =
-    Provider((ref) => SyncSharedPlayedTrackRepository());
+final syncSharedPlayedTrackRepositoryProvider = Provider(
+  (ref) => SyncSharedPlayedTrackRepository(),
+);

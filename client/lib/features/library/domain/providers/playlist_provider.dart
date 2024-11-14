@@ -3,6 +3,8 @@ import 'package:melodink_client/features/library/data/repository/playlist_reposi
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
+import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
+import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'playlist_provider.g.dart';
@@ -15,12 +17,42 @@ Future<List<Playlist>> allPlaylists(AllPlaylistsRef ref) async {
 }
 
 @riverpod
-Future<Playlist> playlistById(PlaylistByIdRef ref, int id) async {
-  final playlistRepository = ref.watch(playlistRepositoryProvider);
+class PlaylistById extends _$PlaylistById {
+  late final PlayedTrackRepository _playedTrackRepository;
 
-  final result = await playlistRepository.getPlaylistById(id);
+  @override
+  Future<Playlist> build(int id) async {
+    final playlistRepository = ref.watch(playlistRepositoryProvider);
+    _playedTrackRepository = ref.read(playedTrackRepositoryProvider);
 
-  return result;
+    final manager = ref.read(playerTrackerManagerProvider);
+
+    final subscription = manager.newPlayedTrack.listen((playedTrack) {
+      reloadTrackHistoryInfo(playedTrack.trackId);
+    });
+
+    ref.onDispose(() {
+      subscription.cancel();
+    });
+
+    final result = await playlistRepository.getPlaylistById(id);
+
+    return result;
+  }
+
+  reloadTrackHistoryInfo(int trackId) async {
+    final info = await _playedTrackRepository.getTrackHistoryInfo(trackId);
+
+    final playlist = await future;
+
+    final updatedTracks = playlist.tracks.map((track) {
+      return track.id == trackId
+          ? track.copyWith(historyInfo: () => info)
+          : track;
+    }).toList();
+
+    state = AsyncData(playlist.copyWith(tracks: updatedTracks));
+  }
 }
 
 class PlaylistDownloadState extends Equatable {
