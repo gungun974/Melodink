@@ -32,11 +32,11 @@ void main() async {
 
     await windowManager.ensureInitialized();
 
-    WindowOptions windowOptions = const WindowOptions(
+    WindowOptions windowOptions = WindowOptions(
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
-      titleBarStyle: TitleBarStyle.hidden,
-      minimumSize: Size(300, 534),
+      titleBarStyle: Platform.isLinux ? TitleBarStyle.hidden : TitleBarStyle.normal,
+      minimumSize: const Size(300, 534),
       fullScreen: false,
     );
 

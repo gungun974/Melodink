@@ -53,7 +53,7 @@ class MelodinkPlayer {
   init() {
     final names = {
       'windows': [
-        'libmelodink_player.dll',
+        'melodink_player.dll',
       ],
       'linux': [
         'libmelodink_player.so',
@@ -79,7 +79,7 @@ class MelodinkPlayer {
       // If the dynamic library is not loaded, throw an [Exception].
       throw Exception(
         {
-          'windows': 'Cannot find libmelodink_player.dll',
+          'windows': 'Cannot find melodink_player.dll',
           'linux': 'Cannot find libmelodink_player.so',
           'macos': 'Cannot find MelodinkPlayer.framework/MelodinkPlayer.',
           'ios': 'Cannot find MelodinkPlayer.framework/MelodinkPlayer.',

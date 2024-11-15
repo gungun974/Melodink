@@ -1,0 +1,20 @@
+LIBRARY melodink_player
+
+EXPORTS
+    init
+    register_event_audio_changed_callback
+    register_event_update_state_callback
+    play
+    pause
+    seek
+    skip_to_previous
+    skip_to_next
+    set_audios
+    set_loop_mode
+    set_auth_token
+    get_current_playing
+    get_current_track_pos
+    get_current_position
+    get_current_buffered_position
+    get_current_player_state
+    get_current_loop_mode
