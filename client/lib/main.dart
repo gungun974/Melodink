@@ -35,7 +35,8 @@ void main() async {
     WindowOptions windowOptions = WindowOptions(
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
-      titleBarStyle: Platform.isLinux ? TitleBarStyle.hidden : TitleBarStyle.normal,
+      titleBarStyle:
+          Platform.isLinux ? TitleBarStyle.hidden : TitleBarStyle.normal,
       minimumSize: const Size(300, 534),
       fullScreen: false,
     );
@@ -82,22 +83,38 @@ class MyApp extends StatelessWidget {
               }
             });
 
-            return MaterialApp.router(
-              title: 'Melodink Client',
-              debugShowCheckedModeBanner: false,
-              theme: ThemeData(
-                useMaterial3: false,
-                brightness: Brightness.dark,
-                appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
-                primaryColor: Colors.black,
-                iconTheme: const IconThemeData().copyWith(color: Colors.white),
-                colorScheme: ColorScheme.fromSeed(
-                  seedColor: const Color.fromRGBO(196, 126, 208, 1),
+            final audioController = ref.watch(audioControllerProvider);
+
+            return Shortcuts(
+              shortcuts: <ShortcutActivator, Intent>{
+                const SingleActivator(LogicalKeyboardKey.space):
+                    VoidCallbackIntent(() {
+                  if (audioController.playbackState.valueOrNull?.playing ==
+                      true) {
+                    audioController.pause();
+                    return;
+                  }
+                  audioController.play();
+                }),
+              },
+              child: MaterialApp.router(
+                title: 'Melodink Client',
+                debugShowCheckedModeBanner: false,
+                theme: ThemeData(
+                  useMaterial3: false,
                   brightness: Brightness.dark,
+                  appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
+                  primaryColor: Colors.black,
+                  iconTheme:
+                      const IconThemeData().copyWith(color: Colors.white),
+                  colorScheme: ColorScheme.fromSeed(
+                    seedColor: const Color.fromRGBO(196, 126, 208, 1),
+                    brightness: Brightness.dark,
+                  ),
+                  fontFamily: "Roboto",
                 ),
-                fontFamily: "Roboto",
+                routerConfig: appRouter,
               ),
-              routerConfig: appRouter,
             );
           },
         ),
