@@ -265,16 +265,28 @@ class DesktopTrack extends HookConsumerWidget {
                   if (displayLastPlayed)
                     SizedBox(
                       width: 96,
-                      child: Text(
-                        track.historyInfo?.lastPlayedDate == null
-                            ? "Never"
-                            : formatTimeago(track.historyInfo!.lastPlayedDate!),
-                        style: TextStyle(
-                          fontSize: 12,
-                          letterSpacing: 14 * 0.03,
-                          color: Colors.grey[350],
-                        ),
-                      ),
+                      child: track.historyInfo?.lastPlayedDate == null
+                          ? Text(
+                              "Never",
+                              style: TextStyle(
+                                fontSize: 12,
+                                letterSpacing: 14 * 0.03,
+                                color: Colors.grey[350],
+                              ),
+                            )
+                          : FormatTimeago(
+                              date: track.historyInfo!.lastPlayedDate!,
+                              builder: (context, value) {
+                                return Text(
+                                  value,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    letterSpacing: 14 * 0.03,
+                                    color: Colors.grey[350],
+                                  ),
+                                );
+                              },
+                            ),
                     ),
                   if (displayPlayedCount)
                     SizedBox(
@@ -295,12 +307,15 @@ class DesktopTrack extends HookConsumerWidget {
                   if (displayDateAdded)
                     SizedBox(
                       width: 96,
-                      child: Text(
-                        formatTimeago(track.dateAdded),
-                        style: TextStyle(
-                          fontSize: 12,
-                          letterSpacing: 14 * 0.03,
-                          color: Colors.grey[350],
+                      child: FormatTimeago(
+                        date: track.dateAdded,
+                        builder: (context, value) => Text(
+                          value,
+                          style: TextStyle(
+                            fontSize: 12,
+                            letterSpacing: 14 * 0.03,
+                            color: Colors.grey[350],
+                          ),
                         ),
                       ),
                     ),
