@@ -9,6 +9,7 @@ class HoverableText extends HookWidget {
     this.hoverStyle,
     this.maxLines,
     this.overflow,
+    this.textAlign,
   });
 
   final String text;
@@ -20,6 +21,8 @@ class HoverableText extends HookWidget {
   final int? maxLines;
 
   final TextOverflow? overflow;
+
+  final TextAlign? textAlign;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +40,7 @@ class HoverableText extends HookWidget {
         overflow: overflow,
         maxLines: maxLines,
         style: isHover.value && hoverStyle != null ? hoverStyle : style,
+        textAlign: textAlign,
       ),
     );
   }

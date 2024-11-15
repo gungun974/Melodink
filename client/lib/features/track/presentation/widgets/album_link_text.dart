@@ -12,6 +12,8 @@ class AlbumLinkText extends StatelessWidget {
     required this.style,
     this.maxLines,
     this.overflow = TextOverflow.clip,
+    this.textAlign,
+    this.alignment,
     this.withTooltip = true,
     this.noInteraction = false,
     this.openWithScrollOnSpecificTrackId,
@@ -25,6 +27,9 @@ class AlbumLinkText extends StatelessWidget {
   final int? maxLines;
 
   final TextOverflow overflow;
+
+  final TextAlign? textAlign;
+  final Alignment? alignment;
 
   final bool withTooltip;
 
@@ -70,6 +75,7 @@ class AlbumLinkText extends StatelessWidget {
                 : style.copyWith(
                     decoration: TextDecoration.underline,
                   ),
+            textAlign: textAlign,
           ),
         ),
       ),
@@ -77,13 +83,13 @@ class AlbumLinkText extends StatelessWidget {
 
     if (!withTooltip) {
       return Align(
-        alignment: Alignment.centerLeft,
+        alignment: alignment ?? Alignment.centerLeft,
         child: textWidget,
       );
     }
 
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: alignment ?? Alignment.centerLeft,
       child: Tooltip(
         message: text,
         waitDuration: const Duration(milliseconds: 800),

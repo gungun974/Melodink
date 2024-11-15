@@ -1,11 +1,10 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/core/routes/provider.dart';
-import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
+import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
+import 'package:melodink_client/features/player/presentation/widgets/controls/open_queue_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_play_pause_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_repeat_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_shuffle_control.dart';
@@ -27,10 +26,10 @@ class SidePlayerBar extends ConsumerWidget {
     return Container(
       color: Colors.black,
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
+      child: const Column(
         children: [
-          const SizedBox(height: 16),
-          const Padding(
+          SizedBox(height: 16),
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 8.0),
             child: Center(
               child: IntrinsicHeight(
@@ -40,7 +39,7 @@ class SidePlayerBar extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(
+          SizedBox(
             height: 60,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -66,46 +65,12 @@ class SidePlayerBar extends ConsumerWidget {
           ),
           Row(
             children: [
-              const AppIconButton(
-                padding: EdgeInsets.all(8),
-                icon: AdwaitaIcon(
-                  AdwaitaIcons.heart_outline_thick,
-                ),
-                iconSize: 20.0,
-              ),
-              const Spacer(),
-              Consumer(
-                builder: (context, ref, child) {
-                  final currentUrl = ref.watch(appRouterCurrentUrl);
-
-                  return AppIconButton(
-                    padding: const EdgeInsets.all(8),
-                    icon: const AdwaitaIcon(
-                      AdwaitaIcons.music_queue,
-                    ),
-                    iconSize: 20.0,
-                    color: currentUrl == "/queue"
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.white,
-                    onPressed: () async {
-                      if (currentUrl == "/queue") {
-                        GoRouter.of(context).pop();
-                        while (GoRouter.of(context)
-                                .location
-                                ?.startsWith("/player") ??
-                            true) {
-                          GoRouter.of(context).pop();
-                        }
-                        return;
-                      }
-                      GoRouter.of(context).push("/queue");
-                    },
-                  );
-                },
-              ),
+              LikeTrackControl(),
+              Spacer(),
+              OpenQueueControl(),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
         ],
       ),
     );

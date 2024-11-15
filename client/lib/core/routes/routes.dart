@@ -12,6 +12,7 @@ import 'package:melodink_client/features/library/presentation/pages/artists_page
 import 'package:melodink_client/features/library/presentation/pages/playlist_page.dart';
 import 'package:melodink_client/features/library/presentation/pages/playlists_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/mobile_player_page.dart';
+import 'package:melodink_client/features/player/presentation/pages/player_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_and_history_page.dart';
 import 'package:melodink_client/features/settings/presentation/pages/settings_page.dart';
 import 'package:melodink_client/features/track/presentation/pages/tracks_page.dart';
@@ -135,7 +136,7 @@ final List<RouteBase> appRoutesWithDesktopPlayerShell = [
     name: "/player",
     pageBuilder: (context, state) => CustomTransitionPage<void>(
       key: state.pageKey,
-      child: const MobilePlayerPage(),
+      child: const PlayerPage(),
       transitionDuration: pageTransitonDuration,
       transitionsBuilder: slideUpTransitionBuilder,
     ),

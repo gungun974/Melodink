@@ -1,13 +1,12 @@
-import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:go_router/go_router.dart';
-import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
+import 'package:melodink_client/features/player/presentation/widgets/controls/open_queue_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_controls.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
@@ -190,17 +189,10 @@ class MobilePlayerPage extends ConsumerWidget {
                                           ],
                                         ),
                                       ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(4.0),
-                                        child: AppIconButton(
-                                          padding: EdgeInsets.zero,
-                                          icon: const AdwaitaIcon(
-                                              AdwaitaIcons.heart_outline_thick),
-                                          iconSize: 24.0,
-                                          color: Colors.white,
-                                          onPressed: () {
-                                            GoRouter.of(context).push("/queue");
-                                          },
+                                      const Padding(
+                                        padding: EdgeInsets.all(4.0),
+                                        child: LikeTrackControl(
+                                          largeControlButton: true,
                                         ),
                                       )
                                     ],
@@ -236,23 +228,13 @@ class MobilePlayerPage extends ConsumerWidget {
                 ),
               ),
               const Spacer(),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
+              const Padding(
+                padding: EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    const Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        icon: const AdwaitaIcon(AdwaitaIcons.music_queue),
-                        iconSize: 24.0,
-                        color: Colors.white,
-                        onPressed: () {
-                          GoRouter.of(context).push("/queue");
-                        },
-                      ),
+                    Spacer(),
+                    OpenQueueControl(
+                      largeControlButton: true,
                     ),
                   ],
                 ),

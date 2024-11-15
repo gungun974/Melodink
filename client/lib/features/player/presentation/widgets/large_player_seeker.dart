@@ -10,10 +10,12 @@ import 'package:melodink_client/features/player/domain/providers/audio_provider.
 
 class LargePlayerSeeker extends HookConsumerWidget {
   final bool displayDurationsInBottom;
+  final bool large;
 
   const LargePlayerSeeker({
     super.key,
     this.displayDurationsInBottom = false,
+    this.large = false,
   });
 
   @override
@@ -56,27 +58,33 @@ class LargePlayerSeeker extends HookConsumerWidget {
 
     final progressBar = AbsorbPointer(
       absorbing: duration.inMilliseconds < 100,
-      child: ProgressBar(
-        barHeight: 5.0,
-        thumbRadius: 7.0,
-        thumbColor: Colors.white,
-        baseBarColor: Colors.grey[800],
-        progressBarColor: Colors.white,
-        progress: position,
-        total: duration,
-        timeLabelLocation: TimeLabelLocation.none,
-        onSeek: audioController.seek,
-        onDragStart: (thumbValue) {
-          newSeekFuture.value = thumbValue.timeStamp;
-        },
-        onDragUpdate: (thumbValue) {
-          newSeekFuture.value = thumbValue.timeStamp;
-        },
-        onDragEnd: () {
-          Future.delayed(const Duration(milliseconds: 30), () {
-            newSeekFuture.value = null;
-          });
-        },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        clipBehavior: large ? Clip.antiAlias : Clip.none,
+        child: ProgressBar(
+          barHeight: large ? 16.0 : 5.0,
+          thumbRadius: large ? 0 : 7.0,
+          thumbGlowRadius: large ? 0 : 30.0,
+          thumbColor: Colors.white,
+          baseBarColor: Colors.grey[800],
+          progressBarColor: Colors.white,
+          barCapShape: BarCapShape.square,
+          progress: position,
+          total: duration,
+          timeLabelLocation: TimeLabelLocation.none,
+          onSeek: audioController.seek,
+          onDragStart: (thumbValue) {
+            newSeekFuture.value = thumbValue.timeStamp;
+          },
+          onDragUpdate: (thumbValue) {
+            newSeekFuture.value = thumbValue.timeStamp;
+          },
+          onDragEnd: () {
+            Future.delayed(const Duration(milliseconds: 30), () {
+              newSeekFuture.value = null;
+            });
+          },
+        ),
       ),
     );
 

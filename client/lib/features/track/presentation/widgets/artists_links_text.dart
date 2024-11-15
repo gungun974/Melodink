@@ -12,6 +12,8 @@ class ArtistsLinksText extends StatelessWidget {
     required this.style,
     this.maxLines,
     this.overflow = TextOverflow.clip,
+    this.textAlign,
+    this.alignment,
     this.withTooltip = true,
     this.noInteraction = false,
   });
@@ -23,6 +25,9 @@ class ArtistsLinksText extends StatelessWidget {
   final int? maxLines;
 
   final TextOverflow overflow;
+
+  final TextAlign? textAlign;
+  final Alignment? alignment;
 
   final bool withTooltip;
 
@@ -42,6 +47,7 @@ class ArtistsLinksText extends StatelessWidget {
     final text = RichText(
       maxLines: maxLines,
       overflow: overflow,
+      textAlign: textAlign ?? TextAlign.start,
       text: TextSpan(
         style: style.copyWith(
           fontFamily: "Roboto",
@@ -52,13 +58,13 @@ class ArtistsLinksText extends StatelessWidget {
 
     if (!withTooltip) {
       return Align(
-        alignment: Alignment.centerLeft,
+        alignment: alignment ?? Alignment.centerLeft,
         child: text,
       );
     }
 
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: alignment ?? Alignment.centerLeft,
       child: Tooltip(
         message: artists.map((artist) => artist.name).join(", "),
         waitDuration: const Duration(milliseconds: 800),
