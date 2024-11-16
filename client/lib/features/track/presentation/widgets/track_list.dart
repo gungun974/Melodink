@@ -51,6 +51,8 @@ class TrackList extends HookConsumerWidget {
     VoidCallback unselect,
   )? multiCustomActionsBuilder;
 
+  final String? source;
+
   const TrackList({
     super.key,
     required this.tracks,
@@ -68,6 +70,7 @@ class TrackList extends HookConsumerWidget {
     this.scrollController,
     this.autoScrollToCurrentTrack = false,
     this.scrollToTrackIdOnMounted,
+    this.source,
   });
 
   @override
@@ -263,6 +266,7 @@ class TrackList extends HookConsumerWidget {
                 await audioController.loadTracks(
                   tracks,
                   startAt: index,
+                  source: source,
                 );
               },
               selected: selected,
@@ -280,6 +284,7 @@ class TrackList extends HookConsumerWidget {
                 await audioController.loadTracks(
                   tracks,
                   startAt: index,
+                  source: source,
                 );
               },
               displayDateAdded: displayDateAdded,

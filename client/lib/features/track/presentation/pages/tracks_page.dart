@@ -106,6 +106,7 @@ class TracksPage extends HookConsumerWidget {
                         displayQuality: true,
                         scrollController: scrollController,
                         autoScrollToCurrentTrack: true,
+                        source: "Playing from Search",
                       ),
                     ),
                     const SliverToBoxAdapter(

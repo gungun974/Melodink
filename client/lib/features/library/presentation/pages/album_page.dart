@@ -79,6 +79,7 @@ class AlbumPage extends HookConsumerWidget {
                         playCallback: () async {
                           await audioController.loadTracks(
                             tracks,
+                            source: "Album \"${album.name}\"",
                           );
                         },
                         downloadCallback: () async {
@@ -105,6 +106,7 @@ class AlbumPage extends HookConsumerWidget {
                         playCallback: () async {
                           await audioController.loadTracks(
                             tracks,
+                            source: "Album \"${album.name}\"",
                           );
                         },
                         downloadCallback: () async {
@@ -164,6 +166,7 @@ class AlbumPage extends HookConsumerWidget {
                   displayQuality: true,
                   scrollController: scrollController,
                   scrollToTrackIdOnMounted: openWithScrollOnSpecificTrackId,
+                  source: "Album \"${album.name}\"",
                 ),
               ),
               const SliverToBoxAdapter(

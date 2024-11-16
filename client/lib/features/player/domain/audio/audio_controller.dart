@@ -268,6 +268,7 @@ class AudioController extends BaseAudioHandler
     List<MinimalTrack> tracks, {
     int startAt = -1,
     bool restart = true,
+    String? source,
   }) async {
     await playlistTracksMutex.protect(() async {
       _originalTracksPlaylist = List.from(tracks);
@@ -304,6 +305,8 @@ class AudioController extends BaseAudioHandler
 
         player.play();
       }
+
+      playerTracksFrom.add(source);
 
       await _updatePlaybackState();
     });
@@ -691,6 +694,9 @@ class AudioController extends BaseAudioHandler
       BehaviorSubject.seeded([]);
 
   final BehaviorSubject<MinimalTrack?> currentTrack =
+      BehaviorSubject.seeded(null);
+
+  final BehaviorSubject<String?> playerTracksFrom =
       BehaviorSubject.seeded(null);
 
   void _updateUiTrackLists() {

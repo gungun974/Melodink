@@ -38,6 +38,23 @@ class MobilePlayerPage extends ConsumerWidget {
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
+            title: StreamBuilder<String?>(
+                stream: audioController.playerTracksFrom.stream,
+                builder: (context, snapshot) {
+                  final source = snapshot.data;
+                  if (source == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return Text(
+                    source,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      letterSpacing: 20 * 0.03,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  );
+                }),
+            centerTitle: true,
             backgroundColor: const Color.fromRGBO(0, 0, 0, 0.08),
             shadowColor: Colors.transparent,
           ),

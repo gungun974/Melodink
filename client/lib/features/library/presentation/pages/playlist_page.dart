@@ -75,6 +75,7 @@ class PlaylistPage extends ConsumerWidget {
                         playCallback: () async {
                           await audioController.loadTracks(
                             tracks,
+                            source: "Playlist \"${playlist.name}\"",
                           );
                         },
                         downloadCallback: () async {
@@ -102,6 +103,7 @@ class PlaylistPage extends ConsumerWidget {
                         playCallback: () async {
                           await audioController.loadTracks(
                             tracks,
+                            source: "Playlist \"${playlist.name}\"",
                           );
                         },
                         downloadCallback: () async {
@@ -219,6 +221,7 @@ class PlaylistPage extends ConsumerWidget {
                       ),
                     ];
                   },
+                  source: "Playlist \"${playlist.name}\"",
                 ),
               ),
               const SliverToBoxAdapter(

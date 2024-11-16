@@ -67,6 +67,7 @@ class HistoryPage extends ConsumerWidget {
               displayAlbum: false,
               displayTrackIndex: false,
               displayLike: false,
+              source: "Playing from History",
             ),
           ),
           const SliverToBoxAdapter(
