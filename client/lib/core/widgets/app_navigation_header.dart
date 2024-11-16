@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
-class AppNavigationHeader extends StatelessWidget {
+class AppNavigationHeader extends HookWidget {
   const AppNavigationHeader({
     super.key,
     required this.child,
@@ -18,11 +19,13 @@ class AppNavigationHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final canPop = useState(GoRouter.of(context).canPop());
+
     return Column(
       children: [
-        if (alwayShow || GoRouter.of(context).canPop())
+        if (alwayShow || canPop.value)
           AppBar(
-            leading: GoRouter.of(context).canPop()
+            leading: canPop.value
                 ? IconButton(
                     icon: SvgPicture.asset(
                       "assets/icons/arrow-left.svg",
