@@ -54,16 +54,22 @@ class DesktopPlayerPage extends ConsumerWidget {
           body: LayoutBuilder(builder: (context, constraints) {
             return MaxContainer(
               maxWidth: 1920,
-              padding: const EdgeInsets.only(
+              padding: EdgeInsets.only(
                 left: 64,
                 right: 64,
+                top: constraints.maxHeight * constraints.maxHeight * 0.000118 +
+                    constraints.maxHeight * 0.01 -
+                    25,
+                bottom:
+                    constraints.maxHeight * constraints.maxHeight * 0.000025 +
+                        constraints.maxHeight * 0.08 -
+                        25,
               ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  IntrinsicHeight(
+                  Expanded(
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         SizedBox(
                           width: min(constraints.maxWidth * 0.3, 600),
@@ -153,15 +159,21 @@ class DesktopPlayerPage extends ConsumerWidget {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      ConstrainedBox(
-                                        constraints:
-                                            const BoxConstraints(maxWidth: 600),
-                                        child: AspectRatio(
-                                          aspectRatio: 1.0,
-                                          child: image,
+                                      Expanded(
+                                        child: ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 600,
+                                          ),
+                                          child: Align(
+                                            alignment: Alignment.bottomCenter,
+                                            child: AspectRatio(
+                                              aspectRatio: 1.0,
+                                              child: image,
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                      const SizedBox(height: 16),
+                                      const SizedBox(height: 24),
                                       Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.end,
@@ -182,7 +194,7 @@ class DesktopPlayerPage extends ConsumerWidget {
                                                   openWithScrollOnSpecificTrackId:
                                                       trackId,
                                                 ),
-                                                const SizedBox(height: 4),
+                                                const SizedBox(height: 6),
                                                 ArtistsLinksText(
                                                   artists: artists,
                                                   maxLines: 1,
@@ -194,7 +206,7 @@ class DesktopPlayerPage extends ConsumerWidget {
                                                     color: Colors.grey[350],
                                                   ),
                                                 ),
-                                                const SizedBox(height: 3),
+                                                const SizedBox(height: 4),
                                                 AlbumLinkText(
                                                   text: album,
                                                   albumId: albumId,
@@ -208,14 +220,9 @@ class DesktopPlayerPage extends ConsumerWidget {
                                               ],
                                             ),
                                           ),
-                                          const Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: LikeTrackControl(
-                                              largeControlButton: true,
-                                            ),
-                                          )
                                         ],
                                       ),
+                                      const SizedBox(height: 16),
                                     ],
                                   );
                                 },

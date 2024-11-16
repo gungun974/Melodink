@@ -96,7 +96,7 @@ class LargePlayerSeeker extends HookConsumerWidget {
               Expanded(child: progressBar),
             ],
           ),
-          const SizedBox(height: 4.0),
+          SizedBox(height: large ? 8.0 : 4.0),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
