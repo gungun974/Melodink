@@ -287,7 +287,10 @@ class AudioController extends BaseAudioHandler
       _nextTracks.addAll(tracks.sublist(startAt + 1));
 
       if (isShuffled) {
-        await _doShuffle(AudioServiceShuffleMode.all);
+        await _doShuffle(
+          AudioServiceShuffleMode.all,
+          shouldUpdatePlayersTracks: false,
+        );
       }
 
       if (_previousTracks.isEmpty && _nextTracks.isNotEmpty) {
@@ -357,7 +360,10 @@ class AudioController extends BaseAudioHandler
     });
   }
 
-  Future<void> _doShuffle(AudioServiceShuffleMode shuffleMode) async {
+  Future<void> _doShuffle(
+    AudioServiceShuffleMode shuffleMode, {
+    bool shouldUpdatePlayersTracks = true,
+  }) async {
     final currentTrack = _previousTracks.lastOrNull;
 
     _previousTracks.clear();
@@ -413,13 +419,15 @@ class AudioController extends BaseAudioHandler
       }
     }
 
-    if (!(_previousTracks.isEmpty &&
-        _nextTracks.isEmpty &&
-        _queueTracks.isEmpty)) {
-      await _updatePlayerTracks();
-    }
+    if (shouldUpdatePlayersTracks) {
+      if (!(_previousTracks.isEmpty &&
+          _nextTracks.isEmpty &&
+          _queueTracks.isEmpty)) {
+        await _updatePlayerTracks();
+      }
 
-    await _updatePlaybackState();
+      await _updatePlaybackState();
+    }
 
     await _asyncPrefs.setString(
       "audioPlayerLastShuffleState",
