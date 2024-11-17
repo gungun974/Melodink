@@ -3,7 +3,9 @@
 
   inputs = {
     # Nixpkgs
-    nixpkgs.url = "github:nixos/nixpkgs?rev=c1ce56e9c606b4cd31f0950768911b1171b8db51";
+    nixpkgs.url = "github:nixos/nixpkgs";
+
+    flutter-nixpkgs.url = "github:nixos/nixpkgs?rev=c1ce56e9c606b4cd31f0950768911b1171b8db51";
 
     flake-utils.url = "github:numtide/flake-utils";
 
@@ -14,12 +16,13 @@
 
     android-nixpkgs = {
       url = "github:tadfisher/android-nixpkgs";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "flutter-nixpkgs";
     };
   };
 
   outputs = {
     nixpkgs,
+    flutter-nixpkgs,
     gitignore,
     flake-utils,
     android-nixpkgs,
@@ -29,11 +32,19 @@
       pkgs = import nixpkgs {
         inherit system;
         config = {
+          allowUnfree = true;
+        };
+      };
+
+      flutter-pkgs = import flutter-nixpkgs {
+        inherit system;
+        config = {
           android_sdk.accept_license = true;
           allowUnfree = true;
         };
       };
-      flutter-sdk = (import ./nix/flutter) pkgs;
+
+      flutter-sdk = (import ./nix/flutter) flutter-pkgs;
       sdk = android-nixpkgs.sdk.${system} (sdkPkgs:
         with sdkPkgs; [
           build-tools-30-0-3
@@ -48,7 +59,7 @@
           system-images-android-34-google-apis-playstore-x86-64
           ndk-23-1-7779620
         ]);
-      pinnedJDK = pkgs.jdk17;
+      pinnedJDK = flutter-pkgs.jdk17;
     in {
       packages = rec {
         melodink-server = pkgs.buildGo122Module rec {
@@ -106,7 +117,7 @@
           '';
         };
 
-        melodink-client = pkgs.flutter.buildFlutterApplication rec {
+        melodink-client = flutter-pkgs.flutter.buildFlutterApplication rec {
           pname = "melodink-client";
           version = "1.0.0";
 
