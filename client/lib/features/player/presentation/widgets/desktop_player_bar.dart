@@ -6,6 +6,7 @@ import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/features/home/presentation/widgets/desktop_sidebar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/open_queue_control.dart';
+import 'package:melodink_client/features/player/presentation/widgets/controls/volume_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_controls.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
@@ -45,6 +46,8 @@ class DesktopPlayerBar extends ConsumerWidget {
                 child: Row(
                   children: [
                     LikeTrackControl(),
+                    SizedBox(width: 2),
+                    VolumeControl(),
                     SizedBox(width: 2),
                     OpenQueueControl(),
                   ],

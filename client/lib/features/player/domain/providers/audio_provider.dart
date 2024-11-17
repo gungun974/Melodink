@@ -53,6 +53,7 @@ Stream<MinimalTrack?> currentTrackStream(CurrentTrackStreamRef ref) async* {
 
   await for (final track in audioController.currentTrack.stream) {
     yield track;
+    final _ = ref.refresh(currentPlayerVolumeProvider);
   }
 }
 
@@ -106,4 +107,13 @@ Future<List<List<int>>?> currentTrackPalette(
   final palette = await getPaletteFromImage(image, 5, 5);
 
   return palette;
+}
+
+@riverpod
+double currentPlayerVolume(
+  CurrentPlayerVolumeRef ref,
+) {
+  final audioController = ref.watch(audioControllerProvider);
+
+  return audioController.getVolume();
 }

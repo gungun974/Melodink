@@ -443,4 +443,14 @@ public:
 
     mpv_set_option_string(mpv, "http-header-fields", headers);
   }
+
+  void set_volume(double volume) {
+    mpv_set_property(mpv, "ao-volume", MPV_FORMAT_DOUBLE, &volume);
+  }
+
+  double get_volume() {
+    double volume = 0.0;
+    mpv_get_property(mpv, "ao-volume", MPV_FORMAT_DOUBLE, &volume);
+    return volume;
+  }
 };

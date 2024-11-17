@@ -13,7 +13,7 @@ class LikeTrackControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppIconButton(
-      padding: EdgeInsets.zero,
+      padding: const EdgeInsets.all(8),
       icon: const AdwaitaIcon(
         AdwaitaIcons.heart_outline_thick,
       ),

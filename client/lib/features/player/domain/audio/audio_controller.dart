@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -262,6 +263,16 @@ class AudioController extends BaseAudioHandler
     await playlistTracksMutex.protect(() async {
       await _doShuffle(shuffleMode);
     });
+  }
+
+  setVolume(double volume) {
+    player.setVolume((100 * pow(volume.clamp(0, 100) / 100, 3)).toDouble());
+  }
+
+  double getVolume() {
+    return (100 * pow(player.getVolume() / 100, 1 / 3))
+        .toDouble()
+        .clamp(0, 100);
   }
 
   Future<void> loadTracks(

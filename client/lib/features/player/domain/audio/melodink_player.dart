@@ -174,6 +174,13 @@ class MelodinkPlayer {
             'get_current_loop_mode')
         .asFunction();
 
+    _setVolume = _lib
+        .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>('set_volume')
+        .asFunction();
+    _getVolume = _lib
+        .lookup<ffi.NativeFunction<ffi.Double Function()>>('get_volume')
+        .asFunction();
+
     _eventAudioChangedReceivePort.listen(
       (data) => _eventAudioChangedStreamController.add(data),
       onError: (error) => _eventAudioChangedStreamController.addError(error),
@@ -236,6 +243,9 @@ class MelodinkPlayer {
   late final int Function() _getCurrentPlayerState;
   late final int Function() _getCurrentLoopMode;
 
+  late final double Function() _getVolume;
+  late final void Function(double) _setVolume;
+
   void play() => _play();
   void pause() => _pause();
   void seek(int positionMs) => _seek(positionMs);
@@ -296,4 +306,8 @@ class MelodinkPlayer {
   MelodinkLoopMode getCurrentLoopMode() {
     return MelodinkLoopMode.values[_getCurrentLoopMode()];
   }
+
+  void setVolume(double volume) => _setVolume(volume);
+
+  double getVolume() => _getVolume();
 }

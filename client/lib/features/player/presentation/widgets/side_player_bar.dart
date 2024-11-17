@@ -10,6 +10,7 @@ import 'package:melodink_client/features/player/presentation/widgets/controls/pl
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_shuffle_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_skip_to_next_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_skip_to_previous_control.dart';
+import 'package:melodink_client/features/player/presentation/widgets/controls/volume_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 
 class SidePlayerBar extends ConsumerWidget {
@@ -66,6 +67,8 @@ class SidePlayerBar extends ConsumerWidget {
           Row(
             children: [
               LikeTrackControl(),
+              Spacer(),
+              VolumeControl(),
               Spacer(),
               OpenQueueControl(),
             ],

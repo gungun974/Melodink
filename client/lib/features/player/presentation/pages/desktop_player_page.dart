@@ -15,6 +15,7 @@ import 'package:melodink_client/features/player/presentation/widgets/controls/pl
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_shuffle_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_skip_to_next_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_skip_to_previous_control.dart';
+import 'package:melodink_client/features/player/presentation/widgets/controls/volume_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
@@ -285,9 +286,13 @@ class DesktopPlayerPage extends ConsumerWidget {
                                     ),
                                   ),
                                   Spacer(),
+                                  VolumeControl(
+                                    largeControlButton: true,
+                                  ),
+                                  SizedBox(width: 4),
                                   OpenQueueControl(
                                     largeControlButton: true,
-                                  )
+                                  ),
                                 ],
                               ),
                             ],

@@ -18,3 +18,5 @@ EXPORTS
     get_current_buffered_position
     get_current_player_state
     get_current_loop_mode
+    set_volume
+    get_volume

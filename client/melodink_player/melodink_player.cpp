@@ -104,3 +104,7 @@ extern "C" int64_t get_current_player_state() {
 extern "C" int64_t get_current_loop_mode() {
   return player->get_current_loop_mode();
 }
+
+extern "C" void set_volume(double volume) { player->set_volume(volume); }
+
+extern "C" double get_volume() { return player->get_volume(); }
