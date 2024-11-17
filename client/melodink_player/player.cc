@@ -359,6 +359,13 @@ public:
 
   int64_t get_current_position() {
     double position = 0.0;
+    mpv_get_property(mpv, "audio-pts", MPV_FORMAT_DOUBLE, &position);
+    int64_t finalPos = (int64_t)(position * 1000);
+
+    if (finalPos != 0) {
+      return finalPos;
+    }
+
     mpv_get_property(mpv, "time-pos", MPV_FORMAT_DOUBLE, &position);
     return (int64_t)(position * 1000);
   }
