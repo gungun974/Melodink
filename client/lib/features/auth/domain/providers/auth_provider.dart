@@ -4,6 +4,7 @@ import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/features/auth/data/repository/auth_repository.dart';
 import 'package:melodink_client/features/auth/domain/entities/user.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_provider.g.dart';
@@ -59,10 +60,12 @@ class AuthError extends AuthState {
 
 @riverpod
 class AuthNotifier extends _$AuthNotifier {
+  late AudioController _audioController;
   late AuthRepository _authRepository;
 
   @override
   Future<AuthState> build() async {
+    _audioController = ref.read(audioControllerProvider);
     _authRepository = ref.read(authRepositoryProvider);
 
     AppApi().dio.interceptors.add(
@@ -167,6 +170,8 @@ class AuthNotifier extends _$AuthNotifier {
   }
 
   Future<void> logout() async {
+    await _audioController.clean();
+
     await _authRepository.logout();
 
     state = const AsyncValue.data(AuthLoaded(

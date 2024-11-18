@@ -371,6 +371,23 @@ class AudioController extends BaseAudioHandler
     });
   }
 
+  Future<void> clean() async {
+    await playlistTracksMutex.protect(() async {
+      player.pause();
+
+      await _updatePlayerTracks();
+      await _updatePlaybackState();
+
+      playerTracksFrom.add(null);
+      _previousTracks.clear();
+      _nextTracks.clear();
+      _queueTracks.clear();
+
+      await _updatePlayerTracks();
+      await _updatePlaybackState();
+    });
+  }
+
   Future<void> _doShuffle(
     AudioServiceShuffleMode shuffleMode, {
     bool shouldUpdatePlayersTracks = true,
