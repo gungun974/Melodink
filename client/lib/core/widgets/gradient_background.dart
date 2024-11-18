@@ -92,6 +92,9 @@ class GradientBackground extends ConsumerWidget {
     return Stack(
       children: [
         Container(
+          color: Colors.grey[850],
+        ),
+        Container(
           color: Colors.black87,
         ),
         AnimatedContainer(
