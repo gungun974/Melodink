@@ -139,6 +139,7 @@ final List<RouteBase> appRoutesWithDesktopPlayerShell = [
       child: const PlayerPage(),
       transitionDuration: pageTransitonDuration,
       transitionsBuilder: slideUpTransitionBuilder,
+      opaque: false,
     ),
   ),
   GoRoute(
