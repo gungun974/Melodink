@@ -9,6 +9,7 @@ import (
 	"github.com/gungun974/Melodink/server/internal/database"
 	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/gungun974/Melodink/server/internal/routes"
+	"github.com/gungun974/Melodink/server/internal/scheduler"
 	"github.com/joho/godotenv"
 )
 
@@ -28,6 +29,11 @@ func main() {
 	container := internal.NewContainer(db)
 
 	container.ConfigController.SetupDefaultKeys(context.Background())
+
+	err = scheduler.StartScheduler(container)
+	if err != nil {
+		logger.MainLogger.Panicf("Failed to start scheduler : %v", err)
+	}
 
 	port := os.Getenv("PORT")
 

@@ -1,12 +1,14 @@
 package internal
 
 import (
+	"github.com/gungun974/Melodink/server/internal/layers/data/processor"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
 	"github.com/gungun974/Melodink/server/internal/layers/data/scanner"
 	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
 	album_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/album"
 	artist_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/artist"
 	config_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/config"
+	hls_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/hls"
 	playlist_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/playlist"
 	shared_played_track_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/shared_played_track"
 	track_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/track"
@@ -26,6 +28,7 @@ type Container struct {
 	AlbumController             controller.AlbumController
 	ArtistController            controller.ArtistController
 	SharedPlayedTrackController controller.SharedPlayedTrackController
+	HlsController               controller.HlsController
 }
 
 func NewContainer(db *sqlx.DB) Container {
@@ -46,6 +49,10 @@ func NewContainer(db *sqlx.DB) Container {
 
 	trackStorage := storage.NewTrackStorage()
 	coverStorage := storage.NewCoverStorage()
+
+	//! Processor
+
+	hlsProcessor := processor.NewHlsProcessor()
 
 	//! Scanner
 
@@ -79,6 +86,7 @@ func NewContainer(db *sqlx.DB) Container {
 		coverStorage,
 		acoustIdScanner,
 		musicBrainzScanner,
+		hlsProcessor,
 		trackPresenter,
 	)
 
@@ -102,6 +110,11 @@ func NewContainer(db *sqlx.DB) Container {
 		sharedPlayedTrackPresenter,
 	)
 
+	hlsUsecase := hls_usecase.NewHlsUsecase(
+		hlsProcessor,
+		trackRepository,
+	)
+
 	//! Controller
 
 	container.ConfigController = controller.NewConfigController(configUsecase)
@@ -113,6 +126,7 @@ func NewContainer(db *sqlx.DB) Container {
 	container.SharedPlayedTrackController = controller.NewSharedPlayedTrackController(
 		sharedPlayedTrackUsecase,
 	)
+	container.HlsController = controller.NewHlsController(hlsUsecase)
 
 	return container
 }

@@ -68,6 +68,8 @@ var MainLogger = log.WithField("logger", "MainLogger")
 
 var DatabaseLogger = log.WithField("logger", "DatabaseLogger")
 
+var SchedulerLogger = log.WithField("logger", "SchedulerLogger")
+
 var ScannerLogger = log.WithField("logger", "ScannerLogger")
 
 var HTTPLogger = log.WithField("logger", "HTTPLogger")

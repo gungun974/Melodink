@@ -119,12 +119,12 @@ class DesktopTrack extends HookConsumerWidget {
               },
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTap: !isTouchDevice(context)
+          onTap: isTouchDevice(context)
               ? null
               : () {
                   playCallback(track);
                 },
-          onDoubleTap: isTouchDevice(context)
+          onDoubleTap: !isTouchDevice(context)
               ? null
               : () {
                   playCallback(track);

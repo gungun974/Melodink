@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/gungun974/Melodink/server/internal"
+	track_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/track"
 )
 
 func TrackRouter(c internal.Container) http.Handler {
@@ -107,7 +108,40 @@ func TrackRouter(c internal.Container) http.Handler {
 	router.Get("/{id}/audio", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 
-		response, err := c.TrackController.GetTrackAudio(r.Context(), id)
+		response, err := c.TrackController.GetTrackAudioFile(r.Context(), id)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Get("/{id}/audio/hls", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		response, err := c.TrackController.GetTrackAudioHls(
+			r.Context(),
+			id,
+			string(track_usecase.AudioHlsAdaptative),
+		)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Get("/{id}/audio/hls/{quality}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		quality := chi.URLParam(r, "quality")
+
+		response, err := c.TrackController.GetTrackAudioHls(
+			r.Context(),
+			id,
+			quality,
+		)
 		if err != nil {
 			handleHTTPError(err, w)
 			return

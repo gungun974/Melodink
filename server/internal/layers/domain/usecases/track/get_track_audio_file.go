@@ -10,7 +10,7 @@ import (
 	"github.com/gungun974/Melodink/server/internal/models"
 )
 
-func (u *TrackUsecase) GetTrackAudio(
+func (u *TrackUsecase) GetTrackAudioFile(
 	ctx context.Context,
 	trackId int,
 ) (models.APIResponse, error) {

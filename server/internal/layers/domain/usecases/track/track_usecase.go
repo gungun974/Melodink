@@ -1,6 +1,7 @@
 package track_usecase
 
 import (
+	"github.com/gungun974/Melodink/server/internal/layers/data/processor"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
 	"github.com/gungun974/Melodink/server/internal/layers/data/scanner"
 	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
@@ -13,6 +14,7 @@ type TrackUsecase struct {
 	coverStorage       storage.CoverStorage
 	acoustIdScanner    scanner.AcoustIdScanner
 	musicBrainzScanner scanner.MusicBrainzScanner
+	hlsProcessor       processor.HlsProcessor
 	trackPresenter     presenter.TrackPresenter
 }
 
@@ -22,6 +24,7 @@ func NewTrackUsecase(
 	coverStorage storage.CoverStorage,
 	acoustIdScanner scanner.AcoustIdScanner,
 	musicBrainzScanner scanner.MusicBrainzScanner,
+	hlsProcessor processor.HlsProcessor,
 	trackPresenter presenter.TrackPresenter,
 ) TrackUsecase {
 	return TrackUsecase{
@@ -30,6 +33,7 @@ func NewTrackUsecase(
 		coverStorage,
 		acoustIdScanner,
 		musicBrainzScanner,
+		hlsProcessor,
 		trackPresenter,
 	}
 }

@@ -7,6 +7,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.5
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-chi/cors v1.2.1
+	github.com/go-co-op/gocron/v2 v2.12.3
 	github.com/go-fingerprint/fingerprint v0.0.0-20140803133125-29397256b7ff
 	github.com/go-fingerprint/gochroma v0.0.0-20211004000611-a294aa5ccab6
 	github.com/go-resty/resty/v2 v2.15.3
@@ -27,8 +28,11 @@ require (
 require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/nyaruka/phonenumbers v1.3.1 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.19.0 // indirect

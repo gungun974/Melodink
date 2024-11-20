@@ -138,7 +138,9 @@ class MinimalTrack extends Equatable {
   }
 
   String getUrl() {
-    return "${AppApi().getServerUrl()}track/$id/audio";
+    // return "${AppApi().getServerUrl()}track/$id/audio/hls/low";
+    return "${AppApi().getServerUrl()}track/$id/audio/hls";
+    // return "${AppApi().getServerUrl()}track/$id/audio";
   }
 
   String getOriginalCoverUrl() {

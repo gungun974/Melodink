@@ -108,7 +108,7 @@ func (c *TrackController) GetCompressedCover(
 	return c.trackUsecase.GetCompressedTrackCover(ctx, id, quality)
 }
 
-func (c *TrackController) GetTrackAudio(
+func (c *TrackController) GetTrackAudioFile(
 	ctx context.Context,
 	rawId string,
 ) (models.APIResponse, error) {
@@ -122,7 +122,25 @@ func (c *TrackController) GetTrackAudio(
 		return nil, entities.NewValidationError(err.Error())
 	}
 
-	return c.trackUsecase.GetTrackAudio(ctx, id)
+	return c.trackUsecase.GetTrackAudioFile(ctx, id)
+}
+
+func (c *TrackController) GetTrackAudioHls(
+	ctx context.Context,
+	rawId string,
+	quality string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.GetTrackAudioHls(ctx, id, track_usecase.AudioHlsQuality(quality))
 }
 
 func (c *TrackController) GetTrackFileSignature(
