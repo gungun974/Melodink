@@ -68,7 +68,7 @@ class LargePlayerSeeker extends HookConsumerWidget {
           thumbColor: Colors.white,
           baseBarColor: Colors.grey[800],
           progressBarColor: Colors.white,
-          barCapShape: BarCapShape.square,
+          barCapShape: large ? BarCapShape.round : BarCapShape.round,
           progress: position,
           total: duration,
           timeLabelLocation: TimeLabelLocation.none,
