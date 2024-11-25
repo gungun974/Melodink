@@ -3,7 +3,6 @@ package track_usecase
 import (
 	"context"
 	"errors"
-	"os"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
@@ -28,19 +27,8 @@ func (u *TrackUsecase) GetTrackAudio(
 		return nil, entities.NewInternalError(err)
 	}
 
-	file, err := os.Open(track.Path)
-	if err != nil {
-		return nil, entities.NewInternalError(err)
-	}
-
-	fileInfo, err := file.Stat()
-	if err != nil {
-		return nil, entities.NewInternalError(err)
-	}
-
-	return models.ReaderAPIResponse{
+	return models.FileAPIResponse{
 		MIMEType: mtype.String(),
-		Reader:   file,
-		Size:     fileInfo.Size(),
+		Path:     track.Path,
 	}, nil
 }

@@ -227,12 +227,6 @@ add_custom_target("MIMALLOC_TARGET" ALL DEPENDS ${MIMALLOC_LIB})
 
 # ------------------------------------------------------------------------------
 
-
-# Check for libmpv & epoxy headers & libraries.
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(mpv IMPORTED_TARGET mpv)
-
-
 # target_compile_features(${TARGET} PRIVATE "${mpv_CFLAGS_OTHER}")
 #
 # target_include_directories(
@@ -241,7 +235,7 @@ pkg_check_modules(mpv IMPORTED_TARGET mpv)
 #   "${mpv_INCLUDE_DIRS}"
 # )
 
-target_link_libraries(${BINARY_NAME} PRIVATE melodink_player PkgConfig::mpv)
+target_link_libraries(${BINARY_NAME} PRIVATE melodink_player avformat avcodec avutil swresample dl pthread m pulse)
 
 # ----
 

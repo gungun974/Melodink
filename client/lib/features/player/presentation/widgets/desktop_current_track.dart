@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/player/presentation/widgets/player_error_overlay.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
@@ -65,19 +66,21 @@ class DesktopCurrentTrack extends ConsumerWidget {
                       cursor: SystemMouseCursors.click,
                       child: AspectRatio(
                         aspectRatio: 1.0,
-                        child: AuthCachedNetworkImage(
-                          imageUrl: downloadedTrack?.getCoverUrl() ??
-                              currentTrack.getCompressedCoverUrl(
-                                TrackCompressedCoverQuality.medium,
-                              ),
-                          placeholder: (context, url) => Image.asset(
-                            "assets/melodink_track_cover_not_found.png",
-                          ),
-                          errorWidget: (context, url, error) {
-                            return Image.asset(
+                        child: PlayerErrorOverlay(
+                          child: AuthCachedNetworkImage(
+                            imageUrl: downloadedTrack?.getCoverUrl() ??
+                                currentTrack.getCompressedCoverUrl(
+                                  TrackCompressedCoverQuality.medium,
+                                ),
+                            placeholder: (context, url) => Image.asset(
                               "assets/melodink_track_cover_not_found.png",
-                            );
-                          },
+                            ),
+                            errorWidget: (context, url, error) {
+                              return Image.asset(
+                                "assets/melodink_track_cover_not_found.png",
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ),

@@ -151,8 +151,13 @@ class AudioController extends BaseAudioHandler
     }
 
     if (playbackState.valueOrNull?.processingState ==
-        AudioProcessingState.idle) {
+        AudioProcessingState.completed) {
       await skipToQueueItem(0);
+
+      player.seek(0);
+    } else if (playbackState.valueOrNull?.processingState ==
+        AudioProcessingState.error) {
+      await skipToQueueItem(_previousTracks.length - 1);
 
       player.seek(0);
     }
@@ -242,7 +247,7 @@ class AudioController extends BaseAudioHandler
       AudioServiceRepeatMode.one: MelodinkLoopMode.one,
     }[repeatMode]!);
 
-    await _updatePlaybackState();
+    await _updatePlaylistTracks(_previousTracks.length - 1);
 
     await _asyncPrefs.setString(
       "audioPlayerLastLoopState",
@@ -266,13 +271,11 @@ class AudioController extends BaseAudioHandler
   }
 
   setVolume(double volume) {
-    player.setVolume((100 * pow(volume.clamp(0, 100) / 100, 3)).toDouble());
+    player.setVolume(volume.clamp(0, 100) / 100.0);
   }
 
   double getVolume() {
-    return (100 * pow(player.getVolume() / 100, 1 / 3))
-        .toDouble()
-        .clamp(0, 100);
+    return (player.getVolume() * 100.0).clamp(0, 100);
   }
 
   Future<void> loadTracks(
@@ -565,6 +568,25 @@ class AudioController extends BaseAudioHandler
         }
       }
 
+      Map<String, int> urlCount = {};
+
+      void addUrl(String url, List<String> list) {
+        if (urlCount.containsKey(url)) {
+          urlCount[url] = urlCount[url]! + 1;
+          list[list.indexOf(url)] = '$url?i=${urlCount[url]}';
+        } else {
+          urlCount[url] = 1;
+        }
+      }
+
+      for (String url in prevUrls) {
+        addUrl(url, prevUrls);
+      }
+
+      for (String url in nextUrls) {
+        addUrl(url, nextUrls);
+      }
+
       if (prevUrls.isNotEmpty) {
         player.setAudios(
           prevUrls,
@@ -641,6 +663,7 @@ class AudioController extends BaseAudioHandler
         MelodinkProcessingState.buffering: AudioProcessingState.buffering,
         MelodinkProcessingState.ready: AudioProcessingState.ready,
         MelodinkProcessingState.completed: AudioProcessingState.completed,
+        MelodinkProcessingState.error: AudioProcessingState.error,
       }[playerState]!,
       playing:
           playerState == MelodinkProcessingState.idle || _previousTracks.isEmpty
