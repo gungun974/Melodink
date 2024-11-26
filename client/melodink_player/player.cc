@@ -14,6 +14,7 @@
 #undef AVMediaType
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <mutex>
 #include <shared_mutex>
@@ -143,6 +144,7 @@ private:
     bool is_track_loaded = next_track->IsAudioOpened();
 
     if (reinit && is_track_loaded) {
+      reinit_miniaudio_mutex.lock();
       ma_device_uninit(&audio_device);
     }
 
@@ -156,6 +158,7 @@ private:
 
     if (reinit && is_track_loaded) {
       InitMiniaudio();
+      reinit_miniaudio_mutex.unlock();
     }
 
     send_event_audio_changed(current_track_index);
@@ -175,6 +178,7 @@ private:
     bool is_track_loaded = prev_track->IsAudioOpened();
 
     if (reinit && is_track_loaded) {
+      reinit_miniaudio_mutex.lock();
       ma_device_uninit(&audio_device);
     }
 
@@ -188,6 +192,7 @@ private:
 
     if (reinit && is_track_loaded) {
       InitMiniaudio();
+      reinit_miniaudio_mutex.unlock();
     }
 
     send_event_audio_changed(current_track_index);
@@ -247,7 +252,7 @@ private:
 
     send_event_audio_changed(current_track_index);
 
-    MelodinkTrack *new_current_track = GetTrack(current_url, true);
+    MelodinkTrack *new_current_track = GetTrack(current_url, false);
 
     if (last_set_audio_id.load() - 1 != current_set_audio_id) {
       new_current_track->player_load_count -= 1;
@@ -320,11 +325,13 @@ private:
       }
 
       if (!IsTrackMatchDevice(new_current_track)) {
+        reinit_miniaudio_mutex.lock();
         ma_device_uninit(&audio_device);
 
         current_track = new_current_track;
 
         InitMiniaudio();
+        reinit_miniaudio_mutex.unlock();
       } else {
         current_track = new_current_track;
 
@@ -505,11 +512,9 @@ private:
     player->auto_next_audio_mismatch_conditional.notify_one();
   }
 
+  std::mutex reinit_miniaudio_mutex;
+
   int InitMiniaudio() {
-    ma_device_config audio_device_config;
-
-    audio_device_config = ma_device_config_init(ma_device_type_playback);
-
     if (current_track != nullptr) {
 
       switch (current_track->GetAudioOutputFormat()) {
@@ -595,7 +600,7 @@ private:
 
       parallel_loading += 1;
 
-      std::thread t([new_track, this]() {
+      std::thread t([new_track, this, url]() {
 #ifdef MELODINK_PLAYER_LOG
         fprintf(stderr, "OPEN %s\n", url);
 #endif
@@ -694,13 +699,18 @@ private:
     }
   }
 
+  ma_device_config audio_device_config;
+
 public:
   MelodinkPlayer() {
 #ifndef MELODINK_PLAYER_LOG
     av_log_set_level(AV_LOG_QUIET);
 #endif
 
+    reinit_miniaudio_mutex.lock();
+    audio_device_config = ma_device_config_init(ma_device_type_playback);
     InitMiniaudio();
+    reinit_miniaudio_mutex.unlock();
 
     auto_next_audio_mismatch_thread =
         std::thread(&MelodinkPlayer::AutoNextAudioMismatchThread, this);
@@ -759,6 +769,7 @@ public:
   void Prev() { PlayPrevAudio(true); }
 
   void Seek(int64_t position_ms) {
+    return;
     std::unique_lock<std::mutex> lock(set_audio_mutex);
 
     if (current_track == nullptr) {

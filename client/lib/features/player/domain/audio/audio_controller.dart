@@ -510,8 +510,16 @@ class AudioController extends BaseAudioHandler
   int? _lastCurrentTrackId;
   String? _lastCurrentTrackUrl;
 
+  DateTime _lastUpdatePlayerTracks = DateTime.fromMillisecondsSinceEpoch(0);
+
   Future<void> _updatePlayerTracks() async {
     await playerTracksMutex.protect(() async {
+      if (DateTime.now().difference(_lastUpdatePlayerTracks).inMilliseconds <
+          10) {
+        await Future.delayed(const Duration(milliseconds: 10));
+      }
+      _lastUpdatePlayerTracks = DateTime.now();
+
       player.setAuthToken(
         AppApi().generateCookieHeader(),
       );

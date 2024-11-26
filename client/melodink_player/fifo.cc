@@ -40,6 +40,10 @@ public:
   int push(void **data, int samples) {
     std::lock_guard<std::mutex> lock(_mut);
 
+    if (_fifo == nullptr) {
+      return -1;
+    }
+
     int space = av_audio_fifo_space(_fifo);
 
     if (samples > space) {
@@ -52,6 +56,10 @@ public:
 
   int pop(void **data, int samples) {
     std::unique_lock<std::mutex> lock(_mut);
+    if (_fifo == nullptr) {
+      return -1;
+    }
+
     return av_audio_fifo_read(_fifo, data, samples);
   }
 
@@ -71,11 +79,13 @@ public:
   }
 
   void clear() {
+    std::unique_lock<std::mutex> lock(_mut);
     if (_fifo != nullptr)
       av_audio_fifo_drain(_fifo, av_audio_fifo_size(_fifo));
   }
 
   void free() {
+    std::unique_lock<std::mutex> lock(_mut);
     av_audio_fifo_free(_fifo);
     _fifo = nullptr;
   }

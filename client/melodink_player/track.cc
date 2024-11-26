@@ -692,10 +692,7 @@ public:
     return samples_read;
   }
 
-  bool IsAudioOpened() {
-    std::unique_lock<std::mutex> lock(open_mutex);
-    return audio_opened;
-  }
+  bool IsAudioOpened() { return audio_opened; }
 
   void PrintAudioInfo() {
 #ifndef MELODINK_PLAYER_LOG
