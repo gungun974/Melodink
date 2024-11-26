@@ -1,7 +1,11 @@
+#pragma once
+
 extern "C" {
 #include <libavutil/audio_fifo.h>
 #include <libavutil/avutil.h>
 }
+
+#include <mutex>
 
 class AudioFifo {
 private:

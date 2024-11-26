@@ -5,10 +5,11 @@
 #define MELODINK_KEEP_PREV_TRACKS 5
 #define MELODINK_KEEP_NEXT_TRACKS 8
 
-#define MA_NO_DECODING
-#define MA_NO_ENCODING
-#define MINIAUDIO_IMPLEMENTATION
+#define AVMediaType FF_AVMediaType
+
 #include "miniaudio.h"
+
+#undef AVMediaType
 
 #include <atomic>
 #include <condition_variable>
@@ -18,7 +19,6 @@
 #include <thread>
 #include <vector>
 
-#include "sendevent.cc"
 #include "track.cc"
 
 typedef enum {
@@ -42,9 +42,9 @@ private:
   MelodinkTrack *current_track = nullptr;
   MelodinkTrack *next_track = nullptr;
 
-  std::atomic<MelodinkProcessingState> state = MELODINK_PROCESSING_STATE_IDLE;
+  std::atomic<MelodinkProcessingState> state{MELODINK_PROCESSING_STATE_IDLE};
 
-  std::atomic<MelodinkLoopMode> loop_mode = MELODINK_LOOP_MODE_NONE;
+  std::atomic<MelodinkLoopMode> loop_mode{MELODINK_LOOP_MODE_NONE};
 
   std::string auth_token;
 
@@ -55,7 +55,7 @@ private:
 
     this->state = state;
 
-    send_event_update_state(state);
+    //send_event_update_state(state);
   }
 
   std::thread set_audio_thread;
@@ -155,7 +155,7 @@ private:
       InitMiniaudio();
     }
 
-    send_event_audio_changed(current_track_index);
+    //send_event_audio_changed(current_track_index);
   }
 
   void PlayPrevAudio(bool reinit) {
@@ -187,7 +187,7 @@ private:
       InitMiniaudio();
     }
 
-    send_event_audio_changed(current_track_index);
+    //send_event_audio_changed(current_track_index);
   }
 
   void AutoNextAudioMismatchThread() {
@@ -202,7 +202,7 @@ private:
 
   std::atomic<int64_t> last_set_audio_id;
   std::mutex set_audio_mutex;
-  std::atomic<int64_t> can_change_track = 0;
+  std::atomic<int64_t> can_change_track{0};
 
   void
   SetAudioThread(std::shared_ptr<std::vector<std::string>> shared_previous_urls,
@@ -242,7 +242,7 @@ private:
     prev_track_index = current_track_index - 1;
     next_track_index = current_track_index + 1;
 
-    send_event_audio_changed(current_track_index);
+    //send_event_audio_changed(current_track_index);
 
     MelodinkTrack *new_current_track = GetTrack(current_url, true);
 
@@ -434,7 +434,7 @@ private:
       double current_position = player->current_track->GetCurrentPlaybackTime();
 
       if (current_position < player->previous_position) {
-        send_event_update_state(player->state);
+        //send_event_update_state(player->state);
       }
       player->previous_position = current_position;
     }
@@ -569,7 +569,7 @@ private:
   std::mutex load_track_mutex;
   std::condition_variable load_track_conditional;
 
-  std::atomic<int> parallel_loading = 0;
+  std::atomic<int> parallel_loading{0};
 
   MelodinkTrack *LoadTrack(const char *url, bool waitForOpen) {
     MelodinkTrack *new_track = new MelodinkTrack;
@@ -777,7 +777,7 @@ public:
       ma_device_start(&audio_device);
     }
 
-    send_event_update_state(state);
+    //send_event_update_state(state);
   }
 
   void SetAudios(std::vector<const char *> previous_urls,

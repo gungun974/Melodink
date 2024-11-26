@@ -31,10 +31,10 @@ private:
   std::string loaded_url = "";
   bool audio_opened = false;
 
-  std::atomic<bool> finished_reading = false;
-  std::atomic<bool> keep_loading = true;
+  std::atomic<bool> finished_reading{false};
+  std::atomic<bool> keep_loading{true};
 
-  std::atomic<bool> infinite_loop = false;
+  std::atomic<bool> infinite_loop{false};
 
   std::thread decoding_thread;
   std::mutex decoding_mutex;
@@ -56,7 +56,7 @@ private:
 
   size_t audio_frames_consumed = 0;
   size_t audio_frames_consumed_max = -1;
-  std::atomic<double> audio_time = 0.0;
+  std::atomic<double> audio_time{0.0};
 
   int audio_sample_size = 0;
   int audio_sample_rate = 0;
@@ -803,5 +803,5 @@ public:
   }
 
   // This is only for `player.cc`
-  std::atomic<int> player_load_count = 0;
+  std::atomic<int> player_load_count{0};
 };

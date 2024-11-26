@@ -1,6 +1,14 @@
 #include <stdio.h>
 
-#include "player.cc"
+#define MA_NO_DECODING
+#define MA_NO_ENCODING
+#define MA_NO_RUNTIME_LINKING
+#define AVMediaType FF_AVMediaType
+//#include "miniaudio.mm"
+#undef AVMediaType
+#undef MINIAUDIO_IMPLEMENTATION
+
+#include "player.mm"
 
 MelodinkPlayer *player = nullptr;
 
@@ -14,12 +22,12 @@ extern "C" void mi_player_init() {
 
 extern "C" void
 mi_register_event_audio_changed_callback(void (*callback)(int64_t)) {
-  dart_send_event_audio_changed = callback;
+  //dart_send_event_audio_changed = callback;
 }
 
 extern "C" void
 mi_register_event_update_state_callback(void (*callback)(int64_t)) {
-  dart_send_event_update_state = callback;
+  //dart_send_event_update_state = callback;
 }
 
 extern "C" void mi_player_play() {
