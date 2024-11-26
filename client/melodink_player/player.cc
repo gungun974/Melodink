@@ -5,10 +5,12 @@
 #define MELODINK_KEEP_PREV_TRACKS 5
 #define MELODINK_KEEP_NEXT_TRACKS 8
 
+// #define MA_NO_DECODING
+// #define MA_NO_ENCODING
+// #define MA_NO_RUNTIME_LINKING
+
 #define AVMediaType FF_AVMediaType
-
 #include "miniaudio.h"
-
 #undef AVMediaType
 
 #include <atomic>
@@ -19,6 +21,7 @@
 #include <thread>
 #include <vector>
 
+#include "sendevent.h"
 #include "track.cc"
 
 typedef enum {
@@ -55,7 +58,7 @@ private:
 
     this->state = state;
 
-    //send_event_update_state(state);
+    send_event_update_state(state);
   }
 
   std::thread set_audio_thread;
@@ -155,7 +158,7 @@ private:
       InitMiniaudio();
     }
 
-    //send_event_audio_changed(current_track_index);
+    send_event_audio_changed(current_track_index);
   }
 
   void PlayPrevAudio(bool reinit) {
@@ -187,7 +190,7 @@ private:
       InitMiniaudio();
     }
 
-    //send_event_audio_changed(current_track_index);
+    send_event_audio_changed(current_track_index);
   }
 
   void AutoNextAudioMismatchThread() {
@@ -242,7 +245,7 @@ private:
     prev_track_index = current_track_index - 1;
     next_track_index = current_track_index + 1;
 
-    //send_event_audio_changed(current_track_index);
+    send_event_audio_changed(current_track_index);
 
     MelodinkTrack *new_current_track = GetTrack(current_url, true);
 
@@ -434,7 +437,7 @@ private:
       double current_position = player->current_track->GetCurrentPlaybackTime();
 
       if (current_position < player->previous_position) {
-        //send_event_update_state(player->state);
+        send_event_update_state(player->state);
       }
       player->previous_position = current_position;
     }
@@ -777,7 +780,7 @@ public:
       ma_device_start(&audio_device);
     }
 
-    //send_event_update_state(state);
+    send_event_update_state(state);
   }
 
   void SetAudios(std::vector<const char *> previous_urls,
