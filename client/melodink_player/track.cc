@@ -40,6 +40,7 @@ private:
   std::mutex decoding_mutex;
   std::condition_variable decoding_conditional;
 
+  std::mutex open_mutex;
   std::mutex seek_mutex;
 
   int audio_stream_index = -1;
@@ -267,7 +268,7 @@ private:
     // Minimum amount of frames that should be pre-decoded
     size_t min_audio_queue_size;
 
-    if (IsAudioOpened()) {
+    if (audio_opened) {
       min_audio_queue_size =
           std::max(size_t(audio_fifo.capacity() / 2), size_t(1));
     }
@@ -295,7 +296,7 @@ private:
 
     while (true) {
       while (true) {
-        if (IsAudioOpened() && audio_fifo.size() <= min_audio_queue_size) {
+        if (audio_opened && audio_fifo.size() <= min_audio_queue_size) {
 
           break;
         }
@@ -332,7 +333,7 @@ private:
         break;
       }
 
-      if (IsAudioOpened() && av_packet->stream_index == audio_stream_index) {
+      if (audio_opened && av_packet->stream_index == audio_stream_index) {
         FrameData *fd;
 
         av_packet->opaque_ref = av_buffer_allocz(sizeof(*fd));
@@ -429,7 +430,7 @@ private:
     // Minimum amount of frames that should be pre-decoded
     size_t min_audio_queue_size;
 
-    if (IsAudioOpened()) {
+    if (audio_opened) {
       min_audio_queue_size =
           std::max(size_t(audio_fifo.capacity() / 2), size_t(1));
     }
@@ -455,11 +456,11 @@ private:
       return -1;
     }
 
-    bool audio_seeked = IsAudioOpened() ? false : true;
+    bool audio_seeked = audio_opened ? false : true;
 
     while (true) {
       if (audio_seeked) {
-        if (IsAudioOpened()) {
+        if (audio_opened) {
           double at = audio_time;
 #ifdef MELODINK_PLAYER_LOG
           fprintf(stderr, "audio_time: %lf\n", at);
@@ -481,7 +482,7 @@ private:
         break;
       }
 
-      if (IsAudioOpened() && av_packet->stream_index == audio_stream_index) {
+      if (audio_opened && av_packet->stream_index == audio_stream_index) {
         FrameData *fd;
 
         av_packet->opaque_ref = av_buffer_allocz(sizeof(*fd));
@@ -592,11 +593,12 @@ public:
   void SetLoadedUrl(const char *filename) { loaded_url = filename; }
 
   int Open(const char *filename, const char *auth_token) {
+    std::unique_lock<std::mutex> lock(open_mutex);
     loaded_url = filename;
 
     int result;
 
-    if (IsAudioOpened()) {
+    if (audio_opened) {
       Close();
     }
 
@@ -622,7 +624,7 @@ public:
   }
 
   bool FinishedReading() {
-    if (!IsAudioOpened()) {
+    if (!audio_opened) {
       return false;
     }
 
@@ -634,8 +636,9 @@ public:
 
   int Seek(double new_time) {
     std::unique_lock<std::mutex> lock(seek_mutex);
+    std::unique_lock<std::mutex> lock2(open_mutex);
 
-    if (!IsAudioOpened()) {
+    if (!audio_opened) {
       fprintf(stderr, "ERROR SEEK %s\n", loaded_url.c_str());
       return -1;
     }
@@ -653,7 +656,7 @@ public:
 
     if (response >= 0) {
 
-      if (IsAudioOpened()) {
+      if (audio_opened) {
         audio_fifo.clear();
         avcodec_flush_buffers(av_audio_codec_ctx);
       }
@@ -689,13 +692,16 @@ public:
     return samples_read;
   }
 
-  bool IsAudioOpened() { return audio_opened; }
+  bool IsAudioOpened() {
+    std::unique_lock<std::mutex> lock(open_mutex);
+    return audio_opened;
+  }
 
   void PrintAudioInfo() {
 #ifndef MELODINK_PLAYER_LOG
     return;
 #endif
-    if (IsAudioOpened() == false) {
+    if (audio_opened == false) {
       fprintf(stderr, "Audio isn't open\n");
       return;
     }
@@ -752,32 +758,32 @@ public:
   }
 
   AVSampleFormat GetAudioOutputFormat() {
-    assert(IsAudioOpened());
+    assert(audio_opened);
 
     return audio_format;
   }
 
   AVSampleFormat GetAudioOriginalFormat() {
-    assert(IsAudioOpened());
+    assert(audio_opened);
 
     return (AVSampleFormat)av_format_ctx->streams[audio_stream_index]
         ->codecpar->format;
   }
 
   int GetAudioSampleSize() {
-    assert(IsAudioOpened());
+    assert(audio_opened);
 
     return audio_sample_size;
   }
 
   int GetAudioSampleRate() {
-    assert(IsAudioOpened());
+    assert(audio_opened);
 
     return audio_sample_rate;
   }
 
   int GetAudioChannelCount() {
-    assert(IsAudioOpened());
+    assert(audio_opened);
 
     return audio_channel_count;
   }
@@ -785,7 +791,7 @@ public:
   double GetCurrentPlaybackTime() {
     double time = 0.0;
 
-    if (IsAudioOpened()) {
+    if (audio_opened) {
       time = audio_time;
     }
 
