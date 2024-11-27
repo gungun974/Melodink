@@ -129,23 +129,18 @@ private:
 
     std::unique_lock<std::mutex> lock(set_audio_mutex);
 
-    fprintf(stderr, "PLAYNEXTAUDIO START\n");
-
     if (next_track == nullptr) {
       ma_device_state device_state = ma_device_get_state(&audio_device);
 
       if (device_state == ma_device_state_started ||
           device_state == ma_device_state_stopped) {
-        fprintf(stderr, "ma_device_stop START (A) \n");
         reinit_miniaudio_mutex.lock();
         ma_device_stop(&audio_device);
         reinit_miniaudio_mutex.unlock();
-        fprintf(stderr, "ma_device_stop END (A) \n");
       }
 
       is_paused = true;
       SetPlayerState(MELODINK_PROCESSING_STATE_COMPLETED);
-      fprintf(stderr, "PLAYNEXTAUDIO COMPLETED\n");
       return;
     }
 
@@ -153,9 +148,7 @@ private:
 
     if (reinit && is_track_loaded) {
       reinit_miniaudio_mutex.lock();
-      fprintf(stderr, "ma_device_uninit START (A) \n");
       ma_device_uninit(&audio_device);
-      fprintf(stderr, "ma_device_uninit END (A) \n");
     }
 
     current_track_index = next_track_index;
@@ -172,7 +165,6 @@ private:
     }
 
     send_event_audio_changed(current_track_index);
-    fprintf(stderr, "PLAYNEXTAUDIO END\n");
   }
 
   void PlayPrevAudio(bool reinit) {
@@ -190,9 +182,7 @@ private:
 
     if (reinit && is_track_loaded) {
       reinit_miniaudio_mutex.lock();
-      fprintf(stderr, "ma_device_uninit START (B) \n");
       ma_device_uninit(&audio_device);
-      fprintf(stderr, "ma_device_uninit END (B) \n");
     }
 
     current_track_index = prev_track_index;
@@ -236,9 +226,7 @@ private:
 
   void SetAudioThread() {
     while (true) {
-      fprintf(stderr, "THREAD WAIT %d\n", std::this_thread::get_id());
       set_audio_queue_mutex.lock();
-      fprintf(stderr, "THREAD WATCH %d\n", std::this_thread::get_id());
       while (set_audio_queue.empty()) {
         std::this_thread::sleep_for(std::chrono::microseconds(10));
       }
@@ -250,13 +238,10 @@ private:
         set_audio_queue.pop();
       }
 
-      fprintf(stderr, "THREAD EQUIL %d\n", can_change_track.load());
-
       can_change_track += 1;
 
       int64_t current_set_audio_id = last_set_audio_id.fetch_add(1);
 
-      fprintf(stderr, "THREAD ACTION %d\n", std::this_thread::get_id());
       std::unique_lock<std::mutex> lock(set_audio_mutex);
       set_audio_queue_mutex.unlock();
 
@@ -341,7 +326,6 @@ private:
 
         t.detach();
 
-        fprintf(stderr, "THREAD OPEN %d\n", std::this_thread::get_id());
         while (!*is_loading_finish) {
           if (last_set_audio_id.load() - 1 != current_set_audio_id) {
             break;
@@ -372,11 +356,9 @@ private:
 
         if (device_state == ma_device_state_started ||
             device_state == ma_device_state_stopped) {
-          fprintf(stderr, "ma_device_stop START (B) \n");
           reinit_miniaudio_mutex.lock();
           ma_device_stop(&audio_device);
           reinit_miniaudio_mutex.unlock();
-          fprintf(stderr, "ma_device_stop END (B) \n");
         }
 
         is_paused = true;
@@ -392,52 +374,36 @@ private:
         }
 
         if (!IsTrackMatchDevice(new_current_track)) {
-          fprintf(stderr, "Hoi (A) : %d\n", new_current_track->IsAudioOpened());
           reinit_miniaudio_mutex.lock();
-          fprintf(stderr, "Hoi (B) : %d\n", new_current_track->IsAudioOpened());
           ma_device_state device_state = ma_device_get_state(&audio_device);
 
           if (device_state == ma_device_state_started ||
               device_state == ma_device_state_stopped) {
-            fprintf(stderr, "ma_device_stop START (C) \n");
             ma_device_stop(&audio_device);
-            fprintf(stderr, "ma_device_stop END (C) \n");
           }
 
-          fprintf(stderr, "Hoi (B2) : %d\n",
-                  new_current_track->IsAudioOpened());
-
           if (!new_current_track->IsAudioOpened()) {
-            fprintf(stderr, "Hoi (ERRRRR) : %d\n",
-                    new_current_track->IsAudioOpened());
-
             current_track = nullptr;
 
             ma_device_state device_state = ma_device_get_state(&audio_device);
 
             if (device_state == ma_device_state_started ||
                 device_state == ma_device_state_stopped) {
-              fprintf(stderr, "ma_device_stop START (D) \n");
               ma_device_stop(&audio_device);
-              fprintf(stderr, "ma_device_stop END (D) \n");
             }
 
             is_paused = true;
 
             SetPlayerState(MELODINK_PROCESSING_STATE_ERROR);
           } else {
-            fprintf(stderr, "ma_device_uninit START (C) \n");
             ma_device_uninit(&audio_device);
-            fprintf(stderr, "ma_device_uninit END (A) \n");
 
-            fprintf(stderr, "Hoi (C) : %d\n",
                     new_current_track->IsAudioOpened());
-            current_track = new_current_track;
+                    current_track = new_current_track;
 
-            fprintf(stderr, "Hoi (D) : %d\n",
                     new_current_track->IsAudioOpened());
 
-            InitMiniaudio();
+                    InitMiniaudio();
           }
 
           reinit_miniaudio_mutex.unlock();
@@ -448,11 +414,9 @@ private:
 
           if (device_state == ma_device_state_started ||
               device_state == ma_device_state_stopped) {
-            fprintf(stderr, "ma_device_start START (A) \n");
-            reinit_miniaudio_mutex.lock();
-            ma_device_start(&audio_device);
-            reinit_miniaudio_mutex.unlock();
-            fprintf(stderr, "ma_device_start END (A) \n");
+                    reinit_miniaudio_mutex.lock();
+                    ma_device_start(&audio_device);
+                    reinit_miniaudio_mutex.unlock();
           }
 
           is_paused = false;
@@ -669,22 +633,16 @@ private:
 
     audio_device_config.dataCallback = &MelodinkPlayer::AudioDataCallback;
 
-    fprintf(stderr, "ma_device_init START (A) \n");
     if (ma_device_init(NULL, &audio_device_config, &audio_device) !=
         MA_SUCCESS) {
-      fprintf(stderr, "Couldn't init playback device\n");
       return -1;
     }
-    fprintf(stderr, "ma_device_init END (A) \n");
 
     is_paused = false;
 
-    fprintf(stderr, "ma_device_start START (B) \n");
     if (ma_device_start(&audio_device) != MA_SUCCESS) {
-      fprintf(stderr, "Failed to start playback device\n");
       return -1;
     }
-    fprintf(stderr, "ma_device_start END (B) \n");
 
     ma_device_set_master_volume(&audio_device, audio_volume);
 
@@ -851,11 +809,9 @@ public:
 
     if (device_state == ma_device_state_started ||
         device_state == ma_device_state_stopped) {
-      fprintf(stderr, "ma_device_start START (C) \n");
       reinit_miniaudio_mutex.lock();
       ma_device_start(&audio_device);
       reinit_miniaudio_mutex.unlock();
-      fprintf(stderr, "ma_device_start END (C) \n");
     }
 
     is_paused = false;
@@ -878,11 +834,9 @@ public:
 
     if (device_state == ma_device_state_started ||
         device_state == ma_device_state_stopped) {
-      fprintf(stderr, "ma_device_stop START (E) \n");
       reinit_miniaudio_mutex.lock();
       ma_device_stop(&audio_device);
       reinit_miniaudio_mutex.unlock();
-      fprintf(stderr, "ma_device_stop END (E) \n");
     }
 
     is_paused = true;
@@ -918,27 +872,21 @@ public:
 
       if (device_state == ma_device_state_started ||
           device_state == ma_device_state_stopped) {
-        fprintf(stderr, "ma_device_stop START (F) \n");
         reinit_miniaudio_mutex.lock();
         ma_device_stop(&audio_device);
         reinit_miniaudio_mutex.unlock();
-        fprintf(stderr, "ma_device_stop END (F) \n");
       }
 
       state = MELODINK_PROCESSING_STATE_BUFFERING;
 
       send_event_update_state(state);
 
-      fprintf(stderr, "LE GRAND GENTIL SEEK\n");
       current_track->Seek(position_seconds);
-      fprintf(stderr, "LE GRAND MECHANT SEEK\n");
 
       if (!is_paused) {
-        fprintf(stderr, "ma_device_start START (D) \n");
         reinit_miniaudio_mutex.lock();
         ma_device_start(&audio_device);
         reinit_miniaudio_mutex.unlock();
-        fprintf(stderr, "ma_device_start END (D) \n");
       }
 
       seek_duration = -1;
