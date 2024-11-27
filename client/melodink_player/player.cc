@@ -123,7 +123,7 @@ private:
   }
 
   void PlayNextAudio(bool reinit) {
-    if (last_set_audio_id.load() != last_current_set_audio_id.load()) {
+    if (can_change_track != 0) {
       return;
     }
 
@@ -175,7 +175,7 @@ private:
   }
 
   void PlayPrevAudio(bool reinit) {
-    if (last_set_audio_id.load() != last_current_set_audio_id.load()) {
+    if (can_change_track != 0) {
       return;
     }
 
@@ -222,7 +222,7 @@ private:
 
   std::atomic<int64_t> last_set_audio_id{0};
   std::mutex set_audio_mutex;
-  std::atomic<int64_t> last_current_set_audio_id{0};
+  std::atomic<int64_t> can_change_track{0};
 
   struct SetAudioRequest {
     std::vector<std::string> previous_urls;
@@ -231,10 +231,13 @@ private:
 
   std::queue<std::shared_ptr<SetAudioRequest>> set_audio_queue;
   std::mutex set_audio_queue_mutex;
+  std::mutex set_audio_queue_write_mutex;
 
   void SetAudioThread() {
     while (true) {
+      fprintf(stderr, "THREAD WAIT %d\n", std::this_thread::get_id());
       set_audio_queue_mutex.lock();
+      fprintf(stderr, "THREAD WATCH %d\n", std::this_thread::get_id());
       while (set_audio_queue.empty()) {
         std::this_thread::sleep_for(std::chrono::microseconds(10));
       }
@@ -245,36 +248,38 @@ private:
         request = *set_audio_queue.front();
         set_audio_queue.pop();
       }
-      set_audio_queue_mutex.unlock();
 
-      fprintf(stderr, "%d = %d\n", last_set_audio_id.load(),
-              last_current_set_audio_id.load());
+      fprintf(stderr, "THREAD EQUIL %d\n", can_change_track.load());
+
+      can_change_track += 1;
 
       int64_t current_set_audio_id = last_set_audio_id.fetch_add(1);
 
+      fprintf(stderr, "THREAD ACTION %d\n", std::this_thread::get_id());
       std::unique_lock<std::mutex> lock(set_audio_mutex);
+      set_audio_queue_mutex.unlock();
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-        last_current_set_audio_id += 1;
-        return;
+        can_change_track -= 1;
+        continue;
       }
 
       if (request.previous_urls.size() == 0) {
         current_track = nullptr;
         if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-          last_current_set_audio_id += 1;
-          return;
+          can_change_track -= 1;
+          continue;
         }
         UnloadTracks(request.previous_urls, request.next_urls);
-        last_current_set_audio_id += 1;
-        return;
+        can_change_track -= 1;
+        continue;
       }
 
       const char *current_url = request.previous_urls.back().c_str();
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-        last_current_set_audio_id += 1;
-        return;
+        can_change_track -= 1;
+        continue;
       }
 
       current_track_index = request.previous_urls.size() - 1;
@@ -283,12 +288,12 @@ private:
 
       send_event_audio_changed(current_track_index);
 
-      MelodinkTrack *new_current_track = GetTrack(current_url, false);
+      MelodinkTrack *new_current_track = GetTrack(current_url);
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
         new_current_track->player_load_count -= 1;
-        last_current_set_audio_id += 1;
-        return;
+        can_change_track -= 1;
+        continue;
       }
 
       if (!new_current_track->IsAudioOpened()) {
@@ -298,39 +303,65 @@ private:
 
         if (last_set_audio_id.load() - 1 != current_set_audio_id) {
           new_current_track->player_load_count -= 1;
-          last_current_set_audio_id += 1;
-          return;
+          can_change_track -= 1;
+          continue;
         }
 
         SetAudioNext(request.previous_urls, request.next_urls);
 
         if (last_set_audio_id.load() - 1 != current_set_audio_id) {
           new_current_track->player_load_count -= 1;
-          last_current_set_audio_id += 1;
-          return;
+          can_change_track -= 1;
+          continue;
         }
 
         SetPlayer_state(MELODINK_PROCESSING_STATE_BUFFERING);
 
         set_audio_mutex.unlock();
 
-        // last_current_set_audio_id += 1;
+        can_change_track -= 1;
 
-        new_current_track->Open(current_url, auth_token.c_str());
+        std::shared_ptr<std::atomic<bool>> is_loading_finish =
+            std::make_shared<std::atomic<bool>>(false);
+
+        std::thread t(
+            [new_current_track, this, current_url, is_loading_finish]() {
+#ifdef MELODINK_PLAYER_LOG
+              fprintf(stderr, "OPEN late %s\n", current_url);
+#endif
+              new_current_track->player_load_count += 1;
+              new_current_track->Open(current_url, auth_token.c_str());
+              new_current_track->player_load_count -= 1;
+              *is_loading_finish = true;
+#ifdef MELODINK_PLAYER_LOG
+              fprintf(stderr, "FINISH late %s\n", current_url);
+#endif
+            });
+
+        t.detach();
+
+        fprintf(stderr, "THREAD OPEN %d\n", std::this_thread::get_id());
+        while (!*is_loading_finish) {
+          if (last_set_audio_id.load() - 1 != current_set_audio_id) {
+            break;
+          }
+
+          std::this_thread::sleep_for(std::chrono::microseconds(10));
+        }
 
         if (last_set_audio_id.load() - 1 != current_set_audio_id) {
           new_current_track->player_load_count -= 1;
-          return;
+          continue;
         }
 
-        // last_current_set_audio_id += 1;
+        can_change_track += 1;
         set_audio_mutex.lock();
       }
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
         new_current_track->player_load_count -= 1;
-        last_current_set_audio_id += 1;
-        return;
+        can_change_track -= 1;
+        continue;
       }
 
       if (!new_current_track->IsAudioOpened()) {
@@ -432,15 +463,15 @@ private:
       SetAudioPrev(request.previous_urls, request.next_urls);
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-        last_current_set_audio_id += 1;
-        return;
+        can_change_track -= 1;
+        continue;
       }
 
       SetAudioNext(request.previous_urls, request.next_urls);
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-        last_current_set_audio_id += 1;
-        return;
+        can_change_track -= 1;
+        continue;
       }
 
       size_t start_previous =
@@ -449,12 +480,15 @@ private:
               : 0;
       for (size_t j = start_previous; j < request.previous_urls.size(); ++j) {
         if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-          last_current_set_audio_id += 1;
-          return;
+          break;
         }
-        MelodinkTrack *track =
-            GetTrack(request.previous_urls[j].c_str(), false);
+        MelodinkTrack *track = GetTrack(request.previous_urls[j].c_str());
         track->player_load_count -= 1;
+      }
+
+      if (last_set_audio_id.load() - 1 != current_set_audio_id) {
+        can_change_track -= 1;
+        continue;
       }
 
       size_t end_next = request.next_urls.size() > MELODINK_KEEP_NEXT_TRACKS
@@ -462,27 +496,25 @@ private:
                             : request.next_urls.size();
       for (size_t j = 0; j < end_next; ++j) {
         if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-          last_current_set_audio_id += 1;
-          return;
+          break;
         }
-        MelodinkTrack *track = GetTrack(request.next_urls[j].c_str(), false);
+        MelodinkTrack *track = GetTrack(request.next_urls[j].c_str());
         track->player_load_count -= 1;
       }
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-        last_current_set_audio_id += 1;
-        return;
+        can_change_track -= 1;
+        continue;
       }
       UnloadTracks(request.previous_urls, request.next_urls);
-      last_current_set_audio_id += 1;
+      can_change_track -= 1;
     }
   }
 
   void SetAudioPrev(std::vector<std::string> previous_urls,
                     std::vector<std::string> next_urls) {
     if (previous_urls.size() > 1) {
-      prev_track =
-          GetTrack(previous_urls[previous_urls.size() - 2].c_str(), false);
+      prev_track = GetTrack(previous_urls[previous_urls.size() - 2].c_str());
       if (prev_track->GetCurrentPlaybackTime() != 0.0) {
         prev_track->Seek(0);
       }
@@ -495,7 +527,7 @@ private:
     if (next_urls.size() == 0) {
       if (loop_mode == MELODINK_LOOP_MODE_ALL) {
         next_track_index = 0;
-        next_track = GetTrack(previous_urls[0].c_str(), false);
+        next_track = GetTrack(previous_urls[0].c_str());
         if (next_track->GetCurrentPlaybackTime() != 0.0) {
           next_track->Seek(0);
         }
@@ -505,7 +537,7 @@ private:
         next_track = nullptr;
       }
     } else {
-      next_track = GetTrack(next_urls[0].c_str(), false);
+      next_track = GetTrack(next_urls[0].c_str());
       if (next_track->GetCurrentPlaybackTime() != 0.0) {
         next_track->Seek(0);
       }
@@ -569,8 +601,7 @@ private:
       return;
     }
 
-    if (player->last_set_audio_id.load() !=
-        player->last_current_set_audio_id.load()) {
+    if (player->can_change_track != 0) {
       return;
     }
 
@@ -667,52 +698,42 @@ private:
 
   std::atomic<int> parallel_loading{0};
 
-  MelodinkTrack *LoadTrack(const char *url, bool waitForOpen) {
+  MelodinkTrack *LoadTrack(const char *url) {
     MelodinkTrack *new_track = new MelodinkTrack;
 
-    if (waitForOpen) {
+    new_track->player_load_count += 1;
+
+    new_track->SetLoadedUrl(url);
+
+    std::unique_lock<std::mutex> lock(load_track_mutex);
+    while (parallel_loading > 15) {
+      load_track_conditional.wait(lock);
+    }
+
+    parallel_loading += 1;
+
+    std::thread t([new_track, this, url]() {
 #ifdef MELODINK_PLAYER_LOG
       fprintf(stderr, "OPEN %s\n", url);
 #endif
-      new_track->Open(url, auth_token.c_str());
+      new_track->player_load_count += 1;
+      new_track->Open(new_track->GetLoadedUrl(), auth_token.c_str());
+      new_track->player_load_count -= 1;
+      parallel_loading -= 1;
+      load_track_conditional.notify_one();
 #ifdef MELODINK_PLAYER_LOG
       fprintf(stderr, "FINISH %s\n", url);
 #endif
-    } else {
-      new_track->SetLoadedUrl(url);
+    });
 
-      std::unique_lock<std::mutex> lock(load_track_mutex);
-      while (parallel_loading > 15) {
-        load_track_conditional.wait(lock);
-      }
-
-      parallel_loading += 1;
-
-      std::thread t([new_track, this, url]() {
-#ifdef MELODINK_PLAYER_LOG
-        fprintf(stderr, "OPEN %s\n", url);
-#endif
-        new_track->player_load_count += 1;
-        new_track->Open(new_track->GetLoadedUrl(), auth_token.c_str());
-        new_track->player_load_count -= 1;
-        parallel_loading -= 1;
-        load_track_conditional.notify_one();
-#ifdef MELODINK_PLAYER_LOG
-        fprintf(stderr, "FINISH %s\n", url);
-#endif
-      });
-
-      t.detach();
-    }
-
-    new_track->player_load_count += 1;
+    t.detach();
 
     loaded_tracks.push_back(new_track);
 
     return new_track;
   }
 
-  MelodinkTrack *GetTrack(const char *url, bool waitForOpen) {
+  MelodinkTrack *GetTrack(const char *url) {
     {
       ReadLock r_lock(loaded_tracks_lock);
       for (size_t i = 0; i < loaded_tracks.size(); ++i) {
@@ -725,7 +746,7 @@ private:
 
     WriteLock w_lock(loaded_tracks_lock);
 
-    return LoadTrack(url, waitForOpen);
+    return LoadTrack(url);
   }
 
   void UnloadTracks(std::vector<std::string> previous_urls,
@@ -869,10 +890,15 @@ public:
 
   void Seek(int64_t position_ms) {
     std::unique_lock<std::mutex> lock(set_audio_mutex);
+    WriteLock w_lock(loaded_tracks_lock);
+
+    MelodinkTrack *current_track = nullptr;
 
     if (current_track == nullptr) {
       return;
     }
+
+    current_track->player_load_count += 1;
 
     double position_seconds = position_ms / 1000.0;
 
@@ -888,6 +914,7 @@ public:
     }
 
     current_track->Seek(position_seconds);
+    current_track->player_load_count -= 1;
 
     if (!is_paused) {
       fprintf(stderr, "ma_device_start START (D) \n");

@@ -31,7 +31,7 @@ private:
   std::string loaded_url = "";
   bool audio_opened = false;
 
-  std::atomic<bool> finished_reading{false};
+  std::atomic<bool> finished_reading{true};
   std::atomic<bool> keep_loading{true};
 
   std::atomic<bool> infinite_loop{false};
@@ -246,8 +246,10 @@ private:
 #ifdef MELODINK_PLAYER_LOG
     fprintf(stderr, "Starting thread\n");
 #endif
+    if (!finished_reading) {
+      return;
+    }
     keep_loading = true;
-    finished_reading = false;
     this->decoding_thread = std::thread(&MelodinkTrack::DecodingThread, this);
   }
 
