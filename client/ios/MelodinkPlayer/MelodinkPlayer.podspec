@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
 
   s.name         = 'MelodinkPlayer'
   s.version      = '1.0.0'
-  s.summary      = 'LibMPV binaries & custom wrapper used for IOS and MacOS Melodink'
+  s.summary      = 'FFmpeg binaries & custom player used for IOS and MacOS Melodink'
   s.homepage     = 'https://github.com/gungun974/Melodink'
   s.license      = { :type => 'LGPL-3.0' }
   s.authors      = { 'Gungun974' => 'xfelix974@gmail.com' }

@@ -3,38 +3,35 @@ Pod::Spec.new do |s|
 
   s.name         = 'MelodinkPlayer'
   s.version      = '1.0.0'
-  s.summary      = 'LibMPV binaries & custom wrapper used for IOS and MacOS Melodink'
+  s.summary      = 'FFmpeg binaries & custom player used for IOS and MacOS Melodink'
   s.homepage     = 'https://github.com/gungun974/Melodink'
   s.license      = { :type => 'LGPL-3.0' }
   s.authors      = { 'Gungun974' => 'xfelix974@gmail.com' }
   s.source       = { :path => '.' }
 
-  s.platform = :osx, '10.9'
-  s.source_files = 'Src/**/*.{h,hpp,cpp,c,m,mm}'
+  s.platform     = :osx, '10.9'
+  s.source_files = 'Src/**/*.{cc,mm,cpp,c}'
 
   s.vendored_frameworks = [
-    'Frameworks/Ass.xcframework',
     'Frameworks/Avcodec.xcframework',
     'Frameworks/Avfilter.xcframework',
     'Frameworks/Avformat.xcframework',
     'Frameworks/Avutil.xcframework',
     'Frameworks/Dav1d.xcframework',
-    'Frameworks/Freetype.xcframework',
-    'Frameworks/Fribidi.xcframework',
-    'Frameworks/Harfbuzz.xcframework',
     'Frameworks/Mbedcrypto.xcframework',
     'Frameworks/Mbedtls.xcframework',
     'Frameworks/Mbedx509.xcframework',
-    'Frameworks/Mpv.xcframework',
-    'Frameworks/Placebo.xcframework',
-    'Frameworks/Png16.xcframework',
     'Frameworks/Swresample.xcframework',
     'Frameworks/Swscale.xcframework',
-    'Frameworks/Uchardet.xcframework',
     'Frameworks/Xml2.xcframework'
   ]
 
-  s.xcconfig = { 'OTHER_LDFLAGS' => '-framework mpv' }
+  s.compiler_flags = [
+    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avcodec.xcframework/macos-arm64_x86_64/Avcodec.framework/Headers',
+    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avutil.xcframework/macos-arm64_x86_64/Avutil.framework/Headers',
+    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avformat.xcframework/macos-arm64_x86_64/Avformat.framework/Headers',
+    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Swresample.xcframework/macos-arm64_x86_64/Swresample.framework/Headers',
+  ]
 
   s.libraries = ['bz2', 'xml2', 'iconv', 'z', 'c++']
 
@@ -51,8 +48,22 @@ Pod::Spec.new do |s|
   ]
 
   s.pod_target_xcconfig = {
+    'OTHER_LDFLAGS' => [
+      '-framework Avcodec',
+      '-framework Avfilter',
+      '-framework Avformat',
+      '-framework Avutil',
+      '-framework Dav1d',
+      '-framework Mbedcrypto',
+      '-framework Mbedtls',
+      '-framework Mbedx509',
+      '-framework Swresample',
+      '-framework Swscale',
+      '-framework Xml2'
+    ],
     'DEFINES_MODULE' => 'YES',
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',
+    'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
   }
 
   s.static_framework = false
