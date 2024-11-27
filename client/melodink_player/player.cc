@@ -52,7 +52,7 @@ private:
 
   std::string auth_token;
 
-  void SetPlayer_state(MelodinkProcessingState state) {
+  void SetPlayerState(MelodinkProcessingState state) {
     if (state == this->state) {
       return;
     }
@@ -143,7 +143,7 @@ private:
       }
 
       is_paused = true;
-      SetPlayer_state(MELODINK_PROCESSING_STATE_COMPLETED);
+      SetPlayerState(MELODINK_PROCESSING_STATE_COMPLETED);
       fprintf(stderr, "PLAYNEXTAUDIO COMPLETED\n");
       return;
     }
@@ -315,7 +315,7 @@ private:
           continue;
         }
 
-        SetPlayer_state(MELODINK_PROCESSING_STATE_BUFFERING);
+        SetPlayerState(MELODINK_PROCESSING_STATE_BUFFERING);
 
         set_audio_mutex.unlock();
 
@@ -380,7 +380,7 @@ private:
 
         is_paused = true;
 
-        SetPlayer_state(MELODINK_PROCESSING_STATE_ERROR);
+        SetPlayerState(MELODINK_PROCESSING_STATE_ERROR);
       } else {
         new_current_track->SetLoop(loop_mode == MELODINK_LOOP_MODE_ONE);
 
@@ -423,7 +423,7 @@ private:
 
             is_paused = true;
 
-            SetPlayer_state(MELODINK_PROCESSING_STATE_ERROR);
+            SetPlayerState(MELODINK_PROCESSING_STATE_ERROR);
           } else {
             fprintf(stderr, "ma_device_uninit START (C) \n");
             ma_device_uninit(&audio_device);
@@ -577,7 +577,7 @@ private:
     int frame_read = player->current_track->GetAudioFrame(&pOutput, frameCount);
 
     if (frame_read > 0) {
-      player->SetPlayer_state(MELODINK_PROCESSING_STATE_READY);
+      player->SetPlayerState(MELODINK_PROCESSING_STATE_READY);
     }
 
     if (frame_read < 0) {
@@ -591,7 +591,7 @@ private:
     }
 
     if (!player->current_track->FinishedReading()) {
-      player->SetPlayer_state(MELODINK_PROCESSING_STATE_BUFFERING);
+      player->SetPlayerState(MELODINK_PROCESSING_STATE_BUFFERING);
       return;
     }
 
@@ -888,43 +888,64 @@ public:
 
   void Prev() { PlayPrevAudio(true); }
 
+  std::atomic<int64_t> seek_duration{-1};
+
   void Seek(int64_t position_ms) {
-    std::unique_lock<std::mutex> lock(set_audio_mutex);
-    WriteLock w_lock(loaded_tracks_lock);
-
-    MelodinkTrack *current_track = nullptr;
-
     if (current_track == nullptr) {
       return;
     }
 
-    current_track->player_load_count += 1;
+    std::thread t([this, position_ms]() {
+      std::unique_lock<std::mutex> lock(set_audio_mutex);
+      WriteLock w_lock(loaded_tracks_lock);
 
-    double position_seconds = position_ms / 1000.0;
+      if (current_track == nullptr) {
+        return;
+      }
 
-    ma_device_state device_state = ma_device_get_state(&audio_device);
+      can_change_track += 1;
+      current_track->player_load_count += 1;
 
-    if (device_state == ma_device_state_started ||
-        device_state == ma_device_state_stopped) {
-      fprintf(stderr, "ma_device_stop START (F) \n");
-      reinit_miniaudio_mutex.lock();
-      ma_device_stop(&audio_device);
-      reinit_miniaudio_mutex.unlock();
-      fprintf(stderr, "ma_device_stop END (F) \n");
-    }
+      seek_duration = position_ms;
 
-    current_track->Seek(position_seconds);
-    current_track->player_load_count -= 1;
+      double position_seconds = position_ms / 1000.0;
 
-    if (!is_paused) {
-      fprintf(stderr, "ma_device_start START (D) \n");
-      reinit_miniaudio_mutex.lock();
-      ma_device_start(&audio_device);
-      reinit_miniaudio_mutex.unlock();
-      fprintf(stderr, "ma_device_start END (D) \n");
-    }
+      ma_device_state device_state = ma_device_get_state(&audio_device);
 
-    send_event_update_state(state);
+      if (device_state == ma_device_state_started ||
+          device_state == ma_device_state_stopped) {
+        fprintf(stderr, "ma_device_stop START (F) \n");
+        reinit_miniaudio_mutex.lock();
+        ma_device_stop(&audio_device);
+        reinit_miniaudio_mutex.unlock();
+        fprintf(stderr, "ma_device_stop END (F) \n");
+      }
+
+      state = MELODINK_PROCESSING_STATE_BUFFERING;
+
+      send_event_update_state(state);
+
+      fprintf(stderr, "LE GRAND GENTIL SEEK\n");
+      current_track->Seek(position_seconds);
+      fprintf(stderr, "LE GRAND MECHANT SEEK\n");
+
+      if (!is_paused) {
+        fprintf(stderr, "ma_device_start START (D) \n");
+        reinit_miniaudio_mutex.lock();
+        ma_device_start(&audio_device);
+        reinit_miniaudio_mutex.unlock();
+        fprintf(stderr, "ma_device_start END (D) \n");
+      }
+
+      seek_duration = -1;
+
+      SetPlayerState(MELODINK_PROCESSING_STATE_READY);
+
+      current_track->player_load_count -= 1;
+      can_change_track -= 1;
+    });
+
+    t.detach();
   }
 
   void SetAudios(std::vector<const char *> previous_urls,
@@ -951,6 +972,10 @@ public:
   int64_t GetCurrentPosition() {
     if (current_track == nullptr) {
       return 0;
+    }
+
+    if (seek_duration >= 0) {
+      return seek_duration;
     }
 
     return (int64_t)(current_track->GetCurrentPlaybackTime() * 1000);
