@@ -324,7 +324,6 @@ private:
 
           audio_frames_consumed_max = audio_frames_consumed + audio_fifo.size();
 
-          // AdjustSeekedPosition(0.0);
           continue;
         }
 
@@ -687,7 +686,9 @@ public:
 
     audio_frames_consumed += samples_read;
 
-    audio_frames_consumed %= audio_frames_consumed_max;
+    if (infinite_loop) {
+      audio_frames_consumed %= audio_frames_consumed_max;
+    }
 
     audio_time = double(audio_frames_consumed) / double(audio_sample_rate);
 

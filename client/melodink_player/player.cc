@@ -128,6 +128,7 @@ private:
     }
 
     std::unique_lock<std::mutex> lock(set_audio_mutex);
+
     fprintf(stderr, "PLAYNEXTAUDIO START\n");
 
     if (next_track == nullptr) {
@@ -618,9 +619,12 @@ private:
     }
 
     if (player->IsTrackMatchDevice(player->next_track)) {
+      uint8_t *pOutputByteOffset = pOutputByte +=
+          player->current_track->GetAudioChannelCount() *
+          player->current_track->GetAudioSampleSize() * frame_read;
+
       player->PlayNextAudio(false);
-      PlayAudioData(pDevice, player, pOutputByte + frame_read, remaining_frame,
-                    false);
+      PlayAudioData(pDevice, player, pOutputByteOffset, remaining_frame, false);
       return;
     }
 
