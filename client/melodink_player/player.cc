@@ -949,7 +949,11 @@ public:
       can_change_track -= 1;
     });
 
-    t.detach();
+    if (position_ms == 0) {
+      t.join();
+    } else {
+      t.detach();
+    }
   }
 
   void SetAudios(std::vector<const char *> previous_urls,
