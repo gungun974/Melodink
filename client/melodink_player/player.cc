@@ -398,12 +398,9 @@ private:
           } else {
             ma_device_uninit(&audio_device);
 
-                    new_current_track->IsAudioOpened());
-                    current_track = new_current_track;
+            current_track = new_current_track;
 
-                    new_current_track->IsAudioOpened());
-
-                    InitMiniaudio();
+            InitMiniaudio();
           }
 
           reinit_miniaudio_mutex.unlock();
@@ -414,9 +411,9 @@ private:
 
           if (device_state == ma_device_state_started ||
               device_state == ma_device_state_stopped) {
-                    reinit_miniaudio_mutex.lock();
-                    ma_device_start(&audio_device);
-                    reinit_miniaudio_mutex.unlock();
+            reinit_miniaudio_mutex.lock();
+            ma_device_start(&audio_device);
+            reinit_miniaudio_mutex.unlock();
           }
 
           is_paused = false;
