@@ -63,6 +63,7 @@ private:
   }
 
   std::thread set_audio_thread;
+  std::thread set_audio_thread2;
 
   ma_device audio_device;
 
@@ -122,11 +123,12 @@ private:
   }
 
   void PlayNextAudio(bool reinit) {
-    if (can_change_track != 0) {
+    if (last_set_audio_id.load() != last_current_set_audio_id.load()) {
       return;
     }
 
     std::unique_lock<std::mutex> lock(set_audio_mutex);
+    fprintf(stderr, "PLAYNEXTAUDIO START\n");
 
     if (next_track == nullptr) {
       ma_device_state device_state = ma_device_get_state(&audio_device);
@@ -142,6 +144,7 @@ private:
 
       is_paused = true;
       SetPlayer_state(MELODINK_PROCESSING_STATE_COMPLETED);
+      fprintf(stderr, "PLAYNEXTAUDIO COMPLETED\n");
       return;
     }
 
@@ -168,10 +171,11 @@ private:
     }
 
     send_event_audio_changed(current_track_index);
+    fprintf(stderr, "PLAYNEXTAUDIO END\n");
   }
 
   void PlayPrevAudio(bool reinit) {
-    if (can_change_track != 0) {
+    if (last_set_audio_id.load() != last_current_set_audio_id.load()) {
       return;
     }
 
@@ -216,9 +220,9 @@ private:
     }
   }
 
-  std::atomic<int64_t> last_set_audio_id;
+  std::atomic<int64_t> last_set_audio_id{0};
   std::mutex set_audio_mutex;
-  std::atomic<int64_t> can_change_track{0};
+  std::atomic<int64_t> last_current_set_audio_id{0};
 
   struct SetAudioRequest {
     std::vector<std::string> previous_urls;
@@ -226,11 +230,13 @@ private:
   };
 
   std::queue<std::shared_ptr<SetAudioRequest>> set_audio_queue;
+  std::mutex set_audio_queue_mutex;
 
   void SetAudioThread() {
     while (true) {
-      if (set_audio_queue.empty()) {
-        continue;
+      set_audio_queue_mutex.lock();
+      while (set_audio_queue.empty()) {
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
       }
 
       SetAudioRequest request;
@@ -239,32 +245,35 @@ private:
         request = *set_audio_queue.front();
         set_audio_queue.pop();
       }
+      set_audio_queue_mutex.unlock();
+
+      fprintf(stderr, "%d = %d\n", last_set_audio_id.load(),
+              last_current_set_audio_id.load());
 
       int64_t current_set_audio_id = last_set_audio_id.fetch_add(1);
 
-      can_change_track += 1;
       std::unique_lock<std::mutex> lock(set_audio_mutex);
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-        can_change_track -= 1;
+        last_current_set_audio_id += 1;
         return;
       }
 
       if (request.previous_urls.size() == 0) {
         current_track = nullptr;
         if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-          can_change_track -= 1;
+          last_current_set_audio_id += 1;
           return;
         }
         UnloadTracks(request.previous_urls, request.next_urls);
-        can_change_track -= 1;
+        last_current_set_audio_id += 1;
         return;
       }
 
       const char *current_url = request.previous_urls.back().c_str();
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-        can_change_track -= 1;
+        last_current_set_audio_id += 1;
         return;
       }
 
@@ -278,7 +287,7 @@ private:
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
         new_current_track->player_load_count -= 1;
-        can_change_track -= 1;
+        last_current_set_audio_id += 1;
         return;
       }
 
@@ -289,7 +298,7 @@ private:
 
         if (last_set_audio_id.load() - 1 != current_set_audio_id) {
           new_current_track->player_load_count -= 1;
-          can_change_track -= 1;
+          last_current_set_audio_id += 1;
           return;
         }
 
@@ -297,7 +306,7 @@ private:
 
         if (last_set_audio_id.load() - 1 != current_set_audio_id) {
           new_current_track->player_load_count -= 1;
-          can_change_track -= 1;
+          last_current_set_audio_id += 1;
           return;
         }
 
@@ -305,7 +314,7 @@ private:
 
         set_audio_mutex.unlock();
 
-        can_change_track -= 1;
+        // last_current_set_audio_id += 1;
 
         new_current_track->Open(current_url, auth_token.c_str());
 
@@ -314,13 +323,13 @@ private:
           return;
         }
 
-        can_change_track += 1;
+        // last_current_set_audio_id += 1;
         set_audio_mutex.lock();
       }
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
         new_current_track->player_load_count -= 1;
-        can_change_track -= 1;
+        last_current_set_audio_id += 1;
         return;
       }
 
@@ -423,14 +432,14 @@ private:
       SetAudioPrev(request.previous_urls, request.next_urls);
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-        can_change_track -= 1;
+        last_current_set_audio_id += 1;
         return;
       }
 
       SetAudioNext(request.previous_urls, request.next_urls);
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-        can_change_track -= 1;
+        last_current_set_audio_id += 1;
         return;
       }
 
@@ -440,7 +449,7 @@ private:
               : 0;
       for (size_t j = start_previous; j < request.previous_urls.size(); ++j) {
         if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-          can_change_track -= 1;
+          last_current_set_audio_id += 1;
           return;
         }
         MelodinkTrack *track =
@@ -453,7 +462,7 @@ private:
                             : request.next_urls.size();
       for (size_t j = 0; j < end_next; ++j) {
         if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-          can_change_track -= 1;
+          last_current_set_audio_id += 1;
           return;
         }
         MelodinkTrack *track = GetTrack(request.next_urls[j].c_str(), false);
@@ -461,11 +470,11 @@ private:
       }
 
       if (last_set_audio_id.load() - 1 != current_set_audio_id) {
-        can_change_track -= 1;
+        last_current_set_audio_id += 1;
         return;
       }
       UnloadTracks(request.previous_urls, request.next_urls);
-      can_change_track -= 1;
+      last_current_set_audio_id += 1;
     }
   }
 
@@ -560,7 +569,8 @@ private:
       return;
     }
 
-    if (player->can_change_track != 0) {
+    if (player->last_set_audio_id.load() !=
+        player->last_current_set_audio_id.load()) {
       return;
     }
 
@@ -794,6 +804,7 @@ public:
         std::thread(&MelodinkPlayer::AutoNextAudioMismatchThread, this);
 
     set_audio_thread = std::thread(&MelodinkPlayer::SetAudioThread, this);
+    set_audio_thread2 = std::thread(&MelodinkPlayer::SetAudioThread, this);
   }
 
   ~MelodinkPlayer() {}
