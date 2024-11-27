@@ -27,6 +27,10 @@ Pod::Spec.new do |s|
   ]
 
   s.compiler_flags = [
+    '-DMA_NO_RUNTIME_LINKING',
+    '-DMA_NO_DECODING',
+    '-DMA_NO_ENCODING',
+
     '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avcodec.xcframework/macos-arm64_x86_64/Avcodec.framework/Headers',
     '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avutil.xcframework/macos-arm64_x86_64/Avutil.framework/Headers',
     '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avformat.xcframework/macos-arm64_x86_64/Avformat.framework/Headers',
@@ -38,13 +42,8 @@ Pod::Spec.new do |s|
   s.frameworks = [
     'AVFoundation',
     'AudioToolbox',
-    'CoreVideo',
     'CoreAudio',
-    'CoreText',
     'CoreFoundation',
-    'CoreMedia',
-    'Metal',
-    'VideoToolbox'
   ]
 
   s.pod_target_xcconfig = {
@@ -59,7 +58,10 @@ Pod::Spec.new do |s|
       '-framework Mbedx509',
       '-framework Swresample',
       '-framework Swscale',
-      '-framework Xml2'
+      '-framework Xml2',
+      '-framework CoreFoundation',
+      '-framework CoreAudio',
+      '-framework AudioToolbox',
     ],
     'DEFINES_MODULE' => 'YES',
     'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386',

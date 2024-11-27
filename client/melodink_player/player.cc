@@ -2,13 +2,6 @@
 
 // #define MELODINK_PLAYER_LOG
 
-#define MELODINK_KEEP_PREV_TRACKS 5
-#define MELODINK_KEEP_NEXT_TRACKS 8
-
-// #define MA_NO_DECODING
-// #define MA_NO_ENCODING
-// #define MA_NO_RUNTIME_LINKING
-
 #define AVMediaType FF_AVMediaType
 #include "miniaudio.h"
 #undef AVMediaType
