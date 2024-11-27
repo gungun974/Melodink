@@ -857,7 +857,6 @@ public:
   void Prev() { PlayPrevAudio(true); }
 
   void Seek(int64_t position_ms) {
-    return;
     std::unique_lock<std::mutex> lock(set_audio_mutex);
 
     if (current_track == nullptr) {
