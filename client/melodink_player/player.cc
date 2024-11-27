@@ -233,8 +233,12 @@ private:
         continue;
       }
 
-      SetAudioRequest request = *set_audio_queue.front();
-      set_audio_queue.pop();
+      SetAudioRequest request;
+
+      while (!set_audio_queue.empty()) {
+        request = *set_audio_queue.front();
+        set_audio_queue.pop();
+      }
 
       int64_t current_set_audio_id = last_set_audio_id.fetch_add(1);
 
