@@ -564,26 +564,25 @@ private:
       return;
     }
 
-    if (player->next_track == nullptr) {
-      return;
-    }
+    if (player->next_track != nullptr) {
+      if (!player->next_track->IsAudioOpened()) {
+        return;
+      }
 
-    if (!player->next_track->IsAudioOpened()) {
-      return;
-    }
+      if (player->current_track->GetCurrentPlaybackTime() < 0.1) {
+        return;
+      }
 
-    if (player->current_track->GetCurrentPlaybackTime() < 0.1) {
-      return;
-    }
+      if (player->IsTrackMatchDevice(player->next_track)) {
+        uint8_t *pOutputByteOffset = pOutputByte +=
+            player->current_track->GetAudioChannelCount() *
+            player->current_track->GetAudioSampleSize() * frame_read;
 
-    if (player->IsTrackMatchDevice(player->next_track)) {
-      uint8_t *pOutputByteOffset = pOutputByte +=
-          player->current_track->GetAudioChannelCount() *
-          player->current_track->GetAudioSampleSize() * frame_read;
-
-      player->PlayNextAudio(false);
-      PlayAudioData(pDevice, player, pOutputByteOffset, remaining_frame, false);
-      return;
+        player->PlayNextAudio(false);
+        PlayAudioData(pDevice, player, pOutputByteOffset, remaining_frame,
+                      false);
+        return;
+      }
     }
 
     player->auto_next_audio_mismatch_conditional.notify_one();
