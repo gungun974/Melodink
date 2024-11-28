@@ -843,15 +843,21 @@ public:
   std::atomic<int64_t> seek_duration{-1};
 
   void Seek(int64_t position_ms) {
-    if (current_track == nullptr) {
+    MelodinkTrack *static_current_track = current_track;
+
+    if (static_current_track == nullptr) {
       return;
     }
 
-    std::thread t([this, position_ms]() {
+    std::thread t([this, position_ms, static_current_track]() {
       std::unique_lock<std::mutex> lock(set_audio_mutex);
       WriteLock w_lock(loaded_tracks_lock);
 
       if (current_track == nullptr) {
+        return;
+      }
+
+      if (current_track != static_current_track) {
         return;
       }
 
@@ -891,11 +897,7 @@ public:
       can_change_track -= 1;
     });
 
-    if (position_ms == 0) {
-      t.join();
-    } else {
-      t.detach();
-    }
+    t.detach();
   }
 
   void SetAudios(std::vector<const char *> previous_urls,
