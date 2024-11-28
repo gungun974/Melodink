@@ -90,7 +90,18 @@ private:
 
     av_dict_set(&options, "max_reload", "2147483647", 0);
 
-    response = avformat_open_input(&av_format_ctx, filename, NULL, &options);
+    char cleaned_filename[1024];
+
+    strcpy(cleaned_filename, filename);
+
+    char *unique_index_mark = strrchr(cleaned_filename, '?');
+
+    if (unique_index_mark != nullptr) {
+      *unique_index_mark = '\0';
+    }
+
+    response =
+        avformat_open_input(&av_format_ctx, cleaned_filename, NULL, &options);
     if (response < 0) {
       fprintf(stderr, "avformat_open_input response: %s\n", GetError(response));
     }
