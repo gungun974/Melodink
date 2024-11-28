@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/player/presentation/widgets/player_error_overlay.dart';
 import 'package:melodink_client/features/player/presentation/widgets/tiny_player_seeker.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
@@ -71,22 +72,24 @@ class MobileCurrentTrackInfo extends ConsumerWidget {
                           child: IntrinsicHeight(
                             child: Row(
                               children: [
-                                AuthCachedNetworkImage(
-                                  height: 40,
-                                  imageUrl: downloadedTrack?.getCoverUrl() ??
-                                      currentTrack.getCompressedCoverUrl(
-                                        TrackCompressedCoverQuality.small,
-                                      ),
-                                  placeholder: (context, url) => Image.asset(
-                                    "assets/melodink_track_cover_not_found.png",
+                                PlayerErrorOverlay(
+                                  child: AuthCachedNetworkImage(
                                     height: 40,
-                                  ),
-                                  errorWidget: (context, url, error) {
-                                    return Image.asset(
+                                    imageUrl: downloadedTrack?.getCoverUrl() ??
+                                        currentTrack.getCompressedCoverUrl(
+                                          TrackCompressedCoverQuality.small,
+                                        ),
+                                    placeholder: (context, url) => Image.asset(
                                       "assets/melodink_track_cover_not_found.png",
                                       height: 40,
-                                    );
-                                  },
+                                    ),
+                                    errorWidget: (context, url, error) {
+                                      return Image.asset(
+                                        "assets/melodink_track_cover_not_found.png",
+                                        height: 40,
+                                      );
+                                    },
+                                  ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(

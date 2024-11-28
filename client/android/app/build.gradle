@@ -88,7 +88,7 @@ task downloadDependencies(type: Exec)  {
         }
         outputDir.mkdirs()
 
-        def unzipDir = file("$buildDir/libmpv")
+        def unzipDir = file("$buildDir/ffmpeg")
         if (unzipDir.exists()) {
             unzipDir.deleteDir()
         }
@@ -96,10 +96,10 @@ task downloadDependencies(type: Exec)  {
 
         // Download all *.jar dependencies & verify their MD5 checksums.
         def filesToDownload = [
-            ["url": "https://github.com/gungun974/melodink-libmpv-android-audio-build/releases/download/v0.39.0/default-arm64-v8a.jar", "md5": "7a184eab1cce312fcb20e7513b5ea78c", "destination": file("$buildDir/v0.38.0/default-arm64-v8a.jar")],
-            ["url": "https://github.com/gungun974/melodink-libmpv-android-audio-build/releases/download/v0.39.0/default-armeabi-v7a.jar", "md5": "215d2bdb6661c66f8bcf1c6965dba9f9", "destination": file("$buildDir/v0.38.0/default-armeabi-v7a.jar")],
-            ["url": "https://github.com/gungun974/melodink-libmpv-android-audio-build/releases/download/v0.39.0/default-x86_64.jar", "md5": "773a620f9e165d07b1d2604a18cb91e2", "destination": file("$buildDir/v0.38.0/default-x86_64.jar")],
-            ["url": "https://github.com/gungun974/melodink-libmpv-android-audio-build/releases/download/v0.39.0/default-x86.jar", "md5": "c4bc6c887448f8cc93b7b1e14e94bd2e", "destination": file("$buildDir/v0.38.0/default-x86.jar")]
+            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-1/default-arm64-v8a.jar", "md5": "f4cdfc979aafbcfe82e4df24481ddf5a", "destination": file("$buildDir/v7.1-1/default-arm64-v8a.jar")],
+            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-1/default-armeabi-v7a.jar", "md5": "db72eccb621b1c01057cb99d452cda62", "destination": file("$buildDir/v7.1-1/default-armeabi-v7a.jar")],
+            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-1/default-x86_64.jar", "md5": "abb5d9e3027e448b8642ea9e53e2251e", "destination": file("$buildDir/v7.1-1/default-x86_64.jar")],
+            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-1/default-x86.jar", "md5": "0de4564d554f0be88a97a1426985938a", "destination": file("$buildDir/v7.1-1/default-x86.jar")]
         ]
 
         filesToDownload.each { fileInfo ->

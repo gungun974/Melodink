@@ -44,6 +44,15 @@
         };
       };
 
+      ffmpeg = pkgs.ffmpeg.overrideAttrs (oldAttrs: {
+        patches =
+          (oldAttrs.patches or [])
+          ++ [
+            ./nix/ffmpeg/0001-hls-seek-patch-1.patch
+            ./nix/ffmpeg/0002-hls-seek-patch-2.patch
+          ];
+      });
+
       flutter-sdk = (import ./nix/flutter) flutter-pkgs;
       sdk = android-nixpkgs.sdk.${system} (sdkPkgs:
         with sdkPkgs; [
@@ -121,10 +130,9 @@
           pname = "melodink-client";
           version = "1.0.0";
 
-          buildInputs = with pkgs; [
-            which
-            mpv
-            wrapGAppsHook
+          buildInputs = [
+            pkgs.which
+            pkgs.wrapGAppsHook
           ];
 
           nativeBuildInputs = buildInputs;
@@ -158,7 +166,7 @@
 
             makeWrapper $out/app/melodink/melodink_client $out/bin/melodink_client \
                 "''${gappsWrapperArgs[@]}" \
-                --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped pkgs.sqlite]}
+                --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath [pkgs.sqlite]}
           '';
 
           autoPubspecLock = ./client/pubspec.lock;
@@ -181,7 +189,7 @@
         GOROOT = "${pkgs.go_1_22}/share/go";
 
         shellHook = ''
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.mpv-unwrapped pkgs.sqlite pkgs.chromaprint]}
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.sqlite pkgs.chromaprint]}
         '';
 
         buildInputs = [
@@ -198,7 +206,9 @@
 
           pkgs.pkg-config
           pkgs.gtk3
-          pkgs.mpv
+          # mpv
+          ffmpeg.dev
+          pkgs.pulseaudio.dev
 
           pkgs.chromaprint
           pkgs.fftw

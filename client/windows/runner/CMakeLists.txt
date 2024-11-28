@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(runner LANGUAGES CXX)
 project(melodink_player VERSION 1.0.0 LANGUAGES CXX)
+project(miniaudio VERSION 1.0.0 LANGUAGES C)
 
 function(download_and_verify url md5 locationForArchive)
   # Check if the archive exists.
@@ -50,36 +51,37 @@ function(check_directory_exists_and_not_empty dir result_var)
 endfunction()
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(LIBMPV "mpv-dev-x86_64-20241117-git-02254b9.7z")
+set(FFMPEG "ffmpeg-n7.1-latest-win64-lgpl-shared-7.1.zip")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(LIBMPV_URL "https://github.com/gungun974/libmpv-win32-video-cmake/releases/download/20241117/${LIBMPV}")
-set(LIBMPV_MD5 "d04ab52b95f539b30d17ce49724bdffe")
+set(FFMPEG_URL "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/${FFMPEG}")
+set(FFMPEG_MD5 "c62e1ec41c757bdbebbbb8a2c9881e28")
 
 # Download location of the libmpv archive.
-set(LIBMPV_ARCHIVE "${CMAKE_BINARY_DIR}/${LIBMPV}")
-set(LIBMPV_SRC "${CMAKE_BINARY_DIR}/libmpv")
+set(FFMPEG_ARCHIVE "${CMAKE_BINARY_DIR}/${FFMPEG}")
+set(FFMPEG_SRC "${CMAKE_BINARY_DIR}/ffmpeg")
 
 download_and_verify(
-  ${LIBMPV_URL}
-  ${LIBMPV_MD5}
-  ${LIBMPV_ARCHIVE}
+  ${FFMPEG_URL}
+  ${FFMPEG_MD5}
+  ${FFMPEG_ARCHIVE}
 )
 
-check_directory_exists_and_not_empty(${LIBMPV_SRC} LIBMPV_SRC_VALID)
+check_directory_exists_and_not_empty(${FFMPEG_SRC} FFMPEG_SRC_VALID)
 
 # Extract the libmpv archive.
-if(NOT LIBMPV_SRC_VALID)
-  message(STATUS "Extracting ${LIBMPV}...")
-  make_directory("${LIBMPV_SRC}")
-  add_custom_target("${PROJECT_NAME}_LIBMPV_EXTRACT" ALL)
+if(NOT FFMPEG_SRC_VALID)
+  get_filename_component(FFMPEG_NAME "${FFMPEG_ARCHIVE}" NAME_WLE)
+
+  message(STATUS "Extracting ${FFMPEG}...")
+  make_directory("${FFMPEG_SRC}")
+  add_custom_target("${PROJECT_NAME}_FFMPEG_EXTRACT" ALL)
   add_custom_command(
-    TARGET "${PROJECT_NAME}_LIBMPV_EXTRACT"
-    COMMAND "${CMAKE_COMMAND}" -E tar xzf "\"${LIBMPV_ARCHIVE}\""
-    COMMAND xcopy "\"${LIBMPV_SRC}/include/mpv\"" "\"${LIBMPV_SRC}/mpv\"" /E /H /C /I
-    COMMAND rmdir "\"${LIBMPV_SRC}/include\"" /S /Q
-    COMMAND ren "\"${LIBMPV_SRC}/mpv\"" "\"include\""
-    WORKING_DIRECTORY "${LIBMPV_SRC}"
+    TARGET "${PROJECT_NAME}_FFMPEG_EXTRACT"
+    COMMAND powershell -Command "Expand-Archive -Path \"${FFMPEG_ARCHIVE}\" -DestinationPath \"${FFMPEG_SRC}\" -Force"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "\"${FFMPEG_SRC}/${FFMPEG_NAME}\"" "\"${FFMPEG_SRC}\""
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "\"${FFMPEG_SRC}/${FFMPEG_NAME}\""
+    WORKING_DIRECTORY "${FFMPEG_SRC}"
   )
 endif()
 
@@ -95,10 +97,27 @@ download_and_verify(
 
 # ------------------------------------------------------------------------------
 
+add_library(miniaudio STATIC
+    ../../melodink_player/miniaudio.c
+)
+
+target_compile_definitions(miniaudio
+  PRIVATE MA_NO_DECODING MA_NO_ENCODING
+)
+
+target_compile_options(miniaudio PRIVATE /W0)
+
 add_library(melodink_player SHARED
   "../../melodink_player/melodink_player.cpp"
+  "../../melodink_player/sendevent.cc"
   "../../melodink_player/melodink_player.def"
 )
+
+include_directories(
+ "${FFMPEG_SRC}/include"
+)
+
+target_link_libraries(melodink_player PRIVATE miniaudio)
 
 # Define the application target. To change its name, change BINARY_NAME in the
 # top-level CMakeLists.txt, not the value here, or `flutter run` will no longer
@@ -138,6 +157,14 @@ target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
 
-target_link_libraries(melodink_player PRIVATE "${LIBMPV_SRC}/libmpv.dll.a")
+target_link_libraries(
+  melodink_player PRIVATE
+  "${FFMPEG_SRC}/lib/libswscale.dll.a"
+  "${FFMPEG_SRC}/lib/libswresample.dll.a"
+  "${FFMPEG_SRC}/lib/libavutil.dll.a"
+  "${FFMPEG_SRC}/lib/libavformat.dll.a"
+  "${FFMPEG_SRC}/lib/libavfilter.dll.a"
+  "${FFMPEG_SRC}/lib/libavcodec.dll.a"
+)
 
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")

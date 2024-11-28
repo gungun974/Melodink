@@ -2,6 +2,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(runner LANGUAGES CXX)
 project(melodink_player VERSION 1.0.0 LANGUAGES CXX)
+project(miniaudio VERSION 1.0.0 LANGUAGES C)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
@@ -57,7 +58,19 @@ pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 
-add_library(melodink_player SHARED ../melodink_player/melodink_player.cpp)
+add_library(miniaudio STATIC
+    ../melodink_player/miniaudio.c
+)
+
+target_compile_definitions(miniaudio
+  PRIVATE MA_NO_DECODING MA_NO_ENCODING
+)
+
+target_compile_options(miniaudio PRIVATE -w)
+
+add_library(melodink_player SHARED ../melodink_player/melodink_player.cpp ../melodink_player/sendevent.cc)
+
+target_link_libraries(melodink_player PRIVATE miniaudio)
 
 # Define the application target. To change its name, change BINARY_NAME above,
 # not the value here, or `flutter run` will no longer work.
@@ -227,21 +240,7 @@ add_custom_target("MIMALLOC_TARGET" ALL DEPENDS ${MIMALLOC_LIB})
 
 # ------------------------------------------------------------------------------
 
-
-# Check for libmpv & epoxy headers & libraries.
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(mpv IMPORTED_TARGET mpv)
-
-
-# target_compile_features(${TARGET} PRIVATE "${mpv_CFLAGS_OTHER}")
-#
-# target_include_directories(
-#   ${TARGET} INTERFACE
-#   "${CMAKE_CURRENT_SOURCE_DIR}/include"
-#   "${mpv_INCLUDE_DIRS}"
-# )
-
-target_link_libraries(${BINARY_NAME} PRIVATE melodink_player PkgConfig::mpv)
+target_link_libraries(${BINARY_NAME} PRIVATE melodink_player avformat avcodec avutil swresample dl pthread m pulse)
 
 # ----
 

@@ -19,6 +19,9 @@ enum MelodinkProcessingState {
 
   /// The end of resource was reached.
   completed,
+
+  /// There was an error loading resource.
+  error,
 }
 
 enum MelodinkLoopMode {
@@ -108,31 +111,34 @@ class MelodinkPlayer {
   void _initLibrary(ffi.DynamicLibrary lib) {
     _lib = lib;
     final void Function() init = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function()>>('init')
+        .lookup<ffi.NativeFunction<ffi.Void Function()>>('mi_player_init')
         .asFunction();
 
     final registerEventAudioChangedCallback = _lib.lookupFunction<
         Int64NativeSetCallbackFunction,
-        Int64SetCallbackFunction>('register_event_audio_changed_callback');
+        Int64SetCallbackFunction>('mi_register_event_audio_changed_callback');
 
     final registerEventUpdateStateCallback = _lib.lookupFunction<
         Int64NativeSetCallbackFunction,
-        Int64SetCallbackFunction>('register_event_update_state_callback');
+        Int64SetCallbackFunction>('mi_register_event_update_state_callback');
 
     _play = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function()>>('play')
+        .lookup<ffi.NativeFunction<ffi.Void Function()>>('mi_player_play')
         .asFunction();
     _pause = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function()>>('pause')
+        .lookup<ffi.NativeFunction<ffi.Void Function()>>('mi_player_pause')
         .asFunction();
     _seek = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('seek')
+        .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+            'mi_player_seek')
         .asFunction();
     _skipToPrevious = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function()>>('skip_to_previous')
+        .lookup<ffi.NativeFunction<ffi.Void Function()>>(
+            'mi_player_skip_to_previous')
         .asFunction();
     _skipToNext = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function()>>('skip_to_next')
+        .lookup<ffi.NativeFunction<ffi.Void Function()>>(
+            'mi_player_skip_to_next')
         .asFunction();
     _setAudios = _lib
         .lookup<
@@ -140,45 +146,48 @@ class MelodinkPlayer {
                 ffi.Void Function(
                   ffi.Pointer<ffi.Pointer<ffi.Utf8>>,
                   ffi.Pointer<ffi.Pointer<ffi.Utf8>>,
-                )>>('set_audios')
+                )>>('mi_player_set_audios')
         .asFunction();
     _setLoopMode = _lib
         .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int32)>>(
-            'set_loop_mode')
+            'mi_player_set_loop_mode')
         .asFunction();
     _setAuthToken = _lib
         .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Utf8>)>>(
-            'set_auth_token')
+            'mi_player_set_auth_token')
         .asFunction();
     _getCurrentPlaying = _lib
-        .lookup<ffi.NativeFunction<ffi.Uint8 Function()>>('get_current_playing')
+        .lookup<ffi.NativeFunction<ffi.Uint8 Function()>>(
+            'mi_player_get_current_playing')
         .asFunction();
     _getCurrentTrackPos = _lib
         .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
-            'get_current_track_pos')
+            'mi_player_get_current_track_pos')
         .asFunction();
     _getCurrentPosition = _lib
         .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
-            'get_current_position')
+            'mi_player_get_current_position')
         .asFunction();
     _getCurrentBufferedPosition = _lib
         .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
-            'get_current_buffered_position')
+            'mi_player_get_current_buffered_position')
         .asFunction();
     _getCurrentPlayerState = _lib
         .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
-            'get_current_player_state')
+            'mi_player_get_current_player_state')
         .asFunction();
     _getCurrentLoopMode = _lib
         .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
-            'get_current_loop_mode')
+            'mi_player_get_current_loop_mode')
         .asFunction();
 
     _setVolume = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>('set_volume')
+        .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>(
+            'mi_player_set_volume')
         .asFunction();
     _getVolume = _lib
-        .lookup<ffi.NativeFunction<ffi.Double Function()>>('get_volume')
+        .lookup<ffi.NativeFunction<ffi.Double Function()>>(
+            'mi_player_get_volume')
         .asFunction();
 
     _eventAudioChangedReceivePort.listen(

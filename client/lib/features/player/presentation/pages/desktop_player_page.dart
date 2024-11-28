@@ -18,6 +18,7 @@ import 'package:melodink_client/features/player/presentation/widgets/controls/pl
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_skip_to_previous_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/volume_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
+import 'package:melodink_client/features/player/presentation/widgets/player_error_overlay.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
@@ -162,21 +163,25 @@ class DesktopPlayerPage extends ConsumerWidget {
                                           )
                                           .valueOrNull;
 
-                                      image = AuthCachedNetworkImage(
-                                        imageUrl: downloadedTrack
-                                                ?.getCoverUrl() ??
-                                            currentTrack.getCompressedCoverUrl(
-                                              TrackCompressedCoverQuality.high,
-                                            ),
-                                        placeholder: (context, url) =>
-                                            Image.asset(
-                                          "assets/melodink_track_cover_not_found.png",
-                                        ),
-                                        errorWidget: (context, url, error) {
-                                          return Image.asset(
+                                      image = PlayerErrorOverlay(
+                                        child: AuthCachedNetworkImage(
+                                          imageUrl:
+                                              downloadedTrack?.getCoverUrl() ??
+                                                  currentTrack
+                                                      .getCompressedCoverUrl(
+                                                    TrackCompressedCoverQuality
+                                                        .high,
+                                                  ),
+                                          placeholder: (context, url) =>
+                                              Image.asset(
                                             "assets/melodink_track_cover_not_found.png",
-                                          );
-                                        },
+                                          ),
+                                          errorWidget: (context, url, error) {
+                                            return Image.asset(
+                                              "assets/melodink_track_cover_not_found.png",
+                                            );
+                                          },
+                                        ),
                                       );
                                     }
 
