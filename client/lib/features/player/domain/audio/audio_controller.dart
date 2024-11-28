@@ -578,27 +578,30 @@ class AudioController extends BaseAudioHandler
 
       Map<String, int> urlCount = {};
 
-      void addUrl(String url, List<String> list) {
+      final List<String> uniquePreviousUrls = [];
+      final List<String> uniqueNextUrls = [];
+
+      void addUrl(String url, List<String> list, List<String> output) {
         if (urlCount.containsKey(url)) {
           urlCount[url] = urlCount[url]! + 1;
-          list[list.indexOf(url)] = '$url?i=${urlCount[url]}';
         } else {
           urlCount[url] = 1;
         }
+        output.add('$url?i=${urlCount[url]}');
       }
 
       for (String url in prevUrls) {
-        addUrl(url, prevUrls);
+        addUrl(url, prevUrls, uniquePreviousUrls);
       }
 
       for (String url in nextUrls) {
-        addUrl(url, nextUrls);
+        addUrl(url, nextUrls, uniqueNextUrls);
       }
 
       if (prevUrls.isNotEmpty) {
         player.setAudios(
-          prevUrls,
-          nextUrls,
+          uniquePreviousUrls,
+          uniqueNextUrls,
         );
       }
     });
