@@ -13,9 +13,8 @@ function check_and_install () {
     return 0
   fi
 
-  # Thanks to media-kit for the base of the building process. https://github.com/gungun974/melodink-libmpv-darwin-build
-  # curl -L "https://github.com/gungun974/melodink-libmpv-darwin-build/releases/download/v0.39.0/$archive_framework_name" -o "Frameworks/$archive_framework_name" 
-  cp "/Users/gungun974/Downloads/melodink-libmpv-darwin-build/build/output/$archive_framework_name" "Frameworks/$archive_framework_name" 
+  # Thanks to media-kit for the base of the building process. https://github.com/gungun974/melodink-ffmpeg-darwin-build
+  curl -L "https://github.com/gungun974/melodink-ffmpeg-darwin-build/releases/download/v7.0.2-0/$archive_framework_name" -o "Frameworks/$archive_framework_name" 
 
   downloaded_hash=$(shasum -a 256 "Frameworks/$archive_framework_name" | awk '{ print $1 }')
 
@@ -36,6 +35,6 @@ function check_and_install () {
   return 2
 }
 
-check_and_install "libmpv-xcframeworks_develop_ios-universal-video-default.tar.gz" "d5a904dfcb98e6b876c247f84ee37714dce22cbd2e36679aa9660b3cb1a343da"
+check_and_install "ffmpeg-xcframeworks_v7.0.2-0_ios-universal-video-default.tar.gz" "15fbdbcdeb7e0f06690b7f88dec1e8de17754d2a405dcdf45abc96f04438314a"
 
 exit 0
