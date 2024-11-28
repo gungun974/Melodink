@@ -236,14 +236,6 @@ add_custom_target("MIMALLOC_TARGET" ALL DEPENDS ${MIMALLOC_LIB})
 
 # ------------------------------------------------------------------------------
 
-# target_compile_features(${TARGET} PRIVATE "${mpv_CFLAGS_OTHER}")
-#
-# target_include_directories(
-#   ${TARGET} INTERFACE
-#   "${CMAKE_CURRENT_SOURCE_DIR}/include"
-#   "${mpv_INCLUDE_DIRS}"
-# )
-
 target_link_libraries(${BINARY_NAME} PRIVATE melodink_player avformat avcodec avutil swresample dl pthread m pulse)
 
 # ----
