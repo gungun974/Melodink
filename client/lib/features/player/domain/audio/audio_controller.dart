@@ -210,6 +210,8 @@ class AudioController extends BaseAudioHandler
 
     if (_previousTracks.length == 1) {
       player.seek(0);
+    } else if (playbackState.value.position.inMilliseconds > 5000) {
+      player.seek(0);
     } else {
       player.skipToPrevious();
     }
