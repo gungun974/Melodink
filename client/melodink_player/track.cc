@@ -595,13 +595,14 @@ public:
 
   int Open(const char *filename, const char *auth_token) {
     std::unique_lock<std::mutex> lock(open_mutex);
-    loaded_url = filename;
+
+    if (audio_opened) {
+      return 0;
+    }
 
     int result;
 
-    if (audio_opened) {
-      Close();
-    }
+    loaded_url = filename;
 
     result = OpenFile(filename, auth_token);
     if (result != 0) {
