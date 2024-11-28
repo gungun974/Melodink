@@ -62,6 +62,10 @@ add_library(miniaudio STATIC
     ../melodink_player/miniaudio.c
 )
 
+target_compile_definitions(miniaudio
+  PRIVATE MA_NO_DECODING MA_NO_ENCODING
+)
+
 target_compile_options(miniaudio PRIVATE -w)
 
 add_library(melodink_player SHARED ../melodink_player/melodink_player.cpp ../melodink_player/sendevent.cc)
