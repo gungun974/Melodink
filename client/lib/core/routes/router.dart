@@ -123,6 +123,7 @@ final appRouterProvider = Provider((ref) {
                   final currentPlayerBarPosition =
                       ref.watch(currentPlayerBarPositionProvider);
                   return Scaffold(
+                    resizeToAvoidBottomInset: false,
                     body: Column(
                       children: [
                         if (currentPlayerBarPosition ==
