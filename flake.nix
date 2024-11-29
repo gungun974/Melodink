@@ -133,6 +133,8 @@
           buildInputs = [
             pkgs.which
             pkgs.wrapGAppsHook
+            ffmpeg.dev
+            pkgs.pulseaudio.dev
           ];
 
           nativeBuildInputs = buildInputs;
@@ -166,7 +168,7 @@
 
             makeWrapper $out/app/melodink/melodink_client $out/bin/melodink_client \
                 "''${gappsWrapperArgs[@]}" \
-                --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath [pkgs.sqlite]}
+                --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath [pkgs.sqlite pkgs.ffmpeg pkgs.pulseaudio]}
           '';
 
           autoPubspecLock = ./client/pubspec.lock;
@@ -206,7 +208,6 @@
 
           pkgs.pkg-config
           pkgs.gtk3
-          # mpv
           ffmpeg.dev
           pkgs.pulseaudio.dev
 
