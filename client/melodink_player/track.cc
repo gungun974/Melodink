@@ -231,7 +231,7 @@ private:
 
     response = audio_fifo.init(audio_format,
                                av_audio_codec_params->ch_layout.nb_channels,
-                               av_audio_codec_params->sample_rate * 2);
+                               av_audio_codec_params->sample_rate * 30);
     if (response != 0) {
       fprintf(stderr, "Couldn't allocate audio fifo\n");
       return -1;
