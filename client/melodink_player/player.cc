@@ -848,22 +848,36 @@ public:
       return;
     }
 
+    seek_duration = position_ms;
+
+    state = MELODINK_PROCESSING_STATE_BUFFERING;
+
+    send_event_update_state(state);
+
     std::thread t([this, position_ms, static_current_track]() {
       std::unique_lock<std::mutex> lock(set_audio_mutex);
       WriteLock w_lock(loaded_tracks_lock);
 
       if (current_track == nullptr) {
+        seek_duration = -1;
+
+        state = MELODINK_PROCESSING_STATE_READY;
+
+        send_event_update_state(state);
         return;
       }
 
       if (current_track != static_current_track) {
+        seek_duration = -1;
+
+        state = MELODINK_PROCESSING_STATE_READY;
+
+        send_event_update_state(state);
         return;
       }
 
       can_change_track += 1;
       current_track->player_load_count += 1;
-
-      seek_duration = position_ms;
 
       double position_seconds = position_ms / 1000.0;
 
@@ -876,21 +890,19 @@ public:
         reinit_miniaudio_mutex.unlock();
       }
 
-      state = MELODINK_PROCESSING_STATE_BUFFERING;
+      current_track->Seek(position_seconds);
+
+      seek_duration = -1;
+
+      state = MELODINK_PROCESSING_STATE_READY;
 
       send_event_update_state(state);
-
-      current_track->Seek(position_seconds);
 
       if (!is_paused) {
         reinit_miniaudio_mutex.lock();
         ma_device_start(&audio_device);
         reinit_miniaudio_mutex.unlock();
       }
-
-      seek_duration = -1;
-
-      SetPlayerState(MELODINK_PROCESSING_STATE_READY);
 
       current_track->player_load_count -= 1;
       can_change_track -= 1;
