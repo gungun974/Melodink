@@ -8,6 +8,7 @@ import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
+import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/all_track_filter_panel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
@@ -21,6 +22,10 @@ class TracksPage extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncTracks = ref.watch(allSortedTracksProvider);
+
+    final isAutoScrollViewToCurrentTrackEnabled = ref.watch(
+      isAutoScrollViewToCurrentTrackEnabledProvider,
+    );
 
     final tracks = asyncTracks.valueOrNull;
 
@@ -105,7 +110,8 @@ class TracksPage extends HookConsumerWidget {
                         displayPlayedCount: true,
                         displayQuality: true,
                         scrollController: scrollController,
-                        autoScrollToCurrentTrack: true,
+                        autoScrollToCurrentTrack:
+                            isAutoScrollViewToCurrentTrackEnabled,
                         source: "Playing from Search",
                       ),
                     ),

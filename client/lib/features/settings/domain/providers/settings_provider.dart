@@ -52,3 +52,16 @@ Future<String> deviceId(
 ) {
   return SettingsRepository().getDeviceId();
 }
+
+@riverpod
+bool isAutoScrollViewToCurrentTrackEnabled(
+  IsAutoScrollViewToCurrentTrackEnabledRef ref,
+) {
+  final currentSettings = ref.watch(appSettingsNotifierProvider).valueOrNull;
+
+  if (currentSettings == null) {
+    return false;
+  }
+
+  return currentSettings.autoScrollViewToCurrentTrack;
+}
