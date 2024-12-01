@@ -157,7 +157,7 @@ private:
     next_track = nullptr;
 
     if (reinit && is_track_loaded) {
-      InitMiniaudio();
+      InitMiniaudio(true);
       reinit_miniaudio_mutex.unlock();
     }
 
@@ -191,7 +191,7 @@ private:
     prev_track = nullptr;
 
     if (reinit && is_track_loaded) {
-      InitMiniaudio();
+      InitMiniaudio(true);
       reinit_miniaudio_mutex.unlock();
     }
 
@@ -397,23 +397,12 @@ private:
 
             current_track = new_current_track;
 
-            InitMiniaudio();
+            InitMiniaudio(!is_paused);
           }
 
           reinit_miniaudio_mutex.unlock();
         } else {
           current_track = new_current_track;
-
-          ma_device_state device_state = ma_device_get_state(&audio_device);
-
-          if (device_state == ma_device_state_started ||
-              device_state == ma_device_state_stopped) {
-            reinit_miniaudio_mutex.lock();
-            ma_device_start(&audio_device);
-            reinit_miniaudio_mutex.unlock();
-          }
-
-          is_paused = false;
         }
       }
 
@@ -590,7 +579,7 @@ private:
 
   std::mutex reinit_miniaudio_mutex;
 
-  int InitMiniaudio() {
+  int InitMiniaudio(bool start_audio) {
     if (current_track != nullptr) {
 
       switch (current_track->GetAudioOutputFormat()) {
@@ -633,8 +622,10 @@ private:
 
     is_paused = false;
 
-    if (ma_device_start(&audio_device) != MA_SUCCESS) {
-      return -1;
+    if (start_audio) {
+      if (ma_device_start(&audio_device) != MA_SUCCESS) {
+        return -1;
+      }
     }
 
     ma_device_set_master_volume(&audio_device, audio_volume);
@@ -773,7 +764,7 @@ public:
 
     reinit_miniaudio_mutex.lock();
     audio_device_config = ma_device_config_init(ma_device_type_playback);
-    InitMiniaudio();
+    InitMiniaudio(false);
     reinit_miniaudio_mutex.unlock();
 
     auto_next_audio_mismatch_thread =
