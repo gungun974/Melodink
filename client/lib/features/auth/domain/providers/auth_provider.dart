@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/features/auth/data/repository/auth_repository.dart';
 import 'package:melodink_client/features/auth/domain/entities/user.dart';
@@ -105,6 +106,10 @@ class AuthNotifier extends _$AuthNotifier {
     try {
       final user = await _authRepository.login(email, password);
 
+      try {
+        await DatabaseService.getDatabase();
+      } catch (_) {}
+
       state = AsyncValue.data(AuthLoaded(
         status: AuthStatus.authenticated,
         user: user,
@@ -173,6 +178,10 @@ class AuthNotifier extends _$AuthNotifier {
     await _audioController.clean();
 
     await _authRepository.logout();
+
+    try {
+      await DatabaseService.disconnectDatabase();
+    } catch (_) {}
 
     state = const AsyncValue.data(AuthLoaded(
       status: AuthStatus.unauthenticated,

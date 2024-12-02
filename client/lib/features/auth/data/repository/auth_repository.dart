@@ -113,6 +113,17 @@ class AuthRepository {
     }
   }
 
+  static Future<User?> getCachedUser() async {
+    final cachedUser =
+        await SharedPreferencesAsync().getString("current_user_cache");
+
+    if (cachedUser != null) {
+      return UserModel.fromJson(json.decode(cachedUser)).toUser();
+    }
+
+    return null;
+  }
+
   Future<User> register(String name, email, password) async {
     try {
       await AppApi().dio.post(
