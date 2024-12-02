@@ -313,16 +313,10 @@ class AudioController extends BaseAudioHandler
         _previousTracks.add(_nextTracks.removeAt(0));
       }
 
-      if (restart) {
-        player.pause();
-      }
-
       await _updatePlayerTracks();
 
       if (restart) {
         await seek(Duration.zero);
-
-        player.play();
       }
 
       playerTracksFrom.add(source);
