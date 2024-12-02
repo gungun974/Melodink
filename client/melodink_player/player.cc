@@ -322,12 +322,14 @@ private:
       return -1;
     }
 
-    is_paused = false;
-
     if (start_audio) {
       if (ma_device_start(&audio_device) != MA_SUCCESS) {
         return -1;
       }
+
+      is_paused = false;
+    } else {
+      is_paused = true;
     }
 
     ma_device_set_master_volume(&audio_device, audio_volume);
