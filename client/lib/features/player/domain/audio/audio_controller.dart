@@ -317,6 +317,8 @@ class AudioController extends BaseAudioHandler
 
       if (restart) {
         await seek(Duration.zero);
+
+        player.play();
       }
 
       playerTracksFrom.add(source);

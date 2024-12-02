@@ -598,14 +598,6 @@ public:
   ~MelodinkPlayer() {}
 
   void Play() {
-    if (current_track == nullptr) {
-      return;
-    }
-
-    if (!current_track->IsAudioOpened()) {
-      return;
-    }
-
     if (!is_paused) {
       return;
     }
@@ -623,14 +615,6 @@ public:
   }
 
   void Pause() {
-    if (current_track == nullptr) {
-      return;
-    }
-
-    if (!current_track->IsAudioOpened()) {
-      return;
-    }
-
     if (is_paused) {
       return;
     }
