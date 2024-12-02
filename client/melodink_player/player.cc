@@ -2,8 +2,8 @@
 
 // #define MELODINK_PLAYER_LOG
 
-#define MELODINK_KEEP_PREV_TRACKS 5
-#define MELODINK_KEEP_NEXT_TRACKS 8
+#define MELODINK_KEEP_PREV_TRACKS 3
+#define MELODINK_KEEP_NEXT_TRACKS 4
 
 #define AVMediaType FF_AVMediaType
 #include "miniaudio.h"
@@ -59,6 +59,8 @@ private:
 
     send_event_update_state(state);
   }
+
+  std::thread track_auto_open_thread;
 
   ma_device audio_device;
 
@@ -343,10 +345,7 @@ private:
 
   Lock loaded_tracks_lock;
 
-  std::mutex load_track_mutex;
-  std::condition_variable load_track_conditional;
-
-  std::atomic<int> parallel_loading{0};
+  std::queue<MelodinkTrack *> track_auto_open_queue;
 
   MelodinkTrack *LoadTrack(const char *url) {
     MelodinkTrack *new_track = new MelodinkTrack;
@@ -355,32 +354,35 @@ private:
 
     new_track->SetLoadedUrl(url);
 
-    std::unique_lock<std::mutex> lock(load_track_mutex);
-    while (parallel_loading > 15) {
-      load_track_conditional.wait(lock);
-    }
-
-    parallel_loading += 1;
-
-    std::thread t([new_track, this, url]() {
-#ifdef MELODINK_PLAYER_LOG
-      fprintf(stderr, "OPEN %s\n", url);
-#endif
-      new_track->player_load_count += 1;
-      new_track->Open(new_track->GetLoadedUrl(), auth_token.c_str());
-      new_track->player_load_count -= 1;
-      parallel_loading -= 1;
-      load_track_conditional.notify_one();
-#ifdef MELODINK_PLAYER_LOG
-      fprintf(stderr, "FINISH %s\n", url);
-#endif
-    });
-
-    t.detach();
+    new_track->player_load_count += 1;
+    track_auto_open_queue.push(new_track);
 
     loaded_tracks.push_back(new_track);
 
     return new_track;
+  }
+
+  void TrackAutoOpenThread() {
+    while (true) {
+      while (track_auto_open_queue.empty()) {
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
+      }
+
+      MelodinkTrack *track = track_auto_open_queue.front();
+      track_auto_open_queue.pop();
+
+      const char *url = track->GetLoadedUrl();
+
+#ifdef MELODINK_PLAYER_LOG
+      fprintf(stderr, "OPEN %s\n", url);
+#endif
+
+      track->Open(url, auth_token.c_str());
+      track->player_load_count -= 1;
+#ifdef MELODINK_PLAYER_LOG
+      fprintf(stderr, "FINISH %s\n", url);
+#endif
+    }
   }
 
   MelodinkTrack *GetTrack(const char *url) {
@@ -593,6 +595,9 @@ public:
 
     auto_next_audio_mismatch_thread =
         std::thread(&MelodinkPlayer::AutoNextAudioMismatchThread, this);
+
+    track_auto_open_thread =
+        std::thread(&MelodinkPlayer::TrackAutoOpenThread, this);
   }
 
   ~MelodinkPlayer() {}
