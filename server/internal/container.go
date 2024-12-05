@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"github.com/gungun974/Melodink/server/internal/layers/data/processor"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
 	"github.com/gungun974/Melodink/server/internal/layers/data/scanner"
 	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
@@ -52,6 +53,10 @@ func NewContainer(db *sqlx.DB) Container {
 	acoustIdScanner := scanner.NewAcoustIdScanner()
 	musicBrainzScanner := scanner.NewMusicBrainzScanner()
 
+	//! Processor
+
+	transcodePRocessor := processor.NewTranscodeProcessor()
+
 	//! Presenter
 
 	userPresenter := presenter.NewUserPresenter()
@@ -79,6 +84,7 @@ func NewContainer(db *sqlx.DB) Container {
 		coverStorage,
 		acoustIdScanner,
 		musicBrainzScanner,
+		transcodePRocessor,
 		trackPresenter,
 	)
 

@@ -70,4 +70,6 @@ var DatabaseLogger = log.WithField("logger", "DatabaseLogger")
 
 var ScannerLogger = log.WithField("logger", "ScannerLogger")
 
+var TranscoderLogger = log.WithField("logger", "TranscoderLogger")
+
 var HTTPLogger = log.WithField("logger", "HTTPLogger")
