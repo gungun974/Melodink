@@ -161,6 +161,33 @@ private:
     send_event_audio_changed(current_track_index);
   }
 
+  void DontDirectPlayNextAudio() {
+    std::unique_lock<std::mutex> lock(set_next_and_prev_audio_mutex);
+
+    if (next_track == nullptr) {
+      ma_device_state device_state = ma_device_get_state(&audio_device);
+
+      if (device_state == ma_device_state_started ||
+          device_state == ma_device_state_stopped) {
+        reinit_miniaudio_mutex.lock();
+        ma_device_stop(&audio_device);
+        reinit_miniaudio_mutex.unlock();
+      }
+
+      is_paused = true;
+      SetPlayerState(MELODINK_PROCESSING_STATE_COMPLETED);
+      return;
+    }
+
+    current_track_index = next_track_index;
+
+    current_track = nullptr;
+
+    next_track = nullptr;
+
+    send_event_audio_changed(current_track_index);
+  }
+
   void PlayPrevAudio(bool reinit) {
     std::unique_lock<std::mutex> lock(set_next_and_prev_audio_mutex);
 
@@ -259,6 +286,7 @@ private:
 
     if (player->next_track != nullptr) {
       if (!player->next_track->IsAudioOpened()) {
+        player->DontDirectPlayNextAudio();
         return;
       }
 
@@ -728,13 +756,15 @@ public:
 
       new_current_track->player_load_count += 1;
 
-      std::thread t([new_current_track, this, current_url]() {
+      std::thread t([new_current_track, this]() {
+        const char *url = new_current_track->GetLoadedUrl();
+
 #ifdef MELODINK_PLAYER_LOG
-        fprintf(stderr, "OPEN late %s\n", current_url);
+        fprintf(stderr, "OPEN late %s\n", url);
 #endif
-        new_current_track->Open(current_url, auth_token.c_str());
+        new_current_track->Open(url, auth_token.c_str());
 #ifdef MELODINK_PLAYER_LOG
-        fprintf(stderr, "FINISH late %s\n", current_url);
+        fprintf(stderr, "FINISH late %s\n", url);
 #endif
 
         if (target_current_track == new_current_track) {
