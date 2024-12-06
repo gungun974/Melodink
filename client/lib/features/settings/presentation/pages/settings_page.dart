@@ -107,6 +107,83 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   SettingPannel(
+                    title: "Audio Quality",
+                    children: [
+                      SettingDropdownOption(
+                        text: "WiFi streaming :",
+                        value: settings.wifiAudioQuality,
+                        onChanged: (audioQuality) {
+                          ref
+                              .read(appSettingsNotifierProvider.notifier)
+                              .setSettings(
+                                settings.copyWith(
+                                  wifiAudioQuality: audioQuality,
+                                ),
+                              );
+                        },
+                        items: const [
+                          DropdownMenuItem(
+                            value: AppSettingAudioQuality.low,
+                            child: Text("Low - Opus VBR 96 kbps"),
+                          ),
+                          DropdownMenuItem(
+                            value: AppSettingAudioQuality.medium,
+                            child: Text("Medium - Opus VBR 320 kbps"),
+                          ),
+                          DropdownMenuItem(
+                            value: AppSettingAudioQuality.high,
+                            child: Text("High - FLAC 44.1KHz"),
+                          ),
+                          DropdownMenuItem(
+                            value: AppSettingAudioQuality.max,
+                            child: Text("Max - (Only seek)"),
+                          ),
+                          DropdownMenuItem(
+                            value: AppSettingAudioQuality.directFile,
+                            child: Text("Direct - (Read from source file)"),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24),
+                      SettingDropdownOption(
+                        text: "Cellular streaming :",
+                        value: settings.cellularAudioQuality,
+                        onChanged: (audioQuality) {
+                          ref
+                              .read(appSettingsNotifierProvider.notifier)
+                              .setSettings(
+                                settings.copyWith(
+                                  cellularAudioQuality: audioQuality,
+                                ),
+                              );
+                        },
+                        items: const [
+                          DropdownMenuItem(
+                            value: AppSettingAudioQuality.low,
+                            child: Text("Low - Opus VBR 96 kbps"),
+                          ),
+                          DropdownMenuItem(
+                            value: AppSettingAudioQuality.medium,
+                            child: Text("Medium - Opus VBR 320 kbps"),
+                          ),
+                          DropdownMenuItem(
+                            value: AppSettingAudioQuality.high,
+                            child: Text("High - FLAC 44.1KHz"),
+                          ),
+                          DropdownMenuItem(
+                            value: AppSettingAudioQuality.max,
+                            child: Text("Max - (Only seek)"),
+                          ),
+                          DropdownMenuItem(
+                            value: AppSettingAudioQuality.directFile,
+                            child: Text("Direct - (Read from source file)"),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SettingPannel(
                     title: "Playing",
                     children: [
                       SettingToggleOption(

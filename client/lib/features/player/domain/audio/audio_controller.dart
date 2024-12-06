@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/player/domain/audio/melodink_player.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
@@ -53,6 +55,10 @@ class AudioController extends BaseAudioHandler
 
     player.eventUpdateStateStream.listen((value) {
       updateState(value);
+    });
+
+    Connectivity().onConnectivityChanged.listen((_) {
+      reloadPlayerTracks();
     });
   }
 
@@ -522,6 +528,18 @@ class AudioController extends BaseAudioHandler
         AppApi().generateCookieHeader(),
       );
 
+      // AudioQuality
+      final config = await SettingsRepository().getSettings();
+
+      final connectivityResult = await (Connectivity().checkConnectivity());
+
+      AppSettingAudioQuality currentAudioQuality = config.cellularAudioQuality;
+
+      if (connectivityResult.contains(ConnectivityResult.ethernet) ||
+          connectivityResult.contains(ConnectivityResult.wifi)) {
+        currentAudioQuality = config.wifiAudioQuality;
+      }
+
       final getDownloadedTrackByTrackId =
           downloadTrackRepository?.getDownloadedTrackByTrackId;
 
@@ -530,7 +548,8 @@ class AudioController extends BaseAudioHandler
       for (final (index, track) in _previousTracks.indexed) {
         if (index == _previousTracks.length - 1) {
           if (_lastCurrentTrackId == track.id) {
-            prevUrls.add(_lastCurrentTrackUrl ?? track.getUrl());
+            prevUrls
+                .add(_lastCurrentTrackUrl ?? track.getUrl(currentAudioQuality));
             continue;
           }
         }
@@ -545,7 +564,7 @@ class AudioController extends BaseAudioHandler
         late String url;
 
         if (downloadedTrack == null) {
-          url = track.getUrl();
+          url = track.getUrl(currentAudioQuality);
         } else {
           url = downloadedTrack.getUrl();
         }
@@ -568,7 +587,7 @@ class AudioController extends BaseAudioHandler
         }
 
         if (downloadedTrack == null) {
-          nextUrls.add(track.getUrl());
+          nextUrls.add(track.getUrl(currentAudioQuality));
         } else {
           nextUrls.add(downloadedTrack.getUrl());
         }

@@ -1,7 +1,9 @@
 package processor
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -20,6 +22,7 @@ type TranscodeProcessor struct{}
 var (
 	TranscoderKilledError = errors.New("FFmpeg was killed early")
 	TranscoderExitError   = errors.New("FFmpeg exited with non 0 status code")
+	TranscoderScanError   = errors.New("Failed to find input format")
 )
 
 func (p *TranscodeProcessor) TranscodeLow(
@@ -69,9 +72,14 @@ func (p *TranscodeProcessor) TranscodeMax(
 	sourcePath string,
 	out io.Writer,
 ) error {
+	format, err := getInputFormat(sourcePath)
+	if err != nil {
+		return err
+	}
+
 	return p.transcode(ctx, seek, []string{
-		"-c:a", "flac",
-		"-f", "flac",
+		"-c:a", "copy",
+		"-f", format,
 	}, sourcePath, out)
 }
 
@@ -106,6 +114,7 @@ func (*TranscodeProcessor) transcode(
 		sourcePath,
 		seek.Milliseconds(),
 	)
+
 	cmd := exec.CommandContext(ctx, "ffmpeg", args...)
 	cmd.Stdout = out
 
@@ -147,4 +156,35 @@ func (*TranscodeProcessor) transcode(
 		seek.Milliseconds(),
 	)
 	return nil
+}
+
+func getInputFormat(sourcePath string) (string, error) {
+	cmd := exec.Command(
+		"ffprobe",
+		"-v",
+		"quiet",
+		"-print_format",
+		"json",
+		"-show_format",
+		sourcePath,
+	)
+
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	err := cmd.Run()
+	if err != nil {
+		return "", TranscoderScanError
+	}
+
+	var result struct {
+		Format struct {
+			FormatName string `json:"format_name"`
+		} `json:"format"`
+	}
+	err = json.Unmarshal(out.Bytes(), &result)
+	if err != nil {
+		return "", TranscoderScanError
+	}
+
+	return result.Format.FormatName, nil
 }

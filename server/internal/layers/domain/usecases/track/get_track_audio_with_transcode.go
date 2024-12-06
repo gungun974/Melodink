@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/gungun974/Melodink/server/internal/layers/data/processor"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
@@ -40,7 +41,12 @@ func (u *TrackUsecase) GetTrackAudioWithTranscode(
 	timeOffset, _ := strconv.Atoi(timeOffsetRaw)
 
 	if quality == AudioTranscodeMax {
-		w.Header().Set("Content-Type", "audio/flac")
+		mtype, err := mimetype.DetectFile(track.Path)
+		if err != nil {
+			return entities.NewInternalError(err)
+		}
+
+		w.Header().Set("Content-Type", mtype.String())
 		if err := u.transcodeProcessor.TranscodeMax(ctx, time.Duration(timeOffset)*time.Millisecond, track.Path, w); err != nil &&
 			!errors.Is(err, processor.TranscoderKilledError) {
 			return entities.NewInternalError(err)
