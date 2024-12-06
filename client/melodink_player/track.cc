@@ -851,7 +851,7 @@ public:
     return samples_read;
   }
 
-  bool IsAudioOpened() { return audio_opened; }
+  bool IsAudioOpened() { return audio_opened || audio_retry; }
 
   void PrintAudioInfo() {
 #ifndef MELODINK_PLAYER_LOG
@@ -886,8 +886,10 @@ public:
 
     fprintf(stderr, "Codec: %s\n", av_audio_codec->long_name);
     fprintf(stderr, "Frame size: %i\n", frame_size);
-    fprintf(stderr, "Original format type: %s\n",
-            av_get_sample_fmt_name(GetAudioOriginalFormat()));
+    if (audio_opened) {
+      fprintf(stderr, "Original format type: %s\n",
+              av_get_sample_fmt_name(GetAudioOriginalFormat()));
+    }
     fprintf(stderr, "Output format type: %s\n",
             av_get_sample_fmt_name(GetAudioOutputFormat()));
     fprintf(stderr, "Duration_origin: %" PRId64 "\n", duration_origin);
@@ -914,7 +916,7 @@ public:
   }
 
   AVSampleFormat GetAudioOutputFormat() {
-    assert(audio_opened);
+    assert(audio_opened | audio_retry);
 
     return audio_format;
   }
@@ -927,19 +929,19 @@ public:
   }
 
   int GetAudioSampleSize() {
-    assert(audio_opened);
+    assert(audio_opened | audio_retry);
 
     return audio_sample_size;
   }
 
   int GetAudioSampleRate() {
-    assert(audio_opened);
+    assert(audio_opened | audio_retry);
 
     return audio_sample_rate;
   }
 
   int GetAudioChannelCount() {
-    assert(audio_opened);
+    assert(audio_opened | audio_retry);
 
     return audio_channel_count;
   }
