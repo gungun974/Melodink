@@ -19,11 +19,6 @@ extern "C" {
 
 #include "fifo.cc"
 
-bool endsWith(const std::string &str, const std::string &suffix) {
-  size_t pos = str.rfind(suffix);
-  return pos != std::string::npos && pos == str.size() - suffix.size();
-}
-
 typedef struct FrameData {
   int64_t pkt_pos;
   int pkt_size;
@@ -31,6 +26,11 @@ typedef struct FrameData {
 
 class MelodinkTrack {
 private:
+  bool endsWith(const std::string &str, const std::string &suffix) {
+    size_t pos = str.rfind(suffix);
+    return pos != std::string::npos && pos == str.size() - suffix.size();
+  }
+
   AVFormatContext *av_format_ctx = nullptr;
 
   std::string loaded_url = "";
