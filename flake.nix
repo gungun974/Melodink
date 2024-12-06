@@ -50,6 +50,7 @@
           ++ [
             ./nix/ffmpeg/0001-hls-seek-patch-1.patch
             ./nix/ffmpeg/0002-hls-seek-patch-2.patch
+            ./nix/ffmpeg/0003-return-eio-for-prematurely-broken-connection.patch
           ];
       });
 

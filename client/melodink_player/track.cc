@@ -88,12 +88,12 @@ private:
     av_dict_set(&options, "headers", headers, 0);
 
     av_dict_set(&options, "reconnect", "0", 0);
-    //
+
     av_dict_set(&options, "reconnect_on_network_error", "0", 0);
 
     av_dict_set(&options, "reconnect_at_eof", "0", 0);
-    //
-    av_dict_set(&options, "reconnect_streamed", "0", 0);
+
+    av_dict_set(&options, "reconnect_streamed", "1", 0);
 
     av_dict_set(&options, "rw_timeout", "10000", 0);
 
@@ -435,7 +435,7 @@ private:
         fprintf(stderr, "Exit info: %s\n", GetError(response));
 #endif
 
-        if (response == AVERROR(ETIMEDOUT)) {
+        if (response == AVERROR(ETIMEDOUT) || response == AVERROR(EIO)) {
           TimeoutReopen();
         }
         break;
@@ -456,7 +456,8 @@ private:
         if (response < 0) {
           if (response != AVERROR(EAGAIN)) {
             fprintf(stderr, "Failed to decode packet\n");
-            return -1;
+            av_packet_unref(av_packet);
+            continue;
           }
         }
 
