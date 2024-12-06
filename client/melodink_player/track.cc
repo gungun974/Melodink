@@ -95,7 +95,7 @@ private:
 
     av_dict_set(&options, "reconnect_streamed", "1", 0);
 
-    av_dict_set(&options, "rw_timeout", "10000", 0);
+    av_dict_set(&options, "rw_timeout", "8000000", 0);
 
     char cleaned_filename[1024];
 
