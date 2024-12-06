@@ -12,9 +12,20 @@ enum AppSettingPlayerBarPosition {
   side,
 }
 
+enum AppSettingAudioQuality {
+  low,
+  medium,
+  high,
+  max,
+  directFile,
+}
+
 class AppSettings extends Equatable {
   final AppSettingTheme theme;
   final AppSettingPlayerBarPosition playerBarPosition;
+
+  final AppSettingAudioQuality wifiAudioQuality;
+  final AppSettingAudioQuality cellularAudioQuality;
 
   final bool rememberLoopAndShuffleAcrossRestarts;
   final bool keepLastPlayingListAcrossRestarts;
@@ -26,6 +37,8 @@ class AppSettings extends Equatable {
   const AppSettings({
     required this.theme,
     required this.playerBarPosition,
+    required this.wifiAudioQuality,
+    required this.cellularAudioQuality,
     required this.rememberLoopAndShuffleAcrossRestarts,
     required this.keepLastPlayingListAcrossRestarts,
     required this.autoScrollViewToCurrentTrack,
@@ -36,6 +49,8 @@ class AppSettings extends Equatable {
   AppSettings copyWith({
     AppSettingTheme? theme,
     AppSettingPlayerBarPosition? playerBarPosition,
+    AppSettingAudioQuality? wifiAudioQuality,
+    AppSettingAudioQuality? cellularAudioQuality,
     bool? rememberLoopAndShuffleAcrossRestarts,
     bool? keepLastPlayingListAcrossRestarts,
     bool? autoScrollViewToCurrentTrack,
@@ -45,6 +60,8 @@ class AppSettings extends Equatable {
     return AppSettings(
       theme: theme ?? this.theme,
       playerBarPosition: playerBarPosition ?? this.playerBarPosition,
+      wifiAudioQuality: wifiAudioQuality ?? this.wifiAudioQuality,
+      cellularAudioQuality: cellularAudioQuality ?? this.cellularAudioQuality,
       rememberLoopAndShuffleAcrossRestarts:
           rememberLoopAndShuffleAcrossRestarts ??
               this.rememberLoopAndShuffleAcrossRestarts,
@@ -62,6 +79,9 @@ class AppSettings extends Equatable {
   @override
   List<Object?> get props => [
         theme,
+        playerBarPosition,
+        wifiAudioQuality,
+        cellularAudioQuality,
         rememberLoopAndShuffleAcrossRestarts,
         keepLastPlayingListAcrossRestarts,
         autoScrollViewToCurrentTrack,

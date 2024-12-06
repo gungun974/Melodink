@@ -2,7 +2,6 @@ import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
-import 'package:uuid/v4.dart';
 
 class SettingsRepository {
   SettingsRepository._privateConstructor();
@@ -21,8 +20,15 @@ class SettingsRepository {
     final rawPlayerBarPosition =
         await asyncPrefs.getString("settingPlayerBarPosition");
 
+    final rawWifiAudioQuality = await asyncPrefs.getString("wifiAudioQuality");
+    final rawCellularAudioQuality =
+        await asyncPrefs.getString("cellularAudioQuality");
+
     AppSettingTheme? theme;
     AppSettingPlayerBarPosition? playerBarPosition;
+
+    AppSettingAudioQuality? wifiAudioQuality;
+    AppSettingAudioQuality? cellularAudioQuality;
 
     if (rawTheme != null) {
       theme = AppSettingTheme.values
@@ -33,6 +39,18 @@ class SettingsRepository {
     if (rawPlayerBarPosition != null) {
       playerBarPosition = AppSettingPlayerBarPosition.values
           .where((value) => value.name == rawPlayerBarPosition)
+          .firstOrNull;
+    }
+
+    if (rawWifiAudioQuality != null) {
+      wifiAudioQuality = AppSettingAudioQuality.values
+          .where((value) => value.name == rawWifiAudioQuality)
+          .firstOrNull;
+    }
+
+    if (rawCellularAudioQuality != null) {
+      cellularAudioQuality = AppSettingAudioQuality.values
+          .where((value) => value.name == rawCellularAudioQuality)
           .firstOrNull;
     }
 
@@ -52,6 +70,9 @@ class SettingsRepository {
       theme: theme ?? AppSettingTheme.dynamic,
       playerBarPosition:
           playerBarPosition ?? AppSettingPlayerBarPosition.bottom,
+      wifiAudioQuality: wifiAudioQuality ?? AppSettingAudioQuality.max,
+      cellularAudioQuality:
+          cellularAudioQuality ?? AppSettingAudioQuality.medium,
       rememberLoopAndShuffleAcrossRestarts:
           rememberLoopAndShuffleAcrossRestarts ?? true,
       keepLastPlayingListAcrossRestarts:
@@ -70,6 +91,15 @@ class SettingsRepository {
     await asyncPrefs.setString(
       "settingPlayerBarPosition",
       settings.playerBarPosition.name,
+    );
+
+    await asyncPrefs.setString(
+      "wifiAudioQuality",
+      settings.wifiAudioQuality.name,
+    );
+    await asyncPrefs.setString(
+      "cellularAudioQuality",
+      settings.cellularAudioQuality.name,
     );
 
     await asyncPrefs.setBool(

@@ -228,7 +228,7 @@ private:
     }
   }
 
-  double previous_position = -1;
+  int64_t previous_position = -1;
 
   static void AudioDataCallback(ma_device *pDevice, void *pOutput,
                                 const void *pInput, ma_uint32 frameCount) {
@@ -239,7 +239,8 @@ private:
 
     if (player->current_track != nullptr &&
         player->loop_mode == MELODINK_LOOP_MODE_ONE) {
-      double current_position = player->current_track->GetCurrentPlaybackTime();
+      int64_t current_position =
+          player->current_track->GetCurrentPlaybackTime();
 
       if (current_position < player->previous_position) {
         send_event_update_state(player->state);
@@ -290,7 +291,7 @@ private:
         return;
       }
 
-      if (player->current_track->GetCurrentPlaybackTime() < 0.1) {
+      if (player->current_track->GetCurrentPlaybackTime() < 100) {
         return;
       }
 
@@ -509,7 +510,7 @@ private:
     new_current_track->SetLoop(loop_mode == MELODINK_LOOP_MODE_ONE);
 
     if (new_current_track != current_track) {
-      if (new_current_track->GetCurrentPlaybackTime() != 0.0) {
+      if (new_current_track->GetCurrentPlaybackTime() != 0) {
         new_current_track->player_load_count += 1;
         std::thread t([new_current_track]() {
           new_current_track->Seek(0);
@@ -561,7 +562,7 @@ private:
       MelodinkTrack *new_prev_track =
           GetTrack(previous_urls[previous_urls.size() - 2].c_str());
       prev_track = new_prev_track;
-      if (new_prev_track->GetCurrentPlaybackTime() != 0.0) {
+      if (new_prev_track->GetCurrentPlaybackTime() != 0) {
         new_prev_track->player_load_count += 1;
         std::thread t([new_prev_track]() {
           new_prev_track->Seek(0);
@@ -580,7 +581,7 @@ private:
         next_track_index = 0;
         MelodinkTrack *new_next_track = GetTrack(previous_urls[0].c_str());
         next_track = new_next_track;
-        if (new_next_track->GetCurrentPlaybackTime() != 0.0) {
+        if (new_next_track->GetCurrentPlaybackTime() != 0) {
           new_next_track->player_load_count += 1;
           std::thread t([new_next_track]() {
             new_next_track->Seek(0);
@@ -596,7 +597,7 @@ private:
     } else {
       MelodinkTrack *new_next_track = GetTrack(next_urls[0].c_str());
       next_track = new_next_track;
-      if (new_next_track->GetCurrentPlaybackTime() != 0.0) {
+      if (new_next_track->GetCurrentPlaybackTime() != 0) {
         new_next_track->player_load_count += 1;
         std::thread t([new_next_track]() {
           new_next_track->Seek(0);
@@ -693,8 +694,6 @@ public:
 
       current_track->player_load_count += 1;
 
-      double position_seconds = position_ms / 1000.0;
-
       ma_device_state device_state = ma_device_get_state(&audio_device);
 
       if (device_state == ma_device_state_started ||
@@ -704,7 +703,7 @@ public:
         reinit_miniaudio_mutex.unlock();
       }
 
-      current_track->Seek(position_seconds);
+      current_track->Seek(position_ms);
 
       seek_duration = -1;
 
@@ -832,7 +831,7 @@ public:
       return seek_duration;
     }
 
-    return (int64_t)(current_track->GetCurrentPlaybackTime() * 1000);
+    return current_track->GetCurrentPlaybackTime();
   }
 
   int64_t GetCurrentBufferedPosition() {

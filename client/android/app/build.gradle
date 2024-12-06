@@ -96,10 +96,10 @@ task downloadDependencies(type: Exec)  {
 
         // Download all *.jar dependencies & verify their MD5 checksums.
         def filesToDownload = [
-            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-1/default-arm64-v8a.jar", "md5": "f4cdfc979aafbcfe82e4df24481ddf5a", "destination": file("$buildDir/v7.1-1/default-arm64-v8a.jar")],
-            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-1/default-armeabi-v7a.jar", "md5": "db72eccb621b1c01057cb99d452cda62", "destination": file("$buildDir/v7.1-1/default-armeabi-v7a.jar")],
-            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-1/default-x86_64.jar", "md5": "abb5d9e3027e448b8642ea9e53e2251e", "destination": file("$buildDir/v7.1-1/default-x86_64.jar")],
-            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-1/default-x86.jar", "md5": "0de4564d554f0be88a97a1426985938a", "destination": file("$buildDir/v7.1-1/default-x86.jar")]
+            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-2/default-arm64-v8a.jar", "md5": "ec95e48b08f3e251b808cba7cf97682c", "destination": file("$buildDir/v7.1-1/default-arm64-v8a.jar")],
+            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-2/default-armeabi-v7a.jar", "md5": "5001be0fefdcc710b6b73e72a437309f", "destination": file("$buildDir/v7.1-1/default-armeabi-v7a.jar")],
+            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-2/default-x86_64.jar", "md5": "ad5d8e01328f9f4d0ae46a94a4a5d410", "destination": file("$buildDir/v7.1-1/default-x86_64.jar")],
+            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-2/default-x86.jar", "md5": "99acc6c808d62b6e81474ef7557fb0ad", "destination": file("$buildDir/v7.1-1/default-x86.jar")]
         ]
 
         filesToDownload.each { fileInfo ->

@@ -26,10 +26,17 @@ typedef struct FrameData {
 
 class MelodinkTrack {
 private:
+  bool endsWith(const std::string &str, const std::string &suffix) {
+    size_t pos = str.rfind(suffix);
+    return pos != std::string::npos && pos == str.size() - suffix.size();
+  }
+
   AVFormatContext *av_format_ctx = nullptr;
 
   std::string loaded_url = "";
+  std::string stored_auth_token = "";
   bool audio_opened = false;
+  bool audio_retry = false;
 
   std::atomic<bool> finished_reading{true};
   std::atomic<bool> keep_loading{true};
@@ -57,13 +64,16 @@ private:
 
   size_t audio_frames_consumed = 0;
   size_t audio_frames_consumed_max = -1;
-  std::atomic<double> audio_time{0.0};
+  std::atomic<int64_t> audio_time{0};
 
   int audio_sample_size = 0;
   int audio_sample_rate = 0;
   int audio_channel_count = 0;
 
-  int OpenFile(const char *filename, const char *auth_token) {
+  bool is_transcoding = false;
+
+  int OpenFile(const char *filename, const char *auth_token,
+               int64_t streamOffset) {
     int response;
 
     AVDictionary *options = NULL;
@@ -71,24 +81,21 @@ private:
     char headers[1024];
     snprintf(headers, sizeof(headers),
              "Cookie: %s\r\n"
-             "User-Agent: Melodink-Player\r\n",
-             auth_token);
+             "User-Agent: Melodink-Player\r\n"
+             "X-Melodink-Stream-Offset: %" PRIu64 "\r\n",
+             auth_token, streamOffset);
 
     av_dict_set(&options, "headers", headers, 0);
 
-    av_dict_set(&options, "reconnect", "1", 0);
+    av_dict_set(&options, "reconnect", "0", 0);
 
-    av_dict_set(&options, "reconnect_on_network_error", "1", 0);
+    av_dict_set(&options, "reconnect_on_network_error", "0", 0);
+
+    av_dict_set(&options, "reconnect_at_eof", "0", 0);
 
     av_dict_set(&options, "reconnect_streamed", "1", 0);
 
-    av_dict_set(&options, "reconnect_max_retries", "3", 0);
-
-    av_dict_set(&options, "seg_max_retry", "2147483647", 0);
-
-    av_dict_set(&options, "m3u8_hold_counters", "2147483647", 0);
-
-    av_dict_set(&options, "max_reload", "2147483647", 0);
+    av_dict_set(&options, "rw_timeout", "10000", 0);
 
     char cleaned_filename[1024];
 
@@ -99,6 +106,8 @@ private:
     if (unique_index_mark != nullptr) {
       *unique_index_mark = '\0';
     }
+
+    is_transcoding = endsWith(cleaned_filename, "/transcode");
 
     response =
         avformat_open_input(&av_format_ctx, cleaned_filename, NULL, &options);
@@ -114,6 +123,8 @@ private:
     response = avformat_find_stream_info(av_format_ctx, nullptr);
     if (response < 0) {
       fprintf(stderr, "Couldn't find stream info\n");
+      avformat_close_input(&av_format_ctx);
+      avformat_free_context(av_format_ctx);
       return -1;
     }
 
@@ -125,7 +136,7 @@ private:
     avformat_free_context(av_format_ctx);
   }
 
-  int InitAudio() {
+  int InitAudio(bool reopen_fifo) {
     int response;
     int result;
 
@@ -225,32 +236,100 @@ private:
     audio_channel_count = av_audio_codec_params->ch_layout.nb_channels;
     audio_sample_rate = av_audio_codec_params->sample_rate;
 
-    // Reset values if audio was previously opened
-    audio_frames_consumed = 0;
-    audio_time = 0.0;
+    if (reopen_fifo) {
+      // Reset values if audio was previously opened
+      audio_frames_consumed = 0;
+      audio_time = 0;
 
-    response = audio_fifo.init(audio_format,
-                               av_audio_codec_params->ch_layout.nb_channels,
-                               av_audio_codec_params->sample_rate * 30);
-    if (response != 0) {
-      fprintf(stderr, "Couldn't allocate audio fifo\n");
-      return -1;
+      response = audio_fifo.init(audio_format,
+                                 av_audio_codec_params->ch_layout.nb_channels,
+                                 av_audio_codec_params->sample_rate * 30);
+      if (response != 0) {
+        fprintf(stderr, "Couldn't allocate audio fifo\n");
+        return -1;
+      }
     }
 
-    audio_opened = true;
+    if (!audio_retry) {
+      audio_opened = true;
+    }
 
     PrintAudioInfo();
 
     return 0;
   }
 
-  void CloseAudio() {
+  void CloseAudio(bool clear_fifo) {
     avcodec_free_context(&av_audio_codec_ctx);
     swr_free(&swr_audio_resampler);
 
     audio_opened = false;
-    audio_fifo.clear();
-    audio_fifo.free();
+    if (clear_fifo) {
+      audio_fifo.clear();
+      audio_fifo.free();
+    }
+  }
+
+  void TimeoutReopen() {
+    std::thread t([this]() {
+      std::unique_lock<std::mutex> lock(open_mutex);
+
+      audio_retry = true;
+
+      StopDecodingThread();
+      CloseFile();
+      CloseAudio(false);
+
+      while (true) {
+        int64_t end_audio_time =
+            (double(audio_frames_consumed + audio_fifo.size()) /
+             double(audio_sample_rate)) *
+            1000;
+
+        int result = OpenFile(loaded_url.c_str(), stored_auth_token.c_str(),
+                              end_audio_time + time_offset);
+        if (result != 0) {
+          std::this_thread::sleep_for(std::chrono::seconds(1));
+          continue;
+        }
+
+        result = InitAudio(false);
+        if (result != 0) {
+          fprintf(stderr, "Failed to reopen file %s\n", loaded_url.c_str());
+          CloseFile();
+          audio_retry = false;
+          return;
+        }
+
+        if (!is_transcoding) {
+          // Note: Zero some time don't reset, so if we try to set 0, we got
+          // a little higher
+          int response = av_seek_frame(
+              av_format_ctx, -1,
+              int64_t(end_audio_time == 0
+                          ? 1953
+                          : AV_TIME_BASE * double(end_audio_time) / 1000.0),
+              AVSEEK_FLAG_BACKWARD);
+
+          if (response >= 0) {
+            if (audio_opened) {
+              audio_fifo.clear();
+              avcodec_flush_buffers(av_audio_codec_ctx);
+            }
+
+            AdjustSeekedPosition(end_audio_time);
+          }
+        }
+
+        audio_opened = true;
+
+        break;
+      }
+      StartDecodingThread();
+      audio_retry = false;
+    });
+
+    t.detach();
   }
 
   void StartDecodingThread() {
@@ -329,19 +408,41 @@ private:
       // Return if error or end of file was encountered
       if (response < 0) {
         if (response == AVERROR_EOF && infinite_loop) {
-          av_seek_frame(av_format_ctx, -1, 1953, AVSEEK_FLAG_BACKWARD);
-
-          avcodec_flush_buffers(av_audio_codec_ctx);
-
           audio_frames_consumed_max = audio_frames_consumed + audio_fifo.size();
 
-          continue;
+          std::thread t([this]() {
+            std::unique_lock<std::mutex> lock(seek_mutex);
+            std::unique_lock<std::mutex> lock2(open_mutex);
+
+            StopDecodingThread();
+            CloseFile();
+            CloseAudio(false);
+
+            int result =
+                OpenFile(loaded_url.c_str(), stored_auth_token.c_str(), 0);
+            if (result != 0) {
+              return;
+            }
+
+            result = InitAudio(false);
+            if (result != 0) {
+              return;
+            }
+            StartDecodingThread();
+          });
+          t.detach();
+
+          break;
         }
 
 #ifdef MELODINK_PLAYER_LOG
         fprintf(stderr, "Error or end of file happened\n");
         fprintf(stderr, "Exit info: %s\n", GetError(response));
 #endif
+
+        if (response == AVERROR(ETIMEDOUT) || response == AVERROR(EIO)) {
+          TimeoutReopen();
+        }
         break;
       }
 
@@ -360,7 +461,8 @@ private:
         if (response < 0) {
           if (response != AVERROR(EAGAIN)) {
             fprintf(stderr, "Failed to decode packet\n");
-            return -1;
+            av_packet_unref(av_packet);
+            continue;
           }
         }
 
@@ -438,11 +540,11 @@ private:
     return 0;
   }
 
-  int AdjustSeekedPosition(double wanted_timepoint) {
+  int AdjustSeekedPosition(int64_t wanted_timepoint) {
     // Minimum amount of frames that should be pre-decoded
     size_t min_audio_queue_size;
 
-    if (audio_opened) {
+    if (audio_opened || audio_retry) {
       min_audio_queue_size =
           std::max(size_t(audio_fifo.capacity() / 2), size_t(1));
     }
@@ -468,12 +570,12 @@ private:
       return -1;
     }
 
-    bool audio_seeked = audio_opened ? false : true;
+    bool audio_seeked = audio_opened || audio_retry ? false : true;
 
     while (true) {
       if (audio_seeked) {
-        if (audio_opened) {
-          double at = audio_time;
+        if (audio_opened || audio_retry) {
+          double at = audio_time / 1000;
 #ifdef MELODINK_PLAYER_LOG
           fprintf(stderr, "audio_time: %lf\n", at);
 #endif
@@ -494,7 +596,8 @@ private:
         break;
       }
 
-      if (audio_opened && av_packet->stream_index == audio_stream_index) {
+      if ((audio_opened || audio_retry) &&
+          av_packet->stream_index == audio_stream_index) {
         FrameData *fd;
 
         av_packet->opaque_ref = av_buffer_allocz(sizeof(*fd));
@@ -535,7 +638,8 @@ private:
               // Keep track of, when the first sample starts
               if (audio_seeked == false) {
                 audio_time = CalculateAudioPts(av_audio_frame);
-                audio_frames_consumed = size_t(audio_time * audio_sample_rate);
+                audio_frames_consumed =
+                    size_t(audio_time / 1000 * audio_sample_rate);
               }
 
               audio_seeked = true;
@@ -592,9 +696,11 @@ private:
     return 0;
   }
 
-  double CalculateAudioPts(const AVFrame *frame) {
-    return double(frame->best_effort_timestamp * audio_time_base.num) /
-           double(audio_time_base.den);
+  int64_t CalculateAudioPts(const AVFrame *frame) {
+    return static_cast<int64_t>(
+        (double(frame->best_effort_timestamp * audio_time_base.num) /
+         double(audio_time_base.den)) *
+        1000);
   }
 
 public:
@@ -614,13 +720,14 @@ public:
     int result;
 
     loaded_url = filename;
+    stored_auth_token = auth_token;
 
-    result = OpenFile(filename, auth_token);
+    result = OpenFile(filename, auth_token, 0);
     if (result != 0) {
       return result;
     }
 
-    result = InitAudio();
+    result = InitAudio(true);
     if (result != 0) {
       return result;
     }
@@ -633,7 +740,7 @@ public:
   void Close() {
     StopDecodingThread();
     CloseFile();
-    CloseAudio();
+    CloseAudio(true);
   }
 
   bool FinishedReading() {
@@ -647,7 +754,9 @@ public:
     return audio_fifo.size() <= 0;
   }
 
-  int Seek(double new_time) {
+  int64_t time_offset = 0;
+
+  int Seek(int64_t new_time) {
     std::unique_lock<std::mutex> lock(seek_mutex);
     std::unique_lock<std::mutex> lock2(open_mutex);
 
@@ -656,31 +765,62 @@ public:
       return -1;
     }
 
+    int64_t current = GetCurrentPlaybackTime();
+
+    int64_t diff = new_time - current;
+
+    int64_t sample_count =
+        (diff * static_cast<int64_t>(audio_sample_rate)) / 1000;
+
+    if (sample_count > 0 && sample_count <= audio_fifo.size()) {
+      audio_fifo.drain(sample_count);
+
+      audio_frames_consumed += sample_count;
+      return 0;
+    }
+
     StopDecodingThread();
 
     int result = 0;
 
-    // Note: Zero some time don't reset, so if we try to set 0, we got a little
-    // higher
-    int response =
-        av_seek_frame(av_format_ctx, -1,
-                      int64_t(new_time == 0.0 ? 1953 : AV_TIME_BASE * new_time),
-                      AVSEEK_FLAG_BACKWARD);
+    if (is_transcoding) {
+      CloseFile();
+      CloseAudio(true);
 
-    if (response >= 0) {
+      int response =
+          OpenFile(loaded_url.c_str(), stored_auth_token.c_str(), new_time);
 
-      if (audio_opened) {
-        audio_fifo.clear();
-        avcodec_flush_buffers(av_audio_codec_ctx);
+      if (response >= 0) {
+        result = InitAudio(true);
+      } else {
+        result = -1;
       }
 
-      result = AdjustSeekedPosition(new_time);
+      if (result != -1) {
+        time_offset = new_time;
+      }
     } else {
-      result = -1;
+      // Note: Zero some time don't reset, so if we try to set 0, we got a
+      // little higher
+      int response = av_seek_frame(
+          av_format_ctx, -1,
+          int64_t(new_time == 0 ? 1953
+                                : AV_TIME_BASE * double(new_time) / 1000.0),
+          AVSEEK_FLAG_BACKWARD);
+
+      if (response >= 0) {
+        if (audio_opened) {
+          audio_fifo.clear();
+          avcodec_flush_buffers(av_audio_codec_ctx);
+        }
+
+        result = AdjustSeekedPosition(new_time);
+      } else {
+        result = -1;
+      }
     }
 
     StartDecodingThread();
-
     return result;
   }
 
@@ -698,16 +838,20 @@ public:
 
     audio_frames_consumed += samples_read;
 
-    if (infinite_loop) {
+    if (infinite_loop && audio_frames_consumed_max != 0 &&
+        audio_frames_consumed >= audio_frames_consumed_max) {
       audio_frames_consumed %= audio_frames_consumed_max;
+      audio_frames_consumed_max = 0;
+      time_offset = 0;
     }
 
-    audio_time = double(audio_frames_consumed) / double(audio_sample_rate);
+    audio_time =
+        (double(audio_frames_consumed) / double(audio_sample_rate)) * 1000;
 
     return samples_read;
   }
 
-  bool IsAudioOpened() { return audio_opened; }
+  bool IsAudioOpened() { return audio_opened || audio_retry; }
 
   void PrintAudioInfo() {
 #ifndef MELODINK_PLAYER_LOG
@@ -742,8 +886,10 @@ public:
 
     fprintf(stderr, "Codec: %s\n", av_audio_codec->long_name);
     fprintf(stderr, "Frame size: %i\n", frame_size);
-    fprintf(stderr, "Original format type: %s\n",
-            av_get_sample_fmt_name(GetAudioOriginalFormat()));
+    if (audio_opened) {
+      fprintf(stderr, "Original format type: %s\n",
+              av_get_sample_fmt_name(GetAudioOriginalFormat()));
+    }
     fprintf(stderr, "Output format type: %s\n",
             av_get_sample_fmt_name(GetAudioOutputFormat()));
     fprintf(stderr, "Duration_origin: %" PRId64 "\n", duration_origin);
@@ -770,7 +916,7 @@ public:
   }
 
   AVSampleFormat GetAudioOutputFormat() {
-    assert(audio_opened);
+    assert(audio_opened | audio_retry);
 
     return audio_format;
   }
@@ -783,31 +929,29 @@ public:
   }
 
   int GetAudioSampleSize() {
-    assert(audio_opened);
+    assert(audio_opened | audio_retry);
 
     return audio_sample_size;
   }
 
   int GetAudioSampleRate() {
-    assert(audio_opened);
+    assert(audio_opened | audio_retry);
 
     return audio_sample_rate;
   }
 
   int GetAudioChannelCount() {
-    assert(audio_opened);
+    assert(audio_opened | audio_retry);
 
     return audio_channel_count;
   }
 
-  double GetCurrentPlaybackTime() {
-    double time = 0.0;
-
-    if (audio_opened) {
-      time = audio_time;
+  int64_t GetCurrentPlaybackTime() {
+    if (!audio_opened && !audio_retry) {
+      return 0;
     }
 
-    return time;
+    return audio_time + time_offset;
   }
 
   const char *GetLoadedUrl() { return loaded_url.c_str(); }

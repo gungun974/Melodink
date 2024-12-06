@@ -116,6 +116,21 @@ func TrackRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
+	for _, quality := range []string{"low", "medium", "high", "max"} {
+		router.Get(
+			"/{id}/audio/"+quality+"/transcode",
+			func(w http.ResponseWriter, r *http.Request) {
+				id := chi.URLParam(r, "id")
+
+				err := c.TrackController.GetTrackAudioWithTranscode(r.Context(), id, quality, w, r)
+				if err != nil {
+					handleHTTPError(err, w)
+					return
+				}
+			},
+		)
+	}
+
 	router.Get("/{id}/signature", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 

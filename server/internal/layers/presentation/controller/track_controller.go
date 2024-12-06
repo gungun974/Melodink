@@ -125,6 +125,31 @@ func (c *TrackController) GetTrackAudio(
 	return c.trackUsecase.GetTrackAudio(ctx, id)
 }
 
+func (c *TrackController) GetTrackAudioWithTranscode(
+	ctx context.Context,
+	rawId string,
+	quality string,
+	w http.ResponseWriter, r *http.Request,
+) error {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.GetTrackAudioWithTranscode(
+		ctx,
+		id,
+		track_usecase.AudioTranscodeQuality(quality),
+		w,
+		r,
+	)
+}
+
 func (c *TrackController) GetTrackFileSignature(
 	ctx context.Context,
 	rawId string,

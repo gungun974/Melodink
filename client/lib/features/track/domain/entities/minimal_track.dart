@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/helpers/double_to_string_without_zero.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
 
@@ -137,8 +138,19 @@ class MinimalTrack extends Equatable {
     return newArtists;
   }
 
-  String getUrl() {
-    return "${AppApi().getServerUrl()}track/$id/audio";
+  String getUrl(AppSettingAudioQuality quality) {
+    switch (quality) {
+      case AppSettingAudioQuality.low:
+        return "${AppApi().getServerUrl()}track/$id/audio/low/transcode";
+      case AppSettingAudioQuality.medium:
+        return "${AppApi().getServerUrl()}track/$id/audio/medium/transcode";
+      case AppSettingAudioQuality.high:
+        return "${AppApi().getServerUrl()}track/$id/audio/high/transcode";
+      case AppSettingAudioQuality.max:
+        return "${AppApi().getServerUrl()}track/$id/audio/max/transcode";
+      default:
+        return "${AppApi().getServerUrl()}track/$id/audio";
+    }
   }
 
   String getOriginalCoverUrl() {
