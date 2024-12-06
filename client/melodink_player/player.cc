@@ -640,7 +640,13 @@ public:
     if (device_state == ma_device_state_started ||
         device_state == ma_device_state_stopped) {
       reinit_miniaudio_mutex.lock();
+#ifndef __ANDROID__
       ma_device_start(&audio_device);
+#else
+      // On Android device "start" can sometime just don't work
+      ma_device_uninit(&audio_device);
+      InitMiniaudio(true);
+#endif
       reinit_miniaudio_mutex.unlock();
     }
 
@@ -708,7 +714,13 @@ public:
 
       if (!is_paused) {
         reinit_miniaudio_mutex.lock();
+#ifndef __ANDROID__
         ma_device_start(&audio_device);
+#else
+        // On Android device "start" can sometime just don't work
+        ma_device_uninit(&audio_device);
+        InitMiniaudio(true);
+#endif
         reinit_miniaudio_mutex.unlock();
       }
 
