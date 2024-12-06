@@ -14,7 +14,7 @@ function check_and_install () {
   fi
 
   # Thanks to media-kit for the base of the building process. https://github.com/gungun974/melodink-libmpv-darwin-build
-  curl -L "https://github.com/gungun974/melodink-ffmpeg-darwin-build/releases/download/v7.0.2-0/$archive_framework_name" -o "Frameworks/$archive_framework_name" 
+  curl -L "https://github.com/gungun974/melodink-ffmpeg-darwin-build/releases/download/v7.0.2-1/$archive_framework_name" -o "Frameworks/$archive_framework_name" 
 
   downloaded_hash=$(shasum -a 256 "Frameworks/$archive_framework_name" | awk '{ print $1 }')
 
@@ -35,6 +35,6 @@ function check_and_install () {
   return 2
 }
 
-check_and_install "ffmpeg-xcframeworks_v7.0.2-0_macos-universal-video-default.tar.gz" "d850ea1affb194b9e247a5d2f10e781e32adc47c0a053d4ba182c7fa8af5fcfd"
+check_and_install "ffmpeg-xcframeworks_v7.0.2-1_macos-universal-video-default.tar.gz" "574d638ada37249ca749b37855b36da0891545b6c5de4c54ceff9081e316922e"
 
 exit 0

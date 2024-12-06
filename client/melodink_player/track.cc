@@ -281,7 +281,6 @@ private:
       CloseAudio(false);
 
       while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
         int64_t end_audio_time =
             (double(audio_frames_consumed + audio_fifo.size()) /
              double(audio_sample_rate)) *
@@ -290,6 +289,7 @@ private:
         int result = OpenFile(loaded_url.c_str(), stored_auth_token.c_str(),
                               end_audio_time + time_offset);
         if (result != 0) {
+          std::this_thread::sleep_for(std::chrono::seconds(1));
           continue;
         }
 

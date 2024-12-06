@@ -14,7 +14,7 @@ function check_and_install () {
   fi
 
   # Thanks to media-kit for the base of the building process. https://github.com/gungun974/melodink-ffmpeg-darwin-build
-  curl -L "https://github.com/gungun974/melodink-ffmpeg-darwin-build/releases/download/v7.0.2-0/$archive_framework_name" -o "Frameworks/$archive_framework_name" 
+  curl -L "https://github.com/gungun974/melodink-ffmpeg-darwin-build/releases/download/v7.0.2-1/$archive_framework_name" -o "Frameworks/$archive_framework_name" 
 
   downloaded_hash=$(shasum -a 256 "Frameworks/$archive_framework_name" | awk '{ print $1 }')
 
@@ -35,6 +35,6 @@ function check_and_install () {
   return 2
 }
 
-check_and_install "ffmpeg-xcframeworks_v7.0.2-0_ios-universal-video-default.tar.gz" "15fbdbcdeb7e0f06690b7f88dec1e8de17754d2a405dcdf45abc96f04438314a"
+check_and_install "ffmpeg-xcframeworks_v7.0.2-1_ios-universal-video-default.tar.gz" "6a532daa3c9c5af70a09396ef948d6330179f62cabcbb34d5da9c225724f3e7d"
 
 exit 0
