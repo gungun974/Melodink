@@ -282,8 +282,13 @@ private:
 
       while (true) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
+        int64_t end_audio_time =
+            (double(audio_frames_consumed + audio_fifo.size()) /
+             double(audio_sample_rate)) *
+            1000;
+
         int result = OpenFile(loaded_url.c_str(), stored_auth_token.c_str(),
-                              audio_time + time_offset);
+                              end_audio_time + time_offset);
         if (result != 0) {
           continue;
         }
@@ -301,9 +306,9 @@ private:
           // a little higher
           int response = av_seek_frame(
               av_format_ctx, -1,
-              int64_t(audio_time == 0
+              int64_t(end_audio_time == 0
                           ? 1953
-                          : AV_TIME_BASE * double(audio_time) / 1000.0),
+                          : AV_TIME_BASE * double(end_audio_time) / 1000.0),
               AVSEEK_FLAG_BACKWARD);
 
           if (response >= 0) {
@@ -312,7 +317,7 @@ private:
               avcodec_flush_buffers(av_audio_codec_ctx);
             }
 
-            AdjustSeekedPosition(audio_time);
+            AdjustSeekedPosition(end_audio_time);
           }
         }
 
