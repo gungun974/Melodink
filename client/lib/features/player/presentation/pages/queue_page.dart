@@ -101,8 +101,7 @@ class _QueueReordableManagerState extends State<QueuePage> {
       return false;
     }
 
-    if (newPosition is ValueKey<String> &&
-        newPosition.value.contains("queue")) {
+    if (newPosition is ValueKey<String> && newPosition.value == "Next-queue") {
       setState(() {
         if (isItemFromQueue) {
           queueTracks.removeAt(queueDraggingIndex);
@@ -114,7 +113,8 @@ class _QueueReordableManagerState extends State<QueuePage> {
       return false;
     }
 
-    if (newPosition is ValueKey<String> &&
+    if (queueTracks.isEmpty &&
+        newPosition is ValueKey<String> &&
         newPosition.value.contains("playing")) {
       setState(() {
         if (isItemFromQueue) {
