@@ -49,6 +49,17 @@ class TrackRepository {
       historyInfo: () => info,
     );
   }
+
+  Future<Track> saveTrack(Track track) async {
+    final updatedTrack = await trackRemoteDataSource.saveTrack(track);
+    final info = await playedTrackRepository.getTrackHistoryInfo(
+      updatedTrack.id,
+    );
+
+    return updatedTrack.copyWith(
+      historyInfo: () => info,
+    );
+  }
 }
 
 final trackRepositoryProvider = Provider(

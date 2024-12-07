@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
+import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
+import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/modals/edit_track_modal.dart';
 
 class ShowTrackModal extends ConsumerWidget {
   final int trackId;
@@ -31,6 +34,32 @@ class ShowTrackModal extends ConsumerWidget {
 
     return AppModal(
       title: Text(track.title),
+      actions: [
+        AppIconButton(
+          iconSize: 20,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          icon: const AdwaitaIcon(AdwaitaIcons.edit),
+          onPressed: () {
+            showGeneralDialog(
+              context: context,
+              barrierDismissible: true,
+              barrierLabel: "EditTrackModal",
+              pageBuilder: (_, __, ___) {
+                return Center(
+                  child: MaxContainer(
+                    maxWidth: 800,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 64,
+                    ),
+                    child: EditTrackModal(track: track),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
       body: DefaultTabController(
         length: 4,
         child: Column(
@@ -62,42 +91,48 @@ class ShowTrackModal extends ConsumerWidget {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              AppReadTextField(
+                              AppValueTextField(
                                 labelText: "Title",
                                 value: track.title,
+                                readOnly: true,
                               ),
                               const SizedBox(height: 8),
-                              AppReadTextField(
+                              AppValueTextField(
                                 labelText: "Duration",
                                 value: durationToTime(track.duration),
+                                readOnly: true,
                               ),
                               const SizedBox(height: 8),
                               Row(
                                 children: [
                                   Expanded(
-                                    child: AppReadTextField(
+                                    child: AppValueTextField(
                                       labelText: "Tags Format",
                                       value: track.tagsFormat,
+                                      readOnly: true,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
-                                    child: AppReadTextField(
+                                    child: AppValueTextField(
                                       labelText: "File Type",
                                       value: track.fileType,
+                                      readOnly: true,
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              AppReadTextField(
+                              AppValueTextField(
                                 labelText: "File Signature",
                                 value: track.fileSignature,
+                                readOnly: true,
                               ),
                               const SizedBox(height: 8),
-                              AppReadTextField(
+                              AppValueTextField(
                                 labelText: "Date Added",
                                 value: formatter.format(track.dateAdded),
+                                readOnly: true,
                               ),
                             ],
                           ),
@@ -151,9 +186,10 @@ class ShowTrackModal extends ConsumerWidget {
                           Column(
                             children: track.metadata.albumArtists
                                 .map(
-                                  (artist) => AppReadTextField(
+                                  (artist) => AppValueTextField(
                                     labelText: "Album Artist",
                                     value: artist.name,
+                                    readOnly: true,
                                   ),
                                 )
                                 .toList(),
@@ -173,9 +209,10 @@ class ShowTrackModal extends ConsumerWidget {
                           Column(
                             children: track.metadata.artists
                                 .map(
-                                  (artist) => AppReadTextField(
+                                  (artist) => AppValueTextField(
                                     labelText: "Artist",
                                     value: artist.name,
+                                    readOnly: true,
                                   ),
                                 )
                                 .toList(),
@@ -190,9 +227,10 @@ class ShowTrackModal extends ConsumerWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          AppReadTextField(
+                          AppValueTextField(
                             labelText: "Album",
                             value: track.metadata.album,
+                            readOnly: true,
                           ),
                           const Divider(
                             height: 24,
@@ -200,16 +238,18 @@ class ShowTrackModal extends ConsumerWidget {
                           Row(
                             children: [
                               Expanded(
-                                child: AppReadTextField(
+                                child: AppValueTextField(
                                   labelText: "Track Number",
                                   value: "${track.metadata.trackNumber}",
+                                  readOnly: true,
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: AppReadTextField(
+                                child: AppValueTextField(
                                   labelText: "Total Tracks",
                                   value: "${track.metadata.totalTracks}",
+                                  readOnly: true,
                                 ),
                               ),
                             ],
@@ -218,16 +258,18 @@ class ShowTrackModal extends ConsumerWidget {
                           Row(
                             children: [
                               Expanded(
-                                child: AppReadTextField(
+                                child: AppValueTextField(
                                   labelText: "Track Disc",
                                   value: "${track.metadata.discNumber}",
+                                  readOnly: true,
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
-                                child: AppReadTextField(
+                                child: AppValueTextField(
                                   labelText: "Total Disc",
                                   value: "${track.metadata.totalDiscs}",
+                                  readOnly: true,
                                 ),
                               ),
                             ],
@@ -235,55 +277,64 @@ class ShowTrackModal extends ConsumerWidget {
                           const Divider(
                             height: 24,
                           ),
-                          AppReadTextField(
+                          AppValueTextField(
                             labelText: "Date",
                             value: track.metadata.date,
+                            readOnly: true,
                           ),
                           const SizedBox(height: 8),
-                          AppReadTextField(
+                          AppValueTextField(
                             labelText: "Year",
                             value: "${track.metadata.year}",
+                            readOnly: true,
                           ),
                           const Divider(
                             height: 24,
                           ),
-                          AppReadTextField(
+                          AppValueTextField(
                             labelText: "Genres",
                             value: track.metadata.genres.join(";"),
+                            readOnly: true,
                           ),
                           const Divider(
                             height: 24,
                           ),
-                          AppReadTextField(
+                          AppValueTextField(
                             labelText: "AcoustId",
                             value: track.metadata.acoustId,
+                            readOnly: true,
                           ),
                           const SizedBox(height: 8),
-                          AppReadTextField(
+                          AppValueTextField(
                             labelText: "MusicBrainz Release Id",
                             value: track.metadata.musicBrainzReleaseId,
+                            readOnly: true,
                           ),
                           const SizedBox(height: 8),
-                          AppReadTextField(
+                          AppValueTextField(
                             labelText: "MusicBrainz Track Id",
                             value: track.metadata.musicBrainzTrackId,
+                            readOnly: true,
                           ),
                           const SizedBox(height: 8),
-                          AppReadTextField(
+                          AppValueTextField(
                             labelText: "MusicBrainz Recording Id",
                             value: track.metadata.musicBrainzRecordingId,
+                            readOnly: true,
                           ),
                           const Divider(
                             height: 24,
                           ),
-                          AppReadTextField(
+                          AppValueTextField(
                             labelText: "Composer",
                             value: track.metadata.composer,
+                            readOnly: true,
                           ),
                           const SizedBox(height: 8),
-                          AppReadTextField(
+                          AppValueTextField(
                             labelText: "Comment",
                             value: track.metadata.comment,
+                            readOnly: true,
                           ),
                         ],
                       ),

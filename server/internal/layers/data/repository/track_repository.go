@@ -305,7 +305,9 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 
         sample_rate = ?,
         bit_rate = ?,
-        bits_per_raw_sample = ?
+        bits_per_raw_sample = ?,
+
+        created_at = ?
     WHERE
       id = ?
     RETURNING *
@@ -351,6 +353,8 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 		track.SampleRate,
 		track.BitRate,
 		track.BitsPerRawSample,
+
+		track.DateAdded,
 
 		track.Id,
 	)

@@ -5,6 +5,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"time"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
@@ -393,6 +394,69 @@ func (c *TrackController) EditTrack(
 		return nil, entities.NewValidationError(err.Error())
 	}
 
+	acoustId, err := validator.ValidateMapString(
+		"acoust_id",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	musicBrainzReleaseId, err := validator.ValidateMapString(
+		"music_brainz_release_id",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	musicBrainzTrackId, err := validator.ValidateMapString(
+		"music_brainz_track_id",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	musicBrainzRecordingId, err := validator.ValidateMapString(
+		"music_brainz_recording_id",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	var dateAdded *time.Time = nil
+
+	if _, ok := bodyData["date_added"]; ok {
+		rawDateAdded, err := validator.ValidateMapString(
+			"date_added",
+			bodyData,
+			validator.StringValidators{},
+		)
+		if err != nil {
+			return nil, entities.NewValidationError(err.Error())
+		}
+		date, err := time.Parse(time.RFC3339, rawDateAdded)
+		if err != nil {
+			return nil, entities.NewValidationError(err.Error())
+		}
+
+		dateAdded = &date
+	}
+
 	return c.trackUsecase.EditTrack(ctx, track_usecase.EditTrackParams{
 		Id: id,
 
@@ -416,6 +480,14 @@ func (c *TrackController) EditTrack(
 		Artists:      artists,
 		AlbumArtists: albumArtists,
 		Composer:     composer,
+
+		AcoustID: acoustId,
+
+		MusicBrainzReleaseId:   musicBrainzReleaseId,
+		MusicBrainzTrackId:     musicBrainzTrackId,
+		MusicBrainzRecordingId: musicBrainzRecordingId,
+
+		DateAdded: dateAdded,
 	})
 }
 

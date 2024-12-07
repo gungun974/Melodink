@@ -7,10 +7,16 @@ class AppModal extends StatelessWidget {
 
   final Widget? title;
 
+  final List<Widget>? actions;
+
+  final bool preventUserClose;
+
   const AppModal({
     super.key,
     required this.body,
     this.title,
+    this.actions,
+    this.preventUserClose = false,
   });
 
   @override
@@ -19,22 +25,21 @@ class AppModal extends StatelessWidget {
       children: [
         Container(color: Colors.black),
         const GradientBackground(),
-        Scaffold(
-          primary: false,
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            toolbarHeight: 0,
-          ),
-          body: Column(
+        Material(
+          color: Colors.transparent,
+          child: Column(
             children: [
               AppBar(
-                leading: IconButton(
-                  icon: const AdwaitaIcon(AdwaitaIcons.window_close),
-                  onPressed: () => Navigator.of(
-                    context,
-                    rootNavigator: true,
-                  ).pop(),
-                ),
+                leading: preventUserClose
+                    ? const SizedBox.shrink()
+                    : IconButton(
+                        icon: const AdwaitaIcon(AdwaitaIcons.window_close),
+                        onPressed: () => Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        ).pop(),
+                      ),
+                actions: actions,
                 centerTitle: true,
                 backgroundColor: const Color.fromRGBO(0, 0, 0, 0.08),
                 shadowColor: Colors.transparent,

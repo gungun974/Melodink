@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
@@ -35,6 +36,14 @@ type EditTrackParams struct {
 	Artists      []string
 	AlbumArtists []string
 	Composer     string
+
+	AcoustID string
+
+	MusicBrainzReleaseId   string
+	MusicBrainzTrackId     string
+	MusicBrainzRecordingId string
+
+	DateAdded *time.Time
 }
 
 func (u *TrackUsecase) EditTrack(
@@ -89,6 +98,16 @@ func (u *TrackUsecase) EditTrack(
 	track.Metadata.Artists = params.Artists
 	track.Metadata.AlbumArtists = params.AlbumArtists
 	track.Metadata.Composer = params.Composer
+
+	track.Metadata.AcoustID = params.AcoustID
+
+	track.Metadata.MusicBrainzReleaseId = params.MusicBrainzReleaseId
+	track.Metadata.MusicBrainzTrackId = params.MusicBrainzTrackId
+	track.Metadata.MusicBrainzRecordingId = params.MusicBrainzRecordingId
+
+	if params.DateAdded != nil {
+		track.DateAdded = *params.DateAdded
+	}
 
 	if err := u.trackRepository.UpdateTrack(track); err != nil {
 		logger.MainLogger.Error("Couldn't update track in Database", err, *track)

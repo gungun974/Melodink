@@ -26,6 +26,8 @@ class AppTextFormField extends StatelessWidget {
 
   final bool readOnly;
 
+  final int? maxLines;
+
   const AppTextFormField({
     super.key,
     required this.labelText,
@@ -40,6 +42,7 @@ class AppTextFormField extends StatelessWidget {
     this.validator,
     this.onChanged,
     this.readOnly = false,
+    this.maxLines = 1,
   });
 
   @override
@@ -51,13 +54,15 @@ class AppTextFormField extends StatelessWidget {
       builder: (FormFieldState field) {
         return Container(
           decoration: BoxDecoration(
-            color: const Color.fromRGBO(39, 44, 46, 0.55),
+            color: readOnly
+                ? const Color.fromRGBO(10, 12, 13, 0.25)
+                : const Color.fromRGBO(39, 44, 46, 0.55),
             borderRadius: BorderRadius.circular(8.0),
           ),
           child: Stack(
             children: [
               SizedBox(
-                height: 40,
+                height: maxLines == 1 ? 40 : null,
                 child: Center(
                   child: TextField(
                     controller: controller,
@@ -68,13 +73,13 @@ class AppTextFormField extends StatelessWidget {
                     readOnly: readOnly,
                     obscureText: obscureText,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: readOnly ? Colors.grey[200] : Colors.white,
                       fontSize: 14,
                       letterSpacing: 24 * 0.03,
                       fontWeight: FontWeight.w400,
                       height: Platform.isLinux ? 1.4 : 1,
                     ),
-                    maxLines: 1,
+                    maxLines: maxLines,
                     keyboardType: keyboardType,
                     decoration: InputDecoration(
                       prefixIcon: prefixIcon != null ? buildPrefixIcon() : null,
@@ -120,7 +125,7 @@ class AppTextFormField extends StatelessWidget {
                   child: Align(
                     alignment: Alignment.bottomLeft,
                     child: Padding(
-                      padding: const EdgeInsets.only(left: 16, bottom: 4),
+                      padding: const EdgeInsets.only(left: 12, bottom: 4),
                       child: Text(
                         field.errorText!,
                         style: const TextStyle(
@@ -177,24 +182,45 @@ class AppTextFormField extends StatelessWidget {
   }
 }
 
-class AppReadTextField extends HookWidget {
+class AppValueTextField extends HookWidget {
   final String labelText;
   final String value;
 
   final Widget? prefixIcon;
   final Widget? suffixIcon;
 
+  final TextInputType? keyboardType;
+
+  final bool? obscureText;
+
   final VoidCallback? prefixIconOnPressed;
   final VoidCallback? suffixIconOnPressed;
 
-  const AppReadTextField({
+  final AutovalidateMode? autovalidateMode;
+
+  final String? Function(String?)? validator;
+
+  final ValueChanged<String>? onChanged;
+
+  final bool? readOnly;
+
+  final int? maxLines;
+
+  const AppValueTextField({
     super.key,
     required this.labelText,
     required this.value,
     this.prefixIcon,
     this.suffixIcon,
+    this.keyboardType,
+    this.obscureText,
     this.prefixIconOnPressed,
     this.suffixIconOnPressed,
+    this.autovalidateMode,
+    this.validator,
+    this.onChanged,
+    this.readOnly,
+    this.maxLines,
   });
 
   @override
@@ -212,9 +238,15 @@ class AppReadTextField extends HookWidget {
       labelText: labelText,
       prefixIcon: prefixIcon,
       suffixIcon: suffixIcon,
+      keyboardType: keyboardType,
+      obscureText: obscureText ?? false,
       prefixIconOnPressed: prefixIconOnPressed,
       suffixIconOnPressed: suffixIconOnPressed,
-      readOnly: true,
+      autovalidateMode: autovalidateMode,
+      validator: validator,
+      onChanged: onChanged,
+      readOnly: readOnly ?? false,
+      maxLines: maxLines,
     );
   }
 }

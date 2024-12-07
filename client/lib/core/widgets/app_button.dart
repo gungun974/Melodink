@@ -6,6 +6,7 @@ enum AppButtonType {
   primary,
   secondary,
   neutral,
+  danger,
 }
 
 class AppButton extends StatelessWidget {
@@ -34,9 +35,10 @@ class AppButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(10.0),
           ),
           backgroundColor: switch (type) {
-            AppButtonType.primary => Color.fromRGBO(196, 126, 208, 1),
-            AppButtonType.secondary => Color.fromRGBO(152, 128, 209, 1),
-            AppButtonType.neutral => Color.fromRGBO(120, 144, 156, 0.55),
+            AppButtonType.primary => const Color.fromRGBO(196, 126, 208, 1),
+            AppButtonType.secondary => const Color.fromRGBO(152, 128, 209, 1),
+            AppButtonType.neutral => const Color.fromRGBO(120, 144, 156, 0.55),
+            AppButtonType.danger => const Color.fromRGBO(245, 88, 88, 1),
           },
           shadowColor: Colors.transparent,
         ),
