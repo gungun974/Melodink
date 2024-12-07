@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/gungun974/Melodink/server/internal/logger"
@@ -75,6 +76,15 @@ func (p *TranscodeProcessor) TranscodeMax(
 	format, err := getInputFormat(sourcePath)
 	if err != nil {
 		return err
+	}
+
+	// We can't live transcode into mp4 since we can't seek in a stream
+	if strings.Contains(format, "m4a") {
+		format = "mpegts"
+	}
+
+	if strings.Contains(format, "mp4") {
+		format = "mpegts"
 	}
 
 	return p.transcode(ctx, seek, []string{
