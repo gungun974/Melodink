@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
-import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/open_queue_control.dart';
@@ -15,8 +15,10 @@ import 'package:melodink_client/features/track/domain/entities/track_compressed_
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
+import 'package:melodink_client/features/track/presentation/widgets/single_track_context_menu.dart';
+import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 
-class MobilePlayerPage extends ConsumerWidget {
+class MobilePlayerPage extends HookConsumerWidget {
   const MobilePlayerPage({
     super.key,
   });
@@ -24,6 +26,10 @@ class MobilePlayerPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final audioController = ref.watch(audioControllerProvider);
+
+    final trackContextMenuController = useMemoized(() => MenuController());
+
+    final trackContextMenuKey = useMemoized(() => GlobalKey());
 
     return Dismissible(
       direction: isTouchDevice(context)
@@ -42,10 +48,20 @@ class MobilePlayerPage extends ConsumerWidget {
                   "assets/icons/arrow-down.svg",
                   width: 24,
                   height: 24,
-                  color: Colors.white,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.white,
+                    BlendMode.srcIn,
+                  ),
                 ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
+              actions: [
+                TrackContextMenuButton(
+                  trackContextMenuKey: trackContextMenuKey,
+                  menuController: trackContextMenuController,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                )
+              ],
               title: StreamBuilder<String?>(
                   stream: audioController.playerTracksFrom.stream,
                   builder: (context, snapshot) {
@@ -107,127 +123,112 @@ class MobilePlayerPage extends ConsumerWidget {
 
                           return Consumer(
                             builder: (context, ref, child) {
-                              String title = "";
-
-                              int? trackId;
-
-                              List<MinimalArtist> artists = [];
-
-                              String album = "";
-                              String albumId = "";
-
-                              Widget image = Image.asset(
-                                "assets/melodink_track_cover_not_found.png",
-                              );
-
                               final currentTrack = snapshot.data;
 
-                              if (currentTrack != null) {
-                                title = currentTrack.title;
-
-                                trackId = currentTrack.id;
-
-                                artists.addAll(currentTrack.artists);
-
-                                album = currentTrack.album;
-                                albumId = currentTrack.albumId;
-
-                                final downloadedTrack = ref
-                                    .watch(
-                                      isTrackDownloadedProvider(
-                                          currentTrack.id),
-                                    )
-                                    .valueOrNull;
-
-                                image = PlayerErrorOverlay(
-                                  child: AuthCachedNetworkImage(
-                                    imageUrl: downloadedTrack?.getCoverUrl() ??
-                                        currentTrack.getCompressedCoverUrl(
-                                          TrackCompressedCoverQuality.high,
-                                        ),
-                                    placeholder: (context, url) => Image.asset(
-                                      "assets/melodink_track_cover_not_found.png",
-                                    ),
-                                    errorWidget: (context, url, error) {
-                                      return Image.asset(
-                                        "assets/melodink_track_cover_not_found.png",
-                                      );
-                                    },
-                                  ),
-                                );
+                              if (currentTrack == null) {
+                                return const SizedBox.shrink();
                               }
 
-                              return Container(
-                                decoration: BoxDecoration(
-                                  color: const Color.fromRGBO(0, 0, 0, 0.03),
-                                  borderRadius: BorderRadius.circular(8),
+                              final downloadedTrack = ref
+                                  .watch(
+                                    isTrackDownloadedProvider(currentTrack.id),
+                                  )
+                                  .valueOrNull;
+
+                              final image = PlayerErrorOverlay(
+                                child: AuthCachedNetworkImage(
+                                  imageUrl: downloadedTrack?.getCoverUrl() ??
+                                      currentTrack.getCompressedCoverUrl(
+                                        TrackCompressedCoverQuality.high,
+                                      ),
+                                  placeholder: (context, url) => Image.asset(
+                                    "assets/melodink_track_cover_not_found.png",
+                                  ),
+                                  errorWidget: (context, url, error) {
+                                    return Image.asset(
+                                      "assets/melodink_track_cover_not_found.png",
+                                    );
+                                  },
                                 ),
-                                padding: const EdgeInsets.all(8),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: AspectRatio(
-                                            aspectRatio: 1.0,
-                                            child: image,
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              AlbumLinkText(
-                                                text: title,
-                                                albumId: albumId,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 16,
-                                                  letterSpacing: 16 * 0.03,
+                              );
+
+                              return SingleTrackContextMenu(
+                                key: trackContextMenuKey,
+                                track: currentTrack,
+                                menuController: trackContextMenuController,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromRGBO(0, 0, 0, 0.03),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: const EdgeInsets.all(8),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: AspectRatio(
+                                              aspectRatio: 1.0,
+                                              child: image,
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                AlbumLinkText(
+                                                  text: currentTrack.title,
+                                                  albumId: currentTrack.albumId,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 16,
+                                                    letterSpacing: 16 * 0.03,
+                                                  ),
+                                                  openWithScrollOnSpecificTrackId:
+                                                      currentTrack.id,
                                                 ),
-                                                openWithScrollOnSpecificTrackId:
-                                                    trackId,
-                                              ),
-                                              const SizedBox(height: 4),
-                                              ArtistsLinksText(
-                                                artists: artists,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  letterSpacing: 14 * 0.03,
-                                                  color: Colors.grey[350],
+                                                const SizedBox(height: 4),
+                                                ArtistsLinksText(
+                                                  artists: currentTrack.artists,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    letterSpacing: 14 * 0.03,
+                                                    color: Colors.grey[350],
+                                                  ),
                                                 ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              AlbumLinkText(
-                                                text: album,
-                                                albumId: albumId,
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  letterSpacing: 12 * 0.03,
-                                                  fontWeight: FontWeight.w300,
-                                                  color: Colors.grey[350],
+                                                const SizedBox(height: 4),
+                                                AlbumLinkText(
+                                                  text: currentTrack.album,
+                                                  albumId: currentTrack.albumId,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    letterSpacing: 12 * 0.03,
+                                                    fontWeight: FontWeight.w300,
+                                                    color: Colors.grey[350],
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        const Padding(
-                                          padding: EdgeInsets.all(4.0),
-                                          child: LikeTrackControl(
-                                            largeControlButton: true,
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ],
+                                          const Padding(
+                                            padding: EdgeInsets.all(4.0),
+                                            child: LikeTrackControl(
+                                              largeControlButton: true,
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               );
                             },
