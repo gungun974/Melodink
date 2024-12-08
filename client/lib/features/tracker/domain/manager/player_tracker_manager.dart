@@ -174,14 +174,6 @@ final playerTrackerManagerProvider = Provider(
       ),
     );
 
-    final subscription = manager.newPlayedTrack.listen((playedTrack) {
-      ref.invalidate(lastHistoryTracksProvider);
-    });
-
-    ref.onDispose(() {
-      subscription.cancel();
-    });
-
     return manager;
   },
 );
