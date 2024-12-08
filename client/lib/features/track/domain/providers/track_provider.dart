@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
@@ -5,6 +7,7 @@ import 'package:melodink_client/features/track/data/repository/track_repository.
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -13,14 +16,14 @@ part 'track_provider.g.dart';
 
 @riverpod
 class AllTracks extends _$AllTracks {
-  late final PlayedTrackRepository _playedTrackRepository;
+  late PlayedTrackRepository _playedTrackRepository;
 
   @override
   Future<List<MinimalTrack>> build() async {
-    final trackRepository = ref.read(trackRepositoryProvider);
-    _playedTrackRepository = ref.read(playedTrackRepositoryProvider);
+    final trackRepository = ref.watch(trackRepositoryProvider);
+    _playedTrackRepository = ref.watch(playedTrackRepositoryProvider);
 
-    final manager = ref.read(playerTrackerManagerProvider);
+    final manager = ref.watch(playerTrackerManagerProvider);
 
     final subscription = manager.newPlayedTrack.listen((playedTrack) {
       reloadTrackHistoryInfo(playedTrack.trackId);
@@ -28,6 +31,16 @@ class AllTracks extends _$AllTracks {
 
     ref.onDispose(() {
       subscription.cancel();
+    });
+
+    ref.listen(trackEditStreamProvider, (_, rawNewTrack) async {
+      final newTrack = rawNewTrack.valueOrNull;
+
+      if (newTrack == null) {
+        return;
+      }
+
+      await updateTrack(newTrack);
     });
 
     return await trackRepository.getAllTracks();
@@ -41,6 +54,20 @@ class AllTracks extends _$AllTracks {
     final updatedTracks = tracks.map((track) {
       return track.id == trackId
           ? track.copyWith(historyInfo: () => info)
+          : track;
+    }).toList();
+
+    state = AsyncData(updatedTracks);
+  }
+
+  updateTrack(Track newTrack) async {
+    final info = await _playedTrackRepository.getTrackHistoryInfo(newTrack.id);
+
+    final tracks = await future;
+
+    final updatedTracks = tracks.map((track) {
+      return track.id == newTrack.id
+          ? newTrack.toMinimalTrack().copyWith(historyInfo: () => info)
           : track;
     }).toList();
 

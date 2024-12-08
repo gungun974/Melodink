@@ -6,7 +6,7 @@ part 'artist_provider.g.dart';
 
 @riverpod
 Future<List<Artist>> allArtists(AllArtistsRef ref) async {
-  final artistRepository = ref.read(artistRepositoryProvider);
+  final artistRepository = ref.watch(artistRepositoryProvider);
 
   return await artistRepository.getAllArtists();
 }

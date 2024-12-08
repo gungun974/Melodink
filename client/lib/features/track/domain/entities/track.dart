@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
 
@@ -119,6 +120,29 @@ class Track extends Equatable {
       return uri;
     }
     return Uri.parse("file://$url");
+  }
+
+  MinimalTrack toMinimalTrack() {
+    return MinimalTrack(
+      id: id,
+      title: title,
+      duration: duration,
+      album: metadata.album,
+      albumId: metadata.albumId,
+      trackNumber: metadata.trackNumber,
+      discNumber: metadata.discNumber,
+      date: metadata.date,
+      year: metadata.year,
+      genres: metadata.genres,
+      artists: metadata.artists,
+      albumArtists: metadata.albumArtists,
+      composer: metadata.composer,
+      fileType: fileType,
+      sampleRate: sampleRate,
+      bitRate: bitRate,
+      bitsPerRawSample: bitsPerRawSample,
+      dateAdded: dateAdded,
+    );
   }
 }
 

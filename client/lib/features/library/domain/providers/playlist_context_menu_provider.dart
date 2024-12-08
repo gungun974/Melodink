@@ -27,7 +27,7 @@ class PlaylistContextMenuNotifier extends _$PlaylistContextMenuNotifier {
 
   @override
   Future<List<Playlist>> build() async {
-    _playlistRepository = ref.read(playlistRepositoryProvider);
+    _playlistRepository = ref.watch(playlistRepositoryProvider);
 
     return await _playlistRepository.getAllPlaylists();
   }

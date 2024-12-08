@@ -12,8 +12,8 @@ import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_datetime_form_field.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
-import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 
 class EditTrackModal extends HookConsumerWidget {
@@ -26,8 +26,6 @@ class EditTrackModal extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final trackRepository = ref.watch(trackRepositoryProvider);
-
     final formKey = useMemoized(() => GlobalKey<FormState>());
 
     final autoValidate = useState(false);
@@ -615,51 +613,54 @@ class EditTrackModal extends HookConsumerWidget {
                                 isLoading.value = true;
 
                                 try {
-                                  trackRepository.saveTrack(
-                                    track.copyWith(
-                                      title: titleTextController.text,
-                                      metadata: track.metadata.copyWith(
-                                        album: albumTextController.text,
-                                        artists: artists.value
-                                            .map((artist) => MinimalArtist(
-                                                id: artist, name: artist))
-                                            .toList(),
-                                        albumArtists: albumArtists.value
-                                            .map((artist) => MinimalArtist(
-                                                id: artist, name: artist))
-                                            .toList(),
-                                        trackNumber: int.parse(
-                                          trackNumberTextController.text,
+                                  ref
+                                      .read(trackEditStreamProvider.notifier)
+                                      .saveTrack(
+                                        track.copyWith(
+                                          title: titleTextController.text,
+                                          metadata: track.metadata.copyWith(
+                                            album: albumTextController.text,
+                                            artists: artists.value
+                                                .map((artist) => MinimalArtist(
+                                                    id: artist, name: artist))
+                                                .toList(),
+                                            albumArtists: albumArtists.value
+                                                .map((artist) => MinimalArtist(
+                                                    id: artist, name: artist))
+                                                .toList(),
+                                            trackNumber: int.parse(
+                                              trackNumberTextController.text,
+                                            ),
+                                            totalTracks: int.parse(
+                                              totalTracksTextController.text,
+                                            ),
+                                            discNumber: int.parse(
+                                              discNumberTextController.text,
+                                            ),
+                                            totalDiscs: int.parse(
+                                              totalDiscsTextController.text,
+                                            ),
+                                            date: dateTextController.text,
+                                            year: int.parse(
+                                              yearTextController.text,
+                                            ),
+                                            genres: genres.value,
+                                            acoustId:
+                                                acoustIdTextController.text,
+                                            musicBrainzReleaseId:
+                                                acoustIdTextController.text,
+                                            musicBrainzTrackId:
+                                                musicBrainzTrackIdTextController
+                                                    .text,
+                                            musicBrainzRecordingId:
+                                                musicBrainzRecordingIdTextController
+                                                    .text,
+                                            comment: commentTextController.text,
+                                            lyrics: lyricsTextController.text,
+                                          ),
+                                          dateAdded: dateAdded.value,
                                         ),
-                                        totalTracks: int.parse(
-                                          totalTracksTextController.text,
-                                        ),
-                                        discNumber: int.parse(
-                                          discNumberTextController.text,
-                                        ),
-                                        totalDiscs: int.parse(
-                                          totalDiscsTextController.text,
-                                        ),
-                                        date: dateTextController.text,
-                                        year: int.parse(
-                                          yearTextController.text,
-                                        ),
-                                        genres: genres.value,
-                                        acoustId: acoustIdTextController.text,
-                                        musicBrainzReleaseId:
-                                            acoustIdTextController.text,
-                                        musicBrainzTrackId:
-                                            musicBrainzTrackIdTextController
-                                                .text,
-                                        musicBrainzRecordingId:
-                                            musicBrainzRecordingIdTextController
-                                                .text,
-                                        comment: commentTextController.text,
-                                        lyrics: lyricsTextController.text,
-                                      ),
-                                      dateAdded: dateAdded.value,
-                                    ),
-                                  );
+                                      );
 
                                   ref.invalidate(trackByIdProvider(track.id));
 

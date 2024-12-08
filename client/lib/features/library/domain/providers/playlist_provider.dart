@@ -2,7 +2,9 @@ import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
+import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -18,14 +20,14 @@ Future<List<Playlist>> allPlaylists(AllPlaylistsRef ref) async {
 
 @riverpod
 class PlaylistById extends _$PlaylistById {
-  late final PlayedTrackRepository _playedTrackRepository;
+  late PlayedTrackRepository _playedTrackRepository;
 
   @override
   Future<Playlist> build(int id) async {
     final playlistRepository = ref.watch(playlistRepositoryProvider);
-    _playedTrackRepository = ref.read(playedTrackRepositoryProvider);
+    _playedTrackRepository = ref.watch(playedTrackRepositoryProvider);
 
-    final manager = ref.read(playerTrackerManagerProvider);
+    final manager = ref.watch(playerTrackerManagerProvider);
 
     final subscription = manager.newPlayedTrack.listen((playedTrack) {
       reloadTrackHistoryInfo(playedTrack.trackId);
@@ -33,6 +35,16 @@ class PlaylistById extends _$PlaylistById {
 
     ref.onDispose(() {
       subscription.cancel();
+    });
+
+    ref.listen(trackEditStreamProvider, (_, rawNewTrack) async {
+      final newTrack = rawNewTrack.valueOrNull;
+
+      if (newTrack == null) {
+        return;
+      }
+
+      await updateTrack(newTrack);
     });
 
     final result = await playlistRepository.getPlaylistById(id);
@@ -52,6 +64,22 @@ class PlaylistById extends _$PlaylistById {
     }).toList();
 
     state = AsyncData(playlist.copyWith(tracks: updatedTracks));
+  }
+
+  updateTrack(Track newTrack) async {
+    final info = await _playedTrackRepository.getTrackHistoryInfo(newTrack.id);
+
+    final playlist = await future;
+
+    final updatedTracks = playlist.tracks.map((track) {
+      return track.id == newTrack.id
+          ? newTrack.toMinimalTrack().copyWith(historyInfo: () => info)
+          : track;
+    }).toList();
+
+    state = AsyncData(playlist.copyWith(tracks: updatedTracks));
+
+    ref.invalidate(playlistDownloadNotifierProvider(id));
   }
 }
 
@@ -117,7 +145,7 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
   @override
   PlaylistDownloadState build(int playlistId) {
     ref
-        .read(playlistRepositoryProvider)
+        .watch(playlistRepositoryProvider)
         .isPlaylistDownloaded(playlistId)
         .then((downloaded) {
       state = state.copyWith(downloaded: downloaded);
@@ -158,7 +186,8 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
         newPlaylist.tracks,
       );
 
-      final _ = ref.refresh(allPlaylistsProvider);
+      ref.invalidate(allPlaylistsProvider);
+      ref.invalidate(playlistByIdProvider(playlistId));
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,
@@ -189,7 +218,7 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
         downloaded: false,
       );
 
-      final _ = ref.refresh(allPlaylistsProvider);
+      ref.invalidate(allPlaylistsProvider);
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,
