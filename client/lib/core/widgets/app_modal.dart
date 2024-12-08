@@ -30,6 +30,7 @@ class AppModal extends StatelessWidget {
           child: Column(
             children: [
               AppBar(
+                primary: false,
                 leading: preventUserClose
                     ? const SizedBox.shrink()
                     : IconButton(
