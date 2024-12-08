@@ -28,16 +28,22 @@ class LoginPage extends HookConsumerWidget {
       children: [
         const GradientBackground(),
         Scaffold(
-          resizeToAvoidBottomInset: false,
           backgroundColor: Colors.transparent,
-          body: SafeArea(
-            child: Form(
-              key: formKey,
-              child: LayoutBuilder(builder: (context, constraints) {
-                return SingleChildScrollView(
+          body: Form(
+            key: formKey,
+            child: LayoutBuilder(builder: (context, constraints) {
+              final screenSize = MediaQuery.of(context).size;
+
+              final availableHeight = screenSize.height -
+                  MediaQuery.of(context).viewInsets.bottom -
+                  MediaQuery.of(context).viewPadding.top -
+                  MediaQuery.of(context).viewPadding.bottom;
+
+              return SafeArea(
+                child: SingleChildScrollView(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
+                      minHeight: availableHeight,
                     ),
                     child: IntrinsicHeight(
                       child: Padding(
@@ -188,9 +194,9 @@ class LoginPage extends HookConsumerWidget {
                       ),
                     ),
                   ),
-                );
-              }),
-            ),
+                ),
+              );
+            }),
           ),
         ),
         Consumer(
