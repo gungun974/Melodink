@@ -65,6 +65,8 @@ type TrackModel struct {
 	BitRate          *int `db:"bit_rate"`
 	BitsPerRawSample *int `db:"bits_per_raw_sample"`
 
+	DateAdded time.Time `db:"date_added"`
+
 	CreatedAt time.Time  `db:"created_at"`
 	UpdatedAt *time.Time `db:"updated_at"`
 }
@@ -108,7 +110,7 @@ func (m *TrackModel) ToTrack() entities.Track {
 		Path:          m.Path,
 		FileSignature: m.FileSignature,
 
-		DateAdded: m.CreatedAt,
+		DateAdded: m.DateAdded,
 
 		Metadata: entities.TrackMetadata{
 			Album: m.MetadataAlbum,
