@@ -154,6 +154,7 @@ final appRouterProvider = Provider((ref) {
                     children: [
                       const GradientBackground(),
                       Scaffold(
+                        resizeToAvoidBottomInset: false,
                         backgroundColor: Colors.transparent,
                         body: Stack(
                           children: [
@@ -193,6 +194,7 @@ final appRouterProvider = Provider((ref) {
                     children: [
                       const GradientBackground(),
                       Scaffold(
+                        resizeToAvoidBottomInset: false,
                         backgroundColor: Colors.transparent,
                         body: SafeArea(
                           child: NotificationListener<
