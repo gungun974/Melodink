@@ -55,139 +55,148 @@ class LoginPage extends HookConsumerWidget {
                         child: Center(
                           child: Container(
                             constraints: const BoxConstraints(maxWidth: 1200.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                const Spacer(),
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                                  child: Image(
-                                      image: AssetImage(
-                                          "assets/melodink_fulllogo.png")),
-                                ),
-                                const Text(
-                                  "Please sign in",
-                                  textAlign: TextAlign.left,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 24,
-                                    letterSpacing: 24 * 0.03,
+                            child: AutofillGroup(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  const Spacer(),
+                                  const Padding(
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: 16.0),
+                                    child: Image(
+                                        image: AssetImage(
+                                            "assets/melodink_fulllogo.png")),
                                   ),
-                                ),
-                                const SizedBox(height: 12.0),
-                                AppTextFormField(
-                                  controller: emailTextController,
-                                  labelText: "Email Address",
-                                  keyboardType: TextInputType.emailAddress,
-                                  autovalidateMode: autoValidate.value
-                                      ? AutovalidateMode.always
-                                      : AutovalidateMode.disabled,
-                                  validator: FormBuilderValidators.compose(
-                                    [
-                                      FormBuilderValidators.required(
-                                        errorText:
-                                            "The email field should not be empty.",
-                                      ),
-                                      FormBuilderValidators.email(
-                                        errorText:
-                                            "The email field should contain a valid email address.",
-                                      ),
+                                  const Text(
+                                    "Please sign in",
+                                    textAlign: TextAlign.left,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 24,
+                                      letterSpacing: 24 * 0.03,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12.0),
+                                  AppTextFormField(
+                                    controller: emailTextController,
+                                    labelText: "Email Address",
+                                    keyboardType: TextInputType.emailAddress,
+                                    autovalidateMode: autoValidate.value
+                                        ? AutovalidateMode.always
+                                        : AutovalidateMode.disabled,
+                                    validator: FormBuilderValidators.compose(
+                                      [
+                                        FormBuilderValidators.required(
+                                          errorText:
+                                              "The email field should not be empty.",
+                                        ),
+                                        FormBuilderValidators.email(
+                                          errorText:
+                                              "The email field should contain a valid email address.",
+                                        ),
+                                      ],
+                                    ),
+                                    autofillHints: const [AutofillHints.email],
+                                  ),
+                                  const SizedBox(height: 12.0),
+                                  AppPasswordFormField(
+                                    controller: passwordTextController,
+                                    labelText: "Password",
+                                    autovalidateMode: autoValidate.value
+                                        ? AutovalidateMode.always
+                                        : AutovalidateMode.disabled,
+                                    validator: FormBuilderValidators.required(
+                                      errorText:
+                                          "The password field should not be empty",
+                                    ),
+                                    autofillHints: const [
+                                      AutofillHints.password
                                     ],
                                   ),
-                                ),
-                                const SizedBox(height: 12.0),
-                                AppPasswordFormField(
-                                  controller: passwordTextController,
-                                  labelText: "Password",
-                                  autovalidateMode: autoValidate.value
-                                      ? AutovalidateMode.always
-                                      : AutovalidateMode.disabled,
-                                  validator: FormBuilderValidators.required(
-                                    errorText:
-                                        "The password field should not be empty",
+                                  const SizedBox(height: 12.0),
+                                  AppButton(
+                                    text: "Connect",
+                                    type: AppButtonType.primary,
+                                    onPressed: () async {
+                                      final currentState = formKey.currentState;
+                                      if (currentState == null) {
+                                        return;
+                                      }
+
+                                      if (!currentState.validate()) {
+                                        autoValidate.value = true;
+                                        return;
+                                      }
+
+                                      final authNotifier = ref
+                                          .read(authNotifierProvider.notifier);
+
+                                      final success = await authNotifier.login(
+                                        emailTextController.text,
+                                        passwordTextController.text,
+                                      );
+
+                                      if (!success) {
+                                        return;
+                                      }
+
+                                      if (!context.mounted) {
+                                        return;
+                                      }
+
+                                      GoRouter.of(context).go("/");
+                                    },
                                   ),
-                                ),
-                                const SizedBox(height: 12.0),
-                                AppButton(
-                                  text: "Connect",
-                                  type: AppButtonType.primary,
-                                  onPressed: () async {
-                                    final currentState = formKey.currentState;
-                                    if (currentState == null) {
-                                      return;
-                                    }
+                                  Consumer(
+                                    builder: (
+                                      BuildContext context,
+                                      WidgetRef ref,
+                                      Widget? child,
+                                    ) {
+                                      final asyncAuth =
+                                          ref.watch(authNotifierProvider);
 
-                                    if (!currentState.validate()) {
-                                      autoValidate.value = true;
-                                      return;
-                                    }
+                                      final auth = asyncAuth.valueOrNull;
 
-                                    final authNotifier =
-                                        ref.read(authNotifierProvider.notifier);
+                                      if (auth == null || auth is! AuthError) {
+                                        return const SizedBox.shrink();
+                                      }
 
-                                    final success = await authNotifier.login(
-                                      emailTextController.text,
-                                      passwordTextController.text,
-                                    );
+                                      if (auth.page != AuthErrorPage.login) {
+                                        return const SizedBox.shrink();
+                                      }
 
-                                    if (!success) {
-                                      return;
-                                    }
-
-                                    if (!context.mounted) {
-                                      return;
-                                    }
-
-                                    GoRouter.of(context).go("/");
-                                  },
-                                ),
-                                Consumer(
-                                  builder: (
-                                    BuildContext context,
-                                    WidgetRef ref,
-                                    Widget? child,
-                                  ) {
-                                    final asyncAuth =
-                                        ref.watch(authNotifierProvider);
-
-                                    final auth = asyncAuth.valueOrNull;
-
-                                    if (auth == null || auth is! AuthError) {
-                                      return const SizedBox.shrink();
-                                    }
-
-                                    if (auth.page != AuthErrorPage.login) {
-                                      return const SizedBox.shrink();
-                                    }
-
-                                    return Padding(
-                                      padding: const EdgeInsets.only(top: 12.0),
-                                      child: AppErrorBox(
-                                        title: auth.title,
-                                        message: auth.message,
-                                      ),
-                                    );
-                                  },
-                                ),
-                                const Spacer(),
-                                const SizedBox(height: 24.0),
-                                AppButton(
-                                  text: "Create Account",
-                                  type: AppButtonType.secondary,
-                                  onPressed: () {
-                                    GoRouter.of(context).push("/auth/register");
-                                  },
-                                ),
-                                const SizedBox(height: 12.0),
-                                AppButton(
-                                  text: "Change Server",
-                                  type: AppButtonType.secondary,
-                                  onPressed: () {
-                                    GoRouter.of(context)
-                                        .push("/auth/serverSetup");
-                                  },
-                                ),
-                              ],
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 12.0),
+                                        child: AppErrorBox(
+                                          title: auth.title,
+                                          message: auth.message,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const Spacer(),
+                                  const SizedBox(height: 24.0),
+                                  AppButton(
+                                    text: "Create Account",
+                                    type: AppButtonType.secondary,
+                                    onPressed: () {
+                                      GoRouter.of(context)
+                                          .push("/auth/register");
+                                    },
+                                  ),
+                                  const SizedBox(height: 12.0),
+                                  AppButton(
+                                    text: "Change Server",
+                                    type: AppButtonType.secondary,
+                                    onPressed: () {
+                                      GoRouter.of(context)
+                                          .push("/auth/serverSetup");
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

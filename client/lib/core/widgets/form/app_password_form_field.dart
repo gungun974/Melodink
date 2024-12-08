@@ -12,12 +12,15 @@ class AppPasswordFormField extends HookWidget {
 
   final String? Function(String?)? validator;
 
+  final List<String> autofillHints;
+
   const AppPasswordFormField({
     super.key,
     required this.labelText,
     this.controller,
     this.autovalidateMode,
     this.validator,
+    this.autofillHints = const <String>[],
   });
 
   @override
@@ -38,6 +41,7 @@ class AppPasswordFormField extends HookWidget {
         size: 20,
         !isVisible.value ? AdwaitaIcons.view_reveal : AdwaitaIcons.view_conceal,
       ),
+      autofillHints: autofillHints,
     );
   }
 }

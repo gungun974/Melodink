@@ -28,6 +28,8 @@ class AppTextFormField extends StatelessWidget {
 
   final int? maxLines;
 
+  final List<String> autofillHints;
+
   const AppTextFormField({
     super.key,
     required this.labelText,
@@ -43,6 +45,7 @@ class AppTextFormField extends StatelessWidget {
     this.onChanged,
     this.readOnly = false,
     this.maxLines = 1,
+    this.autofillHints = const <String>[],
   });
 
   @override
@@ -116,6 +119,7 @@ class AppTextFormField extends StatelessWidget {
                         ),
                       ),
                     ),
+                    autofillHints: autofillHints,
                   ),
                 ),
               ),
