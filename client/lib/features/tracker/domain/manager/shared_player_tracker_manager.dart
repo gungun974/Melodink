@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
@@ -24,6 +25,17 @@ class SharedPlayedTrackerManager {
     _timer = Timer(const Duration(seconds: 45), () async {
       if (_shouldStop) {
         return;
+      }
+
+      bool isReadyToSync = false;
+
+      try {
+        await getMelodinkInstanceSupportDirectory();
+        isReadyToSync = true;
+      } catch (_) {}
+
+      if (!isReadyToSync) {
+        return _scheduleSync();
       }
 
       try {
