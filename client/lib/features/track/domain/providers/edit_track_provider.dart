@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
@@ -25,6 +26,14 @@ class TrackEditStream extends _$TrackEditStream {
 
   void saveTrack(Track track) async {
     final newTrack = await _trackRepository.saveTrack(track);
+
+    if (!_controller.isClosed) {
+      _controller.add(newTrack);
+    }
+  }
+
+  changeTrackAudio(int id, File file) async {
+    final newTrack = await _trackRepository.changeTrackAudio(id, file);
 
     if (!_controller.isClosed) {
       _controller.add(newTrack);

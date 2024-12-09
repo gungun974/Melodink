@@ -75,6 +75,10 @@ class TrackRepository {
     return await trackRemoteDataSource.uploadAudio(file, progress: progress);
   }
 
+  Future<Track> changeTrackAudio(int id, File file) async {
+    return await trackRemoteDataSource.changeTrackAudio(id, file);
+  }
+
   Future<Track> deleteTrackById(int id) async {
     return await trackRemoteDataSource.deleteTrackById(id);
   }

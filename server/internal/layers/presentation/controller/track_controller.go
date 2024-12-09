@@ -527,6 +527,38 @@ func (c *TrackController) EditTrack(
 	})
 }
 
+func (c *TrackController) ChangeTrackAudio(
+	ctx context.Context,
+	r *http.Request,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	file, handler, err := r.FormFile("audio")
+	if err == nil {
+		defer file.Close()
+
+		if err := checkIfFileIsAudioFile(file, handler); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, entities.NewValidationError("File can't be open")
+	}
+
+	return c.trackUsecase.ChangeTrackAudio(ctx,
+		id,
+		file,
+	)
+}
+
 func (c *TrackController) DeleteTrack(
 	ctx context.Context,
 	rawId string,

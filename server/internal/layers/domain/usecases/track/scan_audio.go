@@ -33,11 +33,6 @@ func makeFileSignature(path string) (string, error) {
 }
 
 func scanAudio(path string) (entities.Track, error) {
-	signature, err := makeFileSignature(path)
-	if err != nil {
-		return entities.Track{}, err
-	}
-
 	file, err := os.Open(path)
 	if err != nil {
 		return entities.Track{}, err
@@ -47,13 +42,6 @@ func scanAudio(path string) (entities.Track, error) {
 	metadata, err := tag.ReadFrom(file)
 	if err != nil {
 		return entities.Track{}, err
-	}
-
-	duration, _ := audiolength.GetAudioDuration(path)
-
-	quality, err := audioquality.GetAudioQuality(path)
-	if err != nil {
-		logger.MainLogger.Warn(err)
 	}
 
 	tn, tt := metadata.Track()
@@ -125,15 +113,10 @@ func scanAudio(path string) (entities.Track, error) {
 	albumArtists = helpers.RemoveEmptyStrings(albumArtists)
 	genres = helpers.RemoveEmptyStrings(genres)
 
-	return entities.Track{
-		Title:    metadata.Title(),
-		Duration: duration,
+	track := entities.Track{
+		Title: metadata.Title(),
 
-		TagsFormat: string(metadata.Format()),
-		FileType:   string(metadata.FileType()),
-
-		Path:          path,
-		FileSignature: signature,
+		Path: path,
 
 		Metadata: entities.TrackMetadata{
 			Album: metadata.Album(),
@@ -161,9 +144,47 @@ func scanAudio(path string) (entities.Track, error) {
 			AlbumArtists: albumArtists,
 			Composer:     metadata.Composer(),
 		},
+	}
 
-		SampleRate:       quality.SampleRate,
-		BitRate:          quality.BitRate,
-		BitsPerRawSample: quality.BitsPerRawSample,
-	}, nil
+	scanAudioFeature(&track)
+
+	return track, nil
+}
+
+func scanAudioFeature(track *entities.Track) error {
+	signature, err := makeFileSignature(track.Path)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Open(track.Path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	metadata, err := tag.ReadFrom(file)
+	if err != nil {
+		return err
+	}
+
+	duration, _ := audiolength.GetAudioDuration(track.Path)
+
+	quality, err := audioquality.GetAudioQuality(track.Path)
+	if err != nil {
+		logger.MainLogger.Warn(err)
+	}
+
+	track.Duration = duration
+
+	track.TagsFormat = string(metadata.Format())
+	track.FileType = string(metadata.FileType())
+
+	track.FileSignature = signature
+
+	track.SampleRate = quality.SampleRate
+	track.BitRate = quality.BitRate
+	track.BitsPerRawSample = quality.BitsPerRawSample
+
+	return nil
 }

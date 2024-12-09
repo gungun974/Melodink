@@ -197,6 +197,18 @@ func TrackRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
+	router.Put("/{id}/audio", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		response, err := c.TrackController.ChangeTrackAudio(r.Context(), r, id)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
 	router.Post("/import", func(w http.ResponseWriter, r *http.Request) {
 		response, err := c.TrackController.ImportPendingTracks(r.Context())
 		if err != nil {

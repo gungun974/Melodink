@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:melodink_client/core/helpers/pick_audio_files.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
@@ -554,23 +555,38 @@ class EditTrackModal extends HookConsumerWidget {
                       const Divider(
                         height: 24,
                       ),
-                      const Row(
+                      Row(
                         children: [
                           Expanded(
                             child: AppButton(
                               text: "Change Audio",
                               type: AppButtonType.secondary,
+                              onPressed: () async {
+                                final file = await pickAudioFile();
+
+                                if (file == null) {
+                                  return;
+                                }
+
+                                isLoading.value = true;
+                                await ref
+                                    .read(trackEditStreamProvider.notifier)
+                                    .changeTrackAudio(track.id, file);
+                                isLoading.value = false;
+
+                                //TODO: Notify success
+                              },
                             ),
                           ),
-                          SizedBox(width: 16),
-                          Expanded(
+                          const SizedBox(width: 16),
+                          const Expanded(
                             child: AppButton(
                               text: "Change Cover",
                               type: AppButtonType.secondary,
                             ),
                           ),
-                          SizedBox(width: 16),
-                          Expanded(
+                          const SizedBox(width: 16),
+                          const Expanded(
                             child: AppButton(
                               text: "Scan Metadata",
                               type: AppButtonType.secondary,
