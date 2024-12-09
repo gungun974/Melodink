@@ -3,6 +3,7 @@ package track_usecase
 import (
 	"context"
 	"io"
+	"os"
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/logger"
@@ -29,6 +30,7 @@ func (u *TrackUsecase) UploadTrack(
 	track, err := scanAudio(path)
 	if err != nil {
 		logger.MainLogger.Error("Failed to scan audio")
+		os.Remove(path)
 		return nil, err
 	}
 
@@ -36,6 +38,7 @@ func (u *TrackUsecase) UploadTrack(
 		track, err = u.advancedScanTrack(track, advancedScanOnlyReplaceEmptyFields)
 		if err != nil {
 			logger.MainLogger.Errorf("Failed to perform an advanced scan %v", err)
+			os.Remove(path)
 			return nil, err
 		}
 	}
@@ -46,6 +49,7 @@ func (u *TrackUsecase) UploadTrack(
 	err = u.trackRepository.CreateTrack(&track)
 	if err != nil {
 		logger.MainLogger.Error("Failed to save audio data in database")
+		os.Remove(path)
 		return nil, err
 	}
 
