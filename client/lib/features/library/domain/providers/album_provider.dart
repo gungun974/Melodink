@@ -3,6 +3,7 @@ import 'package:melodink_client/features/library/data/repository/album_repositor
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
@@ -45,6 +46,26 @@ class AlbumById extends _$AlbumById {
       }
 
       await updateTrack(newTrack);
+    });
+
+    ref.listen(trackDeleteStreamProvider, (_, rawDeletedTrack) async {
+      final deletedTrack = rawDeletedTrack.valueOrNull;
+
+      if (deletedTrack == null) {
+        return;
+      }
+
+      final album = await future;
+
+      final updatedTracks = album.tracks
+          .where(
+            (track) => track.id != deletedTrack.id,
+          )
+          .toList();
+
+      state = AsyncData(album.copyWith(tracks: updatedTracks));
+
+      ref.invalidate(albumDownloadNotifierProvider(id));
     });
 
     final album = await albumRepository.getAlbumById(id);

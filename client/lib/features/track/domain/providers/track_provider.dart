@@ -7,6 +7,7 @@ import 'package:melodink_client/features/track/data/repository/track_repository.
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
@@ -41,6 +42,24 @@ class AllTracks extends _$AllTracks {
       }
 
       await updateTrack(newTrack);
+    });
+
+    ref.listen(trackDeleteStreamProvider, (_, rawDeletedTrack) async {
+      final deletedTrack = rawDeletedTrack.valueOrNull;
+
+      if (deletedTrack == null) {
+        return;
+      }
+
+      final tracks = await future;
+
+      final updatedTracks = tracks
+          .where(
+            (track) => track.id != deletedTrack.id,
+          )
+          .toList();
+
+      state = AsyncData(updatedTracks);
     });
 
     return await trackRepository.getAllTracks();
