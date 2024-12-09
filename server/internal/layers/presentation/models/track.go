@@ -95,6 +95,10 @@ func ConvertToTrackMetadataViewModel(
 		albumId = id
 	}
 
+	if metadata.Genres == nil {
+		metadata.Genres = []string{}
+	}
+
 	return TrackMetadataViewModel{
 		Album:   metadata.Album,
 		AlbumId: albumId,

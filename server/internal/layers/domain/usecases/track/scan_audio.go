@@ -3,8 +3,10 @@ package track_usecase
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/dhowden/tag"
@@ -40,6 +42,22 @@ func scanAudio(path string) (entities.Track, error) {
 	defer file.Close()
 
 	metadata, err := tag.ReadFrom(file)
+
+	if errors.Is(err, tag.ErrNoTagsFound) {
+		track := entities.Track{
+			Title: filepath.Base(path),
+
+			Path: path,
+		}
+
+		err = scanAudioFeature(&track)
+		if err != nil {
+			return entities.Track{}, err
+		}
+
+		return track, nil
+	}
+
 	if err != nil {
 		return entities.Track{}, err
 	}
@@ -146,7 +164,10 @@ func scanAudio(path string) (entities.Track, error) {
 		},
 	}
 
-	scanAudioFeature(&track)
+	err = scanAudioFeature(&track)
+	if err != nil {
+		return entities.Track{}, err
+	}
 
 	return track, nil
 }
@@ -163,11 +184,6 @@ func scanAudioFeature(track *entities.Track) error {
 	}
 	defer file.Close()
 
-	metadata, err := tag.ReadFrom(file)
-	if err != nil {
-		return err
-	}
-
 	duration, _ := audiolength.GetAudioDuration(track.Path)
 
 	quality, err := audioquality.GetAudioQuality(track.Path)
@@ -177,8 +193,16 @@ func scanAudioFeature(track *entities.Track) error {
 
 	track.Duration = duration
 
-	track.TagsFormat = string(metadata.Format())
-	track.FileType = string(metadata.FileType())
+	metadata, err := tag.ReadFrom(file)
+
+	if err != nil && !errors.Is(err, tag.ErrNoTagsFound) {
+		return err
+	}
+
+	if err == nil {
+		track.TagsFormat = string(metadata.Format())
+		track.FileType = string(metadata.FileType())
+	}
 
 	track.FileSignature = signature
 
