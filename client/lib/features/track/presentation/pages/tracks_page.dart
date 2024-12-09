@@ -10,6 +10,7 @@ import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/modals/import_tracks_modal.dart';
 import 'package:melodink_client/features/track/presentation/widgets/all_track_filter_panel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
@@ -217,9 +218,12 @@ class TracksPageSearchAndFilterHeader extends HookConsumerWidget {
                     },
                   ),
                   const SizedBox(width: 16),
-                  const AppButton(
-                    text: "Import",
+                  AppButton(
+                    text: "Imports",
                     type: AppButtonType.primary,
+                    onPressed: () {
+                      ImportTracksModal.showModal(context);
+                    },
                   ),
                   if (size == AppScreenTypeLayout.desktop)
                     const SizedBox(width: 24),

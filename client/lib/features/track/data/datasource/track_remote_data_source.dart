@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
@@ -13,6 +16,28 @@ class TrackRemoteDataSource {
   Future<List<MinimalTrack>> getAllTracks() async {
     try {
       final response = await AppApi().dio.get("/track");
+
+      return (response.data as List)
+          .map(
+            (rawModel) => MinimalTrackModel.fromJson(rawModel).toMinimalTrack(),
+          )
+          .toList();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<List<MinimalTrack>> getAllPendingImportTracks() async {
+    try {
+      final response = await AppApi().dio.get("/track/import");
 
       return (response.data as List)
           .map(
@@ -93,6 +118,101 @@ class TrackRemoteDataSource {
 
       if (response.statusCode == 404) {
         throw TrackNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  int _activeUploads = 0;
+  final List<Completer<void>> _waitingUploads = [];
+
+  Future<Track> uploadAudio(
+    File file, {
+    StreamController<double>? progress,
+  }) async {
+    while (_activeUploads >= 4) {
+      final completer = Completer<void>();
+      _waitingUploads.add(completer);
+      await completer.future;
+    }
+
+    _activeUploads++;
+
+    try {
+      final fileName = file.path.split('/').last;
+
+      final formData = FormData.fromMap({
+        "audio": await MultipartFile.fromFile(file.path, filename: fileName),
+      });
+
+      final response = await AppApi().dio.post(
+            "/track/upload",
+            data: formData,
+            onSendProgress: progress != null
+                ? (int sent, int total) {
+                    progress.add(sent / total);
+                  }
+                : null,
+          );
+
+      return TrackModel.fromJson(response.data).toTrack();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw TrackNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    } finally {
+      _activeUploads--;
+
+      if (_waitingUploads.isNotEmpty) {
+        final next = _waitingUploads.removeAt(0);
+        next.complete();
+      }
+    }
+  }
+
+  Future<Track> deleteTrackById(int id) async {
+    try {
+      final response = await AppApi().dio.delete("/track/$id");
+
+      return TrackModel.fromJson(response.data).toTrack();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw TrackNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  importPendingTracks() async {
+    try {
+      await AppApi().dio.post("/track/import");
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
       }
 
       throw ServerUnknownException();

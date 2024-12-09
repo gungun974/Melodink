@@ -11,6 +11,7 @@ import 'package:melodink_client/core/widgets/app_modal.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_datetime_form_field.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
+import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
@@ -19,9 +20,12 @@ import 'package:melodink_client/features/track/domain/providers/track_provider.d
 class EditTrackModal extends HookConsumerWidget {
   final Track track;
 
+  final bool displayDateAdded;
+
   const EditTrackModal({
     super.key,
     required this.track,
+    this.displayDateAdded = true,
   });
 
   @override
@@ -511,17 +515,19 @@ class EditTrackModal extends HookConsumerWidget {
                         labelText: "Comment",
                         controller: commentTextController,
                       ),
-                      const Divider(
-                        height: 24,
-                      ),
-                      AppDatetimeFormField(
-                        labelText: "Date Added",
-                        formatter: DateFormat('yyyy-MM-dd HH:mm'),
-                        value: dateAdded.value,
-                        onChanged: (value) {
-                          dateAdded.value = value;
-                        },
-                      ),
+                      if (displayDateAdded)
+                        const Divider(
+                          height: 24,
+                        ),
+                      if (displayDateAdded)
+                        AppDatetimeFormField(
+                          labelText: "Date Added",
+                          formatter: DateFormat('yyyy-MM-dd HH:mm'),
+                          value: dateAdded.value,
+                          onChanged: (value) {
+                            dateAdded.value = value;
+                          },
+                        ),
                       const Divider(
                         height: 24,
                       ),
@@ -692,6 +698,33 @@ class EditTrackModal extends HookConsumerWidget {
           if (isLoading.value) const AppPageLoader(),
         ],
       ),
+    );
+  }
+
+  static showModal(
+    BuildContext context,
+    Track track, {
+    bool displayDateAdded = true,
+  }) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "EditTrackModal",
+      pageBuilder: (_, __, ___) {
+        return Center(
+          child: MaxContainer(
+            maxWidth: 800,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 64,
+            ),
+            child: EditTrackModal(
+              track: track,
+              displayDateAdded: displayDateAdded,
+            ),
+          ),
+        );
+      },
     );
   }
 }

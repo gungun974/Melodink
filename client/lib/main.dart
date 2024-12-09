@@ -13,6 +13,7 @@ import 'package:melodink_client/features/player/domain/audio/audio_controller.da
 import 'package:melodink_client/features/player/domain/audio/melodink_player.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/track/domain/providers/import_tracks_provider.dart';
 import 'package:melodink_client/features/tracker/data/repository/sync_shared_played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/providers/shared_played_track_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -131,6 +132,7 @@ class _EagerInitialization extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(audioControllerProvider);
     ref.watch(sharedPlayedTrackerManagerProvider);
+    ref.watch(importTracksProvider);
     return child;
   }
 }

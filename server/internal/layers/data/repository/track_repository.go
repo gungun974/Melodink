@@ -27,7 +27,7 @@ func (r *TrackRepository) GetAllTracks() ([]entities.Track, error) {
 	m := data_models.TracksModels{}
 
 	err := r.Database.Select(&m, `
-    SELECT * FROM tracks
+    SELECT * FROM tracks AND pending_import = 0
   `)
 	if err != nil {
 		logger.DatabaseLogger.Error(err)
@@ -41,7 +41,21 @@ func (r *TrackRepository) GetAllTracksFromUser(userId int) ([]entities.Track, er
 	m := data_models.TracksModels{}
 
 	err := r.Database.Select(&m, `
-    SELECT * FROM tracks WHERE user_id = ?
+    SELECT * FROM tracks WHERE user_id = ? AND pending_import = 0
+  `, userId)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return nil, err
+	}
+
+	return m.ToTracks(), nil
+}
+
+func (r *TrackRepository) GetAllPendingImportTracksFromUser(userId int) ([]entities.Track, error) {
+	m := data_models.TracksModels{}
+
+	err := r.Database.Select(&m, `
+    SELECT * FROM tracks WHERE user_id = ? AND pending_import = 1
   `, userId)
 	if err != nil {
 		logger.DatabaseLogger.Error(err)
@@ -146,10 +160,13 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 
         sample_rate,
         bit_rate,
-        bits_per_raw_sample
+        bits_per_raw_sample,
+
+        pending_import
       )
     VALUES
       (
+        ?,
         ?,
         ?,
         ?,
@@ -222,6 +239,8 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 		track.SampleRate,
 		track.BitRate,
 		track.BitsPerRawSample,
+
+		track.PendingImport,
 	)
 	if err != nil {
 		logger.DatabaseLogger.Error(err)
@@ -307,6 +326,8 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
         bit_rate = ?,
         bits_per_raw_sample = ?,
 
+        pending_import = ?,
+
         date_added = ?
     WHERE
       id = ?
@@ -353,6 +374,8 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 		track.SampleRate,
 		track.BitRate,
 		track.BitsPerRawSample,
+
+		track.PendingImport,
 
 		track.DateAdded,
 

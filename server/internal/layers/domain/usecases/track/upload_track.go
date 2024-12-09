@@ -41,6 +41,7 @@ func (u *TrackUsecase) UploadTrack(
 	}
 
 	track.UserId = &user.Id
+	track.PendingImport = true
 
 	err = u.trackRepository.CreateTrack(&track)
 	if err != nil {

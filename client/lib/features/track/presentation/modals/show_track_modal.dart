@@ -8,7 +8,6 @@ import 'package:melodink_client/core/widgets/app_modal.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
-import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/modals/edit_track_modal.dart';
 
@@ -40,23 +39,7 @@ class ShowTrackModal extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           icon: const AdwaitaIcon(AdwaitaIcons.edit),
           onPressed: () {
-            showGeneralDialog(
-              context: context,
-              barrierDismissible: true,
-              barrierLabel: "EditTrackModal",
-              pageBuilder: (_, __, ___) {
-                return Center(
-                  child: MaxContainer(
-                    maxWidth: 800,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 64,
-                    ),
-                    child: EditTrackModal(track: track),
-                  ),
-                );
-              },
-            );
+            EditTrackModal.showModal(context, track);
           },
         ),
       ],

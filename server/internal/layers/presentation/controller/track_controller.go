@@ -51,10 +51,46 @@ func (c *TrackController) UploadAudio(
 	)
 }
 
+func (c *TrackController) ScanTrack(
+	ctx context.Context,
+	rawId string,
+	performAdvancedScan bool,
+	advancedScanOnlyReplaceEmptyFields bool,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.ScanTrack(
+		ctx,
+		id,
+		performAdvancedScan,
+		advancedScanOnlyReplaceEmptyFields,
+	)
+}
+
 func (c *TrackController) ListUserTracks(
 	ctx context.Context,
 ) (models.APIResponse, error) {
 	return c.trackUsecase.ListUserTracks(ctx)
+}
+
+func (c *TrackController) ListPendingImportTracks(
+	ctx context.Context,
+) (models.APIResponse, error) {
+	return c.trackUsecase.ListPendingImportTracks(ctx)
+}
+
+func (c *TrackController) ImportPendingTracks(
+	ctx context.Context,
+) (models.APIResponse, error) {
+	return c.trackUsecase.ImportPendingTracks(ctx)
 }
 
 func (c *TrackController) GetTrack(
@@ -534,6 +570,7 @@ func checkIfFileIsAudioFile(file io.ReadSeeker, handler *multipart.FileHeader) e
 		"audio/wav",
 		"audio/flac",
 		"audio/x-flac",
+		"audio/x-m4a",
 	} {
 		if mimeType == mtype.String() {
 			validMimeType = true

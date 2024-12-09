@@ -136,6 +136,7 @@
             pkgs.wrapGAppsHook
             ffmpeg.dev
             pkgs.pulseaudio.dev
+            pkgs.zenity
           ];
 
           nativeBuildInputs = buildInputs;
@@ -215,6 +216,8 @@
           pkgs.chromaprint
           pkgs.fftw
           pkgs.vips
+
+          pkgs.zenity
         ];
       };
     });

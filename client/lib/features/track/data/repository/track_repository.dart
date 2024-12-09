@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/track/data/datasource/track_local_data_source.dart';
@@ -41,6 +44,10 @@ class TrackRepository {
     return tracks;
   }
 
+  Future<List<MinimalTrack>> getAllPendingImportTracks() async {
+    return await trackRemoteDataSource.getAllPendingImportTracks();
+  }
+
   Future<Track> getTrackById(int id) async {
     final track = await trackRemoteDataSource.getTrackById(id);
     final info = await playedTrackRepository.getTrackHistoryInfo(id);
@@ -59,6 +66,21 @@ class TrackRepository {
     return updatedTrack.copyWith(
       historyInfo: () => info,
     );
+  }
+
+  Future<Track> uploadAudio(
+    File file, {
+    StreamController<double>? progress,
+  }) async {
+    return await trackRemoteDataSource.uploadAudio(file, progress: progress);
+  }
+
+  Future<Track> deleteTrackById(int id) async {
+    return await trackRemoteDataSource.deleteTrackById(id);
+  }
+
+  importPendingTracks() async {
+    await trackRemoteDataSource.importPendingTracks();
   }
 }
 

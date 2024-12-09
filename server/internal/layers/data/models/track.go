@@ -65,6 +65,8 @@ type TrackModel struct {
 	BitRate          *int `db:"bit_rate"`
 	BitsPerRawSample *int `db:"bits_per_raw_sample"`
 
+	PendingImport bool `db:"pending_import"`
+
 	DateAdded time.Time `db:"date_added"`
 
 	CreatedAt time.Time  `db:"created_at"`
@@ -145,6 +147,8 @@ func (m *TrackModel) ToTrack() entities.Track {
 		SampleRate:       m.SampleRate,
 		BitRate:          m.BitRate,
 		BitsPerRawSample: m.BitsPerRawSample,
+
+		PendingImport: m.PendingImport,
 	}
 }
 

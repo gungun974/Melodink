@@ -44,6 +44,16 @@ func TrackRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
+	router.Get("/import", func(w http.ResponseWriter, r *http.Request) {
+		response, err := c.TrackController.ListPendingImportTracks(r.Context())
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
 	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 
@@ -143,6 +153,30 @@ func TrackRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
+	router.Get("/{id}/scan", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		queryParams := r.URL.Query()
+
+		performAdvancedScan := strings.TrimSpace(queryParams.Get("advanced_scan")) == "true"
+		advancedScanOnlyReplaceEmptyFields := !(strings.TrimSpace(
+			queryParams.Get("advanced_scan_only_replace_empty_fields"),
+		) == "false")
+
+		response, err := c.TrackController.ScanTrack(
+			r.Context(),
+			id,
+			performAdvancedScan,
+			advancedScanOnlyReplaceEmptyFields,
+		)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
 	router.Put("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 
@@ -155,6 +189,16 @@ func TrackRouter(c internal.Container) http.Handler {
 		}
 
 		response, err := c.TrackController.EditTrack(r.Context(), id, bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Post("/import", func(w http.ResponseWriter, r *http.Request) {
+		response, err := c.TrackController.ImportPendingTracks(r.Context())
 		if err != nil {
 			handleHTTPError(err, w)
 			return

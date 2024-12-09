@@ -29,6 +29,8 @@ type Track struct {
 	BitRate          *int
 	BitsPerRawSample *int
 
+	PendingImport bool
+
 	DateAdded time.Time
 }
 

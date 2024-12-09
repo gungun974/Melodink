@@ -1,0 +1,2 @@
+ALTER TABLE tracks
+ADD COLUMN pending_import INTEGER NOT NULL DEFAULT false;
