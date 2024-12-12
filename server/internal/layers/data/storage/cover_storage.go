@@ -102,20 +102,48 @@ func (s *CoverStorage) generateCompressedTrackCovers(track *entities.Track) erro
 		quality int
 		name    string
 	}{
-		{size: 48, quality: 95, name: "small"},
-		{size: 256, quality: 85, name: "medium"},
+		{size: 256, quality: 70, name: "small"},
+		{size: 512, quality: 75, name: "medium"},
 		{size: 1024, quality: 83, name: "high"},
 	} {
-		image, err := bimg.NewImage(rawImage).Process(bimg.Options{
-			Type:    bimg.WEBP,
-			Height:  format.size,
-			Quality: format.quality,
+
+		image := bimg.NewImage(rawImage)
+		size, err := image.Size()
+		if err != nil {
+			return err
+		}
+
+		if size.Height <= format.size {
+			newImage, err := image.Process(bimg.Options{
+				Type:          bimg.WEBP,
+				Quality:       format.quality,
+				Interlace:     true,
+				StripMetadata: true,
+			})
+			if err != nil {
+				return err
+			}
+
+			err = bimg.Write(path.Join(directory, format.name+".webp"), newImage)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		newImage, err := image.Process(bimg.Options{
+			Type:          bimg.WEBP,
+			Height:        format.size,
+			Quality:       format.quality,
+			Interlace:     true,
+			StripMetadata: true,
 		})
 		if err != nil {
 			return err
 		}
 
-		err = bimg.Write(path.Join(directory, format.name+".webp"), image)
+		err = bimg.Write(path.Join(directory, format.name+".webp"), newImage)
 		if err != nil {
 			return err
 		}
