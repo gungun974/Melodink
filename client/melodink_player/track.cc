@@ -42,6 +42,8 @@ private:
   std::atomic<bool> finished_reading{true};
   std::atomic<bool> keep_loading{true};
 
+  std::atomic<int64_t> max_preload_cache{100 * 1024}; // 100KiB
+
   std::atomic<bool> infinite_loop{false};
 
   std::thread decoding_thread;
@@ -386,7 +388,7 @@ private:
 
     while (true) {
       while (true) {
-        if (current_cache_size < 20 * 1024 * 1024) {
+        if (current_cache_size < max_preload_cache) {
           read_packet_response = av_read_frame(av_format_ctx, &read_packet);
 
           if (read_packet_response >= 0) {
@@ -729,6 +731,8 @@ public:
   ~MelodinkTrack() { Close(); }
 
   void SetLoadedUrl(const char *filename) { loaded_url = filename; }
+
+  void SetMaxPreloadCache(int64_t max_size) { max_preload_cache = max_size; }
 
   int Open(const char *filename, const char *auth_token) {
     std::unique_lock<std::mutex> lock(open_mutex);

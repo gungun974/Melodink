@@ -2,8 +2,8 @@
 
 // #define MELODINK_PLAYER_LOG
 
-#define MELODINK_KEEP_PREV_TRACKS 3
-#define MELODINK_KEEP_NEXT_TRACKS 4
+#define MELODINK_KEEP_PREV_TRACKS 1
+#define MELODINK_KEEP_NEXT_TRACKS 2
 
 #define AVMediaType FF_AVMediaType
 #include "miniaudio.h"
@@ -509,6 +509,8 @@ private:
   void SetAudioCurrent(MelodinkTrack *new_current_track) {
     new_current_track->SetLoop(loop_mode == MELODINK_LOOP_MODE_ONE);
 
+    new_current_track->SetMaxPreloadCache(20 * 1024 * 1024); // 20MiB
+
     if (new_current_track != current_track) {
       if (new_current_track->GetCurrentPlaybackTime() != 0) {
         new_current_track->player_load_count += 1;
@@ -562,6 +564,9 @@ private:
       MelodinkTrack *new_prev_track =
           GetTrack(previous_urls[previous_urls.size() - 2].c_str());
       prev_track = new_prev_track;
+
+      prev_track->SetMaxPreloadCache(100 * 1024); // 100KiB
+
       if (new_prev_track->GetCurrentPlaybackTime() != 0) {
         new_prev_track->player_load_count += 1;
         std::thread t([new_prev_track]() {
@@ -581,6 +586,9 @@ private:
         next_track_index = 0;
         MelodinkTrack *new_next_track = GetTrack(previous_urls[0].c_str());
         next_track = new_next_track;
+
+        next_track->SetMaxPreloadCache(100 * 1024); // 100KiB
+
         if (new_next_track->GetCurrentPlaybackTime() != 0) {
           new_next_track->player_load_count += 1;
           std::thread t([new_next_track]() {
@@ -597,6 +605,9 @@ private:
     } else {
       MelodinkTrack *new_next_track = GetTrack(next_urls[0].c_str());
       next_track = new_next_track;
+
+      next_track->SetMaxPreloadCache(100 * 1024); // 100KiB
+
       if (new_next_track->GetCurrentPlaybackTime() != 0) {
         new_next_track->player_load_count += 1;
         std::thread t([new_next_track]() {
@@ -806,6 +817,7 @@ public:
             : 0;
     for (size_t j = start_previous; j < previous_urls.size(); ++j) {
       MelodinkTrack *track = GetTrack(previous_urls[j].c_str());
+      track->SetMaxPreloadCache(100 * 1024); // 100KiB
       track->player_load_count -= 1;
     }
 
@@ -814,6 +826,7 @@ public:
                           : next_urls.size();
     for (size_t j = 0; j < end_next; ++j) {
       MelodinkTrack *track = GetTrack(next_urls[j].c_str());
+      track->SetMaxPreloadCache(100 * 1024); // 100KiB
       track->player_load_count -= 1;
     }
 
