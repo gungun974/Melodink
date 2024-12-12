@@ -218,11 +218,16 @@ private:
     send_event_audio_changed(current_track_index);
   }
 
+  std::atomic<bool> can_auto_next_audio_mismatch{false};
+
   void AutoNextAudioMismatchThread() {
     std::unique_lock<std::mutex> lock(auto_next_audio_mismatch_mutex);
 
     while (true) {
-      auto_next_audio_mismatch_conditional.wait(lock);
+      auto_next_audio_mismatch_conditional.wait(
+          lock, [this] { return can_auto_next_audio_mismatch.load(); });
+
+      can_auto_next_audio_mismatch = false;
 
       PlayNextAudio(true);
     }
@@ -306,6 +311,8 @@ private:
         return;
       }
     }
+
+    player->can_auto_next_audio_mismatch = true;
 
     player->auto_next_audio_mismatch_conditional.notify_one();
   }
