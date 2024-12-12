@@ -12,6 +12,7 @@ extern "C" {
 #include <cassert>
 #include <condition_variable>
 #include <mutex>
+#include <queue>
 #include <string>
 #include <thread>
 
@@ -45,7 +46,6 @@ private:
 
   std::thread decoding_thread;
   std::mutex decoding_mutex;
-  std::condition_variable decoding_conditional;
 
   std::mutex open_mutex;
   std::mutex seek_mutex;
@@ -243,7 +243,7 @@ private:
 
       response = audio_fifo.init(audio_format,
                                  av_audio_codec_params->ch_layout.nb_channels,
-                                 av_audio_codec_params->sample_rate * 30);
+                                 av_audio_codec_params->sample_rate * 5);
       if (response != 0) {
         fprintf(stderr, "Couldn't allocate audio fifo\n");
         return -1;
@@ -346,7 +346,6 @@ private:
   void StopDecodingThread() {
     keep_loading = false;
     finished_reading = true;
-    decoding_conditional.notify_one();
     if (decoding_thread.joinable()) {
       decoding_thread.join();
     }
@@ -366,6 +365,7 @@ private:
     }
 
     int response;
+    int read_packet_response;
 
     AVFrame *av_audio_frame = av_frame_alloc();
     if (av_audio_frame == nullptr) {
@@ -380,88 +380,109 @@ private:
       return -1;
     }
 
-    AVPacket *av_packet = av_packet_alloc();
-    if (av_packet == nullptr) {
-      fprintf(stderr, "Couldn't allocate resampled AVFrame\n");
-      return -1;
-    }
+    AVPacket read_packet;
+    std::queue<AVPacket> cache_packets;
+    int current_cache_size = 0;
 
     while (true) {
       while (true) {
-        if (audio_opened && audio_fifo.size() <= min_audio_queue_size) {
+        if (current_cache_size < 20 * 1024 * 1024) {
+          read_packet_response = av_read_frame(av_format_ctx, &read_packet);
 
+          if (read_packet_response >= 0) {
+            current_cache_size += read_packet.size;
+            cache_packets.push(read_packet);
+          }
+        }
+
+        if (audio_opened && audio_fifo.size() <= min_audio_queue_size) {
           break;
         }
 
-        if (keep_loading == false)
+        if (keep_loading == false) {
+          while (!cache_packets.empty()) {
+            AVPacket av_packet = cache_packets.front();
+            current_cache_size -= av_packet.size;
+            cache_packets.pop();
+            av_packet_unref(&av_packet);
+          }
           break;
+        }
 
-        decoding_conditional.wait(lock);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
 
-      if (keep_loading == false)
+      if (keep_loading == false) {
         break;
+      }
 
-      // Try reading next packet
-      response = av_read_frame(av_format_ctx, av_packet);
+      if (cache_packets.empty()) {
+        // Return if error or end of file was encountered
+        if (read_packet_response < 0) {
+          if (read_packet_response == AVERROR_EOF && infinite_loop) {
+            audio_frames_consumed_max =
+                audio_frames_consumed + audio_fifo.size();
 
-      // Return if error or end of file was encountered
-      if (response < 0) {
-        if (response == AVERROR_EOF && infinite_loop) {
-          audio_frames_consumed_max = audio_frames_consumed + audio_fifo.size();
+            std::thread t([this]() {
+              std::unique_lock<std::mutex> lock(seek_mutex);
+              std::unique_lock<std::mutex> lock2(open_mutex);
 
-          std::thread t([this]() {
-            std::unique_lock<std::mutex> lock(seek_mutex);
-            std::unique_lock<std::mutex> lock2(open_mutex);
+              StopDecodingThread();
+              CloseFile();
+              CloseAudio(false);
 
-            StopDecodingThread();
-            CloseFile();
-            CloseAudio(false);
+              int result =
+                  OpenFile(loaded_url.c_str(), stored_auth_token.c_str(), 0);
+              if (result != 0) {
+                return;
+              }
 
-            int result =
-                OpenFile(loaded_url.c_str(), stored_auth_token.c_str(), 0);
-            if (result != 0) {
-              return;
-            }
+              result = InitAudio(false);
+              if (result != 0) {
+                return;
+              }
+              StartDecodingThread();
+            });
+            t.detach();
 
-            result = InitAudio(false);
-            if (result != 0) {
-              return;
-            }
-            StartDecodingThread();
-          });
-          t.detach();
-
-          break;
-        }
+            break;
+          }
 
 #ifdef MELODINK_PLAYER_LOG
-        fprintf(stderr, "Error or end of file happened\n");
-        fprintf(stderr, "Exit info: %s\n", GetError(response));
+          fprintf(stderr, "Error or end of file happened\n");
+          fprintf(stderr, "Exit info: %s\n", GetError(read_packet_response));
 #endif
 
-        if (response == AVERROR(ETIMEDOUT) || response == AVERROR(EIO)) {
-          TimeoutReopen();
+          if (read_packet_response == AVERROR(ETIMEDOUT) ||
+              read_packet_response == AVERROR(EIO)) {
+            TimeoutReopen();
+          }
+          break;
         }
-        break;
+
+        continue;
       }
 
-      if (audio_opened && av_packet->stream_index == audio_stream_index) {
+      AVPacket av_packet = cache_packets.front();
+      current_cache_size -= av_packet.size;
+      cache_packets.pop();
+
+      if (audio_opened && av_packet.stream_index == audio_stream_index) {
         FrameData *fd;
 
-        av_packet->opaque_ref = av_buffer_allocz(sizeof(*fd));
-        if (av_packet->opaque_ref) {
-          fd = (FrameData *)av_packet->opaque_ref->data;
-          fd->pkt_pos = av_packet->pos;
-          fd->pkt_size = av_packet->size;
+        av_packet.opaque_ref = av_buffer_allocz(sizeof(*fd));
+        if (av_packet.opaque_ref) {
+          fd = (FrameData *)av_packet.opaque_ref->data;
+          fd->pkt_pos = av_packet.pos;
+          fd->pkt_size = av_packet.size;
         }
 
         // Send packet to decode
-        response = avcodec_send_packet(av_audio_codec_ctx, av_packet);
+        response = avcodec_send_packet(av_audio_codec_ctx, &av_packet);
         if (response < 0) {
           if (response != AVERROR(EAGAIN)) {
             fprintf(stderr, "Failed to decode packet\n");
-            av_packet_unref(av_packet);
+            av_packet_unref(&av_packet);
             continue;
           }
         }
@@ -523,7 +544,7 @@ private:
           }
         }
       }
-      av_packet_unref(av_packet);
+      av_packet_unref(&av_packet);
     }
 
     finished_reading = true;
@@ -531,7 +552,6 @@ private:
     // Free the resources
     av_frame_free(&av_audio_frame);
     av_frame_free(&resampled_audio_frame);
-    av_packet_free(&av_packet);
 
 #ifdef MELODINK_PLAYER_LOG
     fprintf(stderr, "Exiting thread\n");
@@ -831,7 +851,6 @@ public:
       return -1;
 
     int samples_read = audio_fifo.pop(output, sample_count);
-    decoding_conditional.notify_one();
 
     if (samples_read < 0)
       return samples_read;
