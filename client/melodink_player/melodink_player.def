@@ -19,4 +19,4 @@ EXPORTS
     mi_player_get_current_player_state
     mi_player_get_current_loop_mode
     mi_player_set_volume
-    mi_playerget_volume
+    mi_player_get_volume
