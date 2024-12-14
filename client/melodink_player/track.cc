@@ -273,6 +273,8 @@ private:
   }
 
   void TimeoutReopen() {
+    audio_retry = true;
+
     std::thread t([this]() {
       std::unique_lock<std::mutex> lock(open_mutex);
 
