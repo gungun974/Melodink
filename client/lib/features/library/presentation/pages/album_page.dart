@@ -1,3 +1,4 @@
+import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -33,6 +34,10 @@ class AlbumPage extends HookConsumerWidget {
 
     final album = asyncAlbum.valueOrNull;
 
+    final albumContextMenuController = useMemoized(() => MenuController());
+
+    final albumContextMenuKey = useMemoized(() => GlobalKey());
+
     final scrollController = useScrollController();
 
     if (album == null) {
@@ -44,138 +49,167 @@ class AlbumPage extends HookConsumerWidget {
       );
     }
 
-    return AppNavigationHeader(
-      title: AppScreenTypeLayoutBuilders(
-        mobile: (_) => const Text("Album"),
-      ),
-      child: AppScreenTypeLayoutBuilder(
-        builder: (context, size) {
-          final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
-          final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
-
-          final separator = size == AppScreenTypeLayout.desktop ? 16.0 : 12.0;
-
-          return CustomScrollView(
-            controller: scrollController,
-            slivers: [
-              SliverContainer(
-                maxWidth: maxWidth,
-                padding: EdgeInsets.only(
-                  left: padding,
-                  right: padding,
-                  top: padding,
-                  bottom: separator,
-                ),
-                sliver: size == AppScreenTypeLayout.desktop
-                    ? DesktopPlaylistHeader(
-                        name: album.name,
-                        type: "Album",
-                        imageUrl: album.getCompressedCoverUrl(
-                          TrackCompressedCoverQuality.high,
-                        ),
-                        description: "",
-                        tracks: tracks,
-                        artists: album.albumArtists,
-                        playCallback: () async {
-                          await audioController.loadTracks(
-                            tracks,
-                            source: "Album \"${album.name}\"",
-                          );
-                        },
-                        downloadCallback: () async {
-                          final albumDownloadNotifier = ref.read(
-                            albumDownloadNotifierProvider(album.id).notifier,
-                          );
-
-                          if (!albumDownload.downloaded) {
-                            await albumDownloadNotifier.download();
-                          } else {
-                            await albumDownloadNotifier.deleteDownloaded();
-                          }
-                        },
-                        downloaded: albumDownload.downloaded,
-                      )
-                    : MobilePlaylistHeader(
-                        name: album.name,
-                        type: "Album",
-                        imageUrl: album.getCompressedCoverUrl(
-                          TrackCompressedCoverQuality.high,
-                        ),
-                        tracks: tracks,
-                        artists: album.albumArtists,
-                        playCallback: () async {
-                          await audioController.loadTracks(
-                            tracks,
-                            source: "Album \"${album.name}\"",
-                          );
-                        },
-                        downloadCallback: () async {
-                          final albumDownloadNotifier = ref.read(
-                            albumDownloadNotifierProvider(album.id).notifier,
-                          );
-
-                          if (!albumDownload.downloaded) {
-                            await albumDownloadNotifier.download();
-                          } else {
-                            await albumDownloadNotifier.deleteDownloaded();
-                          }
-                        },
-                        downloaded: albumDownload.downloaded,
-                      ),
+    return Stack(
+      children: [
+        MenuAnchor(
+          key: albumContextMenuKey,
+          clipBehavior: Clip.antiAlias,
+          menuChildren: [
+            MenuItemButton(
+              leadingIcon: const AdwaitaIcon(
+                AdwaitaIcons.playlist,
+                size: 20,
               ),
-              SliverContainer(
-                maxWidth: maxWidth,
-                padding: EdgeInsets.only(
-                  left: padding,
-                  right: padding,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Color.fromRGBO(0, 0, 0, 0.03),
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(
-                          8,
+              child: const Text("Add to queue"),
+              onPressed: () {
+                audioController.addTracksToQueue(album.tracks);
+                albumContextMenuController.close();
+              },
+            ),
+          ],
+          controller: albumContextMenuController,
+        ),
+        AppNavigationHeader(
+          title: AppScreenTypeLayoutBuilders(
+            mobile: (_) => const Text("Album"),
+          ),
+          child: AppScreenTypeLayoutBuilder(
+            builder: (context, size) {
+              final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
+              final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
+
+              final separator =
+                  size == AppScreenTypeLayout.desktop ? 16.0 : 12.0;
+
+              return CustomScrollView(
+                controller: scrollController,
+                slivers: [
+                  SliverContainer(
+                    maxWidth: maxWidth,
+                    padding: EdgeInsets.only(
+                      left: padding,
+                      right: padding,
+                      top: padding,
+                      bottom: separator,
+                    ),
+                    sliver: size == AppScreenTypeLayout.desktop
+                        ? DesktopPlaylistHeader(
+                            name: album.name,
+                            type: "Album",
+                            imageUrl: album.getCompressedCoverUrl(
+                              TrackCompressedCoverQuality.high,
+                            ),
+                            description: "",
+                            tracks: tracks,
+                            artists: album.albumArtists,
+                            playCallback: () async {
+                              await audioController.loadTracks(
+                                tracks,
+                                source: "Album \"${album.name}\"",
+                              );
+                            },
+                            downloadCallback: () async {
+                              final albumDownloadNotifier = ref.read(
+                                albumDownloadNotifierProvider(album.id)
+                                    .notifier,
+                              );
+
+                              if (!albumDownload.downloaded) {
+                                await albumDownloadNotifier.download();
+                              } else {
+                                await albumDownloadNotifier.deleteDownloaded();
+                              }
+                            },
+                            downloaded: albumDownload.downloaded,
+                            contextMenuKey: albumContextMenuKey,
+                            menuController: albumContextMenuController,
+                          )
+                        : MobilePlaylistHeader(
+                            name: album.name,
+                            type: "Album",
+                            imageUrl: album.getCompressedCoverUrl(
+                              TrackCompressedCoverQuality.high,
+                            ),
+                            tracks: tracks,
+                            artists: album.albumArtists,
+                            playCallback: () async {
+                              await audioController.loadTracks(
+                                tracks,
+                                source: "Album \"${album.name}\"",
+                              );
+                            },
+                            downloadCallback: () async {
+                              final albumDownloadNotifier = ref.read(
+                                albumDownloadNotifierProvider(album.id)
+                                    .notifier,
+                              );
+
+                              if (!albumDownload.downloaded) {
+                                await albumDownloadNotifier.download();
+                              } else {
+                                await albumDownloadNotifier.deleteDownloaded();
+                              }
+                            },
+                            downloaded: albumDownload.downloaded,
+                            contextMenuKey: albumContextMenuKey,
+                            menuController: albumContextMenuController,
+                          ),
+                  ),
+                  SliverContainer(
+                    maxWidth: maxWidth,
+                    padding: EdgeInsets.only(
+                      left: padding,
+                      right: padding,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Color.fromRGBO(0, 0, 0, 0.03),
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(
+                              8,
+                            ),
+                          ),
                         ),
+                        child: size == AppScreenTypeLayout.desktop
+                            ? const DesktopTrackHeader(
+                                displayAlbum: false,
+                                displayLastPlayed: true,
+                                displayPlayedCount: true,
+                                displayQuality: true,
+                              )
+                            : const SizedBox.shrink(),
                       ),
                     ),
-                    child: size == AppScreenTypeLayout.desktop
-                        ? const DesktopTrackHeader(
-                            displayAlbum: false,
-                            displayLastPlayed: true,
-                            displayPlayedCount: true,
-                            displayQuality: true,
-                          )
-                        : const SizedBox.shrink(),
                   ),
-                ),
-              ),
-              SliverContainer(
-                maxWidth: maxWidth,
-                padding: EdgeInsets.only(
-                  left: padding,
-                  right: padding,
-                ),
-                sliver: TrackList(
-                  tracks: tracks,
-                  size: size,
-                  displayImage: false,
-                  displayAlbum: false,
-                  displayLastPlayed: true,
-                  displayPlayedCount: true,
-                  displayQuality: true,
-                  scrollController: scrollController,
-                  scrollToTrackIdOnMounted: openWithScrollOnSpecificTrackId,
-                  source: "Album \"${album.name}\"",
-                ),
-              ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 8),
-              ),
-            ],
-          );
-        },
-      ),
+                  SliverContainer(
+                    maxWidth: maxWidth,
+                    padding: EdgeInsets.only(
+                      left: padding,
+                      right: padding,
+                    ),
+                    sliver: TrackList(
+                      tracks: tracks,
+                      size: size,
+                      displayImage: false,
+                      displayAlbum: false,
+                      displayLastPlayed: true,
+                      displayPlayedCount: true,
+                      displayQuality: true,
+                      scrollController: scrollController,
+                      scrollToTrackIdOnMounted: openWithScrollOnSpecificTrackId,
+                      source: "Album \"${album.name}\"",
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: 8),
+                  ),
+                ],
+              );
+            },
+          ),
+        )
+      ],
     );
   }
 }

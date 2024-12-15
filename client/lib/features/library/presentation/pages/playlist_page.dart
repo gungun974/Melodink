@@ -1,5 +1,6 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
@@ -13,7 +14,7 @@ import 'package:melodink_client/features/track/domain/entities/track_compressed_
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 
-class PlaylistPage extends ConsumerWidget {
+class PlaylistPage extends HookConsumerWidget {
   final int playlistId;
 
   const PlaylistPage({
@@ -32,6 +33,10 @@ class PlaylistPage extends ConsumerWidget {
 
     final playlist = asyncPlaylist.valueOrNull;
 
+    final playlistContextMenuController = useMemoized(() => MenuController());
+
+    final playlistContextMenuKey = useMemoized(() => GlobalKey());
+
     if (playlist == null) {
       return AppNavigationHeader(
         title: AppScreenTypeLayoutBuilders(
@@ -41,196 +46,224 @@ class PlaylistPage extends ConsumerWidget {
       );
     }
 
-    return AppNavigationHeader(
-      title: AppScreenTypeLayoutBuilders(
-        mobile: (_) => const Text("Playlist"),
-      ),
-      child: AppScreenTypeLayoutBuilder(
-        builder: (context, size) {
-          final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
-          final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
-
-          final separator = size == AppScreenTypeLayout.desktop ? 16.0 : 12.0;
-
-          return CustomScrollView(
-            slivers: [
-              SliverContainer(
-                maxWidth: maxWidth,
-                padding: EdgeInsets.only(
-                  left: padding,
-                  right: padding,
-                  top: padding,
-                  bottom: separator,
-                ),
-                sliver: size == AppScreenTypeLayout.desktop
-                    ? DesktopPlaylistHeader(
-                        name: playlist.name,
-                        type: "Playlist",
-                        imageUrl: playlist.getCompressedCoverUrl(
-                          TrackCompressedCoverQuality.high,
-                        ),
-                        description: playlist.description,
-                        tracks: tracks,
-                        artists: const [],
-                        playCallback: () async {
-                          await audioController.loadTracks(
-                            tracks,
-                            source: "Playlist \"${playlist.name}\"",
-                          );
-                        },
-                        downloadCallback: () async {
-                          final playlistDownloadNotifier = ref.read(
-                            playlistDownloadNotifierProvider(playlist.id)
-                                .notifier,
-                          );
-
-                          if (!playlistDownload.downloaded) {
-                            await playlistDownloadNotifier.download();
-                          } else {
-                            await playlistDownloadNotifier.deleteDownloaded();
-                          }
-                        },
-                        downloaded: playlistDownload.downloaded,
-                      )
-                    : MobilePlaylistHeader(
-                        name: playlist.name,
-                        type: "Playlist",
-                        imageUrl: playlist.getCompressedCoverUrl(
-                          TrackCompressedCoverQuality.high,
-                        ),
-                        tracks: tracks,
-                        artists: const [],
-                        playCallback: () async {
-                          await audioController.loadTracks(
-                            tracks,
-                            source: "Playlist \"${playlist.name}\"",
-                          );
-                        },
-                        downloadCallback: () async {
-                          final playlistDownloadNotifier = ref.read(
-                            playlistDownloadNotifierProvider(playlist.id)
-                                .notifier,
-                          );
-
-                          if (!playlistDownload.downloaded) {
-                            await playlistDownloadNotifier.download();
-                          } else {
-                            await playlistDownloadNotifier.deleteDownloaded();
-                          }
-                        },
-                        downloaded: playlistDownload.downloaded,
-                      ),
+    return Stack(
+      children: [
+        MenuAnchor(
+          key: playlistContextMenuKey,
+          menuChildren: [
+            MenuItemButton(
+              leadingIcon: const AdwaitaIcon(
+                AdwaitaIcons.playlist,
+                size: 20,
               ),
-              SliverContainer(
-                maxWidth: maxWidth,
-                padding: EdgeInsets.only(
-                  left: padding,
-                  right: padding,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Color.fromRGBO(0, 0, 0, 0.03),
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(
-                          8,
+              child: const Text("Add to queue"),
+              onPressed: () {
+                audioController.addTracksToQueue(playlist.tracks);
+                playlistContextMenuController.close();
+              },
+            ),
+          ],
+          controller: playlistContextMenuController,
+        ),
+        AppNavigationHeader(
+          title: AppScreenTypeLayoutBuilders(
+            mobile: (_) => const Text("Playlist"),
+          ),
+          child: AppScreenTypeLayoutBuilder(
+            builder: (context, size) {
+              final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
+              final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
+
+              final separator =
+                  size == AppScreenTypeLayout.desktop ? 16.0 : 12.0;
+
+              return CustomScrollView(
+                slivers: [
+                  SliverContainer(
+                    maxWidth: maxWidth,
+                    padding: EdgeInsets.only(
+                      left: padding,
+                      right: padding,
+                      top: padding,
+                      bottom: separator,
+                    ),
+                    sliver: size == AppScreenTypeLayout.desktop
+                        ? DesktopPlaylistHeader(
+                            name: playlist.name,
+                            type: "Playlist",
+                            imageUrl: playlist.getCompressedCoverUrl(
+                              TrackCompressedCoverQuality.high,
+                            ),
+                            description: playlist.description,
+                            tracks: tracks,
+                            artists: const [],
+                            playCallback: () async {
+                              await audioController.loadTracks(
+                                tracks,
+                                source: "Playlist \"${playlist.name}\"",
+                              );
+                            },
+                            downloadCallback: () async {
+                              final playlistDownloadNotifier = ref.read(
+                                playlistDownloadNotifierProvider(playlist.id)
+                                    .notifier,
+                              );
+
+                              if (!playlistDownload.downloaded) {
+                                await playlistDownloadNotifier.download();
+                              } else {
+                                await playlistDownloadNotifier
+                                    .deleteDownloaded();
+                              }
+                            },
+                            downloaded: playlistDownload.downloaded,
+                            contextMenuKey: playlistContextMenuKey,
+                            menuController: playlistContextMenuController,
+                          )
+                        : MobilePlaylistHeader(
+                            name: playlist.name,
+                            type: "Playlist",
+                            imageUrl: playlist.getCompressedCoverUrl(
+                              TrackCompressedCoverQuality.high,
+                            ),
+                            tracks: tracks,
+                            artists: const [],
+                            playCallback: () async {
+                              await audioController.loadTracks(
+                                tracks,
+                                source: "Playlist \"${playlist.name}\"",
+                              );
+                            },
+                            downloadCallback: () async {
+                              final playlistDownloadNotifier = ref.read(
+                                playlistDownloadNotifierProvider(playlist.id)
+                                    .notifier,
+                              );
+
+                              if (!playlistDownload.downloaded) {
+                                await playlistDownloadNotifier.download();
+                              } else {
+                                await playlistDownloadNotifier
+                                    .deleteDownloaded();
+                              }
+                            },
+                            downloaded: playlistDownload.downloaded,
+                            contextMenuKey: playlistContextMenuKey,
+                            menuController: playlistContextMenuController,
+                          ),
+                  ),
+                  SliverContainer(
+                    maxWidth: maxWidth,
+                    padding: EdgeInsets.only(
+                      left: padding,
+                      right: padding,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Color.fromRGBO(0, 0, 0, 0.03),
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(
+                              8,
+                            ),
+                          ),
                         ),
+                        child: size == AppScreenTypeLayout.desktop
+                            ? const DesktopTrackHeader(
+                                displayLastPlayed: true,
+                                displayPlayedCount: true,
+                                displayQuality: true,
+                              )
+                            : const SizedBox.shrink(),
                       ),
                     ),
-                    child: size == AppScreenTypeLayout.desktop
-                        ? const DesktopTrackHeader(
-                            displayLastPlayed: true,
-                            displayPlayedCount: true,
-                            displayQuality: true,
-                          )
-                        : const SizedBox.shrink(),
                   ),
-                ),
-              ),
-              SliverContainer(
-                maxWidth: maxWidth,
-                padding: EdgeInsets.only(
-                  left: padding,
-                  right: padding,
-                ),
-                sliver: TrackList(
-                  tracks: tracks,
-                  size: size,
-                  displayTrackIndex: false,
-                  displayLastPlayed: true,
-                  displayPlayedCount: true,
-                  displayQuality: true,
-                  singleCustomActionsBuilder: (
-                    context,
-                    menuController,
-                    tracks,
-                    index,
-                    unselect,
-                  ) {
-                    return [
-                      const Divider(height: 8),
-                      MenuItemButton(
-                        leadingIcon: const AdwaitaIcon(
-                          AdwaitaIcons.list_remove,
-                          size: 20,
-                        ),
-                        child: const Text("Remove from this playlist"),
-                        onPressed: () {
-                          ref
-                              .read(
-                                  playlistContextMenuNotifierProvider.notifier)
-                              .removeTracks(
-                                playlist,
-                                index,
-                                index,
-                              );
-                          menuController.close();
-                          unselect();
-                        },
-                      ),
-                    ];
-                  },
-                  multiCustomActionsBuilder: (
-                    context,
-                    menuController,
-                    tracks,
-                    startIndex,
-                    endIndex,
-                    unselect,
-                  ) {
-                    return [
-                      const Divider(height: 8),
-                      MenuItemButton(
-                        leadingIcon: const AdwaitaIcon(
-                          AdwaitaIcons.list_remove,
-                          size: 20,
-                        ),
-                        child: const Text("Remove from this playlist"),
-                        onPressed: () {
-                          ref
-                              .read(
-                                  playlistContextMenuNotifierProvider.notifier)
-                              .removeTracks(
-                                playlist,
-                                startIndex,
-                                endIndex,
-                              );
-                          menuController.close();
-                          unselect();
-                        },
-                      ),
-                    ];
-                  },
-                  source: "Playlist \"${playlist.name}\"",
-                ),
-              ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 8),
-              ),
-            ],
-          );
-        },
-      ),
+                  SliverContainer(
+                    maxWidth: maxWidth,
+                    padding: EdgeInsets.only(
+                      left: padding,
+                      right: padding,
+                    ),
+                    sliver: TrackList(
+                      tracks: tracks,
+                      size: size,
+                      displayTrackIndex: false,
+                      displayLastPlayed: true,
+                      displayPlayedCount: true,
+                      displayQuality: true,
+                      singleCustomActionsBuilder: (
+                        context,
+                        menuController,
+                        tracks,
+                        index,
+                        unselect,
+                      ) {
+                        return [
+                          const Divider(height: 8),
+                          MenuItemButton(
+                            leadingIcon: const AdwaitaIcon(
+                              AdwaitaIcons.list_remove,
+                              size: 20,
+                            ),
+                            child: const Text("Remove from this playlist"),
+                            onPressed: () {
+                              ref
+                                  .read(playlistContextMenuNotifierProvider
+                                      .notifier)
+                                  .removeTracks(
+                                    playlist,
+                                    index,
+                                    index,
+                                  );
+                              menuController.close();
+                              unselect();
+                            },
+                          ),
+                        ];
+                      },
+                      multiCustomActionsBuilder: (
+                        context,
+                        menuController,
+                        tracks,
+                        startIndex,
+                        endIndex,
+                        unselect,
+                      ) {
+                        return [
+                          const Divider(height: 8),
+                          MenuItemButton(
+                            leadingIcon: const AdwaitaIcon(
+                              AdwaitaIcons.list_remove,
+                              size: 20,
+                            ),
+                            child: const Text("Remove from this playlist"),
+                            onPressed: () {
+                              ref
+                                  .read(playlistContextMenuNotifierProvider
+                                      .notifier)
+                                  .removeTracks(
+                                    playlist,
+                                    startIndex,
+                                    endIndex,
+                                  );
+                              menuController.close();
+                              unselect();
+                            },
+                          ),
+                        ];
+                      },
+                      source: "Playlist \"${playlist.name}\"",
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: 8),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_human.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
+import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
@@ -26,6 +27,9 @@ class MobilePlaylistHeader extends ConsumerWidget {
 
   final bool downloaded;
 
+  final GlobalKey<State<StatefulWidget>>? contextMenuKey;
+  final MenuController? menuController;
+
   const MobilePlaylistHeader({
     super.key,
     required this.name,
@@ -36,6 +40,8 @@ class MobilePlaylistHeader extends ConsumerWidget {
     required this.playCallback,
     required this.downloadCallback,
     required this.downloaded,
+    this.contextMenuKey,
+    this.menuController,
   });
 
   @override
@@ -145,15 +151,12 @@ class MobilePlaylistHeader extends ConsumerWidget {
                 iconSize: 20.0,
                 onPressed: downloadCallback,
               ),
-              AppIconButton(
-                padding: const EdgeInsets.all(8),
-                icon: const AdwaitaIcon(
-                  AdwaitaIcons.view_more_horizontal,
+              if (contextMenuKey != null && menuController != null)
+                ContextMenuButton(
+                  contextMenuKey: contextMenuKey!,
+                  menuController: menuController!,
+                  padding: const EdgeInsets.all(8),
                 ),
-                color: Colors.white,
-                iconSize: 20.0,
-                onPressed: () async {},
-              ),
               const Spacer(),
               StreamBuilder(
                 stream: audioController.playbackState,

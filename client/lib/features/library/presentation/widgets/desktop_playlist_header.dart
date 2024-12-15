@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_human.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
+import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
@@ -28,6 +29,9 @@ class DesktopPlaylistHeader extends ConsumerWidget {
 
   final bool downloaded;
 
+  final GlobalKey<State<StatefulWidget>>? contextMenuKey;
+  final MenuController? menuController;
+
   const DesktopPlaylistHeader({
     super.key,
     required this.name,
@@ -39,6 +43,8 @@ class DesktopPlaylistHeader extends ConsumerWidget {
     required this.playCallback,
     required this.downloadCallback,
     required this.downloaded,
+    this.contextMenuKey,
+    this.menuController,
   });
 
   @override
@@ -147,25 +153,23 @@ class DesktopPlaylistHeader extends ConsumerWidget {
                           );
                         },
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: ArtistsLinksText(
-                                artists: artists,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  letterSpacing: 14 * 0.03,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ],
+                      if (contextMenuKey != null && menuController != null)
+                        ContextMenuButton(
+                          contextMenuKey: contextMenuKey!,
+                          menuController: menuController!,
+                          padding: const EdgeInsets.only(left: 12, right: 16),
+                        ),
+                      ArtistsLinksText(
+                        artists: artists,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          letterSpacing: 14 * 0.03,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
+                      const Spacer(),
                       const SizedBox(width: 8),
                       AppIconButton(
                         padding:

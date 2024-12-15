@@ -6,6 +6,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
+import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -23,7 +24,6 @@ import 'package:melodink_client/features/track/domain/providers/track_provider.d
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/single_track_context_menu.dart';
-import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 
 class DesktopPlayerPage extends HookConsumerWidget {
   const DesktopPlayerPage({
@@ -63,8 +63,8 @@ class DesktopPlayerPage extends HookConsumerWidget {
                 onPressed: () => Navigator.of(context).pop(),
               ),
               actions: [
-                TrackContextMenuButton(
-                  trackContextMenuKey: trackContextMenuKey,
+                ContextMenuButton(
+                  contextMenuKey: trackContextMenuKey,
                   menuController: trackContextMenuController,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                 )

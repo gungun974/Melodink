@@ -10,6 +10,7 @@ import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/helpers/timeago.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
+import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
@@ -373,8 +374,8 @@ class DesktopTrack extends HookConsumerWidget {
                             callback(track);
                           }
                         },
-                        child: TrackContextMenuButton(
-                          trackContextMenuKey: trackContextMenuKey,
+                        child: ContextMenuButton(
+                          contextMenuKey: trackContextMenuKey,
                           menuController: trackContextMenuController,
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                         ),
