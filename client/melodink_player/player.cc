@@ -284,6 +284,11 @@ private:
       return;
     }
 
+    if (player->current_track->IsAudioRetry()) {
+      player->SetPlayerState(MELODINK_PROCESSING_STATE_BUFFERING);
+      return;
+    }
+
     uint8_t *pOutputByte = static_cast<uint8_t *>(pOutput);
 
     if (!can_direct_play_next) {

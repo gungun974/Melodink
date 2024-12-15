@@ -780,6 +780,8 @@ public:
     return audio_fifo.size() <= 0;
   }
 
+  bool IsAudioRetry() { return audio_retry; }
+
   int64_t time_offset = 0;
 
   int Seek(int64_t new_time) {
