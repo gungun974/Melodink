@@ -97,7 +97,7 @@ private:
 
     av_dict_set(&options, "reconnect_streamed", "1", 0);
 
-    av_dict_set(&options, "rw_timeout", "8000000", 0);
+    av_dict_set(&options, "rw_timeout", "45000000", 0);
 
     char cleaned_filename[1024];
 
@@ -314,15 +314,6 @@ private:
                           ? 1953
                           : AV_TIME_BASE * double(end_audio_time) / 1000.0),
               AVSEEK_FLAG_BACKWARD);
-
-          if (response >= 0) {
-            if (audio_opened) {
-              audio_fifo.clear();
-              avcodec_flush_buffers(av_audio_codec_ctx);
-            }
-
-            AdjustSeekedPosition(end_audio_time);
-          }
         }
 
         audio_opened = true;
