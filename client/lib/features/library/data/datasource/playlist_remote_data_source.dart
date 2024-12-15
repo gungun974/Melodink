@@ -79,6 +79,30 @@ class PlaylistRemoteDataSource {
       throw ServerUnknownException();
     }
   }
+
+  Future<Playlist> createPlaylist(Playlist playlist) async {
+    try {
+      final response = await AppApi().dio.post(
+        "/playlist",
+        data: {
+          "name": playlist.name,
+          "description": playlist.description,
+        },
+      );
+
+      return PlaylistModel.fromJson(response.data).toPlaylist();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
 }
 
 final playlistRemoteDataSourceProvider = Provider(

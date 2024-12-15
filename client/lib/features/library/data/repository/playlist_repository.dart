@@ -111,6 +111,10 @@ class PlaylistRepository {
     await playlistLocalDataSource.deleteStoredPlaylist(id);
   }
 
+  Future<Playlist> createPlaylist(Playlist playlist) async {
+    return playlistRemoteDataSource.createPlaylist(playlist);
+  }
+
   Future<bool> isPlaylistDownloaded(int id) async {
     final playlist = await playlistLocalDataSource.getPlaylistById(id);
 

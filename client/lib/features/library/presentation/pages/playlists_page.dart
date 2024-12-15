@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
+import 'package:melodink_client/features/library/presentation/modals/create_playlist_modal.dart';
 import 'package:melodink_client/features/library/presentation/widgets/playlist_collections_grid.dart';
+import 'package:melodink_client/features/track/presentation/modals/import_tracks_modal.dart';
 
 class PlaylistsPage extends ConsumerWidget {
   const PlaylistsPage({super.key});
@@ -31,14 +34,26 @@ class PlaylistsPage extends ConsumerWidget {
               right: padding,
               top: 16.0,
             ),
-            sliver: const SliverToBoxAdapter(
-              child: Text(
-                "Playlists",
-                style: TextStyle(
-                  fontSize: 48,
-                  letterSpacing: 48 * 0.03,
-                  fontWeight: FontWeight.w600,
-                ),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                children: [
+                  const Text(
+                    "Playlists",
+                    style: TextStyle(
+                      fontSize: 48,
+                      letterSpacing: 48 * 0.03,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  AppButton(
+                    text: "New playlist",
+                    type: AppButtonType.primary,
+                    onPressed: () {
+                      CreatePlaylistModal.showModal(context);
+                    },
+                  )
+                ],
               ),
             ),
           ),
