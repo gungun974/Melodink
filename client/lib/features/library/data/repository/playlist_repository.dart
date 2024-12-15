@@ -39,6 +39,17 @@ class PlaylistRepository {
           }
         }
 
+        final remoteIds =
+            remotePlaylists.map((playlist) => playlist.id).toSet();
+
+        final extraLocalPlaylists = localPlaylists
+            .where((playlist) => !remoteIds.contains(playlist.id))
+            .toList();
+
+        for (final playlist in extraLocalPlaylists) {
+          await playlistLocalDataSource.deleteStoredPlaylist(playlist.id);
+        }
+
         return remotePlaylists;
       } catch (_) {
         return localPlaylists;
@@ -123,6 +134,25 @@ class PlaylistRepository {
     final playlist = await playlistLocalDataSource.getPlaylistById(id);
 
     return playlist != null;
+  }
+
+  Future<Playlist> deletePlaylistById(int playlistId) async {
+    final playlist =
+        await playlistRemoteDataSource.deletePlaylistById(playlistId);
+
+    final savedPlaylist =
+        await playlistLocalDataSource.getPlaylistById(playlist.id);
+
+    if (savedPlaylist != null) {
+      // await playlistLocalDataSource.deleteStoredPlaylist(playlist.id);
+
+      //TODO: Orphans ?!
+      // await _downloadTrackRepository.deleteOrphanTracks(
+      //   _audioController.currentTrack.value?.id,
+      // );
+    }
+
+    return playlist;
   }
 }
 

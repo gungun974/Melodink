@@ -1,10 +1,14 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/helpers/app_confirm.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
+import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
+import 'package:melodink_client/features/library/domain/providers/delete_playlist_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
 import 'package:melodink_client/features/library/presentation/modals/edit_playlist_modal.dart';
@@ -37,6 +41,8 @@ class PlaylistPage extends HookConsumerWidget {
     final playlistContextMenuController = useMemoized(() => MenuController());
 
     final playlistContextMenuKey = useMemoized(() => GlobalKey());
+
+    final isLoading = useState(false);
 
     if (playlist == null) {
       return AppNavigationHeader(
@@ -75,6 +81,45 @@ class PlaylistPage extends HookConsumerWidget {
               child: const Text("Edit playlist"),
               onPressed: () {
                 EditPlaylistModal.showModal(context, playlist);
+              },
+            ),
+            const Divider(height: 8),
+            MenuItemButton(
+              leadingIcon: const Padding(
+                padding: EdgeInsets.all(2.0),
+                child: AdwaitaIcon(
+                  AdwaitaIcons.edit_delete,
+                  size: 16,
+                ),
+              ),
+              child: const Text("Delete playlist"),
+              onPressed: () async {
+                if (!await appConfirm(
+                  context,
+                  title: "Confirm",
+                  content: "Would you like to delete this playlist ?'",
+                  textOK: "DELETE",
+                  isDangerous: true,
+                )) {
+                  return;
+                }
+
+                isLoading.value = true;
+
+                try {
+                  await ref
+                      .read(deletePlaylistStreamProvider.notifier)
+                      .deletePlaylist(playlist.id);
+
+                  isLoading.value = false;
+
+                  if (!context.mounted) {
+                    return;
+                  }
+
+                  GoRouter.of(context).pop();
+                } catch (_) {}
+                isLoading.value = false;
               },
             ),
           ],
@@ -278,6 +323,7 @@ class PlaylistPage extends HookConsumerWidget {
             },
           ),
         ),
+        if (isLoading.value) const AppPageLoader(),
       ],
     );
   }

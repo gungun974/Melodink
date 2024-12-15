@@ -131,6 +131,30 @@ class PlaylistRemoteDataSource {
       throw ServerUnknownException();
     }
   }
+
+  Future<Playlist> deletePlaylistById(int playlistId) async {
+    try {
+      final response = await AppApi().dio.delete(
+            "/playlist/$playlistId",
+          );
+
+      return PlaylistModel.fromJson(response.data).toPlaylist();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw PlaylistNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
 }
 
 final playlistRemoteDataSourceProvider = Provider(

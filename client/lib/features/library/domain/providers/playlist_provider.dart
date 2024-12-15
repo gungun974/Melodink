@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
+import 'package:melodink_client/features/library/domain/providers/delete_playlist_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/edit_playlist_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
@@ -32,6 +33,16 @@ Future<List<Playlist>> allPlaylists(AllPlaylistsRef ref) async {
     final newPlaylist = rawNewPlaylist.valueOrNull;
 
     if (newPlaylist == null) {
+      return;
+    }
+
+    ref.invalidateSelf();
+  });
+
+  ref.listen(deletePlaylistStreamProvider, (_, rawDeletedPlaylist) async {
+    final deletedPlaylist = rawDeletedPlaylist.valueOrNull;
+
+    if (deletedPlaylist == null) {
       return;
     }
 
