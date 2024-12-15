@@ -144,12 +144,7 @@ class PlaylistRepository {
         await playlistLocalDataSource.getPlaylistById(playlist.id);
 
     if (savedPlaylist != null) {
-      // await playlistLocalDataSource.deleteStoredPlaylist(playlist.id);
-
-      //TODO: Orphans ?!
-      // await _downloadTrackRepository.deleteOrphanTracks(
-      //   _audioController.currentTrack.value?.id,
-      // );
+      await playlistLocalDataSource.deleteStoredPlaylist(playlist.id);
     }
 
     return playlist;

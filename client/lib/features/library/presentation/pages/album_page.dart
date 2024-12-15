@@ -6,6 +6,7 @@ import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/library/domain/providers/album_provider.dart';
+import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
 import 'package:melodink_client/features/library/presentation/widgets/desktop_playlist_header.dart';
 import 'package:melodink_client/features/library/presentation/widgets/mobile_playlist_header.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -29,6 +30,7 @@ class AlbumPage extends HookConsumerWidget {
     final audioController = ref.watch(audioControllerProvider);
     final asyncAlbum = ref.watch(albumByIdProvider(albumId));
     final albumDownload = ref.watch(albumDownloadNotifierProvider(albumId));
+    final asyncPlaylists = ref.watch(playlistContextMenuNotifierProvider);
 
     final tracks = ref.watch(albumSortedTracksProvider(albumId));
 
@@ -65,6 +67,29 @@ class AlbumPage extends HookConsumerWidget {
                 audioController.addTracksToQueue(album.tracks);
                 albumContextMenuController.close();
               },
+            ),
+            SubmenuButton(
+              leadingIcon: const AdwaitaIcon(
+                AdwaitaIcons.playlist2,
+                size: 20,
+              ),
+              menuChildren: switch (asyncPlaylists) {
+                AsyncData(:final value) => value.map((playlist) {
+                    return MenuItemButton(
+                      child: Text(playlist.name),
+                      onPressed: () {
+                        ref
+                            .read(playlistContextMenuNotifierProvider.notifier)
+                            .addTracks(
+                              playlist,
+                              tracks,
+                            );
+                      },
+                    );
+                  }).toList(),
+                _ => const [],
+              },
+              child: const Text("Add to playlist"),
             ),
           ],
           controller: albumContextMenuController,
