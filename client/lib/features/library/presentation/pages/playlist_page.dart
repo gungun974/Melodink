@@ -7,6 +7,7 @@ import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
+import 'package:melodink_client/features/library/presentation/modals/edit_playlist_modal.dart';
 import 'package:melodink_client/features/library/presentation/widgets/desktop_playlist_header.dart';
 import 'package:melodink_client/features/library/presentation/widgets/mobile_playlist_header.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -60,6 +61,20 @@ class PlaylistPage extends HookConsumerWidget {
               onPressed: () {
                 audioController.addTracksToQueue(playlist.tracks);
                 playlistContextMenuController.close();
+              },
+            ),
+            const Divider(height: 8),
+            MenuItemButton(
+              leadingIcon: const Padding(
+                padding: EdgeInsets.all(2.0),
+                child: AdwaitaIcon(
+                  AdwaitaIcons.edit,
+                  size: 16,
+                ),
+              ),
+              child: const Text("Edit playlist"),
+              onPressed: () {
+                EditPlaylistModal.showModal(context, playlist);
               },
             ),
           ],

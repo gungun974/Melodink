@@ -10,10 +10,14 @@ import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
+import 'package:melodink_client/features/library/domain/providers/edit_playlist_provider.dart';
 
-class CreatePlaylistModal extends HookConsumerWidget {
-  const CreatePlaylistModal({
+class EditPlaylistModal extends HookConsumerWidget {
+  final Playlist playlist;
+
+  const EditPlaylistModal({
     super.key,
+    required this.playlist,
   });
 
   @override
@@ -26,15 +30,19 @@ class CreatePlaylistModal extends HookConsumerWidget {
 
     final hasError = useState(false);
 
-    final nameTextController = useTextEditingController();
+    final nameTextController = useTextEditingController(
+      text: playlist.name,
+    );
 
-    final descriptionTextController = useTextEditingController();
+    final descriptionTextController = useTextEditingController(
+      text: playlist.description,
+    );
 
     return IntrinsicHeight(
       child: Stack(
         children: [
           AppModal(
-            title: const Text("New Playlist"),
+            title: Text("Edit playlist \"${playlist.name}\""),
             body: Form(
               key: formKey,
               child: SingleChildScrollView(
@@ -71,7 +79,7 @@ class CreatePlaylistModal extends HookConsumerWidget {
                         ),
                       if (hasError.value) const SizedBox(height: 16),
                       AppButton(
-                        text: "Create",
+                        text: "Save",
                         type: AppButtonType.primary,
                         onPressed: () async {
                           hasError.value = false;
@@ -89,9 +97,9 @@ class CreatePlaylistModal extends HookConsumerWidget {
 
                           try {
                             ref
-                                .read(createPlaylistStreamProvider.notifier)
-                                .createPlaylist(Playlist(
-                                  id: -1,
+                                .read(editPlaylistStreamProvider.notifier)
+                                .savePlaylist(Playlist(
+                                  id: playlist.id,
                                   name: nameTextController.text,
                                   description: descriptionTextController.text,
                                   tracks: const [],
@@ -127,20 +135,21 @@ class CreatePlaylistModal extends HookConsumerWidget {
 
   static showModal(
     BuildContext context,
+    Playlist playlist,
   ) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "CreatePlaylistModal",
+      barrierLabel: "EditPlaylistModal",
       pageBuilder: (_, __, ___) {
-        return const Center(
+        return Center(
           child: MaxContainer(
             maxWidth: 420,
-            padding: EdgeInsets.symmetric(
+            padding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 64,
             ),
-            child: CreatePlaylistModal(),
+            child: EditPlaylistModal(playlist: playlist),
           ),
         );
       },

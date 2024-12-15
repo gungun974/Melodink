@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
+import 'package:melodink_client/features/library/domain/providers/edit_playlist_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
@@ -18,6 +19,16 @@ Future<List<Playlist>> allPlaylists(AllPlaylistsRef ref) async {
   final playlistRepository = ref.read(playlistRepositoryProvider);
 
   ref.listen(createPlaylistStreamProvider, (_, rawNewPlaylist) async {
+    final newPlaylist = rawNewPlaylist.valueOrNull;
+
+    if (newPlaylist == null) {
+      return;
+    }
+
+    ref.invalidateSelf();
+  });
+
+  ref.listen(editPlaylistStreamProvider, (_, rawNewPlaylist) async {
     final newPlaylist = rawNewPlaylist.valueOrNull;
 
     if (newPlaylist == null) {
@@ -47,6 +58,22 @@ class PlaylistById extends _$PlaylistById {
 
     ref.onDispose(() {
       subscription.cancel();
+    });
+
+    ref.listen(editPlaylistStreamProvider, (_, rawNewPlaylist) async {
+      final newPlaylist = rawNewPlaylist.valueOrNull;
+
+      if (newPlaylist == null) {
+        return;
+      }
+
+      if (newPlaylist.id != id) {
+        return;
+      }
+
+      ref.invalidateSelf();
+
+      ref.invalidate(playlistDownloadNotifierProvider(id));
     });
 
     ref.listen(trackEditStreamProvider, (_, rawNewTrack) async {

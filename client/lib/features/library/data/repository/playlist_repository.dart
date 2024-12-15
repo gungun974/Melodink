@@ -115,6 +115,10 @@ class PlaylistRepository {
     return playlistRemoteDataSource.createPlaylist(playlist);
   }
 
+  Future<Playlist> savePlaylist(Playlist playlist) async {
+    return playlistRemoteDataSource.savePlaylist(playlist);
+  }
+
   Future<bool> isPlaylistDownloaded(int id) async {
     final playlist = await playlistLocalDataSource.getPlaylistById(id);
 
