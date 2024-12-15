@@ -104,6 +104,30 @@ class PlaylistRemoteDataSource {
     }
   }
 
+  Future<Playlist> duplicatePlaylist(int playlistId) async {
+    try {
+      final response = await AppApi().dio.post(
+            "/playlist/$playlistId/duplicate",
+          );
+
+      return PlaylistModel.fromJson(response.data).toPlaylist();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw PlaylistNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
   Future<Playlist> savePlaylist(Playlist playlist) async {
     try {
       final response = await AppApi().dio.put(

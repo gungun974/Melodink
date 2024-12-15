@@ -35,6 +35,7 @@ func (u *PlaylistUsecase) DuplicatePlaylist(
 	newPlaylist := *originalPlaylist
 
 	newPlaylist.UserId = &user.Id
+	newPlaylist.Name = originalPlaylist.Name + " (2)"
 
 	if err := u.playlistRepository.CreatePlaylist(&newPlaylist); err != nil {
 		logger.MainLogger.Error("Couldn't create playlist", err, newPlaylist)

@@ -23,11 +23,23 @@ class CreatePlaylistStream extends _$CreatePlaylistStream {
     return _controller.stream;
   }
 
-  void createPlaylist(Playlist playlist) async {
+  Future<Playlist> createPlaylist(Playlist playlist) async {
     final newPlaylist = await _playlistRepository.createPlaylist(playlist);
 
     if (!_controller.isClosed) {
       _controller.add(newPlaylist);
     }
+
+    return newPlaylist;
+  }
+
+  Future<Playlist> duplicatePlaylist(int playlistId) async {
+    final newPlaylist = await _playlistRepository.duplicatePlaylist(playlistId);
+
+    if (!_controller.isClosed) {
+      _controller.add(newPlaylist);
+    }
+
+    return newPlaylist;
   }
 }

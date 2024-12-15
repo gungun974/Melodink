@@ -126,6 +126,10 @@ class PlaylistRepository {
     return playlistRemoteDataSource.createPlaylist(playlist);
   }
 
+  Future<Playlist> duplicatePlaylist(int playlistId) {
+    return playlistRemoteDataSource.duplicatePlaylist(playlistId);
+  }
+
   Future<Playlist> savePlaylist(Playlist playlist) async {
     return playlistRemoteDataSource.savePlaylist(playlist);
   }

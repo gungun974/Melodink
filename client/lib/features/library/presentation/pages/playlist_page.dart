@@ -8,6 +8,7 @@ import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
+import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/delete_playlist_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
@@ -78,9 +79,47 @@ class PlaylistPage extends HookConsumerWidget {
                   size: 16,
                 ),
               ),
-              child: const Text("Edit playlist"),
+              child: const Text("Edit"),
               onPressed: () {
                 EditPlaylistModal.showModal(context, playlist);
+              },
+            ),
+            MenuItemButton(
+              leadingIcon: const Padding(
+                padding: EdgeInsets.all(2.0),
+                child: AdwaitaIcon(
+                  AdwaitaIcons.edit_copy,
+                  size: 16,
+                ),
+              ),
+              child: const Text("Duplicate"),
+              onPressed: () async {
+                if (!await appConfirm(
+                  context,
+                  title: "Confirm",
+                  content: "Would you like to duplicate this playlist ?'",
+                  textOK: "Confirm",
+                )) {
+                  return;
+                }
+
+                isLoading.value = true;
+
+                try {
+                  final newPlaylist = await ref
+                      .read(createPlaylistStreamProvider.notifier)
+                      .duplicatePlaylist(playlist.id);
+
+                  isLoading.value = false;
+
+                  if (!context.mounted) {
+                    return;
+                  }
+
+                  GoRouter.of(context)
+                      .pushReplacement("/playlist/${newPlaylist.id}");
+                } catch (_) {}
+                isLoading.value = false;
               },
             ),
             const Divider(height: 8),
@@ -92,7 +131,7 @@ class PlaylistPage extends HookConsumerWidget {
                   size: 16,
                 ),
               ),
-              child: const Text("Delete playlist"),
+              child: const Text("Delete"),
               onPressed: () async {
                 if (!await appConfirm(
                   context,
