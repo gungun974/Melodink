@@ -1,14 +1,11 @@
 package processor
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/gungun974/Melodink/server/internal/logger"
@@ -73,23 +70,9 @@ func (p *TranscodeProcessor) TranscodeMax(
 	sourcePath string,
 	out io.Writer,
 ) error {
-	format, err := getInputFormat(sourcePath)
-	if err != nil {
-		return err
-	}
-
-	// We can't live transcode into mp4 since we can't seek in a stream
-	if strings.Contains(format, "m4a") {
-		format = "mpegts"
-	}
-
-	if strings.Contains(format, "mp4") {
-		format = "mpegts"
-	}
-
 	return p.transcode(ctx, seek, []string{
-		"-c:a", "copy",
-		"-f", format,
+		"-c:a", "flac",
+		"-f", "flac",
 	}, sourcePath, out)
 }
 
@@ -166,35 +149,4 @@ func (*TranscodeProcessor) transcode(
 		seek.Milliseconds(),
 	)
 	return nil
-}
-
-func getInputFormat(sourcePath string) (string, error) {
-	cmd := exec.Command(
-		"ffprobe",
-		"-v",
-		"quiet",
-		"-print_format",
-		"json",
-		"-show_format",
-		sourcePath,
-	)
-
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return "", TranscoderScanError
-	}
-
-	var result struct {
-		Format struct {
-			FormatName string `json:"format_name"`
-		} `json:"format"`
-	}
-	err = json.Unmarshal(out.Bytes(), &result)
-	if err != nil {
-		return "", TranscoderScanError
-	}
-
-	return result.Format.FormatName, nil
 }
