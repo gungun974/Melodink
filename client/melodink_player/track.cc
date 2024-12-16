@@ -284,6 +284,12 @@ private:
       CloseFile();
       CloseAudio(false);
 
+      if (!audio_opened) {
+        audio_frames_consumed = 0;
+        audio_fifo.init(audio_format, audio_channel_count,
+                        audio_sample_rate * 5);
+      }
+
       while (true) {
         int64_t end_audio_time =
             (double(audio_frames_consumed + audio_fifo.size()) /
@@ -334,6 +340,13 @@ private:
     if (!finished_reading) {
       return;
     }
+
+    if (!audio_opened || av_format_ctx == nullptr) {
+      TimeoutReopen();
+
+      return;
+    }
+
     keep_loading = true;
     this->decoding_thread = std::thread(&MelodinkTrack::DecodingThread, this);
   }
@@ -350,6 +363,13 @@ private:
     finished_reading = false;
 
     std::unique_lock<std::mutex> lock(decoding_mutex);
+
+    if (!audio_opened || av_format_ctx == nullptr) {
+      TimeoutReopen();
+
+      finished_reading = true;
+      return 0;
+    }
 
     // Minimum amount of frames that should be pre-decoded
     size_t min_audio_queue_size;
