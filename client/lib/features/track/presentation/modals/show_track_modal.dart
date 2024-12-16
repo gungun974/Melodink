@@ -8,6 +8,7 @@ import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
+import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
@@ -359,6 +360,12 @@ class ShowTrackModal extends HookConsumerWidget {
                                     if (!context.mounted) {
                                       return;
                                     }
+
+                                    AppNotificationManager.of(context).notify(
+                                      context,
+                                      message:
+                                          "Track \"${track.title}\" have been deleted.",
+                                    );
 
                                     Navigator.of(
                                       context,

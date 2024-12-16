@@ -9,6 +9,7 @@ import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
+import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_datetime_form_field.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
@@ -569,12 +570,34 @@ class EditTrackModal extends HookConsumerWidget {
                                 }
 
                                 isLoading.value = true;
-                                await ref
-                                    .read(trackEditStreamProvider.notifier)
-                                    .changeTrackAudio(track.id, file);
-                                isLoading.value = false;
+                                try {
+                                  await ref
+                                      .read(trackEditStreamProvider.notifier)
+                                      .changeTrackAudio(track.id, file);
+                                  isLoading.value = false;
+                                } catch (_) {
+                                  isLoading.value = false;
 
-                                //TODO: Notify success
+                                  if (context.mounted) {
+                                    AppNotificationManager.of(context).notify(
+                                      context,
+                                      title: "Error",
+                                      message: "Something went wrong",
+                                      type: AppNotificationType.danger,
+                                    );
+                                  }
+                                  rethrow;
+                                }
+
+                                if (!context.mounted) {
+                                  return;
+                                }
+
+                                AppNotificationManager.of(context).notify(
+                                  context,
+                                  message:
+                                      "The audio for track \"${track.title}\" have been changed.",
+                                );
                               },
                             ),
                           ),

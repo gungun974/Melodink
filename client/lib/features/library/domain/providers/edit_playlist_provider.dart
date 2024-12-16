@@ -23,11 +23,13 @@ class EditPlaylistStream extends _$EditPlaylistStream {
     return _controller.stream;
   }
 
-  void savePlaylist(Playlist playlist) async {
+  Future<Playlist> savePlaylist(Playlist playlist) async {
     final newPlaylist = await _playlistRepository.savePlaylist(playlist);
 
     if (!_controller.isClosed) {
       _controller.add(newPlaylist);
     }
+
+    return newPlaylist;
   }
 }

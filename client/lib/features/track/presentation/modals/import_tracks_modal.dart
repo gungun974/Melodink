@@ -10,6 +10,7 @@ import 'package:melodink_client/core/helpers/pick_audio_files.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
+import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
@@ -162,6 +163,9 @@ class ImportTracksModal extends HookConsumerWidget {
                           type: AppButtonType.primary,
                           onPressed: state.uploadedTracks.isNotEmpty
                               ? () async {
+                                  final numberOfTracks =
+                                      state.uploadedTracks.length;
+
                                   final result = await ref
                                       .read(importTracksProvider.notifier)
                                       .imports();
@@ -175,6 +179,19 @@ class ImportTracksModal extends HookConsumerWidget {
                                       context,
                                       rootNavigator: true,
                                     ).pop();
+
+                                    AppNotificationManager.of(context).notify(
+                                      context,
+                                      message:
+                                          "$numberOfTracks track${numberOfTracks > 1 ? 's' : ''} have been imported.",
+                                    );
+                                  } else {
+                                    AppNotificationManager.of(context).notify(
+                                      context,
+                                      title: "Error",
+                                      message: "Something went wrong",
+                                      type: AppNotificationType.danger,
+                                    );
                                   }
                                 }
                               : null,

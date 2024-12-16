@@ -5,11 +5,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
+import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
-import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/edit_playlist_provider.dart';
 
 class EditPlaylistModal extends HookConsumerWidget {
@@ -96,7 +96,7 @@ class EditPlaylistModal extends HookConsumerWidget {
                           isLoading.value = true;
 
                           try {
-                            ref
+                            final newPlaylist = await ref
                                 .read(editPlaylistStreamProvider.notifier)
                                 .savePlaylist(Playlist(
                                   id: playlist.id,
@@ -115,6 +115,12 @@ class EditPlaylistModal extends HookConsumerWidget {
                               context,
                               rootNavigator: true,
                             ).pop();
+
+                            AppNotificationManager.of(context).notify(
+                              context,
+                              message:
+                                  "Playlist \"${newPlaylist.name}\" have been saved",
+                            );
                           } catch (_) {
                             isLoading.value = false;
                             hasError.value = true;

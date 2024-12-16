@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
+import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/library/domain/providers/album_provider.dart';
@@ -66,6 +67,12 @@ class AlbumPage extends HookConsumerWidget {
               onPressed: () {
                 audioController.addTracksToQueue(album.tracks);
                 albumContextMenuController.close();
+
+                AppNotificationManager.of(context).notify(
+                  context,
+                  message:
+                      "${album.tracks.length} track${album.tracks.length > 1 ? 's' : ''} have been added to the queue.",
+                );
               },
             ),
             SubmenuButton(
@@ -77,13 +84,37 @@ class AlbumPage extends HookConsumerWidget {
                 AsyncData(:final value) => value.map((playlist) {
                     return MenuItemButton(
                       child: Text(playlist.name),
-                      onPressed: () {
-                        ref
-                            .read(playlistContextMenuNotifierProvider.notifier)
-                            .addTracks(
-                              playlist,
-                              tracks,
+                      onPressed: () async {
+                        try {
+                          await ref
+                              .read(
+                                  playlistContextMenuNotifierProvider.notifier)
+                              .addTracks(
+                                playlist,
+                                tracks,
+                              );
+                        } catch (_) {
+                          if (context.mounted) {
+                            AppNotificationManager.of(context).notify(
+                              context,
+                              title: "Error",
+                              message: "Something went wrong",
+                              type: AppNotificationType.danger,
                             );
+                          }
+
+                          rethrow;
+                        }
+
+                        if (!context.mounted) {
+                          return;
+                        }
+
+                        AppNotificationManager.of(context).notify(
+                          context,
+                          message:
+                              "${album.tracks.length} track${album.tracks.length > 1 ? 's' : ''} have been added to playlist \"${playlist.name}\".",
+                        );
                       },
                     );
                   }).toList(),

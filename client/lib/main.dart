@@ -7,6 +7,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/routes/router.dart';
+import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -14,7 +15,6 @@ import 'package:melodink_client/features/player/domain/audio/melodink_player.dar
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/import_tracks_provider.dart';
-import 'package:melodink_client/features/tracker/data/repository/sync_shared_played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/providers/shared_played_track_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
@@ -98,23 +98,26 @@ class MyApp extends StatelessWidget {
                   audioController.play();
                 }),
               },
-              child: MaterialApp.router(
-                title: 'Melodink Client',
-                debugShowCheckedModeBanner: false,
-                theme: ThemeData(
-                  useMaterial3: false,
-                  brightness: Brightness.dark,
-                  appBarTheme: const AppBarTheme(backgroundColor: Colors.black),
-                  primaryColor: Colors.black,
-                  iconTheme:
-                      const IconThemeData().copyWith(color: Colors.white),
-                  colorScheme: ColorScheme.fromSeed(
-                    seedColor: const Color.fromRGBO(196, 126, 208, 1),
+              child: AppNotificationManager(
+                child: MaterialApp.router(
+                  title: 'Melodink Client',
+                  debugShowCheckedModeBanner: false,
+                  theme: ThemeData(
+                    useMaterial3: false,
                     brightness: Brightness.dark,
+                    appBarTheme:
+                        const AppBarTheme(backgroundColor: Colors.black),
+                    primaryColor: Colors.black,
+                    iconTheme:
+                        const IconThemeData().copyWith(color: Colors.white),
+                    colorScheme: ColorScheme.fromSeed(
+                      seedColor: const Color.fromRGBO(196, 126, 208, 1),
+                      brightness: Brightness.dark,
+                    ),
+                    fontFamily: "Roboto",
                   ),
-                  fontFamily: "Roboto",
+                  routerConfig: appRouter,
                 ),
-                routerConfig: appRouter,
               ),
             );
           },

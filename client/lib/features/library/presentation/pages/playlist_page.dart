@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/app_confirm.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
+import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
@@ -68,6 +69,12 @@ class PlaylistPage extends HookConsumerWidget {
               onPressed: () {
                 audioController.addTracksToQueue(playlist.tracks);
                 playlistContextMenuController.close();
+
+                AppNotificationManager.of(context).notify(
+                  context,
+                  message:
+                      "${playlist.tracks.length} track${playlist.tracks.length > 1 ? 's' : ''} have been added to the queue.",
+                );
               },
             ),
             const Divider(height: 8),
@@ -118,7 +125,22 @@ class PlaylistPage extends HookConsumerWidget {
 
                   GoRouter.of(context)
                       .pushReplacement("/playlist/${newPlaylist.id}");
-                } catch (_) {}
+
+                  AppNotificationManager.of(context).notify(
+                    context,
+                    message:
+                        "The playlist \"${playlist.name}\" has been successfully duplicated.",
+                  );
+                } catch (_) {
+                  if (context.mounted) {
+                    AppNotificationManager.of(context).notify(
+                      context,
+                      title: "Error",
+                      message: "Something went wrong",
+                      type: AppNotificationType.danger,
+                    );
+                  }
+                }
                 isLoading.value = false;
               },
             ),
@@ -156,8 +178,21 @@ class PlaylistPage extends HookConsumerWidget {
                     return;
                   }
 
-                  GoRouter.of(context).pop();
-                } catch (_) {}
+                  AppNotificationManager.of(context).notify(
+                    context,
+                    message:
+                        "The playlist \"${playlist.name}\" has been successfully deleted.",
+                  );
+                } catch (_) {
+                  if (context.mounted) {
+                    AppNotificationManager.of(context).notify(
+                      context,
+                      title: "Error",
+                      message: "Something went wrong",
+                      type: AppNotificationType.danger,
+                    );
+                  }
+                }
                 isLoading.value = false;
               },
             ),
@@ -305,15 +340,39 @@ class PlaylistPage extends HookConsumerWidget {
                               size: 20,
                             ),
                             child: const Text("Remove from this playlist"),
-                            onPressed: () {
-                              ref
-                                  .read(playlistContextMenuNotifierProvider
-                                      .notifier)
-                                  .removeTracks(
-                                    playlist,
-                                    index,
-                                    index,
+                            onPressed: () async {
+                              try {
+                                await ref
+                                    .read(playlistContextMenuNotifierProvider
+                                        .notifier)
+                                    .removeTracks(
+                                      playlist,
+                                      index,
+                                      index,
+                                    );
+                              } catch (_) {
+                                if (context.mounted) {
+                                  AppNotificationManager.of(context).notify(
+                                    context,
+                                    title: "Error",
+                                    message: "Something went wrong",
+                                    type: AppNotificationType.danger,
                                   );
+                                }
+
+                                rethrow;
+                              }
+
+                              if (!context.mounted) {
+                                return;
+                              }
+
+                              AppNotificationManager.of(context).notify(
+                                context,
+                                message:
+                                    "track have been removed from playlist \"${playlist.name}\".",
+                              );
+
                               menuController.close();
                               unselect();
                             },
@@ -336,15 +395,39 @@ class PlaylistPage extends HookConsumerWidget {
                               size: 20,
                             ),
                             child: const Text("Remove from this playlist"),
-                            onPressed: () {
-                              ref
-                                  .read(playlistContextMenuNotifierProvider
-                                      .notifier)
-                                  .removeTracks(
-                                    playlist,
-                                    startIndex,
-                                    endIndex,
+                            onPressed: () async {
+                              try {
+                                await ref
+                                    .read(playlistContextMenuNotifierProvider
+                                        .notifier)
+                                    .removeTracks(
+                                      playlist,
+                                      startIndex,
+                                      endIndex,
+                                    );
+                              } catch (_) {
+                                if (context.mounted) {
+                                  AppNotificationManager.of(context).notify(
+                                    context,
+                                    title: "Error",
+                                    message: "Something went wrong",
+                                    type: AppNotificationType.danger,
                                   );
+                                }
+
+                                rethrow;
+                              }
+
+                              if (!context.mounted) {
+                                return;
+                              }
+
+                              AppNotificationManager.of(context).notify(
+                                context,
+                                message:
+                                    "${tracks.length} track${tracks.length > 1 ? 's' : ''} have been removed from playlist \"${playlist.name}\".",
+                              );
+
                               menuController.close();
                               unselect();
                             },

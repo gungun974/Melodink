@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
+import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
@@ -88,7 +89,7 @@ class CreatePlaylistModal extends HookConsumerWidget {
                           isLoading.value = true;
 
                           try {
-                            ref
+                            final newPlaylist = await ref
                                 .read(createPlaylistStreamProvider.notifier)
                                 .createPlaylist(Playlist(
                                   id: -1,
@@ -107,6 +108,12 @@ class CreatePlaylistModal extends HookConsumerWidget {
                               context,
                               rootNavigator: true,
                             ).pop();
+
+                            AppNotificationManager.of(context).notify(
+                              context,
+                              message:
+                                  "Playlist \"${newPlaylist.name}\" have been created",
+                            );
                           } catch (_) {
                             isLoading.value = false;
                             hasError.value = true;
