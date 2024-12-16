@@ -1,12 +1,16 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
+import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/presentation/modals/show_track_modal.dart';
 
@@ -180,6 +184,65 @@ class SingleTrackContextMenu extends ConsumerWidget {
         if (customActionsBuilder != null)
           ...customActionsBuilder!(context, menuController, track),
         const Divider(height: 8),
+        MenuItemButton(
+          leadingIcon: const AdwaitaIcon(
+            AdwaitaIcons.folder_download,
+            size: 20,
+          ),
+          child: const Text("Export file to device"),
+          onPressed: () async {
+            menuController.close();
+
+            AppNotificationManager.of(context).notify(
+              context,
+              message: "Start downloading track \"${track.title}\"",
+            );
+
+            try {
+              final extensionResponse = await AppApi()
+                  .dio
+                  .get<String>("/track/${track.id}/extension");
+
+              final extension = extensionResponse.data;
+
+              if (extension == null) {
+                throw ServerTimeoutException();
+              }
+
+              await FileSaver.instance.saveFile(
+                name:
+                    "${track.trackNumber.toString().padLeft(2, '0')} - ${track.title}"
+                        .trim(),
+                link: LinkDetails(
+                  link: track.getUrl(AppSettingAudioQuality.directFile),
+                  headers: {"Cookie": AppApi().generateCookieHeader()},
+                  method: "GET",
+                ),
+                ext: extension,
+              );
+
+              if (!context.mounted) {
+                return;
+              }
+
+              AppNotificationManager.of(context).notify(
+                context,
+                message: "Finish downloading track \"${track.title}\"",
+              );
+            } catch (e) {
+              if (context.mounted) {
+                AppNotificationManager.of(context).notify(
+                  context,
+                  title: "Error",
+                  message: "Something went wrong",
+                  type: AppNotificationType.danger,
+                );
+              }
+
+              rethrow;
+            }
+          },
+        ),
         MenuItemButton(
           leadingIcon: const AdwaitaIcon(
             AdwaitaIcons.info,

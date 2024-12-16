@@ -153,6 +153,18 @@ func TrackRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
+	router.Get("/{id}/extension", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		response, err := c.TrackController.GetTrackFileExtension(r.Context(), id)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
 	router.Get("/{id}/scan", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 
