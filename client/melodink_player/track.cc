@@ -360,6 +360,8 @@ private:
     }
   }
 
+  std::atomic<bool> shouldBufferPauseAndPreloadAMinimumAmount = false;
+
   int DecodingThread() {
     finished_reading = false;
 
@@ -400,8 +402,10 @@ private:
     std::queue<AVPacket> cache_packets;
     int current_cache_size = 0;
 
+    bool forceUnloadCache = false;
+
     while (true) {
-      while (true) {
+      while (!forceUnloadCache) {
         if (current_cache_size < max_preload_cache) {
           read_packet_response = av_read_frame(av_format_ctx, &read_packet);
 
@@ -411,7 +415,17 @@ private:
           }
         }
 
+        if (read_packet_response >= 0 &&
+            shouldBufferPauseAndPreloadAMinimumAmount &&
+            !(current_cache_size >= 1024 * 500 ||
+              current_cache_size >= max_preload_cache)) {
+          continue;
+        }
+
         if (audio_opened && audio_fifo.size() <= min_audio_queue_size) {
+          if (shouldBufferPauseAndPreloadAMinimumAmount) {
+            forceUnloadCache = true;
+          }
           break;
         }
 
@@ -433,6 +447,7 @@ private:
       }
 
       if (cache_packets.empty()) {
+        forceUnloadCache = false;
         // Return if error or end of file was encountered
         if (read_packet_response < 0) {
           if (read_packet_response == AVERROR_EOF && infinite_loop) {
@@ -869,6 +884,9 @@ public:
   int GetAudioFrame(void **output, int sample_count) {
     if (!output || !(*output) || sample_count < 0)
       return -1;
+
+    shouldBufferPauseAndPreloadAMinimumAmount =
+        sample_count > audio_fifo.size();
 
     int samples_read = audio_fifo.pop(output, sample_count);
 
