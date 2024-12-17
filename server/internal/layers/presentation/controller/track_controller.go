@@ -221,6 +221,23 @@ func (c *TrackController) GetTrackFileExtension(
 	return c.trackUsecase.GetTrackFileExtension(ctx, id)
 }
 
+func (c *TrackController) GetTrackLyrics(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.GetTrackLyrics(ctx, id)
+}
+
 func (c *TrackController) EditTrack(
 	ctx context.Context,
 	rawId string,

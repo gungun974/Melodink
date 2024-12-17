@@ -57,6 +57,10 @@ class TrackRepository {
     );
   }
 
+  Future<String> getTrackLyricsById(int id) async {
+    return await trackRemoteDataSource.getTrackLyricsById(id);
+  }
+
   Future<Track> saveTrack(Track track) async {
     final updatedTrack = await trackRemoteDataSource.saveTrack(track);
     final info = await playedTrackRepository.getTrackHistoryInfo(

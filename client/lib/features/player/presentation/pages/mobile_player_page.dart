@@ -9,6 +9,7 @@ import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/open_queue_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
+import 'package:melodink_client/features/player/presentation/widgets/live_lyrics.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_controls.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_error_overlay.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
@@ -26,9 +27,14 @@ class MobilePlayerPage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final audioController = ref.watch(audioControllerProvider);
 
+    final currentLyrics = ref.watch(currentLyricsProvider);
+
     final trackContextMenuController = useMemoized(() => MenuController());
 
     final trackContextMenuKey = useMemoized(() => GlobalKey());
+
+    final scrollController = useScrollController();
+    final liveLyricsKey = useMemoized(() => GlobalKey());
 
     return Dismissible(
       direction: isTouchDevice(context)
@@ -81,210 +87,291 @@ class MobilePlayerPage extends HookConsumerWidget {
               backgroundColor: const Color.fromRGBO(0, 0, 0, 0.08),
               shadowColor: Colors.transparent,
             ),
-            body: LayoutBuilder(builder: (context, layout) {
-              return SingleChildScrollView(
-                child: IntrinsicHeight(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: layout.maxHeight,
-                    ),
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 8.0,
-                            ),
-                            constraints: const BoxConstraints(maxWidth: 512),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                StreamBuilder(
-                                  stream: audioController.currentTrack.stream,
-                                  builder: (context, snapshot) {
-                                    audioController.previousTracks.valueOrNull
-                                        ?.take(5)
-                                        .forEach(
-                                      (track) {
-                                        precacheImage(
-                                            AppImageCacheProvider(
-                                                track.getCompressedCoverUri(
-                                              TrackCompressedCoverQuality.high,
-                                            )),
-                                            context);
-                                      },
-                                    );
-
-                                    audioController.nextTracks.valueOrNull
-                                        ?.take(5)
-                                        .forEach(
-                                      (track) {
-                                        precacheImage(
-                                            AppImageCacheProvider(
-                                                track.getCompressedCoverUri(
-                                              TrackCompressedCoverQuality.high,
-                                            )),
-                                            context);
-                                      },
-                                    );
-
-                                    return Consumer(
-                                      builder: (context, ref, child) {
-                                        final currentTrack = snapshot.data;
-
-                                        if (currentTrack == null) {
-                                          return const SizedBox.shrink();
-                                        }
-
-                                        final downloadedTrack = ref
-                                            .watch(
-                                              isTrackDownloadedProvider(
-                                                  currentTrack.id),
-                                            )
-                                            .valueOrNull;
-
-                                        final image = PlayerErrorOverlay(
-                                          child: AuthCachedNetworkImage(
-                                            imageUrl: downloadedTrack
-                                                    ?.getCoverUrl() ??
-                                                currentTrack
-                                                    .getCompressedCoverUrl(
-                                                  TrackCompressedCoverQuality
-                                                      .high,
-                                                ),
-                                            placeholder: (context, url) =>
-                                                Image.asset(
-                                              "assets/melodink_track_cover_not_found.png",
-                                            ),
-                                            errorWidget: (context, url, error) {
-                                              return Image.asset(
-                                                "assets/melodink_track_cover_not_found.png",
+            body: LayoutBuilder(
+              builder: (context, layout) {
+                return LiveLyricsController(
+                  startWithAutoLyrics: false,
+                  liveLyricsKey: liveLyricsKey,
+                  scrollController: scrollController,
+                  builder: (
+                    _,
+                    autoScrollToLyric,
+                    setShouldDisableAutoScrollOnScroll,
+                  ) {
+                    return CustomScrollView(
+                      controller: scrollController,
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: IntrinsicHeight(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: layout.maxHeight,
+                              ),
+                              child: Column(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16.0,
+                                        vertical: 8.0,
+                                      ),
+                                      constraints:
+                                          const BoxConstraints(maxWidth: 512),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          StreamBuilder(
+                                            stream: audioController
+                                                .currentTrack.stream,
+                                            builder: (context, snapshot) {
+                                              audioController
+                                                  .previousTracks.valueOrNull
+                                                  ?.take(5)
+                                                  .forEach(
+                                                (track) {
+                                                  precacheImage(
+                                                      AppImageCacheProvider(track
+                                                          .getCompressedCoverUri(
+                                                        TrackCompressedCoverQuality
+                                                            .high,
+                                                      )),
+                                                      context);
+                                                },
                                               );
-                                            },
-                                          ),
-                                        );
 
-                                        return SingleTrackContextMenu(
-                                          key: trackContextMenuKey,
-                                          track: currentTrack,
-                                          menuController:
-                                              trackContextMenuController,
-                                          child: Column(
-                                            children: [
-                                              IgnorePointer(
-                                                child: Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: AspectRatio(
-                                                        aspectRatio: 1.0,
-                                                        child: image,
+                                              audioController
+                                                  .nextTracks.valueOrNull
+                                                  ?.take(5)
+                                                  .forEach(
+                                                (track) {
+                                                  precacheImage(
+                                                      AppImageCacheProvider(track
+                                                          .getCompressedCoverUri(
+                                                        TrackCompressedCoverQuality
+                                                            .high,
+                                                      )),
+                                                      context);
+                                                },
+                                              );
+
+                                              return Consumer(
+                                                builder: (context, ref, child) {
+                                                  final currentTrack =
+                                                      snapshot.data;
+
+                                                  if (currentTrack == null) {
+                                                    return const SizedBox
+                                                        .shrink();
+                                                  }
+
+                                                  final downloadedTrack = ref
+                                                      .watch(
+                                                        isTrackDownloadedProvider(
+                                                            currentTrack.id),
+                                                      )
+                                                      .valueOrNull;
+
+                                                  final image =
+                                                      PlayerErrorOverlay(
+                                                    child:
+                                                        AuthCachedNetworkImage(
+                                                      imageUrl: downloadedTrack
+                                                              ?.getCoverUrl() ??
+                                                          currentTrack
+                                                              .getCompressedCoverUrl(
+                                                            TrackCompressedCoverQuality
+                                                                .high,
+                                                          ),
+                                                      placeholder:
+                                                          (context, url) =>
+                                                              Image.asset(
+                                                        "assets/melodink_track_cover_not_found.png",
                                                       ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                              const SizedBox(height: 10),
-                                              Row(
-                                                children: [
-                                                  Expanded(
+                                                      errorWidget: (context,
+                                                          url, error) {
+                                                        return Image.asset(
+                                                          "assets/melodink_track_cover_not_found.png",
+                                                        );
+                                                      },
+                                                    ),
+                                                  );
+
+                                                  return SingleTrackContextMenu(
+                                                    key: trackContextMenuKey,
+                                                    track: currentTrack,
+                                                    menuController:
+                                                        trackContextMenuController,
                                                     child: Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
                                                       children: [
-                                                        AlbumLinkText(
-                                                          text: currentTrack
-                                                              .title,
-                                                          albumId: currentTrack
-                                                              .albumId,
-                                                          style:
-                                                              const TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            fontSize: 16,
-                                                            letterSpacing:
-                                                                16 * 0.03,
-                                                          ),
-                                                          openWithScrollOnSpecificTrackId:
-                                                              currentTrack.id,
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 4),
-                                                        ArtistsLinksText(
-                                                          artists: currentTrack
-                                                              .artists,
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style: TextStyle(
-                                                            fontSize: 14,
-                                                            letterSpacing:
-                                                                14 * 0.03,
-                                                            color: Colors
-                                                                .grey[350],
+                                                        IgnorePointer(
+                                                          child: Row(
+                                                            children: [
+                                                              Expanded(
+                                                                child:
+                                                                    AspectRatio(
+                                                                  aspectRatio:
+                                                                      1.0,
+                                                                  child: image,
+                                                                ),
+                                                              )
+                                                            ],
                                                           ),
                                                         ),
                                                         const SizedBox(
-                                                            height: 4),
-                                                        AlbumLinkText(
-                                                          text: currentTrack
-                                                              .album,
-                                                          albumId: currentTrack
-                                                              .albumId,
-                                                          style: TextStyle(
-                                                            fontSize: 12,
-                                                            letterSpacing:
-                                                                12 * 0.03,
-                                                            fontWeight:
-                                                                FontWeight.w300,
-                                                            color: Colors
-                                                                .grey[350],
-                                                          ),
+                                                            height: 10),
+                                                        Row(
+                                                          children: [
+                                                            Expanded(
+                                                              child: Column(
+                                                                crossAxisAlignment:
+                                                                    CrossAxisAlignment
+                                                                        .start,
+                                                                children: [
+                                                                  AlbumLinkText(
+                                                                    text: currentTrack
+                                                                        .title,
+                                                                    albumId:
+                                                                        currentTrack
+                                                                            .albumId,
+                                                                    style:
+                                                                        const TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w500,
+                                                                      fontSize:
+                                                                          16,
+                                                                      letterSpacing:
+                                                                          16 *
+                                                                              0.03,
+                                                                    ),
+                                                                    openWithScrollOnSpecificTrackId:
+                                                                        currentTrack
+                                                                            .id,
+                                                                  ),
+                                                                  const SizedBox(
+                                                                      height:
+                                                                          4),
+                                                                  ArtistsLinksText(
+                                                                    artists:
+                                                                        currentTrack
+                                                                            .artists,
+                                                                    maxLines: 1,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontSize:
+                                                                          14,
+                                                                      letterSpacing:
+                                                                          14 *
+                                                                              0.03,
+                                                                      color: Colors
+                                                                              .grey[
+                                                                          350],
+                                                                    ),
+                                                                  ),
+                                                                  const SizedBox(
+                                                                      height:
+                                                                          4),
+                                                                  AlbumLinkText(
+                                                                    text: currentTrack
+                                                                        .album,
+                                                                    albumId:
+                                                                        currentTrack
+                                                                            .albumId,
+                                                                    style:
+                                                                        TextStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                      letterSpacing:
+                                                                          12 *
+                                                                              0.03,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w300,
+                                                                      color: Colors
+                                                                              .grey[
+                                                                          350],
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ],
                                                     ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
+                                                  );
+                                                },
+                                              );
+                                            },
                                           ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                                const Column(
-                                  children: [
-                                    LargePlayerSeeker(
-                                      displayDurationsInBottom: true,
-                                      large: true,
+                                          const SizedBox(height: 16),
+                                          const Column(
+                                            children: [
+                                              LargePlayerSeeker(
+                                                displayDurationsInBottom: true,
+                                                large: true,
+                                              ),
+                                              PlayerControls(
+                                                  largeControlsButton: true),
+                                            ],
+                                          )
+                                        ],
+                                      ),
                                     ),
-                                    PlayerControls(largeControlsButton: true),
-                                  ],
-                                )
-                              ],
+                                  ),
+                                  const Padding(
+                                    padding: EdgeInsets.only(
+                                        right: 16.0, bottom: 16.0),
+                                    child: Row(
+                                      children: [
+                                        Spacer(),
+                                        OpenQueueControl(
+                                          largeControlButton: true,
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.only(right: 16.0, bottom: 16.0),
-                          child: Row(
-                            children: [
-                              Spacer(),
-                              OpenQueueControl(
-                                largeControlButton: true,
+                        if (currentLyrics != null)
+                          const SliverToBoxAdapter(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16.0, vertical: 8.0),
+                              child: Text(
+                                "Lyrics",
+                                style: TextStyle(
+                                  fontSize: 40,
+                                  letterSpacing: 40 * 0.03,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ],
+                            ),
                           ),
-                        )
+                        SliverPadding(
+                          padding: const EdgeInsets.only(
+                              left: 16.0, right: 16.0, bottom: 16.0),
+                          sliver: LiveLyrics(
+                            key: liveLyricsKey,
+                            autoScrollToLyric: autoScrollToLyric,
+                            scrollController: scrollController,
+                            setShouldDisableAutoScrollOnScroll:
+                                setShouldDisableAutoScrollOnScroll,
+                          ),
+                        ),
                       ],
-                    ),
-                  ),
-                ),
-              );
-            }),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),

@@ -18,6 +18,7 @@ import 'package:melodink_client/features/player/presentation/widgets/controls/pl
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_skip_to_previous_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/volume_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
+import 'package:melodink_client/features/player/presentation/widgets/live_lyrics.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_error_overlay.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
@@ -37,6 +38,9 @@ class DesktopPlayerPage extends HookConsumerWidget {
     final trackContextMenuController = useMemoized(() => MenuController());
 
     final trackContextMenuKey = useMemoized(() => GlobalKey());
+
+    final scrollController = useScrollController();
+    final liveLyricsKey = useMemoized(() => GlobalKey());
 
     return Dismissible(
       direction: isTouchDevice(context)
@@ -268,14 +272,37 @@ class DesktopPlayerPage extends HookConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 32),
-                          const Expanded(
+                          Expanded(
                             child: Column(
                               children: [
                                 Expanded(
-                                  child: SizedBox.shrink(),
+                                  child: LiveLyricsController(
+                                    startWithAutoLyrics: true,
+                                    liveLyricsKey: liveLyricsKey,
+                                    scrollController: scrollController,
+                                    builder: (
+                                      _,
+                                      autoScrollToLyric,
+                                      setShouldDisableAutoScrollOnScroll,
+                                    ) {
+                                      return CustomScrollView(
+                                        controller: scrollController,
+                                        slivers: [
+                                          LiveLyrics(
+                                            key: liveLyricsKey,
+                                            autoScrollToLyric:
+                                                autoScrollToLyric,
+                                            scrollController: scrollController,
+                                            setShouldDisableAutoScrollOnScroll:
+                                                setShouldDisableAutoScrollOnScroll,
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
                                 ),
-                                SizedBox(height: 16),
-                                Row(
+                                const SizedBox(height: 16),
+                                const Row(
                                   children: [
                                     Spacer(),
                                     SizedBox(

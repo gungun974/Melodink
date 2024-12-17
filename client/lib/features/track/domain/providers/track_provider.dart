@@ -101,6 +101,13 @@ Future<Track> trackById(TrackByIdRef ref, int id) async {
   return await trackRepository.getTrackById(id);
 }
 
+@riverpod
+Future<String> trackLyricsById(TrackLyricsByIdRef ref, int id) async {
+  final trackRepository = ref.read(trackRepositoryProvider);
+
+  return await trackRepository.getTrackLyricsById(id);
+}
+
 //! Search
 
 final allTracksSearchInputProvider =

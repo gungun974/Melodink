@@ -79,6 +79,28 @@ class TrackRemoteDataSource {
     }
   }
 
+  Future<String> getTrackLyricsById(int id) async {
+    try {
+      final response = await AppApi().dio.get<String>("/track/$id/lyrics");
+
+      return response.data ?? "";
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw TrackNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
   Future<Track> saveTrack(Track track) async {
     try {
       final response = await AppApi().dio.put(
