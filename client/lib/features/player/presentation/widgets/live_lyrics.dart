@@ -247,7 +247,7 @@ class LyricsParser {
   }
 }
 
-class LiveLyricsController extends HookWidget {
+class LiveLyricsController extends HookConsumerWidget {
   final Widget Function(
     BuildContext context,
     bool autoScrollToLyric,
@@ -268,7 +268,9 @@ class LiveLyricsController extends HookWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentLyrics = ref.watch(currentLyricsProvider);
+
     final autoScrollToLyric = useState(startWithAutoLyrics);
     final shouldDisableAutoScrollOnScroll = useState(true);
 
@@ -310,8 +312,9 @@ class LiveLyricsController extends HookWidget {
       };
     }, [scrollController]);
 
-    final displayButton =
-        !autoScrollToLyric.value && shouldDisplayAutoScrollButton.value;
+    final displayButton = !autoScrollToLyric.value &&
+        shouldDisplayAutoScrollButton.value &&
+        currentLyrics != null;
 
     return Stack(
       children: [
