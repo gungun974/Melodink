@@ -281,14 +281,15 @@ private:
       audio_retry = true;
 
       StopDecodingThread();
-      CloseFile();
-      CloseAudio(false);
 
       if (!audio_opened) {
         audio_frames_consumed = 0;
         audio_fifo.init(audio_format, audio_channel_count,
                         audio_sample_rate * 5);
       }
+
+      CloseFile();
+      CloseAudio(false);
 
       while (true) {
         int64_t end_audio_time =
