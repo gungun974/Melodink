@@ -806,6 +806,7 @@ public:
             SetAudioError();
           } else {
             SetAudioCurrent(new_current_track);
+            send_event_audio_changed(current_track_index);
           }
         }
 
@@ -815,6 +816,7 @@ public:
       t.detach();
     } else {
       SetAudioCurrent(new_current_track);
+      send_event_audio_changed(current_track_index);
     }
 
     new_current_track->player_load_count -= 1;
