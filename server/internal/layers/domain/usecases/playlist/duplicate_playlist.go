@@ -6,6 +6,7 @@ import (
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/gungun974/Melodink/server/internal/models"
@@ -49,5 +50,11 @@ func (u *PlaylistUsecase) DuplicatePlaylist(
 		return nil, entities.NewInternalError(errors.New("Failed to update playlist tracks"))
 	}
 
-	return u.playlistPresenter.ShowPlaylist(*&newPlaylist), nil
+	err = u.coverStorage.DuplicatePlaylistCover(originalPlaylist, &newPlaylist)
+	if err != nil && !errors.Is(err, storage.OriginalCoverNotFoundError) {
+		logger.MainLogger.Error("Failed to duplicate playlist Cover")
+		return nil, err
+	}
+
+	return u.playlistPresenter.ShowPlaylist(newPlaylist), nil
 }

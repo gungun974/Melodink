@@ -33,6 +33,17 @@ func (u *PlaylistUsecase) GetCompressedPlaylistCover(
 		return nil, entities.NewUnauthorizedError()
 	}
 
+	image, err := u.coverStorage.GetCompressedPlaylistCover(playlist, quality)
+
+	if err == nil {
+		mtype := mimetype.Detect(image.Bytes())
+
+		return &models.ImageAPIResponse{
+			MIMEType: mtype.String(),
+			Data:     image,
+		}, nil
+	}
+
 	if len(playlist.Tracks) <= 0 {
 		return nil, entities.NewNotFoundError(
 			"No image available for this playlist",

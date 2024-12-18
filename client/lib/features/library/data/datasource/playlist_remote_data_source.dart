@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
@@ -137,6 +139,61 @@ class PlaylistRemoteDataSource {
           "description": playlist.description,
         },
       );
+
+      return PlaylistModel.fromJson(response.data).toPlaylist();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw PlaylistNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<Playlist> changePlaylistCover(int id, File file) async {
+    final fileName = file.path.split('/').last;
+
+    final formData = FormData.fromMap({
+      "image": await MultipartFile.fromFile(file.path, filename: fileName),
+    });
+
+    try {
+      final response = await AppApi().dio.put(
+            "/playlist/$id/cover",
+            data: formData,
+          );
+
+      return PlaylistModel.fromJson(response.data).toPlaylist();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw PlaylistNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<Playlist> removePlaylistCover(int id) async {
+    try {
+      final response = await AppApi().dio.delete(
+            "/playlist/$id/cover",
+          );
 
       return PlaylistModel.fromJson(response.data).toPlaylist();
     } on DioException catch (e) {

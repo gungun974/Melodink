@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
@@ -9,6 +10,7 @@ import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/helpers/split_id_to_path.dart';
 import 'package:melodink_client/core/logger/logger.dart';
+import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/track/data/models/minimal_track_model.dart';
@@ -104,6 +106,15 @@ class PlaylistLocalDataSource {
         }
 
         downloadImagePath = null;
+      }
+
+      if (downloadImagePath != null) {
+        await FileImage(
+          File("$applicationSupportDirectory/$downloadImagePath"),
+        ).evict();
+
+        PaintingBinding.instance.imageCache.clearLiveImages();
+        WidgetsBinding.instance.reassembleApplication();
       }
 
       final body = {

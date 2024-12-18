@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	playlist_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/playlist"
@@ -136,6 +137,74 @@ func (c *PlaylistController) DuplicatePlaylist(
 	}
 
 	return c.playlistUsecase.DuplicatePlaylist(ctx, id)
+}
+
+func (c *PlaylistController) ChangePlaylistCover(
+	ctx context.Context,
+	r *http.Request,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	file, handler, err := r.FormFile("image")
+	if err == nil {
+		defer file.Close()
+
+		if err := checkIfFileIsImageFile(file, handler); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, entities.NewValidationError("File can't be open")
+	}
+
+	return c.playlistUsecase.ChangePlaylistCover(ctx,
+		id,
+		file,
+	)
+}
+
+func (c *PlaylistController) GetPlaylistCoverSignature(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.playlistUsecase.GetPlaylistCoverSignature(ctx, id)
+}
+
+func (c *PlaylistController) DeletePlaylistCover(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.playlistUsecase.DeletePlaylistCover(ctx,
+		id,
+	)
 }
 
 func (c *PlaylistController) DeletePlaylist(

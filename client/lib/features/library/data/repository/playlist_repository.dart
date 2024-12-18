@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/datasource/playlist_local_data_source.dart';
@@ -138,6 +140,14 @@ class PlaylistRepository {
     final playlist = await playlistLocalDataSource.getPlaylistById(id);
 
     return playlist != null;
+  }
+
+  Future<Playlist> changePlaylistCover(int id, File file) async {
+    return await playlistRemoteDataSource.changePlaylistCover(id, file);
+  }
+
+  Future<Playlist> removePlaylistCover(int id) async {
+    return await playlistRemoteDataSource.removePlaylistCover(id);
   }
 
   Future<Playlist> deletePlaylistById(int playlistId) async {

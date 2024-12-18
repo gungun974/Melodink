@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 
-	"github.com/gabriel-vasile/mimetype"
 	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
+	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/gungun974/Melodink/server/internal/models"
 )
 
-func (u *PlaylistUsecase) GetPlaylistCover(
+func (u *PlaylistUsecase) DeletePlaylistCover(
 	ctx context.Context,
 	playlistId int,
 ) (models.APIResponse, error) {
@@ -32,37 +32,11 @@ func (u *PlaylistUsecase) GetPlaylistCover(
 		return nil, entities.NewUnauthorizedError()
 	}
 
-	image, err := u.coverStorage.GetOriginalPlaylistCover(playlist)
-
-	if err == nil {
-		mtype := mimetype.Detect(image.Bytes())
-
-		return &models.ImageAPIResponse{
-			MIMEType: mtype.String(),
-			Data:     image,
-		}, nil
+	err = u.coverStorage.RemovePlaylistCoverFiles(playlist)
+	if err != nil {
+		logger.MainLogger.Error("Failed to remove playlist Cover")
+		return nil, err
 	}
 
-	if len(playlist.Tracks) <= 0 {
-		return nil, entities.NewNotFoundError(
-			"No image available for this playlist",
-		)
-	}
-
-	for _, track := range playlist.Tracks {
-		image, err := u.coverStorage.GetOriginalTrackCover(&track)
-
-		if err == nil {
-			mtype := mimetype.Detect(image.Bytes())
-
-			return &models.ImageAPIResponse{
-				MIMEType: mtype.String(),
-				Data:     image,
-			}, nil
-		}
-	}
-
-	return nil, entities.NewNotFoundError(
-		"No image available for this playlist",
-	)
+	return u.playlistPresenter.ShowPlaylist(*playlist), nil
 }

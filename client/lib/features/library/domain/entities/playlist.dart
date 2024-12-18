@@ -60,6 +60,15 @@ class Playlist extends Equatable {
     return "${AppApi().getServerUrl()}playlist/$id/cover";
   }
 
+  Uri getOrignalCoverUri() {
+    final url = getOriginalCoverUrl();
+    Uri? uri = Uri.tryParse(url);
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+      return uri;
+    }
+    return Uri.parse("file://$url");
+  }
+
   String getCompressedCoverUrl(TrackCompressedCoverQuality quality) {
     final cover = localCover;
     if (cover != null) {
@@ -76,5 +85,14 @@ class Playlist extends Equatable {
       default:
         return "${AppApi().getServerUrl()}playlist/$id/cover";
     }
+  }
+
+  Uri getCompressedCoverUri(TrackCompressedCoverQuality quality) {
+    final url = getCompressedCoverUrl(quality);
+    Uri? uri = Uri.tryParse(url);
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+      return uri;
+    }
+    return Uri.parse("file://$url");
   }
 }

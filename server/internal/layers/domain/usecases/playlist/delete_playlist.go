@@ -32,6 +32,10 @@ func (u *PlaylistUsecase) DeletePlaylist(
 		return nil, entities.NewUnauthorizedError()
 	}
 
+	if err := u.coverStorage.RemovePlaylistCoverFiles(playlist); err != nil {
+		logger.MainLogger.Warn("Couldn't delete cover files from storage", err, *playlist)
+	}
+
 	if err := u.playlistRepository.DeletePlaylist(playlist); err != nil {
 		logger.MainLogger.Error("Couldn't delete playlist from Database", err, *playlist)
 		return nil, entities.NewInternalError(errors.New("Failed to delete playlist"))
