@@ -172,8 +172,8 @@ class DownloadTrackRepository {
         (await getMelodinkInstanceSupportDirectory()).path;
 
     try {
-      final albumTracksData =
-          await db.rawQuery("SELECT tracks FROM album_download");
+      final albumTracksData = await db.rawQuery(
+          "SELECT tracks FROM album_download WHERE download_tracks = 1");
 
       final playlistTracksData =
           await db.rawQuery("SELECT tracks FROM playlist_download");

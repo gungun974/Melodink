@@ -38,6 +38,7 @@ class AlbumLocalDataSource {
           )
           .toList(),
       isDownloaded: true,
+      downloadTracks: data["download_tracks"] == 1,
     );
   }
 
@@ -83,7 +84,7 @@ class AlbumLocalDataSource {
     }
   }
 
-  Future<void> storeAlbum(Album album) async {
+  Future<void> storeAlbum(Album album, bool shouldDownloadTracks) async {
     final db = await DatabaseService.getDatabase();
 
     try {
@@ -140,12 +141,14 @@ class AlbumLocalDataSource {
               )
               .toList(),
         ),
+        if (shouldDownloadTracks) "download_tracks": 1,
       };
 
       if (savedAlbum == null) {
         await db.insert("album_download", {
           "album_id": album.id,
           ...body,
+          "download_tracks": shouldDownloadTracks ? 1 : 0,
         });
         return;
       }
@@ -196,6 +199,52 @@ class AlbumLocalDataSource {
         where: "album_id = ?",
         whereArgs: [albumId],
       );
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<List<Album>> getOrphanAlbums() async {
+    final db = await DatabaseService.getDatabase();
+
+    final applicationSupportDirectory =
+        (await getMelodinkInstanceSupportDirectory()).path;
+
+    try {
+      final playlistTracksData =
+          await db.rawQuery("SELECT tracks FROM playlist_download");
+
+      final albumIds = playlistTracksData
+          .map((data) => (json.decode(data["tracks"] as String) as List)
+              .map(
+                (rawModel) => "'${MinimalTrackModel.fromJson(rawModel).albumId}'",
+              )
+              .toSet())
+          .expand((i) => i);
+
+      final orphansData = await db.rawQuery(
+        "SELECT * FROM album_download WHERE download_tracks = 0 AND album_id NOT IN (${albumIds.join(",")})",
+      );
+
+      final orphans = orphansData
+          .map((data) => decodeDownloadTrack(data, applicationSupportDirectory))
+          .toList();
+
+      return orphans;
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<void> deleteOrphanAlbums() async {
+    final orphans = await getOrphanAlbums();
+
+    try {
+      for (var orphan in orphans) {
+        await deleteStoredAlbum(orphan.id);
+      }
     } catch (e) {
       mainLogger.e(e);
       throw ServerUnknownException();

@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
@@ -238,6 +239,7 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
     }
 
     final playlistRepository = ref.read(playlistRepositoryProvider);
+    final albumRepository = ref.read(albumRepositoryProvider);
 
     state = state.copyWith(isLoading: true);
     try {
@@ -256,6 +258,11 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
         newPlaylist.tracks,
       );
 
+      for (final albumId
+          in newPlaylist.tracks.map((track) => track.albumId).toSet()) {
+        await albumRepository.updateAndStoreAlbum(albumId, false);
+      }
+
       ref.invalidate(allPlaylistsProvider);
       ref.invalidate(playlistByIdProvider(playlistId));
     } catch (e) {
@@ -273,10 +280,12 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
     }
 
     final playlistRepository = ref.read(playlistRepositoryProvider);
+    final albumRepository = ref.read(albumRepositoryProvider);
 
     state = state.copyWith(isLoading: true);
     try {
       await playlistRepository.deleteStoredPlaylist(playlistId);
+      await albumRepository.deleteOrphanAlbums();
 
       final downloadManagerNotifier =
           ref.read(downloadManagerNotifierProvider.notifier);

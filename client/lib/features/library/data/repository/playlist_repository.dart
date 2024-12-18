@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/network/network_info.dart';
+import 'package:melodink_client/features/library/data/datasource/album_local_data_source.dart';
 import 'package:melodink_client/features/library/data/datasource/playlist_local_data_source.dart';
 import 'package:melodink_client/features/library/data/datasource/playlist_remote_data_source.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
@@ -14,6 +15,8 @@ class PlaylistRepository {
   final PlaylistRemoteDataSource playlistRemoteDataSource;
   final PlaylistLocalDataSource playlistLocalDataSource;
 
+  final AlbumLocalDataSource albumLocalDataSource;
+
   final PlayedTrackRepository playedTrackRepository;
 
   final NetworkInfo networkInfo;
@@ -21,6 +24,7 @@ class PlaylistRepository {
   PlaylistRepository({
     required this.playlistRemoteDataSource,
     required this.playlistLocalDataSource,
+    required this.albumLocalDataSource,
     required this.playedTrackRepository,
     required this.networkInfo,
   });
@@ -51,6 +55,8 @@ class PlaylistRepository {
         for (final playlist in extraLocalPlaylists) {
           await playlistLocalDataSource.deleteStoredPlaylist(playlist.id);
         }
+
+        await albumLocalDataSource.deleteOrphanAlbums();
 
         return remotePlaylists;
       } catch (_) {
@@ -172,6 +178,9 @@ final playlistRepositoryProvider = Provider(
     ),
     playlistLocalDataSource: ref.watch(
       playlistLocalDataSourceProvider,
+    ),
+    albumLocalDataSource: ref.watch(
+      albumLocalDataSourceProvider,
     ),
     playedTrackRepository: ref.watch(
       playedTrackRepositoryProvider,

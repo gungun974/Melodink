@@ -32,8 +32,17 @@ class AlbumRepository {
         final remoteAlbums = await albumRemoteDataSource.getAllAlbums();
 
         for (var i = 0; i < remoteAlbums.length; i++) {
-          if (localAlbums.any((album) => album.id == remoteAlbums[i].id)) {
-            remoteAlbums[i] = remoteAlbums[i].copyWith(isDownloaded: true);
+          final localAlbum = localAlbums
+              .where(
+                (album) => album.id == remoteAlbums[i].id,
+              )
+              .firstOrNull;
+
+          if (localAlbum != null) {
+            remoteAlbums[i] = remoteAlbums[i].copyWith(
+              isDownloaded: true,
+              downloadTracks: localAlbum.downloadTracks,
+            );
           }
         }
 
@@ -56,9 +65,10 @@ class AlbumRepository {
     return album;
   }
 
-  Future<Album> updateAndStoreAlbum(String id) async {
+  Future<Album> updateAndStoreAlbum(
+      String id, bool shouldDownloadTracks) async {
     final album = await albumRemoteDataSource.getAlbumById(id);
-    await albumLocalDataSource.storeAlbum(album);
+    await albumLocalDataSource.storeAlbum(album, shouldDownloadTracks);
 
     await playedTrackRepository.loadTrackHistoryIntoMinimalTracks(album.tracks);
 
@@ -69,10 +79,18 @@ class AlbumRepository {
     await albumLocalDataSource.deleteStoredAlbum(id);
   }
 
+  Future<void> deleteOrphanAlbums() async {
+    await albumLocalDataSource.deleteOrphanAlbums();
+  }
+
   Future<bool> isAlbumDownloaded(String id) async {
     final album = await albumLocalDataSource.getAlbumById(id);
 
-    return album != null;
+    if (album == null) {
+      return false;
+    }
+
+    return album.downloadTracks;
   }
 
   Future<Album> changeAlbumCover(String id, File file) async {

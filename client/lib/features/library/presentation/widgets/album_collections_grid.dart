@@ -104,7 +104,7 @@ class AlbumCollectionsGrid extends StatelessWidget {
                             ),
                           ),
                         ),
-                        album.isDownloaded
+                        album.isDownloaded && album.downloadTracks
                             ? Padding(
                                 padding: const EdgeInsets.only(left: 4.0),
                                 child: SvgPicture.asset(

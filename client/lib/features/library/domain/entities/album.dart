@@ -14,6 +14,7 @@ class Album extends Equatable {
   final List<MinimalTrack> tracks;
 
   final bool isDownloaded;
+  final bool downloadTracks;
 
   final String? localCover;
 
@@ -23,6 +24,7 @@ class Album extends Equatable {
     required this.albumArtists,
     required this.tracks,
     this.isDownloaded = false,
+    this.downloadTracks = false,
     this.localCover,
   });
 
@@ -32,6 +34,7 @@ class Album extends Equatable {
     List<MinimalArtist>? albumArtists,
     List<MinimalTrack>? tracks,
     bool? isDownloaded,
+    bool? downloadTracks,
   }) {
     return Album(
       id: id ?? this.id,
@@ -39,6 +42,7 @@ class Album extends Equatable {
       albumArtists: albumArtists ?? this.albumArtists,
       tracks: tracks ?? this.tracks,
       isDownloaded: isDownloaded ?? this.isDownloaded,
+      downloadTracks: downloadTracks ?? this.downloadTracks,
     );
   }
 
@@ -49,6 +53,7 @@ class Album extends Equatable {
         albumArtists,
         tracks,
         isDownloaded,
+        downloadTracks,
         localCover,
       ];
 

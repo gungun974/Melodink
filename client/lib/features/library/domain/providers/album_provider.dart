@@ -219,7 +219,7 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
 
     state = state.copyWith(isLoading: true);
     try {
-      final newAlbum = await albumRepository.updateAndStoreAlbum(albumId);
+      final newAlbum = await albumRepository.updateAndStoreAlbum(albumId, true);
 
       state = state.copyWith(
         isLoading: false,
