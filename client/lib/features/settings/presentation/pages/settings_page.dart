@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
-import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/settings/presentation/widgets/server_info.dart';
@@ -23,6 +23,8 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(appSettingsNotifierProvider).valueOrNull;
+
+    final forceOffline = ref.watch(isForceOfflineProvider);
 
     if (settings == null) {
       return const AppPageLoader();
@@ -44,6 +46,42 @@ class SettingsPage extends ConsumerWidget {
                 children: [
                   SizedBox(height: padding),
                   const ServerInfo(),
+                  const SizedBox(height: 16),
+                  SettingPannel(
+                    title: "Network",
+                    children: [
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          if (!forceOffline)
+                            Expanded(
+                              child: AppButton(
+                                text: "Force offline",
+                                type: AppButtonType.primary,
+                                onPressed: () async {
+                                  await ref
+                                      .read(networkInfoProvider)
+                                      .setForceOffline(true);
+                                },
+                              ),
+                            ),
+                          if (forceOffline)
+                            Expanded(
+                              child: AppButton(
+                                text: "Disable force offline",
+                                type: AppButtonType.primary,
+                                onPressed: () async {
+                                  await ref
+                                      .read(networkInfoProvider)
+                                      .setForceOffline(false);
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   SettingPannel(
                     title: "Appearance",

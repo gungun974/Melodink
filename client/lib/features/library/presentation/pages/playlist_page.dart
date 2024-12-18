@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/app_confirm.dart';
+import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
@@ -88,6 +89,17 @@ class PlaylistPage extends HookConsumerWidget {
               ),
               child: const Text("Edit"),
               onPressed: () {
+                if (!NetworkInfo().isServerRecheable()) {
+                  AppNotificationManager.of(context).notify(
+                    context,
+                    title: "Offline",
+                    message:
+                        "You can't perform this action while being offline.",
+                    type: AppNotificationType.danger,
+                  );
+                  return;
+                }
+
                 EditPlaylistModal.showModal(context, playlist);
               },
             ),
@@ -101,6 +113,17 @@ class PlaylistPage extends HookConsumerWidget {
               ),
               child: const Text("Duplicate"),
               onPressed: () async {
+                if (!NetworkInfo().isServerRecheable()) {
+                  AppNotificationManager.of(context).notify(
+                    context,
+                    title: "Offline",
+                    message:
+                        "You can't perform this action while being offline.",
+                    type: AppNotificationType.danger,
+                  );
+                  return;
+                }
+
                 if (!await appConfirm(
                   context,
                   title: "Confirm",
@@ -155,6 +178,17 @@ class PlaylistPage extends HookConsumerWidget {
               ),
               child: const Text("Delete"),
               onPressed: () async {
+                if (!NetworkInfo().isServerRecheable()) {
+                  AppNotificationManager.of(context).notify(
+                    context,
+                    title: "Offline",
+                    message:
+                        "You can't perform this action while being offline.",
+                    type: AppNotificationType.danger,
+                  );
+                  return;
+                }
+
                 if (!await appConfirm(
                   context,
                   title: "Confirm",
@@ -343,6 +377,19 @@ class PlaylistPage extends HookConsumerWidget {
                             ),
                             child: const Text("Remove from this playlist"),
                             onPressed: () async {
+                              menuController.close();
+
+                              if (!NetworkInfo().isServerRecheable()) {
+                                AppNotificationManager.of(context).notify(
+                                  context,
+                                  title: "Offline",
+                                  message:
+                                      "You can't perform this action while being offline.",
+                                  type: AppNotificationType.danger,
+                                );
+                                return;
+                              }
+
                               try {
                                 await ref
                                     .read(playlistContextMenuNotifierProvider
@@ -375,7 +422,6 @@ class PlaylistPage extends HookConsumerWidget {
                                     "track have been removed from playlist \"${playlist.name}\".",
                               );
 
-                              menuController.close();
                               unselect();
                             },
                           ),
@@ -398,6 +444,17 @@ class PlaylistPage extends HookConsumerWidget {
                             ),
                             child: const Text("Remove from this playlist"),
                             onPressed: () async {
+                              if (!NetworkInfo().isServerRecheable()) {
+                                AppNotificationManager.of(context).notify(
+                                  context,
+                                  title: "Offline",
+                                  message:
+                                      "You can't perform this action while being offline.",
+                                  type: AppNotificationType.danger,
+                                );
+                                return;
+                              }
+
                               try {
                                 await ref
                                     .read(playlistContextMenuNotifierProvider

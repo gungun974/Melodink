@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
+import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
@@ -52,6 +53,8 @@ void main() async {
   await AppApi().setupCookieJar();
 
   await AppApi().configureDio();
+
+  await NetworkInfo().setSavedForceOffline();
 
   await initAudioService();
 

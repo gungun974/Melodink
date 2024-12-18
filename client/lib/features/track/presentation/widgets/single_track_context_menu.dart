@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
+import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
@@ -68,6 +69,19 @@ class SingleTrackContextMenu extends ConsumerWidget {
                 return MenuItemButton(
                   child: Text(playlist.name),
                   onPressed: () async {
+                    menuController.close();
+
+                    if (!NetworkInfo().isServerRecheable()) {
+                      AppNotificationManager.of(context).notify(
+                        context,
+                        title: "Offline",
+                        message:
+                            "You can't perform this action while being offline.",
+                        type: AppNotificationType.danger,
+                      );
+                      return;
+                    }
+
                     try {
                       await ref
                           .read(playlistContextMenuNotifierProvider.notifier)
@@ -87,7 +101,6 @@ class SingleTrackContextMenu extends ConsumerWidget {
 
                       rethrow;
                     }
-                    menuController.close();
 
                     if (!context.mounted) {
                       return;
@@ -193,6 +206,16 @@ class SingleTrackContextMenu extends ConsumerWidget {
           onPressed: () async {
             menuController.close();
 
+            if (!NetworkInfo().isServerRecheable()) {
+              AppNotificationManager.of(context).notify(
+                context,
+                title: "Offline",
+                message: "You can't perform this action while being offline.",
+                type: AppNotificationType.danger,
+              );
+              return;
+            }
+
             AppNotificationManager.of(context).notify(
               context,
               message: "Start downloading track \"${track.title}\"",
@@ -251,6 +274,17 @@ class SingleTrackContextMenu extends ConsumerWidget {
           child: const Text("Properties"),
           onPressed: () {
             menuController.close();
+
+            if (!NetworkInfo().isServerRecheable()) {
+              AppNotificationManager.of(context).notify(
+                context,
+                title: "Offline",
+                message: "You can't perform this action while being offline.",
+                type: AppNotificationType.danger,
+              );
+              return;
+            }
+
             showGeneralDialog(
               context: context,
               barrierDismissible: true,
