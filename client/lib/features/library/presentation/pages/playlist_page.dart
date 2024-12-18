@@ -183,6 +183,8 @@ class PlaylistPage extends HookConsumerWidget {
                     message:
                         "The playlist \"${playlist.name}\" has been successfully deleted.",
                   );
+
+                  GoRouter.of(context).pop();
                 } catch (_) {
                   if (context.mounted) {
                     AppNotificationManager.of(context).notify(
