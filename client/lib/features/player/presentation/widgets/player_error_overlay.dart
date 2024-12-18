@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +22,8 @@ class PlayerErrorOverlay extends HookConsumerWidget {
     return StreamBuilder(
       stream: audioController.playbackState.stream,
       builder: (context, snapshot) {
-        if (snapshot.data?.processingState != AudioProcessingState.error) {
+        if (audioController.playbackState.valueOrNull?.processingState !=
+            AudioProcessingState.error) {
           return child;
         }
 
@@ -29,15 +32,24 @@ class PlayerErrorOverlay extends HookConsumerWidget {
           final childSize = useState<Size?>(null);
 
           useEffect(() {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
+            calculateSize(_) {
               final renderBox =
                   childKey.currentContext?.findRenderObject() as RenderBox?;
               if (renderBox != null) {
-                childSize.value = renderBox.size;
+                if (renderBox.size != childSize.value) {
+                  childSize.value = renderBox.size;
+                }
               }
-            });
+            }
 
-            return null;
+            WidgetsBinding.instance.addPostFrameCallback(calculateSize);
+
+            final timer = Timer.periodic(
+              const Duration(milliseconds: 10),
+              calculateSize,
+            );
+
+            return timer.cancel;
           }, []);
 
           return Stack(
