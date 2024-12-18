@@ -57,7 +57,7 @@
       flutter-sdk = (import ./nix/flutter) flutter-pkgs;
       sdk = android-nixpkgs.sdk.${system} (sdkPkgs:
         with sdkPkgs; [
-          build-tools-30-0-3
+          build-tools-33-0-1
           build-tools-34-0-0
           cmdline-tools-latest
           emulator
