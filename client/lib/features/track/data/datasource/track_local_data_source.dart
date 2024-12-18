@@ -19,6 +19,9 @@ class TrackLocalDataSource {
     final allAlbums = await albumLocalDataSource.getAllAlbums();
 
     for (final album in allAlbums) {
+      if (!album.downloadTracks) {
+        continue;
+      }
       for (final track in album.tracks) {
         if (tracks.indexWhere((atrack) => atrack.id == track.id) == -1) {
           tracks.add(track);
