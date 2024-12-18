@@ -602,10 +602,47 @@ class EditTrackModal extends HookConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          const Expanded(
+                          Expanded(
                             child: AppButton(
                               text: "Change Cover",
                               type: AppButtonType.secondary,
+                              onPressed: () async {
+                                final file = await pickImageFile();
+
+                                if (file == null) {
+                                  return;
+                                }
+
+                                isLoading.value = true;
+                                try {
+                                  await ref
+                                      .read(trackEditStreamProvider.notifier)
+                                      .changeTrackCover(track.id, file);
+                                  isLoading.value = false;
+                                } catch (_) {
+                                  isLoading.value = false;
+
+                                  if (context.mounted) {
+                                    AppNotificationManager.of(context).notify(
+                                      context,
+                                      title: "Error",
+                                      message: "Something went wrong",
+                                      type: AppNotificationType.danger,
+                                    );
+                                  }
+                                  rethrow;
+                                }
+
+                                if (!context.mounted) {
+                                  return;
+                                }
+
+                                AppNotificationManager.of(context).notify(
+                                  context,
+                                  message:
+                                      "The cover for track \"${track.title}\" have been changed.",
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(width: 16),

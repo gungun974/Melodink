@@ -17,8 +17,9 @@ type TrackViewModel struct {
 	TagsFormat string `json:"tags_format"`
 	FileType   string `json:"file_type"`
 
-	Path          string `json:"path"`
-	FileSignature string `json:"file_signature"`
+	Path           string `json:"path"`
+	FileSignature  string `json:"file_signature"`
+	CoverSignature string `json:"cover_signature"`
 
 	Metadata TrackMetadataViewModel `json:"metadata"`
 
@@ -43,8 +44,9 @@ func ConvertToTrackViewModel(
 		TagsFormat: track.TagsFormat,
 		FileType:   track.FileType,
 
-		Path:          track.Path,
-		FileSignature: track.FileSignature,
+		Path:           track.Path,
+		FileSignature:  track.FileSignature,
+		CoverSignature: track.CoverSignature,
 
 		DateAdded: track.DateAdded.UTC().Format(time.RFC3339),
 

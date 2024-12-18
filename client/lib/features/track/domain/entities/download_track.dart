@@ -7,12 +7,14 @@ class DownloadTrack extends Equatable {
   final String? imageFile;
 
   final String fileSignature;
+  final String coverSignature;
 
   const DownloadTrack({
     required this.trackId,
     required this.audioFile,
     required this.imageFile,
     required this.fileSignature,
+    required this.coverSignature,
   });
 
   @override
@@ -21,6 +23,7 @@ class DownloadTrack extends Equatable {
         audioFile,
         imageFile,
         fileSignature,
+        coverSignature,
       ];
 
   String getUrl() {

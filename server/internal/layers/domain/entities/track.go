@@ -20,8 +20,9 @@ type Track struct {
 	TagsFormat string
 	FileType   string
 
-	Path          string
-	FileSignature string
+	Path           string
+	FileSignature  string
+	CoverSignature string
 
 	Metadata TrackMetadata
 

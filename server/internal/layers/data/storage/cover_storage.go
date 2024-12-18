@@ -2,6 +2,8 @@ package storage
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -84,6 +86,35 @@ func (s *CoverStorage) GenerateTrackCoverFromAudioFile(track *entities.Track) er
 	return nil
 }
 
+func (s *CoverStorage) UploadCustomTrackCover(track *entities.Track, file io.Reader) error {
+	directory := s.getTrackStorageDirectoryPath(track)
+
+	err := os.MkdirAll(directory, 0o755)
+	if err != nil {
+		return err
+	}
+
+	originalFileLocation := helpers.SafeJoin(directory, "original")
+
+	destFile, err := os.Create(originalFileLocation)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, file)
+	if err != nil {
+		return err
+	}
+
+	err = s.generateCompressedTrackCovers(track)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *CoverStorage) generateCompressedTrackCovers(track *entities.Track) error {
 	directory := s.getTrackStorageDirectoryPath(track)
 
@@ -129,7 +160,7 @@ func (s *CoverStorage) generateCompressedTrackCovers(track *entities.Track) erro
 				return err
 			}
 
-			return nil
+			continue
 		}
 
 		newImage, err := image.Process(bimg.Options{
@@ -195,6 +226,27 @@ func (s *CoverStorage) GetOriginalTrackCover(
 	}
 
 	return buffer, nil
+}
+
+func (s *CoverStorage) GetTrackCoverSignature(
+	track *entities.Track,
+) string {
+	directory := s.getTrackStorageDirectoryPath(track)
+
+	file, err := os.Open(path.Join(directory, "original"))
+	if err != nil {
+		return ""
+	}
+
+	defer file.Close()
+
+	hash := md5.New()
+	_, err = io.Copy(hash, file)
+	if err != nil {
+		return ""
+	}
+
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 func (s *CoverStorage) RemoveTrackCoverFiles(track *entities.Track) error {

@@ -77,6 +77,13 @@ func (u *TrackUsecase) UploadTrack(
 	err = u.coverStorage.GenerateTrackCoverFromAudioFile(&track)
 	if err != nil {
 		logger.MainLogger.Warn("Failed to extract cover from audio file", err)
+	} else {
+		track.CoverSignature = u.coverStorage.GetTrackCoverSignature(&track)
+
+		err = u.trackRepository.UpdateTrack(&track)
+		if err != nil {
+			logger.MainLogger.Error("Failed to update track cover signature in database")
+		}
 	}
 
 	return u.trackPresenter.ShowDetailedTrack(track), nil

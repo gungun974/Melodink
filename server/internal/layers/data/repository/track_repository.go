@@ -130,6 +130,7 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 
         path,
         file_signature,
+        cover_signature,
 
         metadata_album,
 
@@ -208,6 +209,7 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 
 		track.Path,
 		track.FileSignature,
+		track.CoverSignature,
 
 		track.Metadata.Album,
 
@@ -294,6 +296,7 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 
         path = ?,
         file_signature = ?,
+        cover_signature = ?,
 
         metadata_album = ?,
 
@@ -343,6 +346,7 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 
 		track.Path,
 		track.FileSignature,
+		track.CoverSignature,
 
 		track.Metadata.Album,
 

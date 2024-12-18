@@ -30,8 +30,9 @@ type TrackModel struct {
 	TagsFormat string `db:"tags_format"`
 	FileType   string `db:"file_type"`
 
-	Path          string `db:"path"`
-	FileSignature string `db:"file_signature"`
+	Path           string `db:"path"`
+	FileSignature  string `db:"file_signature"`
+	CoverSignature string `db:"cover_signature"`
 
 	MetadataAlbum string `db:"metadata_album"`
 
@@ -109,8 +110,9 @@ func (m *TrackModel) ToTrack() entities.Track {
 		TagsFormat: m.TagsFormat,
 		FileType:   m.FileType,
 
-		Path:          m.Path,
-		FileSignature: m.FileSignature,
+		Path:           m.Path,
+		FileSignature:  m.FileSignature,
+		CoverSignature: m.CoverSignature,
 
 		DateAdded: m.DateAdded,
 

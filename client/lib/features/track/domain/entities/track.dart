@@ -15,6 +15,7 @@ class Track extends Equatable {
   final String fileType;
 
   final String fileSignature;
+  final String coverSignature;
 
   final TrackMetadata metadata;
 
@@ -33,6 +34,7 @@ class Track extends Equatable {
     required this.tagsFormat,
     required this.fileType,
     required this.fileSignature,
+    required this.coverSignature,
     required this.metadata,
     required this.sampleRate,
     required this.bitRate,
@@ -48,6 +50,7 @@ class Track extends Equatable {
     String? tagsFormat,
     String? fileType,
     String? fileSignature,
+    String? coverSignature,
     TrackMetadata? metadata,
     int? sampleRate,
     int? bitRate,
@@ -62,6 +65,7 @@ class Track extends Equatable {
       tagsFormat: tagsFormat ?? this.tagsFormat,
       fileType: fileType ?? this.fileType,
       fileSignature: fileSignature ?? this.fileSignature,
+      coverSignature: coverSignature ?? this.coverSignature,
       metadata: metadata ?? this.metadata,
       sampleRate: sampleRate ?? this.sampleRate,
       bitRate: bitRate ?? this.bitRate,
@@ -79,6 +83,7 @@ class Track extends Equatable {
         tagsFormat,
         fileType,
         fileSignature,
+        coverSignature,
         metadata,
         sampleRate,
         bitRate,

@@ -204,6 +204,23 @@ func (c *TrackController) GetTrackFileSignature(
 	return c.trackUsecase.GetTrackFileSignature(ctx, id)
 }
 
+func (c *TrackController) GetTrackCoverSignature(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.GetTrackCoverSignature(ctx, id)
+}
+
 func (c *TrackController) GetTrackFileExtension(
 	ctx context.Context,
 	rawId string,
@@ -593,6 +610,38 @@ func (c *TrackController) ChangeTrackAudio(
 	)
 }
 
+func (c *TrackController) ChangeTrackCover(
+	ctx context.Context,
+	r *http.Request,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	file, handler, err := r.FormFile("image")
+	if err == nil {
+		defer file.Close()
+
+		if err := checkIfFileIsImageFile(file, handler); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, entities.NewValidationError("File can't be open")
+	}
+
+	return c.trackUsecase.ChangeTrackCover(ctx,
+		id,
+		file,
+	)
+}
+
 func (c *TrackController) DeleteTrack(
 	ctx context.Context,
 	rawId string,
@@ -647,6 +696,45 @@ func checkIfFileIsAudioFile(file io.ReadSeeker, handler *multipart.FileHeader) e
 	if !validMimeType {
 		logger.MainLogger.Warnf("Can't process %s", mtype.String())
 		return entities.NewValidationError("File is not a valid audio file")
+	}
+
+	return nil
+}
+
+func checkIfFileIsImageFile(file io.ReadSeeker, handler *multipart.FileHeader) error {
+	if handler.Size > 500*1024*1024 {
+		return entities.NewValidationError("File is too big")
+	}
+
+	validMimeType := false
+
+	mtype, err := mimetype.DetectReader(file)
+	if err != nil {
+		return entities.NewValidationError("File type is unknown")
+	}
+
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		return entities.NewInternalError(err)
+	}
+
+	for _, mimeType := range []string{
+		"image/jpeg",
+		"image/png",
+		"image/webp",
+		"image/gif",
+		"image/avif",
+		"image/tiff",
+		"image/svg+xml",
+	} {
+		if mimeType == mtype.String() {
+			validMimeType = true
+			break
+		}
+	}
+
+	if !validMimeType {
+		logger.MainLogger.Warnf("Can't process %s", mtype.String())
+		return entities.NewValidationError("File is not a valid image file")
 	}
 
 	return nil

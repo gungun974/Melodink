@@ -61,6 +61,20 @@ class AppImageCacheProvider extends ImageProvider<AppImageCacheProvider> {
     );
   }
 
+  static clearCache(Uri url) async {
+    final cacheId = splitHashToPath(createUrlHash(url.toString()));
+
+    final cacheLocation = File(
+      "${(await getMelodinkInstanceCacheDirectory()).path}/imacheCache/$cacheId",
+    );
+
+    if (await cacheLocation.exists()) {
+      await cacheLocation.delete();
+    }
+
+    await AppImageCacheProvider(url).evict();
+  }
+
   Future<ui.Codec> _loadAsync(
     AppImageCacheProvider key,
     StreamController<ImageChunkEvent> chunkEvents,

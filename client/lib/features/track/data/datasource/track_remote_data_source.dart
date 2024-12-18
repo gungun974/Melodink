@@ -237,6 +237,37 @@ class TrackRemoteDataSource {
     }
   }
 
+  changeTrackCover(int id, File file) async {
+    final fileName = file.path.split('/').last;
+
+    final formData = FormData.fromMap({
+      "image": await MultipartFile.fromFile(file.path, filename: fileName),
+    });
+
+    try {
+      final response = await AppApi().dio.put(
+            "/track/$id/cover",
+            data: formData,
+          );
+
+      return TrackModel.fromJson(response.data).toTrack();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw TrackNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
   Future<Track> deleteTrackById(int id) async {
     try {
       final response = await AppApi().dio.delete("/track/$id");

@@ -1,6 +1,5 @@
 import 'package:melodink_client/features/library/data/models/artist_model.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
-import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
 
 class TrackModel {
   final int id;
@@ -12,6 +11,7 @@ class TrackModel {
   final String fileType;
 
   final String fileSignature;
+  final String coverSignature;
 
   final TrackMetadataModel metadata;
 
@@ -28,6 +28,7 @@ class TrackModel {
     required this.tagsFormat,
     required this.fileType,
     required this.fileSignature,
+    required this.coverSignature,
     required this.metadata,
     required this.sampleRate,
     required this.bitRate,
@@ -43,6 +44,7 @@ class TrackModel {
       tagsFormat: tagsFormat,
       fileType: fileType,
       fileSignature: fileSignature,
+      coverSignature: coverSignature,
       metadata: metadata.toTrackMetadata(),
       sampleRate: sampleRate,
       bitRate: bitRate,
@@ -59,6 +61,7 @@ class TrackModel {
       tagsFormat: json['tags_format'],
       fileType: json['file_type'],
       fileSignature: json['file_signature'],
+      coverSignature: json['cover_signature'],
       metadata: TrackMetadataModel.fromJson(json['metadata']),
       sampleRate: (json['sample_rate'] as num).toInt(),
       bitRate:

@@ -153,6 +153,18 @@ func TrackRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
+	router.Get("/{id}/cover/signature", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		response, err := c.TrackController.GetTrackCoverSignature(r.Context(), id)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
 	router.Get("/{id}/extension", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 
@@ -225,6 +237,18 @@ func TrackRouter(c internal.Container) http.Handler {
 		id := chi.URLParam(r, "id")
 
 		response, err := c.TrackController.ChangeTrackAudio(r.Context(), r, id)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Put("/{id}/cover", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		response, err := c.TrackController.ChangeTrackCover(r.Context(), r, id)
 		if err != nil {
 			handleHTTPError(err, w)
 			return

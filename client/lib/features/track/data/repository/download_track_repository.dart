@@ -26,6 +26,7 @@ class DownloadTrackRepository {
           ? "$applicationSupportDirectory/$rawImageFile"
           : null,
       fileSignature: data["file_signature"] as String,
+      coverSignature: data["cover_signature"] as String,
     );
   }
 
@@ -70,15 +71,25 @@ class DownloadTrackRepository {
       final signatureResponse =
           await AppApi().dio.get<String>("/track/$trackId/signature");
 
+      final coverSignatureResponse =
+          await AppApi().dio.get<String>("/track/$trackId/cover/signature");
+
       final signature = signatureResponse.data;
+      final coverSignature = coverSignatureResponse.data;
 
       if (signature == null) {
         throw ServerTimeoutException();
       }
 
+      if (coverSignature == null) {
+        throw ServerTimeoutException();
+      }
+
       final downloadTrack = await getDownloadedTrackByTrackId(trackId);
 
-      if (downloadTrack != null && downloadTrack.fileSignature == signature) {
+      if (downloadTrack != null &&
+          downloadTrack.fileSignature == signature &&
+          downloadTrack.coverSignature == coverSignature) {
         return;
       }
 
@@ -88,29 +99,39 @@ class DownloadTrackRepository {
       final downloadPath = "/download/${splitIdToPath(trackId)}";
 
       final downloadAudioPath = "$downloadPath/audio";
-      String? downloadImagePath = "$downloadPath/image";
+      String? downloadImagePath = "$downloadPath/image-$coverSignature";
 
-      await AppApi().dio.download(
-            "/track/$trackId/audio",
-            "$applicationSupportDirectory/$downloadAudioPath",
-          );
-
-      try {
+      if (downloadTrack?.fileSignature != signature) {
         await AppApi().dio.download(
-              "/track/$trackId/cover",
-              "$applicationSupportDirectory/$downloadImagePath",
+              "/track/$trackId/audio",
+              "$applicationSupportDirectory/$downloadAudioPath",
             );
-      } on DioException catch (e) {
-        final response = e.response;
-        if (response == null) {
-          rethrow;
+      }
+
+      if (downloadTrack?.coverSignature != coverSignature) {
+        try {
+          await AppApi().dio.download(
+                "/track/$trackId/cover",
+                "$applicationSupportDirectory/$downloadImagePath",
+              );
+        } on DioException catch (e) {
+          final response = e.response;
+          if (response == null) {
+            rethrow;
+          }
+
+          if (response.statusCode != 404) {
+            rethrow;
+          }
+
+          downloadImagePath = null;
         }
 
-        if (response.statusCode != 404) {
-          rethrow;
+        if (downloadTrack?.imageFile != null) {
+          try {
+            await File(downloadTrack!.imageFile!).delete();
+          } catch (_) {}
         }
-
-        downloadImagePath = null;
       }
 
       if (downloadTrack == null) {
@@ -119,13 +140,14 @@ class DownloadTrackRepository {
           "audio_file": downloadAudioPath,
           "image_file": downloadImagePath,
           "file_signature": signature,
+          "cover_signature": coverSignature,
         });
         return;
       }
 
       await db.rawUpdate(
-          "UPDATE track_download SET file_signature = ? WHERE track_id = ?",
-          [signature, trackId]);
+          "UPDATE track_download SET file_signature = ?, cover_signature = ?, image_file = ? WHERE track_id = ?",
+          [signature, coverSignature, downloadImagePath, trackId]);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
