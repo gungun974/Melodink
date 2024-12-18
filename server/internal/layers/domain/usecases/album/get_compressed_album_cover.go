@@ -29,6 +29,17 @@ func (u *AlbumUsecase) GetCompressedAlbumCover(
 		return nil, entities.NewInternalError(err)
 	}
 
+	image, err := u.coverStorage.GetCompressedAlbumCover(&album, quality)
+
+	if err == nil {
+		mtype := mimetype.Detect(image.Bytes())
+
+		return &models.ImageAPIResponse{
+			MIMEType: mtype.String(),
+			Data:     image,
+		}, nil
+	}
+
 	if len(album.Tracks) <= 0 {
 		return nil, entities.NewNotFoundError(
 			"No image available for this album",

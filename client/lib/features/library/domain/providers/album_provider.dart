@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
+import 'package:melodink_client/features/library/domain/providers/edit_album_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
@@ -15,6 +16,16 @@ part 'album_provider.g.dart';
 @riverpod
 Future<List<Album>> allAlbums(AllAlbumsRef ref) async {
   final albumRepository = ref.read(albumRepositoryProvider);
+
+  ref.listen(editAlbumStreamProvider, (_, rawNewAlbum) async {
+    final newAlbum = rawNewAlbum.valueOrNull;
+
+    if (newAlbum == null) {
+      return;
+    }
+
+    ref.invalidateSelf();
+  });
 
   return await albumRepository.getAllAlbums();
 }
@@ -36,6 +47,22 @@ class AlbumById extends _$AlbumById {
 
     ref.onDispose(() {
       subscription.cancel();
+    });
+
+    ref.listen(editAlbumStreamProvider, (_, rawNewAlbum) async {
+      final newAlbum = rawNewAlbum.valueOrNull;
+
+      if (newAlbum == null) {
+        return;
+      }
+
+      if (newAlbum.id != id) {
+        return;
+      }
+
+      ref.invalidateSelf();
+
+      ref.invalidate(albumDownloadNotifierProvider(id));
     });
 
     ref.listen(trackEditStreamProvider, (_, rawNewTrack) async {

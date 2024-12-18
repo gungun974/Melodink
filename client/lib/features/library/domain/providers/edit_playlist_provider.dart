@@ -62,6 +62,20 @@ class EditPlaylistStream extends _$EditPlaylistStream {
   removePlaylistCover(int id) async {
     final newPlaylist = await _playlistRepository.removePlaylistCover(id);
 
+    await AppImageCacheProvider.clearCache(newPlaylist.getOrignalCoverUri());
+    await AppImageCacheProvider.clearCache(
+      newPlaylist.getCompressedCoverUri(TrackCompressedCoverQuality.small),
+    );
+    await AppImageCacheProvider.clearCache(
+      newPlaylist.getCompressedCoverUri(TrackCompressedCoverQuality.medium),
+    );
+    await AppImageCacheProvider.clearCache(
+      newPlaylist.getCompressedCoverUri(TrackCompressedCoverQuality.high),
+    );
+
+    PaintingBinding.instance.imageCache.clearLiveImages();
+    WidgetsBinding.instance.reassembleApplication();
+
     if (!_controller.isClosed) {
       _controller.add(newPlaylist);
     }

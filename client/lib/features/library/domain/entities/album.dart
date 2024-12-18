@@ -61,6 +61,15 @@ class Album extends Equatable {
     return "${AppApi().getServerUrl()}album/$id/cover";
   }
 
+  Uri getOrignalCoverUri() {
+    final url = getOriginalCoverUrl();
+    Uri? uri = Uri.tryParse(url);
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+      return uri;
+    }
+    return Uri.parse("file://$url");
+  }
+
   String getCompressedCoverUrl(TrackCompressedCoverQuality quality) {
     final cover = localCover;
     if (cover != null) {
@@ -77,5 +86,14 @@ class Album extends Equatable {
       default:
         return "${AppApi().getServerUrl()}album/$id/cover";
     }
+  }
+
+  Uri getCompressedCoverUri(TrackCompressedCoverQuality quality) {
+    final url = getCompressedCoverUrl(quality);
+    Uri? uri = Uri.tryParse(url);
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+      return uri;
+    }
+    return Uri.parse("file://$url");
   }
 }

@@ -28,6 +28,17 @@ func (u *AlbumUsecase) GetAlbumCover(
 		return nil, entities.NewInternalError(err)
 	}
 
+	image, err := u.coverStorage.GetOriginalAlbumCover(&album)
+
+	if err == nil {
+		mtype := mimetype.Detect(image.Bytes())
+
+		return &models.ImageAPIResponse{
+			MIMEType: mtype.String(),
+			Data:     image,
+		}, nil
+	}
+
 	if len(album.Tracks) <= 0 {
 		return nil, entities.NewNotFoundError(
 			"No image available for this album",

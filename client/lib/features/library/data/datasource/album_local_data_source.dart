@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
@@ -110,6 +111,15 @@ class AlbumLocalDataSource {
         }
 
         downloadImagePath = null;
+      }
+
+      if (downloadImagePath != null) {
+        await FileImage(
+          File("$applicationSupportDirectory/$downloadImagePath"),
+        ).evict();
+
+        PaintingBinding.instance.imageCache.clearLiveImages();
+        WidgetsBinding.instance.reassembleApplication();
       }
 
       final body = {

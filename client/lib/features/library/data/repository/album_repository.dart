@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/datasource/album_local_data_source.dart';
@@ -71,6 +73,14 @@ class AlbumRepository {
     final album = await albumLocalDataSource.getAlbumById(id);
 
     return album != null;
+  }
+
+  Future<Album> changeAlbumCover(String id, File file) async {
+    return await albumRemoteDataSource.changeAlbumCover(id, file);
+  }
+
+  Future<Album> removeAlbumCover(String id) async {
+    return await albumRemoteDataSource.removeAlbumCover(id);
   }
 }
 

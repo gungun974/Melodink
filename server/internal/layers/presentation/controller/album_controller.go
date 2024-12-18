@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	album_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/album"
@@ -77,4 +78,72 @@ func (c *AlbumController) GetCompressedUserAlbumCover(
 	}
 
 	return c.albumUsecase.GetCompressedAlbumCover(ctx, id, quality)
+}
+
+func (c *AlbumController) ChangeAlbumCover(
+	ctx context.Context,
+	r *http.Request,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.ValidateString(
+		rawId,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	file, handler, err := r.FormFile("image")
+	if err == nil {
+		defer file.Close()
+
+		if err := checkIfFileIsImageFile(file, handler); err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, entities.NewValidationError("File can't be open")
+	}
+
+	return c.albumUsecase.ChangeAlbumCover(ctx,
+		id,
+		file,
+	)
+}
+
+func (c *AlbumController) GetAlbumCoverSignature(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.ValidateString(
+		rawId,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.albumUsecase.GetAlbumCoverSignature(ctx, id)
+}
+
+func (c *AlbumController) DeleteAlbumCover(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.ValidateString(
+		rawId,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.albumUsecase.DeleteAlbumCover(ctx,
+		id,
+	)
 }
