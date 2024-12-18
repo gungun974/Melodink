@@ -8,6 +8,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/helpers/timeago.dart';
+import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
@@ -18,7 +19,6 @@ import 'package:melodink_client/features/track/domain/providers/track_provider.d
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
-import 'package:melodink_client/features/tracker/domain/providers/played_track_provider.dart';
 
 class DesktopTrack extends HookConsumerWidget {
   final MinimalTrack track;
@@ -80,6 +80,8 @@ class DesktopTrack extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isServerReachable = ref.watch(isServerReachableProvider);
+
     final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
 
     final downloadedTrack = ref
@@ -96,7 +98,7 @@ class DesktopTrack extends HookConsumerWidget {
 
     final isHovering = useState(false);
 
-    return MouseRegion(
+    final trackWidget = MouseRegion(
       onEnter: (_) {
         isHovering.value = true;
       },
@@ -411,5 +413,16 @@ class DesktopTrack extends HookConsumerWidget {
         ),
       ),
     );
+
+    if (!isServerReachable && downloadedTrack == null) {
+      return IgnorePointer(
+        child: Opacity(
+          opacity: 0.4,
+          child: trackWidget,
+        ),
+      );
+    }
+
+    return trackWidget;
   }
 }

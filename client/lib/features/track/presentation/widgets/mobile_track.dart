@@ -6,6 +6,7 @@ import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
+import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
@@ -59,6 +60,8 @@ class MobileTrack extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isServerReachable = ref.watch(isServerReachableProvider);
+
     final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
 
     final downloadedTrack = ref
@@ -75,7 +78,7 @@ class MobileTrack extends HookConsumerWidget {
 
     final isHovering = useState(false);
 
-    return MouseRegion(
+    final trackWidget = MouseRegion(
       onEnter: (_) {
         isHovering.value = true;
       },
@@ -259,5 +262,16 @@ class MobileTrack extends HookConsumerWidget {
         ),
       ),
     );
+
+    if (!isServerReachable && downloadedTrack == null) {
+      return IgnorePointer(
+        child: Opacity(
+          opacity: 0.4,
+          child: trackWidget,
+        ),
+      );
+    }
+
+    return trackWidget;
   }
 }

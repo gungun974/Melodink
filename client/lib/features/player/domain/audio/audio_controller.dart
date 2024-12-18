@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/logger/logger.dart';
+import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/player/domain/audio/melodink_player.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
@@ -291,8 +292,38 @@ class AudioController extends BaseAudioHandler
     int startAt = -1,
     bool restart = true,
     String? source,
+    bool skipOffline = true,
   }) async {
     await playlistTracksMutex.protect(() async {
+      final isServerRecheable = NetworkInfo().isServerRecheable();
+
+      final isTrackDownloaded = downloadTrackRepository?.isTrackDownloaded;
+
+      if (skipOffline && !isServerRecheable && isTrackDownloaded != null) {
+        List<MinimalTrack> filteredTracks = [];
+        int newStartAt = -1;
+
+        for (int i = 0; i < tracks.length; i++) {
+          MinimalTrack track = tracks[i];
+
+          final isDownloaded = await isTrackDownloaded(track.id);
+
+          if (isDownloaded) {
+            filteredTracks.add(track);
+          }
+
+          if (i == startAt) {
+            if (!isDownloaded && !filteredTracks.contains(track)) {
+              filteredTracks.add(track);
+            }
+            newStartAt = filteredTracks.indexOf(track);
+          }
+        }
+
+        startAt = newStartAt;
+        tracks = filteredTracks;
+      }
+
       _originalTracksPlaylist = List.from(tracks);
 
       _previousTracks.clear();

@@ -64,6 +64,21 @@ class DownloadTrackRepository {
     }
   }
 
+  Future<bool> isTrackDownloaded(int trackId) async {
+    final db = await DatabaseService.getDatabase();
+
+    try {
+      final data = await db.rawQuery(
+          "SELECT track_id FROM track_download WHERE track_id = ?", [trackId]);
+
+      final rawDownloadTrack = data.firstOrNull;
+
+      return rawDownloadTrack != null;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> downloadOrUpdateTrack(int trackId) async {
     final db = await DatabaseService.getDatabase();
 
