@@ -18,11 +18,14 @@ type AlbumViewModel struct {
 
 func ConvertToAlbumsViewModel(
 	albums []entities.Album,
+	showTracks bool,
 ) []AlbumViewModel {
 	albumsViewModels := make([]AlbumViewModel, len(albums))
 
 	for i, album := range albums {
-		album.Tracks = nil
+		if !showTracks {
+			album.Tracks = nil
+		}
 
 		albumsViewModels[i] = ConvertToAlbumViewModel(album)
 	}

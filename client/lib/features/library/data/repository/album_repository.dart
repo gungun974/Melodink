@@ -75,6 +75,19 @@ class AlbumRepository {
     return album;
   }
 
+  Future<List<Album>> updateAndStoreAllAlbums(bool shouldDownloadTracks) async {
+    final albums = await albumRemoteDataSource.getAllAlbumsWithTracks();
+
+    for (final album in albums) {
+      await albumLocalDataSource.storeAlbum(album, shouldDownloadTracks);
+
+      await playedTrackRepository
+          .loadTrackHistoryIntoMinimalTracks(album.tracks);
+    }
+
+    return albums;
+  }
+
   Future<void> deleteStoredAlbum(String id) async {
     await albumLocalDataSource.deleteStoredAlbum(id);
   }

@@ -31,6 +31,27 @@ class AlbumRemoteDataSource {
     }
   }
 
+  Future<List<Album>> getAllAlbumsWithTracks() async {
+    try {
+      final response = await AppApi().dio.get("/album/full");
+
+      return (response.data as List)
+          .map(
+            (rawModel) => AlbumModel.fromJson(rawModel).toAlbum(),
+          )
+          .toList();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      throw ServerUnknownException();
+    }
+  }
+
   Future<Album> getAlbumById(String id) async {
     try {
       final response = await AppApi().dio.get("/album/$id");

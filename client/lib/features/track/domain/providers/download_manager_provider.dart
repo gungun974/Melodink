@@ -226,16 +226,13 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
   Future<void> downloadAllAlbums() async {
     final albumRepository = ref.read(albumRepositoryProvider);
 
-    final albums = await albumRepository.getAllAlbums();
+    final albums = await albumRepository.updateAndStoreAllAlbums(true);
 
     final Set<int> trackIds = {};
     final List<MinimalTrack> tracks = [];
 
     for (final album in albums) {
-      final newAlbum =
-          await albumRepository.updateAndStoreAlbum(album.id, true);
-
-      for (final track in newAlbum.tracks) {
+      for (final track in album.tracks) {
         if (trackIds.add(track.id)) {
           tracks.add(track);
         }
