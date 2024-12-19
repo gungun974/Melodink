@@ -13,6 +13,7 @@ import 'package:melodink_client/features/player/presentation/widgets/desktop_pla
 import 'package:melodink_client/features/player/presentation/widgets/mobile_current_track.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/track/presentation/widgets/current_download_info.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -130,7 +131,15 @@ final appRouterProvider = Provider((ref) {
                             AppSettingPlayerBarPosition.top)
                           const DesktopPlayerBar(),
                         Expanded(
-                          child: child,
+                          child: Stack(
+                            children: [
+                              child,
+                              const Align(
+                                alignment: Alignment.bottomRight,
+                                child: CurrentDownloadInfo(),
+                              ),
+                            ],
+                          ),
                         ),
                         if (currentPlayerBarPosition ==
                             AppSettingPlayerBarPosition.bottom)
@@ -207,9 +216,17 @@ final appRouterProvider = Provider((ref) {
                             child: Column(
                               children: [
                                 Expanded(
-                                  child: child,
+                                  child: Stack(
+                                    children: [
+                                      child,
+                                      const Align(
+                                        alignment: Alignment.bottomRight,
+                                        child: CurrentDownloadInfo(),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                const MobileCurrentTrackInfo()
+                                const MobileCurrentTrackInfo(),
                               ],
                             ),
                           ),

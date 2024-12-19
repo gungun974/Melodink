@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -79,9 +80,8 @@ class DownloadTrackRepository {
     }
   }
 
-  Future<void> downloadOrUpdateTrack(int trackId) async {
-    final db = await DatabaseService.getDatabase();
-
+  Future<({bool shouldDownload, String signature, String coverSignature})>
+      shouldDownloadOrUpdateTrack(int trackId) async {
     try {
       final signatureResponse =
           await AppApi().dio.get<String>("/track/$trackId/signature");
@@ -105,6 +105,49 @@ class DownloadTrackRepository {
       if (downloadTrack != null &&
           downloadTrack.fileSignature == signature &&
           downloadTrack.coverSignature == coverSignature) {
+        return (
+          shouldDownload: false,
+          signature: signature,
+          coverSignature: coverSignature,
+        );
+      }
+
+      return (
+        shouldDownload: true,
+        signature: signature,
+        coverSignature: coverSignature,
+      );
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw TrackNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<void> downloadOrUpdateTrack(
+    int trackId,
+    String signature,
+    String coverSignature,
+    StreamController<double>? progress,
+  ) async {
+    final db = await DatabaseService.getDatabase();
+
+    try {
+      final downloadTrack = await getDownloadedTrackByTrackId(trackId);
+
+      if (downloadTrack != null &&
+          downloadTrack.fileSignature == signature &&
+          downloadTrack.coverSignature == coverSignature) {
         return;
       }
 
@@ -120,6 +163,11 @@ class DownloadTrackRepository {
         await AppApi().dio.download(
               "/track/$trackId/audio",
               "$applicationSupportDirectory/$downloadAudioPath",
+              onReceiveProgress: progress != null
+                  ? (int sent, int total) {
+                      progress.add(sent / total);
+                    }
+                  : null,
             );
       }
 

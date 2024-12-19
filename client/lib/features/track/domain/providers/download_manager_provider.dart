@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
@@ -8,26 +10,60 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'download_manager_provider.g.dart';
 
-class DownloadState extends Equatable {
-  final List<MinimalTrack> queueTracks;
+class DownloadTask extends Equatable {
+  final MinimalTrack track;
+  final Stream<double> progress;
+  final StreamController<double> progressController;
 
-  MinimalTrack? get currentTrack => queueTracks.firstOrNull;
+  const DownloadTask({
+    required this.track,
+    required this.progress,
+    required this.progressController,
+  });
+
+  DownloadTask copyWith({
+    MinimalTrack? track,
+  }) {
+    return DownloadTask(
+      track: track ?? this.track,
+      progress: progress,
+      progressController: progressController,
+    );
+  }
+
+  @override
+  List<Object> get props => [
+        track,
+        progress,
+        progressController,
+      ];
+}
+
+class DownloadState extends Equatable {
+  final List<DownloadTask> queueTasks;
+
+  final bool isDownloading;
+
+  DownloadTask? get currentTask => queueTasks.firstOrNull;
 
   const DownloadState({
-    required this.queueTracks,
+    required this.queueTasks,
+    required this.isDownloading,
   });
 
   DownloadState copyWith({
-    List<MinimalTrack>? queueTracks,
+    List<DownloadTask>? queueTasks,
+    bool? isDownloading,
   }) {
     return DownloadState(
-      queueTracks: queueTracks ?? this.queueTracks,
+      queueTasks: queueTasks ?? this.queueTasks,
+      isDownloading: isDownloading ?? this.isDownloading,
     );
   }
 
   @override
   List<Object?> get props => [
-        queueTracks,
+        queueTasks,
       ];
 }
 
@@ -59,53 +95,94 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
     });
 
     return const DownloadState(
-      queueTracks: [],
+      queueTasks: [],
+      isDownloading: false,
     );
   }
 
   addTracksToDownloadTodo(List<MinimalTrack> tracks) {
-    state = state.copyWith(queueTracks: [
-      ...state.queueTracks,
-      ...tracks,
+    state = state.copyWith(queueTasks: [
+      ...state.queueTasks,
+      ...tracks.map((track) {
+        final streamController = StreamController<double>();
+
+        return DownloadTask(
+          track: track,
+          progress: streamController.stream.asBroadcastStream(),
+          progressController: streamController,
+        );
+      }),
     ]);
 
     _executor.execute(_manageDownload);
   }
 
   Future<void> _manageDownload() async {
-    while (state.queueTracks.isNotEmpty) {
+    while (state.queueTasks.isNotEmpty) {
       await _mutex.acquire();
       try {
-        final currentTrack = state.currentTrack;
+        final currentTask = state.currentTask;
 
-        if (currentTrack == null) {
+        if (currentTask == null) {
           _mutex.release();
 
           continue;
         }
 
-        await _downloadTrackRepository.downloadOrUpdateTrack(
-          currentTrack.id,
+        final result =
+            await _downloadTrackRepository.shouldDownloadOrUpdateTrack(
+          currentTask.track.id,
         );
 
+        if (result.shouldDownload) {
+          if (!state.isDownloading) {
+            state = state.copyWith(
+              isDownloading: true,
+            );
+          }
+
+          currentTask.progressController.add(0);
+
+          await _downloadTrackRepository.downloadOrUpdateTrack(
+            currentTask.track.id,
+            result.signature,
+            result.coverSignature,
+            currentTask.progressController,
+          );
+        }
+
+        currentTask.progressController.close();
+
         state = state.copyWith(
-          queueTracks: state.queueTracks.skip(1).toList(),
+          queueTasks: state.queueTasks.skip(1).toList(),
         );
 
         _mutex.release();
 
         await _audioController.reloadPlayerTracks();
 
-        final _ = ref.refresh(isTrackDownloadedProvider(currentTrack.id));
+        final _ = ref.refresh(isTrackDownloadedProvider(currentTask.track.id));
+
+        if (state.isDownloading && state.queueTasks.isEmpty) {
+          state = state.copyWith(
+            isDownloading: false,
+          );
+        }
       } catch (e) {
         state = state.copyWith(
-          queueTracks: [
-            ...state.queueTracks.skip(1),
-            state.queueTracks.first,
+          queueTasks: [
+            ...state.queueTasks.skip(1),
+            state.queueTasks.first,
           ],
         );
 
         _mutex.release();
+
+        if (state.isDownloading && state.queueTasks.isEmpty) {
+          state = state.copyWith(
+            isDownloading: false,
+          );
+        }
 
         await Future.delayed(
           const Duration(seconds: 1),
@@ -123,9 +200,10 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
 
     await _mutex.acquire();
     state = state.copyWith(
-      queueTracks: state.queueTracks
+      queueTasks: state.queueTasks
           .where(
-            (track) => orphans.any((orphan) => orphan.trackId == track.id),
+            (track) =>
+                orphans.any((orphan) => orphan.trackId == track.track.id),
           )
           .toList(),
     );
@@ -159,4 +237,22 @@ class AsyncExecutor {
 
     return;
   }
+}
+
+@riverpod
+bool isDownloadManagerRunning(
+  IsDownloadManagerRunningRef ref,
+) {
+  final downloadManager = ref.watch(downloadManagerNotifierProvider);
+
+  return downloadManager.isDownloading;
+}
+
+@riverpod
+DownloadTask? currentDownloadManagerTask(
+  CurrentDownloadManagerTaskRef ref,
+) {
+  final downloadManager = ref.watch(downloadManagerNotifierProvider);
+
+  return downloadManager.currentTask;
 }
