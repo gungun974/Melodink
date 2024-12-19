@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -193,6 +194,148 @@ class AlbumLocalDataSource {
         where: "album_id = ?",
         whereArgs: [album.id],
       );
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw AlbumNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<void> storeAlbums(
+    List<Album> albums,
+    bool shouldDownloadTracks,
+    Map<String, String> signatures, [
+    StreamController<double>? streamController,
+  ]) async {
+    final db = await DatabaseService.getDatabase();
+
+    try {
+      final applicationSupportDirectory =
+          (await getMelodinkInstanceSupportDirectory()).path;
+
+      final savedAlbums = await getAllAlbums();
+
+      for (final indexed in albums.indexed) {
+        final album = indexed.$2;
+
+        await Future.delayed(const Duration(milliseconds: 10));
+
+        streamController?.add(indexed.$1 / albums.length);
+
+        final index = savedAlbums.indexWhere(
+          (savedAlbum) => savedAlbum.id == album.id,
+        );
+
+        final savedAlbum = index != -1 ? savedAlbums[index] : null;
+
+        final customSignature = signatures[album.id];
+
+        final downloadPath = "/download-album/${splitHashToPath(album.id)}";
+        String? downloadImagePath;
+
+        late final String? coverSignature;
+
+        try {
+          if (customSignature != null) {
+            coverSignature = customSignature;
+          } else {
+            final signatureResponse = await AppApi()
+                .dio
+                .get<String>("/album/${album.id}/cover/signature");
+
+            coverSignature = signatureResponse.data;
+          }
+
+          downloadImagePath = "$downloadPath/image-$coverSignature";
+
+          if (savedAlbum?.coverSignature != coverSignature) {
+            await AppApi().dio.download(
+                  "/album/${album.id}/cover",
+                  "$applicationSupportDirectory/$downloadImagePath",
+                );
+
+            if (savedAlbum?.localCover != null) {
+              try {
+                await File(savedAlbum!.localCover!).delete();
+              } catch (_) {}
+            }
+          }
+        } on DioException catch (e) {
+          final response = e.response;
+          if (response == null) {
+            rethrow;
+          }
+
+          if (response.statusCode != 404) {
+            rethrow;
+          }
+
+          downloadImagePath = null;
+        }
+
+        if (savedAlbum?.localCover != null && downloadImagePath == null) {
+          try {
+            await File(savedAlbum!.localCover!).delete();
+          } catch (_) {}
+        }
+
+        if (downloadImagePath != null) {
+          await FileImage(
+            File("$applicationSupportDirectory/$downloadImagePath"),
+          ).evict();
+
+          PaintingBinding.instance.imageCache.clearLiveImages();
+          WidgetsBinding.instance.reassembleApplication();
+        }
+
+        final body = {
+          "image_file": downloadImagePath,
+          "name": album.name,
+          "album_artists": json.encode(
+            album.albumArtists
+                .map(
+                  (artist) =>
+                      MinimalArtistModel.fromMinimalArtist(artist).toJson(),
+                )
+                .toList(),
+          ),
+          "tracks": json.encode(
+            album.tracks
+                .map(
+                  (track) => MinimalTrackModel.fromMinimalTrack(track).toJson(),
+                )
+                .toList(),
+          ),
+          if (shouldDownloadTracks) "download_tracks": 1,
+          "cover_signature": coverSignature,
+        };
+
+        if (savedAlbum == null) {
+          await db.insert("album_download", {
+            "album_id": album.id,
+            ...body,
+            "download_tracks": shouldDownloadTracks ? 1 : 0,
+          });
+          return;
+        }
+
+        await db.update(
+          "album_download",
+          body,
+          where: "album_id = ?",
+          whereArgs: [album.id],
+        );
+      }
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {

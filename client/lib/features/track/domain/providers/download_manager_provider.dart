@@ -223,10 +223,15 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
     }
   }
 
-  Future<void> downloadAllAlbums() async {
+  Future<void> downloadAllAlbums(
+    StreamController<double>? streamController,
+  ) async {
     final albumRepository = ref.read(albumRepositoryProvider);
 
-    final albums = await albumRepository.updateAndStoreAllAlbums(true);
+    final albums = await albumRepository.updateAndStoreAllAlbums(
+      true,
+      streamController,
+    );
 
     final Set<int> trackIds = {};
     final List<MinimalTrack> tracks = [];

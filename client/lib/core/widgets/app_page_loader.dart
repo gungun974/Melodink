@@ -3,7 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class AppPageLoader extends StatelessWidget {
-  const AppPageLoader({super.key});
+  final double? value;
+
+  const AppPageLoader({
+    super.key,
+    this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,12 +21,13 @@ class AppPageLoader extends StatelessWidget {
           opacity: max(opacity, 0.0),
           child: Container(
             color: const Color.fromRGBO(0, 0, 0, 0.7),
-            child: const Center(
+            child: Center(
               child: SizedBox(
                 height: 80,
                 width: 80,
                 child: CircularProgressIndicator(
                   strokeWidth: 6,
+                  value: value,
                 ),
               ),
             ),

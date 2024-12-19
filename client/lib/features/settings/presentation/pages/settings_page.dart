@@ -1,5 +1,6 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/app_confirm.dart';
 import 'package:melodink_client/core/network/network_info.dart';
@@ -19,7 +20,7 @@ import 'package:melodink_client/features/settings/presentation/widgets/setting_p
 import 'package:melodink_client/features/settings/presentation/widgets/setting_toggle_option.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 
-class SettingsPage extends HookConsumerWidget {
+class SettingsPage extends ConsumerWidget {
   const SettingsPage({
     super.key,
   });
@@ -29,8 +30,6 @@ class SettingsPage extends HookConsumerWidget {
     final settings = ref.watch(appSettingsNotifierProvider).valueOrNull;
 
     final forceOffline = ref.watch(isForceOfflineProvider);
-
-    final isLoading = useState(false);
 
     if (settings == null) {
       return const AppPageLoader();
@@ -340,14 +339,35 @@ class SettingsPage extends HookConsumerWidget {
                                 return;
                               }
 
-                              isLoading.value = true;
+                              final streamController =
+                                  StreamController<double>();
+
+                              final stream =
+                                  streamController.stream.asBroadcastStream();
+
+                              final loadingWidget = OverlayEntry(
+                                builder: (context) => StreamBuilder(
+                                    stream: stream,
+                                    builder: (context, snapshot) {
+                                      return AppPageLoader(
+                                        value: snapshot.data,
+                                      );
+                                    }),
+                              );
+
+                              if (context.mounted) {
+                                Overlay.of(context, rootOverlay: true)
+                                    .insert(loadingWidget);
+                              }
 
                               try {
                                 await ref
                                     .read(downloadManagerNotifierProvider
                                         .notifier)
-                                    .downloadAllAlbums();
-                                isLoading.value = false;
+                                    .downloadAllAlbums(streamController);
+                                streamController.close();
+
+                                loadingWidget.remove();
 
                                 if (!context.mounted) {
                                   return;
@@ -359,6 +379,7 @@ class SettingsPage extends HookConsumerWidget {
                                       "Download for all albums tracks has started.",
                                 );
                               } catch (_) {
+                                streamController.close();
                                 if (context.mounted) {
                                   AppNotificationManager.of(context).notify(
                                     context,
@@ -367,8 +388,8 @@ class SettingsPage extends HookConsumerWidget {
                                     type: AppNotificationType.danger,
                                   );
                                 }
+                                loadingWidget.remove();
                               }
-                              isLoading.value = false;
                             },
                           ),
                           const Divider(height: 0),
@@ -387,14 +408,21 @@ class SettingsPage extends HookConsumerWidget {
                                 return;
                               }
 
-                              isLoading.value = true;
+                              final loadingWidget = OverlayEntry(
+                                builder: (context) => const AppPageLoader(),
+                              );
+
+                              if (context.mounted) {
+                                Overlay.of(context, rootOverlay: true)
+                                    .insert(loadingWidget);
+                              }
 
                               try {
                                 await ref
                                     .read(downloadManagerNotifierProvider
                                         .notifier)
                                     .removeAllDownloads();
-                                isLoading.value = false;
+                                loadingWidget.remove();
 
                                 if (!context.mounted) {
                                   return;
@@ -413,8 +441,9 @@ class SettingsPage extends HookConsumerWidget {
                                     type: AppNotificationType.danger,
                                   );
                                 }
+
+                                loadingWidget.remove();
                               }
-                              isLoading.value = false;
                             },
                             isDanger: true,
                           ),
@@ -440,7 +469,6 @@ class SettingsPage extends HookConsumerWidget {
             },
           ),
         ),
-        if (isLoading.value) const AppPageLoader(),
       ],
     );
   }

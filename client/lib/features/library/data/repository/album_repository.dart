@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,22 +76,21 @@ class AlbumRepository {
     return album;
   }
 
-  Future<List<Album>> updateAndStoreAllAlbums(bool shouldDownloadTracks) async {
+  Future<List<Album>> updateAndStoreAllAlbums(
+    bool shouldDownloadTracks, [
+    StreamController<double>? streamController,
+  ]) async {
     final albums = await albumRemoteDataSource.getAllAlbumsWithTracks();
 
     final signatures =
         await albumRemoteDataSource.getAllAlbumsCoverSignatures();
 
-    for (final album in albums) {
-      await albumLocalDataSource.storeAlbum(
-        album,
-        shouldDownloadTracks,
-        customSignature: signatures[album.id],
-      );
-
-      await playedTrackRepository
-          .loadTrackHistoryIntoMinimalTracks(album.tracks);
-    }
+    await albumLocalDataSource.storeAlbums(
+      albums,
+      shouldDownloadTracks,
+      signatures,
+      streamController,
+    );
 
     return albums;
   }
