@@ -265,7 +265,7 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
 
     for (final playlist in playlists) {
       try {
-        await playlistRepository.deletePlaylistById(playlist.id);
+        await playlistRepository.deleteStoredPlaylist(playlist.id);
       } on PlaylistNotFoundException {
         //
       }
