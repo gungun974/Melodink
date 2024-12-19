@@ -184,6 +184,8 @@ class PlaylistLocalDataSource {
         where: "playlist_id = ?",
         whereArgs: [playlistId],
       );
+    } on PlaylistNotFoundException {
+      rethrow;
     } catch (e) {
       mainLogger.e(e);
       throw ServerUnknownException();

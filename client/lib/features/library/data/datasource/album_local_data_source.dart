@@ -199,6 +199,8 @@ class AlbumLocalDataSource {
         where: "album_id = ?",
         whereArgs: [albumId],
       );
+    } on AlbumNotFoundException {
+      rethrow;
     } catch (e) {
       mainLogger.e(e);
       throw ServerUnknownException();
@@ -218,7 +220,8 @@ class AlbumLocalDataSource {
       final albumIds = playlistTracksData
           .map((data) => (json.decode(data["tracks"] as String) as List)
               .map(
-                (rawModel) => "'${MinimalTrackModel.fromJson(rawModel).albumId}'",
+                (rawModel) =>
+                    "'${MinimalTrackModel.fromJson(rawModel).albumId}'",
               )
               .toSet())
           .expand((i) => i);
