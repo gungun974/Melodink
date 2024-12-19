@@ -10,7 +10,6 @@ import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/helpers/split_id_to_path.dart';
 import 'package:melodink_client/core/logger/logger.dart';
-import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/track/data/models/minimal_track_model.dart';
@@ -33,6 +32,7 @@ class PlaylistLocalDataSource {
           )
           .toList(),
       isDownloaded: true,
+      coverSignature: data["cover_signature"] as String,
     );
   }
 
@@ -90,35 +90,28 @@ class PlaylistLocalDataSource {
       final downloadPath = "/download-playlist/${splitIdToPath(playlist.id)}";
       String? downloadImagePath;
 
+      late final String? coverSignature;
+
       try {
         final signatureResponse = await AppApi()
             .dio
             .get<String>("/playlist/${playlist.id}/cover/signature");
 
-        final signature = signatureResponse.data;
+        coverSignature = signatureResponse.data;
 
-        if (signature != null && signature.trim().isNotEmpty) {
-          downloadImagePath = "$downloadPath/image-$signature";
+        downloadImagePath = "$downloadPath/image-$coverSignature";
 
-          if (!(await File("$applicationSupportDirectory/$downloadImagePath")
-              .exists())) {
-            await AppApi().dio.download(
-                  "/playlist/${playlist.id}/cover",
-                  "$applicationSupportDirectory/$downloadImagePath",
-                );
-          }
+        if (savedPlaylist?.coverSignature != coverSignature) {
+          await AppApi().dio.download(
+                "/playlist/${playlist.id}/cover",
+                "$applicationSupportDirectory/$downloadImagePath",
+              );
 
-          if (savedPlaylist?.localCover != null &&
-              savedPlaylist!.localCover !=
-                  "$applicationSupportDirectory/$downloadImagePath") {
+          if (savedPlaylist?.localCover != null) {
             try {
-              await File(savedPlaylist.localCover!).delete();
+              await File(savedPlaylist!.localCover!).delete();
             } catch (_) {}
           }
-        } else if (savedPlaylist?.localCover != null) {
-          try {
-            await File(savedPlaylist!.localCover!).delete();
-          } catch (_) {}
         }
       } on DioException catch (e) {
         final response = e.response;
@@ -131,6 +124,12 @@ class PlaylistLocalDataSource {
         }
 
         downloadImagePath = null;
+      }
+
+      if (savedPlaylist?.localCover != null && downloadImagePath == null) {
+        try {
+          await File(savedPlaylist!.localCover!).delete();
+        } catch (_) {}
       }
 
       if (downloadImagePath != null) {

@@ -17,6 +17,7 @@ class Album extends Equatable {
   final bool downloadTracks;
 
   final String? localCover;
+  final String? coverSignature;
 
   const Album({
     required this.id,
@@ -26,6 +27,7 @@ class Album extends Equatable {
     this.isDownloaded = false,
     this.downloadTracks = false,
     this.localCover,
+    this.coverSignature,
   });
 
   Album copyWith({
@@ -43,6 +45,7 @@ class Album extends Equatable {
       tracks: tracks ?? this.tracks,
       isDownloaded: isDownloaded ?? this.isDownloaded,
       downloadTracks: downloadTracks ?? this.downloadTracks,
+      coverSignature: coverSignature,
     );
   }
 
@@ -55,6 +58,7 @@ class Album extends Equatable {
         isDownloaded,
         downloadTracks,
         localCover,
+        coverSignature,
       ];
 
   String getOriginalCoverUrl() {

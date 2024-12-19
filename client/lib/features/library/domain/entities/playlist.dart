@@ -15,6 +15,7 @@ class Playlist extends Equatable {
   final bool isDownloaded;
 
   final String? localCover;
+  final String? coverSignature;
 
   const Playlist({
     required this.id,
@@ -23,6 +24,7 @@ class Playlist extends Equatable {
     required this.tracks,
     this.isDownloaded = false,
     this.localCover,
+    this.coverSignature,
   });
 
   Playlist copyWith({
@@ -38,6 +40,7 @@ class Playlist extends Equatable {
       description: description ?? this.description,
       tracks: tracks ?? this.tracks,
       isDownloaded: isDownloaded ?? this.isDownloaded,
+      coverSignature: coverSignature,
     );
   }
 
@@ -49,6 +52,7 @@ class Playlist extends Equatable {
         tracks,
         isDownloaded,
         localCover,
+        coverSignature,
       ];
 
   String getOriginalCoverUrl() {

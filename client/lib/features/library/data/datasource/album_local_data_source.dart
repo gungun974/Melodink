@@ -39,6 +39,7 @@ class AlbumLocalDataSource {
           .toList(),
       isDownloaded: true,
       downloadTracks: data["download_tracks"] == 1,
+      coverSignature: data["cover_signature"] as String,
     );
   }
 
@@ -100,41 +101,32 @@ class AlbumLocalDataSource {
       final downloadPath = "/download-album/${splitHashToPath(album.id)}";
       String? downloadImagePath;
 
-      try {
-        late final String? signature;
+      late final String? coverSignature;
 
+      try {
         if (customSignature != null) {
-          signature = customSignature;
+          coverSignature = customSignature;
         } else {
           final signatureResponse = await AppApi()
               .dio
               .get<String>("/album/${album.id}/cover/signature");
 
-          signature = signatureResponse.data;
+          coverSignature = signatureResponse.data;
         }
 
-        if (signature != null && signature.trim().isNotEmpty) {
-          downloadImagePath = "$downloadPath/image-$signature";
+        downloadImagePath = "$downloadPath/image-$coverSignature";
 
-          if (!(await File("$applicationSupportDirectory/$downloadImagePath")
-              .exists())) {
-            await AppApi().dio.download(
-                  "/album/${album.id}/cover",
-                  "$applicationSupportDirectory/$downloadImagePath",
-                );
-          }
+        if (savedAlbum?.coverSignature != coverSignature) {
+          await AppApi().dio.download(
+                "/album/${album.id}/cover",
+                "$applicationSupportDirectory/$downloadImagePath",
+              );
 
-          if (savedAlbum?.localCover != null &&
-              savedAlbum!.localCover !=
-                  "$applicationSupportDirectory/$downloadImagePath") {
+          if (savedAlbum?.localCover != null) {
             try {
-              await File(savedAlbum.localCover!).delete();
+              await File(savedAlbum!.localCover!).delete();
             } catch (_) {}
           }
-        } else if (savedAlbum?.localCover != null) {
-          try {
-            await File(savedAlbum!.localCover!).delete();
-          } catch (_) {}
         }
       } on DioException catch (e) {
         final response = e.response;
@@ -147,6 +139,12 @@ class AlbumLocalDataSource {
         }
 
         downloadImagePath = null;
+      }
+
+      if (savedAlbum?.localCover != null && downloadImagePath == null) {
+        try {
+          await File(savedAlbum!.localCover!).delete();
+        } catch (_) {}
       }
 
       if (downloadImagePath != null) {
@@ -177,6 +175,7 @@ class AlbumLocalDataSource {
               .toList(),
         ),
         if (shouldDownloadTracks) "download_tracks": 1,
+        "cover_signature": coverSignature,
       };
 
       if (savedAlbum == null) {
