@@ -195,6 +195,7 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
         ?,
         ?,
         ?,
+        ?,
         ? 
       )
     RETURNING *
