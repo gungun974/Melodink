@@ -10,7 +10,7 @@ import (
 	"github.com/gungun974/Melodink/server/internal/models"
 )
 
-func (u *PlaylistUsecase) GetPlaylistCoverSignature(
+func (u *PlaylistUsecase) GetPlaylistCustomCoverSignature(
 	ctx context.Context,
 	playlistId int,
 ) (models.APIResponse, error) {
@@ -31,25 +31,7 @@ func (u *PlaylistUsecase) GetPlaylistCoverSignature(
 		return nil, entities.NewUnauthorizedError()
 	}
 
-	signature := u.coverStorage.GetPlaylistCoverSignature(playlist)
-
-	if signature != "" {
-		return models.PlainAPIResponse{
-			Text: signature,
-		}, nil
-	}
-
-	for _, track := range playlist.Tracks {
-		signature := u.coverStorage.GetTrackCoverSignature(&track)
-
-		if signature != "" {
-			return models.PlainAPIResponse{
-				Text: signature,
-			}, nil
-		}
-	}
-
 	return models.PlainAPIResponse{
-		Text: "",
+		Text: u.coverStorage.GetPlaylistCoverSignature(playlist),
 	}, nil
 }

@@ -29,7 +29,8 @@ class EditAlbumModal extends HookConsumerWidget {
     final refreshKey = useState(0);
 
     final fetchSignature = useMemoized(
-      () => AppApi().dio.get<String>("/album/${album.id}/cover/signature"),
+      () =>
+          AppApi().dio.get<String>("/album/${album.id}/cover/custom/signature"),
       [refreshKey.value],
     );
 

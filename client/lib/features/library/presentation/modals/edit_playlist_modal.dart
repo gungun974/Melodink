@@ -44,8 +44,9 @@ class EditPlaylistModal extends HookConsumerWidget {
     final refreshKey = useState(0);
 
     final fetchSignature = useMemoized(
-      () =>
-          AppApi().dio.get<String>("/playlist/${playlist.id}/cover/signature"),
+      () => AppApi()
+          .dio
+          .get<String>("/playlist/${playlist.id}/cover/custom/signature"),
       [refreshKey.value],
     );
 

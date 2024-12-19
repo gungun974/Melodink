@@ -188,6 +188,23 @@ func (c *PlaylistController) GetPlaylistCoverSignature(
 	return c.playlistUsecase.GetPlaylistCoverSignature(ctx, id)
 }
 
+func (c *PlaylistController) GetPlaylistCustomCoverSignature(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.playlistUsecase.GetPlaylistCustomCoverSignature(ctx, id)
+}
+
 func (c *PlaylistController) DeletePlaylistCover(
 	ctx context.Context,
 	rawId string,

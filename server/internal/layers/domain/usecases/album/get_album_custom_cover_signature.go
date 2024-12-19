@@ -10,7 +10,7 @@ import (
 	"github.com/gungun974/Melodink/server/internal/models"
 )
 
-func (u *AlbumUsecase) GetAlbumCoverSignature(
+func (u *AlbumUsecase) GetAlbumCustomCoverSignature(
 	ctx context.Context,
 	albumId string,
 ) (models.APIResponse, error) {
@@ -31,31 +31,7 @@ func (u *AlbumUsecase) GetAlbumCoverSignature(
 		return nil, entities.NewUnauthorizedError()
 	}
 
-	if len(album.Tracks) <= 0 {
-		return nil, entities.NewNotFoundError(
-			"No image available for this album",
-		)
-	}
-
-	signature := u.coverStorage.GetAlbumCoverSignature(&album)
-
-	if signature != "" {
-		return models.PlainAPIResponse{
-			Text: signature,
-		}, nil
-	}
-
-	for _, track := range album.Tracks {
-		signature := u.coverStorage.GetTrackCoverSignature(&track)
-
-		if signature != "" {
-			return models.PlainAPIResponse{
-				Text: signature,
-			}, nil
-		}
-	}
-
 	return models.PlainAPIResponse{
-		Text: "",
+		Text: u.coverStorage.GetAlbumCoverSignature(&album),
 	}, nil
 }

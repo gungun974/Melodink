@@ -88,13 +88,38 @@ class PlaylistLocalDataSource {
           (await getMelodinkInstanceSupportDirectory()).path;
 
       final downloadPath = "/download-playlist/${splitIdToPath(playlist.id)}";
-      String? downloadImagePath = "$downloadPath/image";
+      String? downloadImagePath;
 
       try {
-        await AppApi().dio.download(
-              "/playlist/${playlist.id}/cover",
-              "$applicationSupportDirectory/$downloadImagePath",
-            );
+        final signatureResponse = await AppApi()
+            .dio
+            .get<String>("/playlist/${playlist.id}/cover/signature");
+
+        final signature = signatureResponse.data;
+
+        if (signature != null && signature.trim().isNotEmpty) {
+          downloadImagePath = "$downloadPath/image-$signature";
+
+          if (!(await File("$applicationSupportDirectory/$downloadImagePath")
+              .exists())) {
+            await AppApi().dio.download(
+                  "/playlist/${playlist.id}/cover",
+                  "$applicationSupportDirectory/$downloadImagePath",
+                );
+          }
+
+          if (savedPlaylist?.localCover != null &&
+              savedPlaylist!.localCover !=
+                  "$applicationSupportDirectory/$downloadImagePath") {
+            try {
+              await File(savedPlaylist.localCover!).delete();
+            } catch (_) {}
+          }
+        } else if (savedPlaylist?.localCover != null) {
+          try {
+            await File(savedPlaylist!.localCover!).delete();
+          } catch (_) {}
+        }
       } on DioException catch (e) {
         final response = e.response;
         if (response == null) {

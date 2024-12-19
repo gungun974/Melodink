@@ -135,6 +135,23 @@ func (c *AlbumController) GetAlbumCoverSignature(
 	return c.albumUsecase.GetAlbumCoverSignature(ctx, id)
 }
 
+func (c *AlbumController) GetAlbumCustomCoverSignature(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.ValidateString(
+		rawId,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.albumUsecase.GetAlbumCustomCoverSignature(ctx, id)
+}
+
 func (c *AlbumController) DeleteAlbumCover(
 	ctx context.Context,
 	rawId string,
