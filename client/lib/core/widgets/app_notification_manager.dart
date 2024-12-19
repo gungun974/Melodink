@@ -69,20 +69,24 @@ class AppNotificationManagerState extends State<AppNotificationManager> {
       children: [
         widget.child,
         ..._notifications.map((notificaiton) {
-          return AnimatedSlide(
-            key: notificaiton.key,
-            offset:
-                notificaiton.show ? const Offset(0, 0) : const Offset(0, -1),
-            curve: const Cubic(0, .9, 0, 1),
-            duration: const Duration(milliseconds: 670),
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 16.0),
-                child: _AppNotificationWidget(
-                  title: notificaiton.title,
-                  type: notificaiton.type,
-                  message: notificaiton.message,
+          return SafeArea(
+            child: AnimatedSlide(
+              key: notificaiton.key,
+              offset: notificaiton.show
+                  ? const Offset(0, 0)
+                  : Offset(
+                      0, MediaQuery.paddingOf(context).top == 0 ? -1 : -1.5),
+              curve: const Cubic(0, .9, 0, 1),
+              duration: const Duration(milliseconds: 670),
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: _AppNotificationWidget(
+                    title: notificaiton.title,
+                    type: notificaiton.type,
+                    message: notificaiton.message,
+                  ),
                 ),
               ),
             ),
