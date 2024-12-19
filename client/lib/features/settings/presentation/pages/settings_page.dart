@@ -225,6 +225,34 @@ class SettingsPage extends ConsumerWidget {
                               ),
                             ],
                           ),
+                          const Divider(height: 24),
+                          SettingDropdownOption(
+                            text: "Download quality :",
+                            value: settings.downloadAudioQuality,
+                            onChanged: (audioQuality) {
+                              ref
+                                  .read(appSettingsNotifierProvider.notifier)
+                                  .setSettings(
+                                    settings.copyWith(
+                                      downloadAudioQuality: audioQuality,
+                                    ),
+                                  );
+                            },
+                            items: const [
+                              DropdownMenuItem(
+                                value: AppSettingAudioQuality.low,
+                                child: Text("Low - Opus VBR 96 kbps"),
+                              ),
+                              DropdownMenuItem(
+                                value: AppSettingAudioQuality.medium,
+                                child: Text("Medium - Opus VBR 320 kbps"),
+                              ),
+                              DropdownMenuItem(
+                                value: AppSettingAudioQuality.directFile,
+                                child: Text("Source"),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),

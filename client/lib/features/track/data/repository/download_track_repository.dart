@@ -10,6 +10,8 @@ import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/helpers/split_id_to_path.dart';
 import 'package:melodink_client/core/logger/logger.dart';
+import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/track/data/models/minimal_track_model.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
@@ -80,9 +82,16 @@ class DownloadTrackRepository {
     }
   }
 
-  Future<({bool shouldDownload, String signature, String coverSignature})>
-      shouldDownloadOrUpdateTrack(int trackId) async {
+  Future<
+      ({
+        bool shouldDownload,
+        String signature,
+        String coverSignature,
+        AppSettingAudioQuality audioQuality
+      })> shouldDownloadOrUpdateTrack(int trackId) async {
     try {
+      final config = await SettingsRepository().getSettings();
+
       final signatureResponse =
           await AppApi().dio.get<String>("/track/$trackId/signature");
 
@@ -103,19 +112,22 @@ class DownloadTrackRepository {
       final downloadTrack = await getDownloadedTrackByTrackId(trackId);
 
       if (downloadTrack != null &&
-          downloadTrack.fileSignature == signature &&
+          downloadTrack.fileSignature ==
+              "$signature-${config.downloadAudioQuality.name}" &&
           downloadTrack.coverSignature == coverSignature) {
         return (
           shouldDownload: false,
-          signature: signature,
+          signature: "$signature-${config.downloadAudioQuality.name}",
           coverSignature: coverSignature,
+          audioQuality: config.downloadAudioQuality,
         );
       }
 
       return (
         shouldDownload: true,
-        signature: signature,
+        signature: "$signature-${config.downloadAudioQuality.name}",
         coverSignature: coverSignature,
+        audioQuality: config.downloadAudioQuality,
       );
     } on DioException catch (e) {
       final response = e.response;
@@ -138,6 +150,7 @@ class DownloadTrackRepository {
     int trackId,
     String signature,
     String coverSignature,
+    AppSettingAudioQuality audioQuality,
     StreamController<double>? progress,
   ) async {
     final db = await DatabaseService.getDatabase();
@@ -161,11 +174,19 @@ class DownloadTrackRepository {
 
       if (downloadTrack?.fileSignature != signature) {
         await AppApi().dio.download(
-              "/track/$trackId/audio",
+              switch (audioQuality) {
+                AppSettingAudioQuality.low =>
+                  "/track/$trackId/audio/low/transcode",
+                AppSettingAudioQuality.medium =>
+                  "/track/$trackId/audio/medium/transcode",
+                _ => "/track/$trackId/audio",
+              },
               "$applicationSupportDirectory/$downloadAudioPath",
               onReceiveProgress: progress != null
                   ? (int sent, int total) {
-                      progress.add(sent / total);
+                      if (total != -1) {
+                        progress.add(sent / total);
+                      }
                     }
                   : null,
             );

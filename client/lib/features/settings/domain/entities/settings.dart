@@ -26,6 +26,7 @@ class AppSettings extends Equatable {
 
   final AppSettingAudioQuality wifiAudioQuality;
   final AppSettingAudioQuality cellularAudioQuality;
+  final AppSettingAudioQuality downloadAudioQuality;
 
   final bool rememberLoopAndShuffleAcrossRestarts;
   final bool keepLastPlayingListAcrossRestarts;
@@ -39,6 +40,7 @@ class AppSettings extends Equatable {
     required this.playerBarPosition,
     required this.wifiAudioQuality,
     required this.cellularAudioQuality,
+    required this.downloadAudioQuality,
     required this.rememberLoopAndShuffleAcrossRestarts,
     required this.keepLastPlayingListAcrossRestarts,
     required this.autoScrollViewToCurrentTrack,
@@ -51,6 +53,7 @@ class AppSettings extends Equatable {
     AppSettingPlayerBarPosition? playerBarPosition,
     AppSettingAudioQuality? wifiAudioQuality,
     AppSettingAudioQuality? cellularAudioQuality,
+    AppSettingAudioQuality? downloadAudioQuality,
     bool? rememberLoopAndShuffleAcrossRestarts,
     bool? keepLastPlayingListAcrossRestarts,
     bool? autoScrollViewToCurrentTrack,
@@ -62,6 +65,7 @@ class AppSettings extends Equatable {
       playerBarPosition: playerBarPosition ?? this.playerBarPosition,
       wifiAudioQuality: wifiAudioQuality ?? this.wifiAudioQuality,
       cellularAudioQuality: cellularAudioQuality ?? this.cellularAudioQuality,
+      downloadAudioQuality: downloadAudioQuality ?? this.downloadAudioQuality,
       rememberLoopAndShuffleAcrossRestarts:
           rememberLoopAndShuffleAcrossRestarts ??
               this.rememberLoopAndShuffleAcrossRestarts,
@@ -82,6 +86,7 @@ class AppSettings extends Equatable {
         playerBarPosition,
         wifiAudioQuality,
         cellularAudioQuality,
+        downloadAudioQuality,
         rememberLoopAndShuffleAcrossRestarts,
         keepLastPlayingListAcrossRestarts,
         autoScrollViewToCurrentTrack,

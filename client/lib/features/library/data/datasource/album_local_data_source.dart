@@ -326,7 +326,7 @@ class AlbumLocalDataSource {
             ...body,
             "download_tracks": shouldDownloadTracks ? 1 : 0,
           });
-          return;
+          continue;
         }
 
         await db.update(

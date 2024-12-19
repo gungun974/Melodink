@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,12 +26,15 @@ class SettingsRepository {
     final rawWifiAudioQuality = await asyncPrefs.getString("wifiAudioQuality");
     final rawCellularAudioQuality =
         await asyncPrefs.getString("cellularAudioQuality");
+    final rawDownloadAudioQuality =
+        await asyncPrefs.getString("downloadAudioQuality");
 
     AppSettingTheme? theme;
     AppSettingPlayerBarPosition? playerBarPosition;
 
     AppSettingAudioQuality? wifiAudioQuality;
     AppSettingAudioQuality? cellularAudioQuality;
+    AppSettingAudioQuality? downloadAudioQuality;
 
     if (rawTheme != null) {
       theme = AppSettingTheme.values
@@ -54,6 +60,12 @@ class SettingsRepository {
           .firstOrNull;
     }
 
+    if (rawDownloadAudioQuality != null) {
+      downloadAudioQuality = AppSettingAudioQuality.values
+          .where((value) => value.name == rawDownloadAudioQuality)
+          .firstOrNull;
+    }
+
     final rememberLoopAndShuffleAcrossRestarts =
         await asyncPrefs.getBool("settingRememberLoopAndShuffleAcrossRestarts");
     final keepLastPlayingListAcrossRestarts =
@@ -73,6 +85,10 @@ class SettingsRepository {
       wifiAudioQuality: wifiAudioQuality ?? AppSettingAudioQuality.max,
       cellularAudioQuality:
           cellularAudioQuality ?? AppSettingAudioQuality.medium,
+      downloadAudioQuality: downloadAudioQuality ??
+          (!kIsWeb && (Platform.isIOS || Platform.isAndroid)
+              ? AppSettingAudioQuality.medium
+              : AppSettingAudioQuality.directFile),
       rememberLoopAndShuffleAcrossRestarts:
           rememberLoopAndShuffleAcrossRestarts ?? true,
       keepLastPlayingListAcrossRestarts:
@@ -100,6 +116,10 @@ class SettingsRepository {
     await asyncPrefs.setString(
       "cellularAudioQuality",
       settings.cellularAudioQuality.name,
+    );
+    await asyncPrefs.setString(
+      "downloadAudioQuality",
+      settings.downloadAudioQuality.name,
     );
 
     await asyncPrefs.setBool(

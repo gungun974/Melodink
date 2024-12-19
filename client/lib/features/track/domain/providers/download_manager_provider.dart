@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
-import 'package:melodink_client/features/library/data/datasource/album_local_data_source.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -144,12 +143,11 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
             );
           }
 
-          currentTask.progressController.add(0);
-
           await _downloadTrackRepository.downloadOrUpdateTrack(
             currentTask.track.id,
             result.signature,
             result.coverSignature,
+            result.audioQuality,
             currentTask.progressController,
           );
         }
