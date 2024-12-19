@@ -252,6 +252,8 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 
 	*track = m.ToTrack()
 
+	invalidateAlbumCache()
+
 	return nil
 }
 
@@ -393,6 +395,8 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 
 	*track = m.ToTrack()
 
+	invalidateAlbumCache()
+
 	return nil
 }
 
@@ -420,6 +424,8 @@ func (r *TrackRepository) UpdateTrackPath(track *entities.Track) error {
 
 	*track = m.ToTrack()
 
+	invalidateAlbumCache()
+
 	return nil
 }
 
@@ -441,6 +447,8 @@ func (r *TrackRepository) DeleteTrack(track *entities.Track) error {
 	}
 
 	*track = m.ToTrack()
+
+	invalidateAlbumCache()
 
 	return nil
 }

@@ -2,12 +2,17 @@ package repository
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/jmoiron/sqlx"
 )
 
 var AlbumNotFoundError = errors.New("Album is not found")
+
+var albumCacheMutex = sync.Mutex{}
+
+var allAlbumsCache = map[int][]entities.Album{}
 
 func NewAlbumRepository(
 	db *sqlx.DB, trackRepository TrackRepository,
@@ -62,47 +67,43 @@ outerloop:
 }
 
 func (r *AlbumRepository) GetAllAlbumsFromUser(userId int) ([]entities.Album, error) {
+	albumCacheMutex.Lock()
+	defer albumCacheMutex.Unlock()
+
+	if cache, ok := allAlbumsCache[userId]; ok {
+		return cache, nil
+	}
+
 	tracks, err := r.trackRepository.GetAllTracksFromUser(userId)
 	if err != nil {
 		return nil, entities.NewInternalError(err)
 	}
 
-	return r.GroupTracksInAlbums(&userId, tracks), nil
+	albums := r.GroupTracksInAlbums(&userId, tracks)
+
+	allAlbumsCache[userId] = albums
+
+	return albums, nil
 }
 
 func (r *AlbumRepository) GetAlbumByIdFromUser(userId int, albumId string) (entities.Album, error) {
-	tracks, err := r.trackRepository.GetAllTracksFromUser(userId)
+	albums, err := r.GetAllAlbumsFromUser(userId)
 	if err != nil {
 		return entities.Album{}, entities.NewInternalError(err)
 	}
 
-	album := entities.Album{
-		Id: albumId,
-
-		UserId: &userId,
-
-		Tracks: []entities.Track{},
-	}
-
-	for _, track := range tracks {
-		albumId, err := track.Metadata.GetVirtualAlbumId()
-		if err != nil {
-			continue
-		}
-
+	for _, album := range albums {
 		if album.Id == albumId {
-			album.Tracks = append(album.Tracks, track)
+			return album, nil
 		}
-
 	}
 
-	if len(album.Tracks) == 0 {
-		return entities.Album{}, AlbumNotFoundError
-	}
+	return entities.Album{}, AlbumNotFoundError
+}
 
-	album.Name = album.Tracks[0].Metadata.Album
+func invalidateAlbumCache() {
+	albumCacheMutex.Lock()
+	defer albumCacheMutex.Unlock()
 
-	album.AlbumArtists = album.Tracks[0].Metadata.GetVirtualAlbumArtists()
-
-	return album, nil
+	allAlbumsCache = map[int][]entities.Album{}
 }
