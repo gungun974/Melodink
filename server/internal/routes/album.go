@@ -126,6 +126,16 @@ func AlbumRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
+	router.Get("/covers/signatures", func(w http.ResponseWriter, r *http.Request) {
+		response, err := c.AlbumController.GetAllAlbumsCoverSignatures(r.Context())
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
 	router.Delete("/{id}/cover", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 

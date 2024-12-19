@@ -84,7 +84,11 @@ class AlbumLocalDataSource {
     }
   }
 
-  Future<void> storeAlbum(Album album, bool shouldDownloadTracks) async {
+  Future<void> storeAlbum(
+    Album album,
+    bool shouldDownloadTracks, {
+    String? customSignature,
+  }) async {
     final db = await DatabaseService.getDatabase();
 
     try {
@@ -97,11 +101,17 @@ class AlbumLocalDataSource {
       String? downloadImagePath;
 
       try {
-        final signatureResponse = await AppApi()
-            .dio
-            .get<String>("/album/${album.id}/cover/signature");
+        late final String? signature;
 
-        final signature = signatureResponse.data;
+        if (customSignature != null) {
+          signature = customSignature;
+        } else {
+          final signatureResponse = await AppApi()
+              .dio
+              .get<String>("/album/${album.id}/cover/signature");
+
+          signature = signatureResponse.data;
+        }
 
         if (signature != null && signature.trim().isNotEmpty) {
           downloadImagePath = "$downloadPath/image-$signature";

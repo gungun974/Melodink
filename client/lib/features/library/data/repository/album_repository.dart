@@ -78,8 +78,15 @@ class AlbumRepository {
   Future<List<Album>> updateAndStoreAllAlbums(bool shouldDownloadTracks) async {
     final albums = await albumRemoteDataSource.getAllAlbumsWithTracks();
 
+    final signatures =
+        await albumRemoteDataSource.getAllAlbumsCoverSignatures();
+
     for (final album in albums) {
-      await albumLocalDataSource.storeAlbum(album, shouldDownloadTracks);
+      await albumLocalDataSource.storeAlbum(
+        album,
+        shouldDownloadTracks,
+        customSignature: signatures[album.id],
+      );
 
       await playedTrackRepository
           .loadTrackHistoryIntoMinimalTracks(album.tracks);

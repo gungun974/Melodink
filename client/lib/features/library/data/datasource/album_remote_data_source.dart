@@ -52,6 +52,23 @@ class AlbumRemoteDataSource {
     }
   }
 
+  Future<Map<String, String>> getAllAlbumsCoverSignatures() async {
+    try {
+      final response = await AppApi().dio.get("/album/covers/signatures");
+
+      return Map<String, String>.from(response.data);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      throw ServerUnknownException();
+    }
+  }
+
   Future<Album> getAlbumById(String id) async {
     try {
       final response = await AppApi().dio.get("/album/$id");

@@ -152,6 +152,12 @@ func (c *AlbumController) GetAlbumCustomCoverSignature(
 	return c.albumUsecase.GetAlbumCustomCoverSignature(ctx, id)
 }
 
+func (c *AlbumController) GetAllAlbumsCoverSignatures(
+	ctx context.Context,
+) (models.APIResponse, error) {
+	return c.albumUsecase.GetAllAlbumsCoverSignatures(ctx)
+}
+
 func (c *AlbumController) DeleteAlbumCover(
 	ctx context.Context,
 	rawId string,
