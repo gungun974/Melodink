@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:melodink_client/features/library/data/datasource/album_local_data_source.dart';
+import 'package:melodink_client/features/library/data/repository/album_repository.dart';
+import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
@@ -218,6 +221,70 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
     for (final orphan in orphans) {
       final _ = ref.refresh(isTrackDownloadedProvider(orphan.trackId));
     }
+  }
+
+  Future<void> downloadAllAlbums() async {
+    final albumRepository = ref.read(albumRepositoryProvider);
+
+    final albums = await albumRepository.getAllAlbums();
+
+    final Set<int> trackIds = {};
+    final List<MinimalTrack> tracks = [];
+
+    for (final album in albums) {
+      final newAlbum =
+          await albumRepository.updateAndStoreAlbum(album.id, true);
+
+      for (final track in newAlbum.tracks) {
+        if (trackIds.add(track.id)) {
+          tracks.add(track);
+        }
+      }
+    }
+
+    state = state.copyWith(queueTasks: [
+      ...state.queueTasks,
+      ...tracks.map((track) {
+        final streamController = StreamController<double>();
+
+        return DownloadTask(
+          track: track,
+          progress: streamController.stream.asBroadcastStream(),
+          progressController: streamController,
+        );
+      }),
+    ]);
+
+    _executor.execute(_manageDownload);
+  }
+
+  Future<void> removeAllDownloads() async {
+    final playlistRepository = ref.read(playlistRepositoryProvider);
+
+    final playlists = await playlistRepository.getAllPlaylists();
+
+    for (final playlist in playlists) {
+      try {
+        await playlistRepository.deletePlaylistById(playlist.id);
+      } on PlaylistNotFoundException {
+        //
+      }
+    }
+
+    final albumRepository = ref.read(albumRepositoryProvider);
+
+    final albums = await albumRepository.getAllAlbums();
+
+    for (final album in albums) {
+      try {
+        await albumRepository.deleteStoredAlbum(album.id);
+      } on AlbumNotFoundException {
+        //
+      }
+    }
+
+    await albumRepository.deleteOrphanAlbums();
+    await deleteOrphanTracks();
   }
 }
 

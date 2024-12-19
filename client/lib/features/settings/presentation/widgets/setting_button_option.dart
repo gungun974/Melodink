@@ -38,6 +38,7 @@ class SettingButtonOption extends StatelessWidget {
           onPressed: onPressed,
           style: const ButtonStyle(
             alignment: Alignment.centerRight,
+            visualDensity: VisualDensity.standard,
           ),
           child: Text(
             action,
