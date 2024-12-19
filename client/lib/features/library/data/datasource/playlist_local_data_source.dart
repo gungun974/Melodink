@@ -152,6 +152,7 @@ class PlaylistLocalDataSource {
               )
               .toList(),
         ),
+        "cover_signature": coverSignature,
       };
 
       if (savedPlaylist == null) {
