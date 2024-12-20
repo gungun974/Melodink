@@ -106,4 +106,6 @@ func invalidateAlbumCache() {
 	defer albumCacheMutex.Unlock()
 
 	allAlbumsCache = map[int][]entities.Album{}
+
+	invalidateArtistCache()
 }
