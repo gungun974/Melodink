@@ -671,9 +671,10 @@ class AudioController extends BaseAudioHandler
 
   void audioChanged(int pos) {
     audioChangedDebouncer.run(() async {
-      if (pos != _previousTracks.length - 1) {
-        await _updatePlaylistTracks(pos);
-      }
+      await _updatePlaylistTracks(
+        pos,
+        updatePlayerTracks: pos != _previousTracks.length - 1,
+      );
     });
   }
 
