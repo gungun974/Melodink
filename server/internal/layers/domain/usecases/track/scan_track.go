@@ -55,5 +55,14 @@ func (u *TrackUsecase) ScanTrack(
 	scannedTrack.Id = track.Id
 	scannedTrack.UserId = track.UserId
 
+	if len(scannedTrack.Metadata.ArtistsRoles) != 0 {
+		track.Metadata.ArtistsRoles = scannedTrack.Metadata.ArtistsRoles
+
+		if err := u.trackRepository.UpdateTrack(track); err != nil {
+			logger.MainLogger.Error("Couldn't update track in Database", err, *track)
+			return nil, entities.NewInternalError(errors.New("Failed to update track"))
+		}
+	}
+
 	return u.trackPresenter.ShowDetailedTrack(scannedTrack), nil
 }
