@@ -806,6 +806,7 @@ public:
             SetAudioError();
           } else {
             SetAudioCurrent(new_current_track);
+            SetPlayerState(MELODINK_PROCESSING_STATE_BUFFERING);
             send_event_audio_changed(current_track_index);
           }
         }
