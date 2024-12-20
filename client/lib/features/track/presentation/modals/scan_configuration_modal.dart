@@ -22,8 +22,11 @@ class ScanConfiguration extends Equatable {
 }
 
 class ScanConfigurationModal extends HookWidget {
+  final bool hideAdvancedScanQuestion;
+
   const ScanConfigurationModal({
     super.key,
+    required this.hideAdvancedScanQuestion,
   });
 
   @override
@@ -53,21 +56,22 @@ class ScanConfigurationModal extends HookWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      CheckboxListTile(
-                        title: const Text(
-                          'Advanced Scan',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w400,
-                            fontSize: 16,
-                            letterSpacing: 16 * 0.04,
+                      if (!hideAdvancedScanQuestion)
+                        CheckboxListTile(
+                          title: const Text(
+                            'Advanced Scan',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16,
+                              letterSpacing: 16 * 0.04,
+                            ),
                           ),
+                          value: advancedScan.value,
+                          onChanged: (value) {
+                            advancedScan.value = value ?? false;
+                          },
+                          activeColor: const Color.fromRGBO(196, 126, 208, 1),
                         ),
-                        value: advancedScan.value,
-                        onChanged: (value) {
-                          advancedScan.value = value ?? false;
-                        },
-                        activeColor: const Color.fromRGBO(196, 126, 208, 1),
-                      ),
                       CheckboxListTile(
                         title: const Text(
                           'Replace only Empty Fields',
@@ -125,13 +129,16 @@ class ScanConfigurationModal extends HookWidget {
   }
 
   static Future<ScanConfiguration?> showModal(
-    BuildContext context,
-  ) async {
+    BuildContext context, {
+    bool hideAdvancedScanQuestion = false,
+  }) async {
     return await showDialog<ScanConfiguration>(
       context: context,
-      builder: (BuildContext context) => const PopScope(
+      builder: (BuildContext context) => PopScope(
         canPop: true,
-        child: ScanConfigurationModal(),
+        child: ScanConfigurationModal(
+          hideAdvancedScanQuestion: hideAdvancedScanQuestion,
+        ),
       ),
     );
   }

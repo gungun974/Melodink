@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:adwaita_icons/adwaita_icons.dart';
@@ -20,6 +21,7 @@ import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/import_tracks_provider.dart';
 import 'package:melodink_client/features/track/presentation/modals/edit_track_modal.dart';
+import 'package:melodink_client/features/track/presentation/modals/scan_configuration_modal.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 
 class ImportTracksModal extends HookConsumerWidget {
@@ -150,10 +152,77 @@ class ImportTracksModal extends HookConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      const Expanded(
+                      Expanded(
                         child: AppButton(
                           text: "Advanced scan",
                           type: AppButtonType.primary,
+                          onPressed: state.uploadedTracks.isNotEmpty
+                              ? () async {
+                                  final configuration =
+                                      await ScanConfigurationModal.showModal(
+                                    context,
+                                    hideAdvancedScanQuestion: true,
+                                  );
+
+                                  if (configuration == null) {
+                                    return;
+                                  }
+
+                                  final streamController =
+                                      StreamController<double>();
+
+                                  final stream = streamController.stream
+                                      .asBroadcastStream();
+
+                                  final loadingWidget = OverlayEntry(
+                                    builder: (context) => StreamBuilder(
+                                        stream: stream,
+                                        builder: (context, snapshot) {
+                                          return AppPageLoader(
+                                            value: snapshot.data,
+                                          );
+                                        }),
+                                  );
+
+                                  if (context.mounted) {
+                                    Overlay.of(context, rootOverlay: true)
+                                        .insert(loadingWidget);
+                                  }
+
+                                  try {
+                                    await ref
+                                        .read(importTracksProvider.notifier)
+                                        .performAnAdvancedScans(
+                                          configuration.onlyReplaceEmptyFields,
+                                          streamController,
+                                        );
+                                    streamController.close();
+
+                                    loadingWidget.remove();
+
+                                    if (!context.mounted) {
+                                      return;
+                                    }
+
+                                    AppNotificationManager.of(context).notify(
+                                      context,
+                                      message:
+                                          "${state.uploadedTracks.length} track${state.uploadedTracks.length > 1 ? 's' : ''} have been scanned.",
+                                    );
+                                  } catch (_) {
+                                    streamController.close();
+                                    if (context.mounted) {
+                                      AppNotificationManager.of(context).notify(
+                                        context,
+                                        title: "Error",
+                                        message: "Something went wrong",
+                                        type: AppNotificationType.danger,
+                                      );
+                                    }
+                                    loadingWidget.remove();
+                                  }
+                                }
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 16),

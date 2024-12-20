@@ -698,10 +698,13 @@ class EditTrackModal extends HookConsumerWidget {
                                         .metadata.albumArtists
                                         .map((artist) => artist.name)
                                         .toList();
+
+                                    genres.value = scannedTrack.metadata.genres;
                                   } else {
                                     final newArtists = artists.value.toList();
                                     final newAlbumArtists =
                                         albumArtists.value.toList();
+                                    final newGenres = genres.value.toList();
 
                                     while (newArtists.length <
                                         scannedTrack.metadata.artists.length) {
@@ -712,6 +715,11 @@ class EditTrackModal extends HookConsumerWidget {
                                         scannedTrack
                                             .metadata.albumArtists.length) {
                                       newAlbumArtists.add("");
+                                    }
+
+                                    while (newGenres.length <
+                                        scannedTrack.metadata.genres.length) {
+                                      newGenres.add("");
                                     }
 
                                     for (final entry in scannedTrack
@@ -731,8 +739,16 @@ class EditTrackModal extends HookConsumerWidget {
                                       }
                                     }
 
+                                    for (final entry in scannedTrack
+                                        .metadata.genres.indexed) {
+                                      if (newGenres[entry.$1].trim().isEmpty) {
+                                        newGenres[entry.$1] = entry.$2;
+                                      }
+                                    }
+
                                     artists.value = newArtists;
                                     albumArtists.value = newAlbumArtists;
+                                    genres.value = newGenres;
                                   }
 
                                   if (!configuration.onlyReplaceEmptyFields ||
@@ -781,7 +797,6 @@ class EditTrackModal extends HookConsumerWidget {
                                     yearTextController.text =
                                         scannedTrack.metadata.year.toString();
                                   }
-                                  genres.value = scannedTrack.metadata.genres;
 
                                   if (!configuration.onlyReplaceEmptyFields ||
                                       acoustIdTextController.text

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:equatable/equatable.dart';
+import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
@@ -245,5 +246,118 @@ class ImportTracks extends _$ImportTracks {
 
       return false;
     }
+  }
+
+  Future performAnAdvancedScans(
+    bool onlyReplaceEmptyFields,
+    StreamController<double> streamController,
+  ) async {
+    final tracks = state.uploadedTracks;
+
+    streamController.add(0.01 / tracks.length);
+
+    for (var i = 0; i < tracks.length; i++) {
+      final track = await _trackRepository.getTrackById(tracks[i].id);
+
+      final scannedTrack = await _trackRepository.advancedAudioScan(track.id);
+
+      if (!onlyReplaceEmptyFields) {
+        await _trackRepository.saveTrack(scannedTrack);
+      } else {
+        final newArtists = track.metadata.artists.toList();
+        final newAlbumArtists = track.metadata.albumArtists.toList();
+        final newGenres = track.metadata.genres.toList();
+
+        while (newArtists.length < scannedTrack.metadata.artists.length) {
+          newArtists.add(const MinimalArtist(id: "", name: ""));
+        }
+
+        while (newAlbumArtists.length <
+            scannedTrack.metadata.albumArtists.length) {
+          newAlbumArtists.add(const MinimalArtist(id: "", name: ""));
+        }
+
+        while (newGenres.length < scannedTrack.metadata.genres.length) {
+          newGenres.add("");
+        }
+
+        for (final entry in scannedTrack.metadata.artists.indexed) {
+          if (newArtists[entry.$1].name.trim().isEmpty) {
+            newArtists[entry.$1] = entry.$2;
+          }
+        }
+
+        for (final entry in scannedTrack.metadata.albumArtists.indexed) {
+          if (newAlbumArtists[entry.$1].name.trim().isEmpty) {
+            newAlbumArtists[entry.$1] = entry.$2;
+          }
+        }
+
+        for (final entry in scannedTrack.metadata.genres.indexed) {
+          if (newGenres[entry.$1].trim().isEmpty) {
+            newGenres[entry.$1] = entry.$2;
+          }
+        }
+
+        await _trackRepository.saveTrack(
+          track.copyWith(
+            title: track.title.trim().isEmpty ? scannedTrack.title : null,
+            metadata: track.metadata.copyWith(
+              album: track.metadata.album.trim().isEmpty
+                  ? scannedTrack.metadata.album
+                  : null,
+              trackNumber: track.metadata.trackNumber == 0
+                  ? scannedTrack.metadata.trackNumber
+                  : null,
+              totalTracks: track.metadata.totalTracks == 0
+                  ? scannedTrack.metadata.totalTracks
+                  : null,
+              discNumber: track.metadata.discNumber == 0
+                  ? scannedTrack.metadata.discNumber
+                  : null,
+              totalDiscs: track.metadata.totalTracks == 0
+                  ? scannedTrack.metadata.totalDiscs
+                  : null,
+              date: track.metadata.date.trim().isEmpty
+                  ? scannedTrack.metadata.date
+                  : null,
+              year:
+                  track.metadata.year != 0 ? scannedTrack.metadata.year : null,
+              genres: newGenres,
+              lyrics: track.metadata.lyrics.trim().isEmpty
+                  ? scannedTrack.metadata.lyrics
+                  : null,
+              comment: track.metadata.comment.trim().isEmpty
+                  ? scannedTrack.metadata.comment
+                  : null,
+              acoustId: track.metadata.acoustId.trim().isEmpty
+                  ? scannedTrack.metadata.acoustId
+                  : null,
+              musicBrainzReleaseId:
+                  track.metadata.musicBrainzReleaseId.trim().isEmpty
+                      ? scannedTrack.metadata.musicBrainzReleaseId
+                      : null,
+              musicBrainzTrackId:
+                  track.metadata.musicBrainzTrackId.trim().isEmpty
+                      ? scannedTrack.metadata.musicBrainzTrackId
+                      : null,
+              musicBrainzRecordingId:
+                  track.metadata.musicBrainzRecordingId.trim().isEmpty
+                      ? scannedTrack.metadata.musicBrainzRecordingId
+                      : null,
+              artists: newArtists,
+              albumArtists: newAlbumArtists,
+              composer: track.metadata.composer.trim().isEmpty
+                  ? scannedTrack.metadata.composer
+                  : null,
+            ),
+          ),
+        );
+      }
+
+      streamController.add((i + 1) / tracks.length);
+    }
+
+    refresh();
   }
 }
