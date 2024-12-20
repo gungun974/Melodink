@@ -15,9 +15,11 @@ import 'package:melodink_client/core/widgets/form/app_datetime_form_field.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
+import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/modals/scan_configuration_modal.dart';
 
 class EditTrackModal extends HookConsumerWidget {
   final Track track;
@@ -646,10 +648,220 @@ class EditTrackModal extends HookConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          const Expanded(
+                          Expanded(
                             child: AppButton(
                               text: "Scan Metadata",
                               type: AppButtonType.secondary,
+                              onPressed: () async {
+                                final configuration =
+                                    await ScanConfigurationModal.showModal(
+                                  context,
+                                );
+
+                                if (configuration == null) {
+                                  return;
+                                }
+
+                                isLoading.value = true;
+                                try {
+                                  late final Track scannedTrack;
+
+                                  if (configuration.advancedScan) {
+                                    scannedTrack = await ref
+                                        .read(trackRepositoryProvider)
+                                        .advancedAudioScan(track.id);
+                                  } else {
+                                    scannedTrack = await ref
+                                        .read(trackRepositoryProvider)
+                                        .scanAudio(track.id);
+                                  }
+
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      titleTextController.text.trim().isEmpty) {
+                                    titleTextController.text =
+                                        scannedTrack.title;
+                                  }
+
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      albumTextController.text.trim().isEmpty) {
+                                    albumTextController.text =
+                                        scannedTrack.metadata.album;
+                                  }
+
+                                  if (!configuration.onlyReplaceEmptyFields) {
+                                    artists.value = scannedTrack
+                                        .metadata.artists
+                                        .map((artist) => artist.name)
+                                        .toList();
+
+                                    albumArtists.value = scannedTrack
+                                        .metadata.albumArtists
+                                        .map((artist) => artist.name)
+                                        .toList();
+                                  } else {
+                                    final newArtists = artists.value.toList();
+                                    final newAlbumArtists =
+                                        albumArtists.value.toList();
+
+                                    while (newArtists.length <
+                                        scannedTrack.metadata.artists.length) {
+                                      newArtists.add("");
+                                    }
+
+                                    while (newAlbumArtists.length <
+                                        scannedTrack
+                                            .metadata.albumArtists.length) {
+                                      newAlbumArtists.add("");
+                                    }
+
+                                    for (final entry in scannedTrack
+                                        .metadata.artists.indexed) {
+                                      if (newArtists[entry.$1].trim().isEmpty) {
+                                        newArtists[entry.$1] = entry.$2.name;
+                                      }
+                                    }
+
+                                    for (final entry in scannedTrack
+                                        .metadata.albumArtists.indexed) {
+                                      if (newAlbumArtists[entry.$1]
+                                          .trim()
+                                          .isEmpty) {
+                                        newAlbumArtists[entry.$1] =
+                                            entry.$2.name;
+                                      }
+                                    }
+
+                                    artists.value = newArtists;
+                                    albumArtists.value = newAlbumArtists;
+                                  }
+
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      trackNumberTextController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    trackNumberTextController.text =
+                                        scannedTrack.metadata.trackNumber
+                                            .toString();
+                                  }
+
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      totalTracksTextController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    totalTracksTextController.text =
+                                        scannedTrack.metadata.totalTracks
+                                            .toString();
+                                  }
+
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      discNumberTextController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    discNumberTextController.text = scannedTrack
+                                        .metadata.discNumber
+                                        .toString();
+                                  }
+
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      totalDiscsTextController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    totalDiscsTextController.text = scannedTrack
+                                        .metadata.totalDiscs
+                                        .toString();
+                                  }
+
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      dateTextController.text.trim().isEmpty) {
+                                    dateTextController.text =
+                                        scannedTrack.metadata.date;
+                                  }
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      yearTextController.text.trim().isEmpty) {
+                                    yearTextController.text =
+                                        scannedTrack.metadata.year.toString();
+                                  }
+                                  genres.value = scannedTrack.metadata.genres;
+
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      acoustIdTextController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    acoustIdTextController.text =
+                                        scannedTrack.metadata.acoustId;
+                                  }
+
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      acoustIdTextController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    acoustIdTextController.text = scannedTrack
+                                        .metadata.musicBrainzReleaseId;
+                                  }
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      musicBrainzTrackIdTextController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    musicBrainzTrackIdTextController.text =
+                                        scannedTrack
+                                            .metadata.musicBrainzTrackId;
+                                  }
+
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      musicBrainzRecordingIdTextController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    musicBrainzRecordingIdTextController.text =
+                                        scannedTrack
+                                            .metadata.musicBrainzRecordingId;
+                                  }
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      composerTextController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    composerTextController.text =
+                                        scannedTrack.metadata.composer;
+                                  }
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      commentTextController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    commentTextController.text =
+                                        scannedTrack.metadata.comment;
+                                  }
+                                  if (!configuration.onlyReplaceEmptyFields ||
+                                      lyricsTextController.text
+                                          .trim()
+                                          .isEmpty) {
+                                    lyricsTextController.text =
+                                        scannedTrack.metadata.lyrics;
+                                  }
+
+                                  isLoading.value = false;
+                                } catch (_) {
+                                  isLoading.value = false;
+
+                                  if (context.mounted) {
+                                    AppNotificationManager.of(context).notify(
+                                      context,
+                                      title: "Error",
+                                      message: "Something went wrong",
+                                      type: AppNotificationType.danger,
+                                    );
+                                  }
+                                  rethrow;
+                                }
+
+                                if (!context.mounted) {
+                                  return;
+                                }
+
+                                AppNotificationManager.of(context).notify(
+                                  context,
+                                  message:
+                                      "The scan for track \"${track.title}\" is complete.",
+                                );
+                              },
                             ),
                           ),
                         ],
@@ -737,6 +949,8 @@ class EditTrackModal extends HookConsumerWidget {
                                             musicBrainzRecordingId:
                                                 musicBrainzRecordingIdTextController
                                                     .text,
+                                            composer:
+                                                composerTextController.text,
                                             comment: commentTextController.text,
                                             lyrics: lyricsTextController.text,
                                           ),

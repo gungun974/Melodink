@@ -94,6 +94,14 @@ class TrackRepository {
   importPendingTracks() async {
     await trackRemoteDataSource.importPendingTracks();
   }
+
+  Future<Track> scanAudio(int id) async {
+    return await trackRemoteDataSource.scanAudio(id);
+  }
+
+  Future<Track> advancedAudioScan(int id) async {
+    return await trackRemoteDataSource.advancedAudioScan(id);
+  }
 }
 
 final trackRepositoryProvider = Provider(

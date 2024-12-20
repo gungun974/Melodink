@@ -117,7 +117,7 @@ class TrackRemoteDataSource {
           "year": track.metadata.year,
           "genres": track.metadata.genres,
           "lyrics": track.metadata.lyrics,
-          "comment": track.metadata.composer,
+          "comment": track.metadata.comment,
           "artists":
               track.metadata.artists.map((artist) => artist.name).toList(),
           "album_artists":
@@ -297,6 +297,60 @@ class TrackRemoteDataSource {
       final response = e.response;
       if (response == null) {
         throw ServerTimeoutException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<Track> scanAudio(int id) async {
+    try {
+      final response = await AppApi().dio.get(
+            "/track/$id/scan",
+            options: Options(
+              receiveTimeout: const Duration(seconds: 120),
+            ),
+          );
+
+      return TrackModel.fromJson(response.data).toTrack();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw TrackNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<Track> advancedAudioScan(int id) async {
+    try {
+      final response = await AppApi().dio.get(
+            "/track/$id/scan?advanced_scan=true",
+            options: Options(
+              receiveTimeout: const Duration(seconds: 120),
+            ),
+          );
+
+      return TrackModel.fromJson(response.data).toTrack();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw TrackNotFoundException();
       }
 
       throw ServerUnknownException();
