@@ -30,15 +30,37 @@ class MobileNavbar extends ConsumerWidget {
             active: currentUrl == "/track",
           ),
           MobileNavbarItem(
-            label: 'Library',
+            label: 'Playlists',
             icon: const AdwaitaIcon(
-              AdwaitaIcons.library_music,
+              AdwaitaIcons.playlist2,
+              size: 24,
+            ),
+            onTap: () {
+              GoRouter.of(context).go("/playlist");
+            },
+            active: currentUrl == "/playlist",
+          ),
+          MobileNavbarItem(
+            label: 'Albums',
+            icon: const AdwaitaIcon(
+              AdwaitaIcons.media_optical,
               size: 24,
             ),
             onTap: () {
               GoRouter.of(context).go("/album");
             },
             active: currentUrl == "/album",
+          ),
+          MobileNavbarItem(
+            label: 'Artists',
+            icon: const AdwaitaIcon(
+              AdwaitaIcons.music_artist2,
+              size: 24,
+            ),
+            onTap: () {
+              GoRouter.of(context).go("/artist");
+            },
+            active: currentUrl == "/artist",
           ),
           MobileNavbarItem(
             label: 'Settings',
