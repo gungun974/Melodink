@@ -21,6 +21,12 @@ class AlbumLocalDataSource {
       Map<String, Object?> data, String applicationSupportDirectory) {
     final rawImageFile = data["image_file"] as String?;
 
+    final tracks = (json.decode(data["tracks"] as String) as List)
+        .map(
+          (rawModel) => MinimalTrackModel.fromJson(rawModel).toMinimalTrack(),
+        )
+        .toList();
+
     return Album(
       id: data["album_id"] as String,
       localCover: rawImageFile != null
@@ -33,14 +39,15 @@ class AlbumLocalDataSource {
                 MinimalArtistModel.fromJson(rawModel).toMinimalArtist(),
           )
           .toList(),
-      tracks: (json.decode(data["tracks"] as String) as List)
-          .map(
-            (rawModel) => MinimalTrackModel.fromJson(rawModel).toMinimalTrack(),
-          )
-          .toList(),
+      tracks: tracks,
       isDownloaded: true,
       downloadTracks: data["download_tracks"] == 1,
       coverSignature: data["cover_signature"] as String,
+      lastTrackDateAdded: tracks.isEmpty
+          ? DateTime.fromMillisecondsSinceEpoch(0)
+          : tracks
+              .reduce((a, b) => a.dateAdded.isAfter(b.dateAdded) ? a : b)
+              .dateAdded,
     );
   }
 

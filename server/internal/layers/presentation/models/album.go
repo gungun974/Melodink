@@ -1,6 +1,8 @@
 package view_models
 
 import (
+	"time"
+
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 )
 
@@ -14,6 +16,8 @@ type AlbumViewModel struct {
 	AlbumArtists []MinimalArtistViewModel `json:"album_artists"`
 
 	Tracks []MinimalTrackViewModel `json:"tracks"`
+
+	LastTrackDateAdded string `json:"last_track_date_added"`
 }
 
 func ConvertToAlbumsViewModel(
@@ -28,6 +32,20 @@ func ConvertToAlbumsViewModel(
 		}
 
 		albumsViewModels[i] = ConvertToAlbumViewModel(album)
+
+		if !showTracks {
+			lastTrack := entities.Track{}
+
+			for _, track := range albums[i].Tracks {
+				if track.DateAdded.After(lastTrack.DateAdded) {
+					lastTrack = track
+				}
+			}
+
+			albumsViewModels[i].LastTrackDateAdded = lastTrack.DateAdded.UTC().
+				Format(time.RFC3339)
+
+		}
 	}
 
 	return albumsViewModels
@@ -38,8 +56,13 @@ func ConvertToAlbumViewModel(
 ) AlbumViewModel {
 	tracksViewModels := make([]MinimalTrackViewModel, len(album.Tracks))
 
+	lastTrack := entities.Track{}
+
 	for i, track := range album.Tracks {
 		tracksViewModels[i] = ConvertToMinimalTrackViewModel(track)
+		if track.DateAdded.After(lastTrack.DateAdded) {
+			lastTrack = track
+		}
 	}
 
 	return AlbumViewModel{
@@ -52,5 +75,7 @@ func ConvertToAlbumViewModel(
 		AlbumArtists: ConvertToMinimalArtistsViewModel(album.AlbumArtists),
 
 		Tracks: tracksViewModels,
+
+		LastTrackDateAdded: lastTrack.DateAdded.UTC().Format(time.RFC3339),
 	}
 }

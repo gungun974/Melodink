@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
+import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/library/domain/providers/edit_album_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
@@ -12,6 +14,8 @@ import 'package:melodink_client/features/tracker/domain/manager/player_tracker_m
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'album_provider.g.dart';
+
+//! Albums
 
 @riverpod
 Future<List<Album>> allAlbums(AllAlbumsRef ref) async {
@@ -29,6 +33,99 @@ Future<List<Album>> allAlbums(AllAlbumsRef ref) async {
 
   return await albumRepository.getAllAlbums();
 }
+
+final allAlbumsSortedModeProvider =
+    StateProvider.autoDispose<String>((ref) => 'newest');
+
+final allAlbumsSearchInputProvider =
+    StateProvider.autoDispose<String>((ref) => '');
+
+int compareArtists(List<MinimalArtist> a, List<MinimalArtist> b) {
+  int minLength = a.length < b.length ? a.length : b.length;
+
+  for (int i = 0; i < minLength; i++) {
+    if (a[i].name.isEmpty && b[i].name.isNotEmpty) {
+      return 1;
+    }
+
+    if (b[i].name.isEmpty && a[i].name.isNotEmpty) {
+      return -1;
+    }
+
+    int comparison = a[i].name.toLowerCase().compareTo(b[i].name.toLowerCase());
+    if (comparison != 0) {
+      return comparison;
+    }
+  }
+
+  return a.length.compareTo(b.length);
+}
+
+@riverpod
+Future<List<Album>> allAlbumsSorted(AllAlbumsSortedRef ref) async {
+  final allAlbums = await ref.watch(allAlbumsProvider.future);
+
+  final sortedMode = ref.watch(allAlbumsSortedModeProvider);
+
+  return allAlbums.toList(growable: false)
+    ..sort(
+      (a, b) {
+        return switch (sortedMode) {
+          // Artist Z-A
+          "artist-za" => compareArtists(b.albumArtists, a.albumArtists),
+          // Artist A-Z
+          "artist-az" => compareArtists(a.albumArtists, b.albumArtists),
+          // Name Z-A
+          "name-za" => b.name.toLowerCase().compareTo(a.name.toLowerCase()),
+          // Name A-Z
+          "name-az" => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+          // Oldest
+          "oldest" => a.lastTrackDateAdded.compareTo(b.lastTrackDateAdded),
+          // Newest
+          _ => b.lastTrackDateAdded.compareTo(a.lastTrackDateAdded),
+        };
+      },
+    );
+}
+
+@riverpod
+Future<List<Album>> allSearchAlbums(AllSearchAlbumsRef ref) async {
+  final allAlbums = await ref.watch(allAlbumsSortedProvider.future);
+
+  final keepAlphanumeric = RegExp(r'[^a-zA-Z0-9]');
+
+  final allAlbumsSearchInput = ref
+      .watch(allAlbumsSearchInputProvider)
+      .toLowerCase()
+      .trim()
+      .replaceAll(keepAlphanumeric, "");
+
+  if (allAlbumsSearchInput.isEmpty) {
+    return allAlbums;
+  }
+
+  return allAlbums.where((album) {
+    if (album.name
+        .toLowerCase()
+        .replaceAll(keepAlphanumeric, "")
+        .contains(allAlbumsSearchInput)) {
+      return true;
+    }
+
+    for (final artist in album.albumArtists) {
+      if (artist.name
+          .toLowerCase()
+          .replaceAll(keepAlphanumeric, "")
+          .contains(allAlbumsSearchInput)) {
+        return true;
+      }
+    }
+
+    return false;
+  }).toList();
+}
+
+//! Album Page
 
 @riverpod
 class AlbumById extends _$AlbumById {
@@ -130,6 +227,8 @@ class AlbumById extends _$AlbumById {
     ref.invalidate(albumDownloadNotifierProvider(id));
   }
 }
+
+//! Album Download
 
 class AlbumDownloadState extends Equatable {
   final bool downloaded;

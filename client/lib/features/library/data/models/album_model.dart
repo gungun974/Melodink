@@ -11,11 +11,14 @@ class AlbumModel {
 
   final List<MinimalTrackModel> tracks;
 
+  final DateTime lastTrackDateAdded;
+
   const AlbumModel({
     required this.id,
     required this.name,
     required this.albumArtists,
     required this.tracks,
+    required this.lastTrackDateAdded,
   });
 
   Album toAlbum() {
@@ -32,6 +35,7 @@ class AlbumModel {
             (track) => track.toMinimalTrack(),
           )
           .toList(),
+      lastTrackDateAdded: lastTrackDateAdded,
     );
   }
 
@@ -49,6 +53,8 @@ class AlbumModel {
             (track) => MinimalTrackModel.fromJson(track),
           )
           .toList(),
+      lastTrackDateAdded:
+          DateTime.parse(json['last_track_date_added']).toLocal(),
     );
   }
 }
