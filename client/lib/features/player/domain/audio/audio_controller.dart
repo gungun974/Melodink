@@ -697,7 +697,7 @@ class AudioController extends BaseAudioHandler
     await pause();
   }
 
-  Future<void> _updatePlaybackState() async {
+  Future<void> _updatePlaybackState({shouldDoubleCheck = true}) async {
     _updateUiTrackLists();
 
     final playerPlaying = player.getCurrentPlaying();
@@ -778,28 +778,12 @@ class AudioController extends BaseAudioHandler
           )
         : null);
 
-    // Fix tiny wrong start delay
-    Future.delayed(const Duration(milliseconds: 200)).then(
-      (_) => _updateTinyCurrentPosition(),
-    );
-  }
-
-  Future<void> _updateTinyCurrentPosition() async {
-    final positionMs = player.getCurrentPosition();
-    final bufferedPositionMs = player.getCurrentBufferedPosition();
-
-    final newState = playbackState.value.copyWith(
-      updatePosition: Duration(milliseconds: positionMs),
-      bufferedPosition: Duration(milliseconds: bufferedPositionMs),
-    );
-
-    playerTrackerManager?.watchState(
-      playbackState.value,
-      newState,
-      _previousTracks.lastOrNull,
-    );
-
-    playbackState.add(newState);
+    // Be sure current Player State is up to date in case of strange lag
+    if (shouldDoubleCheck) {
+      Future.delayed(const Duration(milliseconds: 10)).then(
+        (_) => _updatePlaybackState(shouldDoubleCheck: false),
+      );
+    }
   }
 
   final BehaviorSubject<List<MinimalTrack>> previousTracks =
