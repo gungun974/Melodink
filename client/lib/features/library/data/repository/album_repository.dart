@@ -47,6 +47,16 @@ class AlbumRepository {
           }
         }
 
+        final remoteIds = remoteAlbums.map((album) => album.id).toSet();
+
+        final extraLocalAlbums = localAlbums
+            .where((album) => !remoteIds.contains(album.id))
+            .toList();
+
+        for (final album in extraLocalAlbums) {
+          await albumLocalDataSource.deleteStoredAlbum(album.id);
+        }
+
         return remoteAlbums;
       } catch (_) {
         return localAlbums;
