@@ -12,6 +12,8 @@ class Artist extends Equatable {
   final List<Album> appearAlbums;
   final List<Album> hasRoleAlbums;
 
+  final DateTime lastTrackDateAdded;
+
   final String? localCover;
 
   const Artist({
@@ -20,6 +22,7 @@ class Artist extends Equatable {
     required this.albums,
     required this.appearAlbums,
     required this.hasRoleAlbums,
+    required this.lastTrackDateAdded,
     this.localCover,
   });
 
@@ -29,6 +32,7 @@ class Artist extends Equatable {
     List<Album>? albums,
     List<Album>? appearAlbums,
     List<Album>? hasRoleAlbums,
+    DateTime? lastTrackDateAdded,
   }) {
     return Artist(
       id: id ?? this.id,
@@ -36,6 +40,7 @@ class Artist extends Equatable {
       albums: albums ?? this.albums,
       appearAlbums: appearAlbums ?? this.appearAlbums,
       hasRoleAlbums: hasRoleAlbums ?? this.hasRoleAlbums,
+      lastTrackDateAdded: lastTrackDateAdded ?? this.lastTrackDateAdded,
     );
   }
 
@@ -45,6 +50,8 @@ class Artist extends Equatable {
         name,
         albums,
         appearAlbums,
+        hasRoleAlbums,
+        lastTrackDateAdded,
         localCover,
       ];
 

@@ -10,12 +10,15 @@ class ArtistModel {
   final List<AlbumModel> appearAlbums;
   final List<AlbumModel> hasRoleAlbums;
 
+  final DateTime lastTrackDateAdded;
+
   const ArtistModel({
     required this.id,
     required this.name,
     required this.albums,
     required this.appearAlbums,
     required this.hasRoleAlbums,
+    required this.lastTrackDateAdded,
   });
 
   Artist toArtist() {
@@ -37,6 +40,7 @@ class ArtistModel {
             (album) => album.toAlbum(),
           )
           .toList(),
+      lastTrackDateAdded: lastTrackDateAdded,
     );
   }
 
@@ -59,6 +63,8 @@ class ArtistModel {
             (album) => AlbumModel.fromJson(album),
           )
           .toList(),
+      lastTrackDateAdded:
+          DateTime.parse(json['last_track_date_added']).toLocal(),
     );
   }
 }

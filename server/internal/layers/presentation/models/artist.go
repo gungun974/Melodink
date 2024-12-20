@@ -1,6 +1,8 @@
 package view_models
 
 import (
+	"time"
+
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 )
 
@@ -18,6 +20,8 @@ type ArtistViewModel struct {
 	AllTracks        []MinimalTrackViewModel `json:"all_tracks"`
 	AllAppearTracks  []MinimalTrackViewModel `json:"all_appear_tracks"`
 	AllHasRoleTracks []MinimalTrackViewModel `json:"all_has_role_tracks"`
+
+	LastTrackDateAdded string `json:"last_track_date_added"`
 }
 
 func ConvertToArtistsViewModel(
@@ -36,6 +40,24 @@ func ConvertToArtistsViewModel(
 		artist.AllHasRoleTracks = nil
 
 		artistsViewModels[i] = ConvertToArtistViewModel(artist)
+
+		lastTrack := entities.Track{}
+
+		for _, track := range artists[i].AllTracks {
+			if track.DateAdded.After(lastTrack.DateAdded) {
+				lastTrack = track
+			}
+		}
+
+		for _, track := range artists[i].AllAppearTracks {
+			if track.DateAdded.After(lastTrack.DateAdded) {
+				lastTrack = track
+			}
+		}
+
+		artistsViewModels[i].LastTrackDateAdded = lastTrack.DateAdded.UTC().
+			Format(time.RFC3339)
+
 	}
 
 	return artistsViewModels
@@ -46,14 +68,22 @@ func ConvertToArtistViewModel(
 ) ArtistViewModel {
 	allTracksViewModels := make([]MinimalTrackViewModel, len(artist.AllTracks))
 
+	lastTrack := entities.Track{}
+
 	for i, track := range artist.AllTracks {
 		allTracksViewModels[i] = ConvertToMinimalTrackViewModel(track)
+		if track.DateAdded.After(lastTrack.DateAdded) {
+			lastTrack = track
+		}
 	}
 
 	allAppearTracksViewModels := make([]MinimalTrackViewModel, len(artist.AllAppearTracks))
 
 	for i, track := range artist.AllAppearTracks {
 		allAppearTracksViewModels[i] = ConvertToMinimalTrackViewModel(track)
+		if track.DateAdded.After(lastTrack.DateAdded) {
+			lastTrack = track
+		}
 	}
 
 	allHasRoleTracksViewModels := make([]MinimalTrackViewModel, len(artist.AllHasRoleTracks))
@@ -100,6 +130,9 @@ func ConvertToArtistViewModel(
 		AllTracks:        allTracksViewModels,
 		AllAppearTracks:  allAppearTracksViewModels,
 		AllHasRoleTracks: allHasRoleTracksViewModels,
+
+		LastTrackDateAdded: lastTrack.DateAdded.UTC().
+			Format(time.RFC3339),
 	}
 }
 

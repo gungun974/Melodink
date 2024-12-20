@@ -19,7 +19,10 @@ class ArtistLocalDataSource {
     final artists = <String, Artist>{};
 
     for (final album in allAlbums) {
-      for (final track in album.tracks) {
+      for (final track in album.tracks.toList(growable: false)
+        ..sort(
+          (a, b) => b.dateAdded.compareTo(a.dateAdded),
+        )) {
         final downloadedTrack =
             await downloadTrackRepository.getDownloadedTrackByTrackId(track.id);
 
@@ -39,6 +42,7 @@ class ArtistLocalDataSource {
               // ignore: prefer_const_literals_to_create_immutables
               hasRoleAlbums: [],
               localCover: downloadedTrack.getCoverUrl(),
+              lastTrackDateAdded: track.dateAdded,
             );
           }
 
@@ -62,6 +66,7 @@ class ArtistLocalDataSource {
               // ignore: prefer_const_literals_to_create_immutables
               hasRoleAlbums: [],
               localCover: downloadedTrack.getCoverUrl(),
+              lastTrackDateAdded: track.dateAdded,
             );
           }
 
