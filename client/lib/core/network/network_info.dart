@@ -88,6 +88,7 @@ class NetworkInfo {
                 "/health",
                 options: Options(
                   headers: {},
+                  receiveTimeout: const Duration(seconds: 3),
                 ),
               );
 
