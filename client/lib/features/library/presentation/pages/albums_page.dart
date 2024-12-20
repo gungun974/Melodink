@@ -20,6 +20,8 @@ class AlbumsPage extends HookConsumerWidget {
     final searchTextController =
         useTextEditingController(text: ref.watch(allAlbumsSearchInputProvider));
 
+    ref.watch(allAlbumsSortedModeProvider);
+
     final albums = asyncAlbums.valueOrNull;
 
     if (albums == null) {

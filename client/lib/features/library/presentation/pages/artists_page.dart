@@ -20,6 +20,8 @@ class ArtistsPage extends HookConsumerWidget {
     final searchTextController = useTextEditingController(
         text: ref.watch(allArtistsSearchInputProvider));
 
+    ref.watch(allArtistsSortedModeProvider);
+
     final artists = asyncArtists.valueOrNull;
 
     if (artists == null) {
