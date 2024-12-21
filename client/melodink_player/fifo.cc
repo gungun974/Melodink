@@ -89,4 +89,9 @@ public:
     av_audio_fifo_free(_fifo);
     _fifo = nullptr;
   }
+
+  bool available() {
+    std::unique_lock<std::mutex> lock(_mut);
+    return _fifo != nullptr;
+  }
 };

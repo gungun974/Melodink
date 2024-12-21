@@ -49,6 +49,8 @@ private:
   std::thread decoding_thread;
   std::mutex decoding_mutex;
 
+  std::thread reopen_thread;
+
   std::mutex open_mutex;
   std::mutex seek_mutex;
 
@@ -272,11 +274,29 @@ private:
     }
   }
 
-  void TimeoutReopen() {
-    audio_retry = true;
+  std::atomic<bool> stop_timeout_reopen{false};
 
-    std::thread t([this]() {
+  void StopTimeoutReopen() {
+    stop_timeout_reopen = true;
+    if (reopen_thread.joinable()) {
+      reopen_thread.join();
+    }
+  }
+
+  void TimeoutReopen() {
+    if (reopen_thread.joinable()) {
+      return;
+    }
+
+    audio_retry = true;
+    stop_timeout_reopen = false;
+
+    reopen_thread = std::thread([this]() {
       std::unique_lock<std::mutex> lock(open_mutex);
+
+      if (!stop_timeout_reopen) {
+        return;
+      }
 
       audio_retry = true;
 
@@ -292,6 +312,10 @@ private:
       CloseAudio(false);
 
       while (true) {
+        if (!stop_timeout_reopen) {
+          return;
+        }
+
         int64_t end_audio_time =
             (double(audio_frames_consumed + audio_fifo.size()) /
              double(audio_sample_rate)) *
@@ -330,8 +354,6 @@ private:
       StartDecodingThread();
       audio_retry = false;
     });
-
-    t.detach();
   }
 
   void StartDecodingThread() {
@@ -792,8 +814,10 @@ public:
 
   void Close() {
     StopDecodingThread();
+    StopTimeoutReopen();
     CloseFile();
     CloseAudio(true);
+    std::unique_lock<std::mutex> lock(open_mutex);
   }
 
   bool FinishedReading() {
@@ -882,8 +906,13 @@ public:
   void SetLoop(bool enabled) { infinite_loop = enabled; }
 
   int GetAudioFrame(void **output, int sample_count) {
-    if (!output || !(*output) || sample_count < 0)
+    if (!output || !(*output) || sample_count < 0) {
       return -1;
+    }
+
+    if (!audio_fifo.available()) {
+      return -1;
+    }
 
     shouldBufferPauseAndPreloadAMinimumAmount =
         sample_count > audio_fifo.size();
