@@ -263,6 +263,11 @@ private:
       return;
     }
 
+    if (!player->current_track->IsAudioOpened()) {
+      player->SetPlayerState(MELODINK_PROCESSING_STATE_BUFFERING);
+      return;
+    }
+
     int frame_read = player->current_track->GetAudioFrame(&pOutput, frameCount);
 
     if (frame_read > 0) {
