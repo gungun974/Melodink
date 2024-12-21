@@ -114,7 +114,7 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "assets/melodink_android_laucher_foreground.png" 
   min_sdk_android: 21
   web:
-    generate: true
+    generate: false
     background_color: "#hexcode"
     theme_color: "#hexcode"
   windows:
