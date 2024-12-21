@@ -18,17 +18,11 @@ class TrackList extends HookConsumerWidget {
 
   final AppScreenTypeLayout size;
 
-  final bool displayDateAdded;
+  final List<DesktopTrackModule> modules;
 
-  final bool displayImage;
-  final bool displayAlbum;
-  final bool displayLike;
+  final bool showImage;
 
-  final bool displayTrackIndex;
-
-  final bool displayLastPlayed;
-  final bool displayPlayedCount;
-  final bool displayQuality;
+  final bool showTrackIndex;
 
   final ScrollController? scrollController;
   final bool autoScrollToCurrentTrack;
@@ -57,14 +51,9 @@ class TrackList extends HookConsumerWidget {
     super.key,
     required this.tracks,
     required this.size,
-    this.displayDateAdded = false,
-    this.displayImage = true,
-    this.displayAlbum = true,
-    this.displayLike = true,
-    this.displayTrackIndex = true,
-    this.displayLastPlayed = false,
-    this.displayPlayedCount = false,
-    this.displayQuality = false,
+    required this.modules,
+    this.showImage = true,
+    this.showTrackIndex = true,
     this.singleCustomActionsBuilder,
     this.multiCustomActionsBuilder,
     this.scrollController,
@@ -279,7 +268,7 @@ class TrackList extends HookConsumerWidget {
             child = DesktopTrack(
               track: tracks[index],
               trackNumber:
-                  displayTrackIndex ? tracks[index].trackNumber : index + 1,
+                  showTrackIndex ? tracks[index].trackNumber : index + 1,
               playCallback: (track) async {
                 await audioController.loadTracks(
                   tracks,
@@ -287,13 +276,8 @@ class TrackList extends HookConsumerWidget {
                   source: source,
                 );
               },
-              displayDateAdded: displayDateAdded,
-              displayImage: displayImage,
-              displayAlbum: displayAlbum,
-              displayLike: displayLike,
-              displayLastPlayed: displayLastPlayed,
-              displayPlayedCount: displayPlayedCount,
-              displayQuality: displayQuality,
+              modules: modules,
+              showImage: showImage,
               selected: selected,
               selectedTracks: selectedTracks,
               selectCallback: selectCallback,

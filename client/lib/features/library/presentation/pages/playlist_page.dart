@@ -19,6 +19,7 @@ import 'package:melodink_client/features/library/presentation/widgets/desktop_pl
 import 'package:melodink_client/features/library/presentation/widgets/mobile_playlist_header.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
+import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 
@@ -340,9 +341,15 @@ class PlaylistPage extends HookConsumerWidget {
                         ),
                         child: size == AppScreenTypeLayout.desktop
                             ? const DesktopTrackHeader(
-                                displayLastPlayed: true,
-                                displayPlayedCount: true,
-                                displayQuality: true,
+                                modules: [
+                                  DesktopTrackModule.title,
+                                  DesktopTrackModule.album,
+                                  DesktopTrackModule.lastPlayed,
+                                  DesktopTrackModule.playedCount,
+                                  DesktopTrackModule.quality,
+                                  DesktopTrackModule.duration,
+                                  DesktopTrackModule.moreActions,
+                                ],
                               )
                             : const SizedBox.shrink(),
                       ),
@@ -357,10 +364,16 @@ class PlaylistPage extends HookConsumerWidget {
                     sliver: TrackList(
                       tracks: tracks,
                       size: size,
-                      displayTrackIndex: false,
-                      displayLastPlayed: true,
-                      displayPlayedCount: true,
-                      displayQuality: true,
+                      showTrackIndex: false,
+                      modules: const [
+                        DesktopTrackModule.title,
+                        DesktopTrackModule.album,
+                        DesktopTrackModule.lastPlayed,
+                        DesktopTrackModule.playedCount,
+                        DesktopTrackModule.quality,
+                        DesktopTrackModule.duration,
+                        DesktopTrackModule.moreActions,
+                      ],
                       singleCustomActionsBuilder: (
                         context,
                         menuController,

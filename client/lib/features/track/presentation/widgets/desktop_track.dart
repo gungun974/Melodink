@@ -9,7 +9,6 @@ import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/helpers/timeago.dart';
 import 'package:melodink_client/core/network/network_info.dart';
-import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
@@ -20,22 +19,25 @@ import 'package:melodink_client/features/track/presentation/widgets/album_link_t
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 
+enum DesktopTrackModule {
+  title,
+  album,
+  moreActions,
+  reorderable,
+  lastPlayed,
+  playedCount,
+  dateAdded,
+  quality,
+  duration,
+}
+
 class DesktopTrack extends HookConsumerWidget {
   final MinimalTrack track;
 
   final int trackNumber;
-  final bool displayDateAdded;
+  final bool showImage;
 
-  final bool displayImage;
-  final bool displayAlbum;
-
-  final bool displayLike;
-  final bool displayMoreActions;
-  final bool displayReorderable;
-
-  final bool displayLastPlayed;
-  final bool displayPlayedCount;
-  final bool displayQuality;
+  final List<DesktopTrackModule> modules;
 
   final void Function(MinimalTrack track) playCallback;
 
@@ -62,15 +64,8 @@ class DesktopTrack extends HookConsumerWidget {
     required this.track,
     required this.trackNumber,
     required this.playCallback,
-    this.displayDateAdded = false,
-    this.displayImage = true,
-    this.displayAlbum = true,
-    this.displayLike = true,
-    this.displayMoreActions = true,
-    this.displayReorderable = false,
-    this.displayLastPlayed = false,
-    this.displayPlayedCount = false,
-    this.displayQuality = false,
+    required this.modules,
+    this.showImage = true,
     this.selectCallback,
     this.selected = false,
     this.selectedTracks = const [],
@@ -151,262 +146,283 @@ class DesktopTrack extends HookConsumerWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
-                children: [
-                  SizedBox(
-                    width: 28,
-                    child: Text(
-                      "$trackNumber",
-                      textAlign: TextAlign.end,
-                      style: TextStyle(
-                        fontSize: 14,
-                        letterSpacing: 14 * 0.03,
-                        fontWeight: FontWeight.w500,
-                        color: isCurrentTrack
-                            ? Theme.of(context).colorScheme.primary
-                            : null,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          if (displayImage)
-                            AuthCachedNetworkImage(
-                              imageUrl: downloadedTrack?.getCoverUrl() ??
-                                  track.getCompressedCoverUrl(
-                                    TrackCompressedCoverQuality.small,
-                                  ),
-                              placeholder: (context, url) => Image.asset(
-                                "assets/melodink_track_cover_not_found.png",
-                              ),
-                              errorWidget: (context, url, error) {
-                                return Image.asset(
-                                  "assets/melodink_track_cover_not_found.png",
-                                );
-                              },
-                            ),
-                          if (displayImage) const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Tooltip(
-                                  message: track.title,
-                                  waitDuration:
-                                      const Duration(milliseconds: 800),
-                                  child: Text(
-                                    track.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      letterSpacing: 14 * 0.03,
-                                      fontWeight: FontWeight.w500,
-                                      color: isCurrentTrack
-                                          ? Theme.of(context)
-                                              .colorScheme
-                                              .primary
-                                          : null,
-                                    ),
-                                  ),
+                children: modules
+                    .map<List<Widget>>((module) {
+                      return switch (module) {
+                        DesktopTrackModule.title => [
+                            SizedBox(
+                              width: 28,
+                              child: Text(
+                                "$trackNumber",
+                                textAlign: TextAlign.end,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  letterSpacing: 14 * 0.03,
+                                  fontWeight: FontWeight.w500,
+                                  color: isCurrentTrack
+                                      ? Theme.of(context).colorScheme.primary
+                                      : null,
                                 ),
-                                const Spacer(),
-                                Row(
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    if (downloadedTrack != null)
-                                      SvgPicture.asset(
-                                        "assets/icons/download2.svg",
-                                        width: 14,
-                                        height: 14,
-                                      ),
-                                    if (downloadedTrack != null)
-                                      const SizedBox(width: 4),
-                                    Expanded(
-                                      child: ArtistsLinksText(
-                                        artists: track.artists,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          letterSpacing: 14 * 0.03,
-                                          color: Colors.grey[350],
+                                    if (showImage)
+                                      AuthCachedNetworkImage(
+                                        imageUrl: downloadedTrack
+                                                ?.getCoverUrl() ??
+                                            track.getCompressedCoverUrl(
+                                              TrackCompressedCoverQuality.small,
+                                            ),
+                                        placeholder: (context, url) =>
+                                            Image.asset(
+                                          "assets/melodink_track_cover_not_found.png",
                                         ),
+                                        errorWidget: (context, url, error) {
+                                          return Image.asset(
+                                            "assets/melodink_track_cover_not_found.png",
+                                          );
+                                        },
+                                      ),
+                                    if (showImage) const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Tooltip(
+                                            message: track.title,
+                                            waitDuration: const Duration(
+                                                milliseconds: 800),
+                                            child: Text(
+                                              track.title,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                letterSpacing: 14 * 0.03,
+                                                fontWeight: FontWeight.w500,
+                                                color: isCurrentTrack
+                                                    ? Theme.of(context)
+                                                        .colorScheme
+                                                        .primary
+                                                    : null,
+                                              ),
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          Row(
+                                            children: [
+                                              if (downloadedTrack != null)
+                                                SvgPicture.asset(
+                                                  "assets/icons/download2.svg",
+                                                  width: 14,
+                                                  height: 14,
+                                                ),
+                                              if (downloadedTrack != null)
+                                                const SizedBox(width: 4),
+                                              Expanded(
+                                                child: ArtistsLinksText(
+                                                  artists: track.artists,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    letterSpacing: 14 * 0.03,
+                                                    color: Colors.grey[350],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  if (displayAlbum)
-                    Expanded(
-                      child: IntrinsicWidth(
-                        child: AlbumLinkText(
-                          text: track.album,
-                          albumId: track.albumId,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            letterSpacing: 14 * 0.03,
-                            color: Colors.grey[350],
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (displayLastPlayed) const SizedBox(width: 8),
-                  if (displayLastPlayed)
-                    SizedBox(
-                      width: 96,
-                      child: track.historyInfo?.lastPlayedDate == null
-                          ? Text(
-                              "Never",
-                              style: TextStyle(
-                                fontSize: 12,
-                                letterSpacing: 14 * 0.03,
-                                color: Colors.grey[350],
                               ),
-                            )
-                          : FormatTimeago(
-                              date: track.historyInfo!.lastPlayedDate!,
-                              builder: (context, value) {
-                                return Text(
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                        DesktopTrackModule.album => [
+                            Expanded(
+                              child: IntrinsicWidth(
+                                child: AlbumLinkText(
+                                  text: track.album,
+                                  albumId: track.albumId,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    letterSpacing: 14 * 0.03,
+                                    color: Colors.grey[350],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        DesktopTrackModule.lastPlayed => [
+                            SizedBox(
+                              width: 96,
+                              child: track.historyInfo?.lastPlayedDate == null
+                                  ? Text(
+                                      "Never",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        letterSpacing: 14 * 0.03,
+                                        color: Colors.grey[350],
+                                      ),
+                                    )
+                                  : FormatTimeago(
+                                      date: track.historyInfo!.lastPlayedDate!,
+                                      builder: (context, value) {
+                                        return Text(
+                                          value,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            letterSpacing: 14 * 0.03,
+                                            color: Colors.grey[350],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ],
+                        DesktopTrackModule.playedCount => [
+                            SizedBox(
+                              width: 40,
+                              child: Text(
+                                track.historyInfo?.playedCount == 0
+                                    ? "Never"
+                                    : "${track.historyInfo?.playedCount}",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  letterSpacing: 14 * 0.03,
+                                  color: Colors.grey[350],
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                        DesktopTrackModule.dateAdded => [
+                            SizedBox(
+                              width: 96,
+                              child: FormatTimeago(
+                                date: track.dateAdded,
+                                builder: (context, value) => Text(
                                   value,
                                   style: TextStyle(
                                     fontSize: 12,
                                     letterSpacing: 14 * 0.03,
                                     color: Colors.grey[350],
                                   ),
-                                );
-                              },
-                            ),
-                    ),
-                  if (displayPlayedCount)
-                    SizedBox(
-                      width: 40,
-                      child: Text(
-                        track.historyInfo?.playedCount == 0
-                            ? "Never"
-                            : "${track.historyInfo?.playedCount}",
-                        style: TextStyle(
-                          fontSize: 12,
-                          letterSpacing: 14 * 0.03,
-                          color: Colors.grey[350],
-                        ),
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                  if (displayPlayedCount) const SizedBox(width: 24),
-                  if (displayDateAdded)
-                    SizedBox(
-                      width: 96,
-                      child: FormatTimeago(
-                        date: track.dateAdded,
-                        builder: (context, value) => Text(
-                          value,
-                          style: TextStyle(
-                            fontSize: 12,
-                            letterSpacing: 14 * 0.03,
-                            color: Colors.grey[350],
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (displayDateAdded && !displayQuality)
-                    const SizedBox(width: 24),
-                  if (displayQuality)
-                    SizedBox(
-                      width: 128,
-                      child: Text(
-                        track.getQualityText(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          letterSpacing: 14 * 0.03,
-                          color: Colors.grey[350],
-                        ),
-                      ),
-                    ),
-                  if (displayQuality) const SizedBox(width: 24),
-                  SizedBox(
-                    width: 60,
-                    child: Text(
-                      durationToTime(track.duration),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        letterSpacing: 14 * 0.03,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  if (displayLike)
-                    GestureDetector(
-                      onTap: () {},
-                      onDoubleTap: () {},
-                      child: Container(
-                        height: 50,
-                        color: Colors.transparent,
-                        child: AppIconButton(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          icon: const AdwaitaIcon(
-                              AdwaitaIcons.heart_outline_thick),
-                          iconSize: 20.0,
-                          onPressed: () async {},
-                        ),
-                      ),
-                    ),
-                  if (displayMoreActions)
-                    GestureDetector(
-                      onTap: () {},
-                      onDoubleTap: () {},
-                      child: Listener(
-                        onPointerDown: (_) {
-                          final callback = selectCallback;
-
-                          if (callback != null) {
-                            callback(track);
-                          }
-                        },
-                        child: ContextMenuButton(
-                          contextMenuKey: trackContextMenuKey,
-                          menuController: trackContextMenuController,
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                        ),
-                      ),
-                    ),
-                  if (displayReorderable)
-                    GestureDetector(
-                      onTap: () {},
-                      onDoubleTap: () {},
-                      child: ReorderableListener(
-                        child: Container(
-                          height: 50,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          color: Colors.transparent,
-                          child: const MouseRegion(
-                            cursor: SystemMouseCursors.grab,
-                            child: Padding(
-                              padding: EdgeInsets.all(4.0),
-                              child: SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: AdwaitaIcon(AdwaitaIcons.menu),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+                          ],
+                        DesktopTrackModule.quality => [
+                            SizedBox(
+                              width: 128,
+                              child: Text(
+                                track.getQualityText(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  letterSpacing: 14 * 0.03,
+                                  color: Colors.grey[350],
+                                ),
+                              ),
+                            ),
+                          ],
+                        DesktopTrackModule.duration => [
+                            SizedBox(
+                              width: 60,
+                              child: Text(
+                                durationToTime(track.duration),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  letterSpacing: 14 * 0.03,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        DesktopTrackModule.moreActions => [
+                            SizedBox(
+                              width: 72,
+                              child: Center(
+                                child: GestureDetector(
+                                  onTap: () {},
+                                  onDoubleTap: () {},
+                                  child: Listener(
+                                    onPointerDown: (_) {
+                                      final callback = selectCallback;
+
+                                      if (callback != null) {
+                                        callback(track);
+                                      }
+                                    },
+                                    child: ContextMenuButton(
+                                      contextMenuKey: trackContextMenuKey,
+                                      menuController:
+                                          trackContextMenuController,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        DesktopTrackModule.reorderable => [
+                            SizedBox(
+                              width: 72,
+                              child: Center(
+                                child: GestureDetector(
+                                  onTap: () {},
+                                  onDoubleTap: () {},
+                                  child: ReorderableListener(
+                                    child: Container(
+                                      height: 50,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20),
+                                      color: Colors.transparent,
+                                      child: const MouseRegion(
+                                        cursor: SystemMouseCursors.grab,
+                                        child: Padding(
+                                          padding: EdgeInsets.all(4.0),
+                                          child: SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child:
+                                                AdwaitaIcon(AdwaitaIcons.menu),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                      };
+                    })
+                    .expand((i) => i)
+                    .expand((element) sync* {
+                      yield element;
+                      yield const SizedBox(width: 8);
+                    })
+                    .toList(),
               ),
             ),
           ),

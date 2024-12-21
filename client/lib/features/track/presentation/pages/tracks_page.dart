@@ -14,6 +14,7 @@ import 'package:melodink_client/features/settings/domain/providers/settings_prov
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/modals/import_tracks_modal.dart';
 import 'package:melodink_client/features/track/presentation/widgets/all_track_filter_panel.dart';
+import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 
@@ -88,10 +89,16 @@ class TracksPage extends HookConsumerWidget {
                           ),
                           child: size == AppScreenTypeLayout.desktop
                               ? const DesktopTrackHeader(
-                                  displayDateAdded: true,
-                                  displayLastPlayed: true,
-                                  displayPlayedCount: true,
-                                  displayQuality: true,
+                                  modules: [
+                                    DesktopTrackModule.title,
+                                    DesktopTrackModule.album,
+                                    DesktopTrackModule.lastPlayed,
+                                    DesktopTrackModule.playedCount,
+                                    DesktopTrackModule.dateAdded,
+                                    DesktopTrackModule.quality,
+                                    DesktopTrackModule.duration,
+                                    DesktopTrackModule.moreActions,
+                                  ],
                                 )
                               : const SizedBox.shrink(),
                         ),
@@ -106,12 +113,17 @@ class TracksPage extends HookConsumerWidget {
                       sliver: TrackList(
                         tracks: tracks,
                         size: size,
-                        displayImage: true,
-                        displayAlbum: true,
-                        displayDateAdded: true,
-                        displayLastPlayed: true,
-                        displayPlayedCount: true,
-                        displayQuality: true,
+                        modules: const [
+                          DesktopTrackModule.title,
+                          DesktopTrackModule.album,
+                          DesktopTrackModule.lastPlayed,
+                          DesktopTrackModule.playedCount,
+                          DesktopTrackModule.dateAdded,
+                          DesktopTrackModule.quality,
+                          DesktopTrackModule.duration,
+                          DesktopTrackModule.moreActions,
+                        ],
+                        showImage: true,
                         scrollController: scrollController,
                         autoScrollToCurrentTrack:
                             isAutoScrollViewToCurrentTrackEnabled,

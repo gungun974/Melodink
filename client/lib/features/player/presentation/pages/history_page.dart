@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
+import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 import 'package:melodink_client/features/tracker/domain/providers/played_track_provider.dart';
@@ -47,8 +48,11 @@ class HistoryPage extends ConsumerWidget {
                 ),
                 child: size == AppScreenTypeLayout.desktop
                     ? const DesktopTrackHeader(
-                        displayAlbum: false,
-                        displayLike: false,
+                        modules: [
+                          DesktopTrackModule.title,
+                          DesktopTrackModule.duration,
+                          DesktopTrackModule.moreActions,
+                        ],
                       )
                     : const SizedBox.shrink(),
               ),
@@ -63,10 +67,12 @@ class HistoryPage extends ConsumerWidget {
             sliver: TrackList(
               tracks: previousTracks,
               size: AppScreenTypeLayout.desktop,
-              displayImage: false,
-              displayAlbum: false,
-              displayTrackIndex: false,
-              displayLike: false,
+              showImage: false,
+              modules: const [
+                DesktopTrackModule.title,
+                DesktopTrackModule.duration,
+                DesktopTrackModule.moreActions,
+              ],
               source: "Playing from History",
             ),
           ),

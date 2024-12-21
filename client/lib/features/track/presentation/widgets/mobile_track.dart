@@ -21,7 +21,7 @@ class MobileTrack extends HookConsumerWidget {
 
   final void Function(MinimalTrack track) playCallback;
 
-  final bool displayImage;
+  final bool showImage;
 
   final bool displayMoreActions;
   final bool displayReorderable;
@@ -48,7 +48,7 @@ class MobileTrack extends HookConsumerWidget {
     super.key,
     required this.track,
     required this.playCallback,
-    this.displayImage = true,
+    this.showImage = true,
     this.displayMoreActions = true,
     this.displayReorderable = false,
     this.selectCallback,
@@ -138,7 +138,7 @@ class MobileTrack extends HookConsumerWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          if (displayImage)
+                          if (showImage)
                             AuthCachedNetworkImage(
                               imageUrl: downloadedTrack?.getCoverUrl() ??
                                   track.getCompressedCoverUrl(
@@ -153,7 +153,7 @@ class MobileTrack extends HookConsumerWidget {
                                 );
                               },
                             ),
-                          if (displayImage) const SizedBox(width: 10),
+                          if (showImage) const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,

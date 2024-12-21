@@ -99,7 +99,12 @@ class QueueTracksPanel extends StatelessWidget {
               child: Container(
                 color: const Color.fromRGBO(0, 0, 0, 0.03),
                 child: const DesktopTrackHeader(
-                  displayLike: false,
+                  modules: [
+                    DesktopTrackModule.title,
+                    DesktopTrackModule.album,
+                    DesktopTrackModule.duration,
+                    DesktopTrackModule.moreActions,
+                  ],
                 ),
               ),
             ),
@@ -141,7 +146,7 @@ class QueueTracksPanel extends StatelessWidget {
                       playCallback: (track) {
                         playCallback(track, index);
                       },
-                      displayImage: false,
+                      showImage: false,
                       displayMoreActions: false,
                       displayReorderable: true,
                     );
@@ -152,10 +157,13 @@ class QueueTracksPanel extends StatelessWidget {
                       playCallback: (track) {
                         playCallback(track, index);
                       },
-                      displayImage: false,
-                      displayLike: false,
-                      displayMoreActions: false,
-                      displayReorderable: true,
+                      showImage: false,
+                      modules: const [
+                        DesktopTrackModule.title,
+                        DesktopTrackModule.album,
+                        DesktopTrackModule.duration,
+                        DesktopTrackModule.reorderable,
+                      ],
                     );
                   }
                 } else {
@@ -173,7 +181,12 @@ class QueueTracksPanel extends StatelessWidget {
                       playCallback: (track) {
                         playCallback(track, index);
                       },
-                      displayLike: false,
+                      modules: const [
+                        DesktopTrackModule.title,
+                        DesktopTrackModule.album,
+                        DesktopTrackModule.duration,
+                        DesktopTrackModule.moreActions,
+                      ],
                     );
                   }
                 }

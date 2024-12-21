@@ -14,6 +14,7 @@ import 'package:melodink_client/features/library/presentation/widgets/desktop_pl
 import 'package:melodink_client/features/library/presentation/widgets/mobile_playlist_header.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
+import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 
@@ -267,10 +268,14 @@ class AlbumPage extends HookConsumerWidget {
                         ),
                         child: size == AppScreenTypeLayout.desktop
                             ? const DesktopTrackHeader(
-                                displayAlbum: false,
-                                displayLastPlayed: true,
-                                displayPlayedCount: true,
-                                displayQuality: true,
+                                modules: [
+                                  DesktopTrackModule.title,
+                                  DesktopTrackModule.lastPlayed,
+                                  DesktopTrackModule.playedCount,
+                                  DesktopTrackModule.quality,
+                                  DesktopTrackModule.duration,
+                                  DesktopTrackModule.moreActions,
+                                ],
                               )
                             : const SizedBox.shrink(),
                       ),
@@ -285,11 +290,15 @@ class AlbumPage extends HookConsumerWidget {
                     sliver: TrackList(
                       tracks: tracks,
                       size: size,
-                      displayImage: false,
-                      displayAlbum: false,
-                      displayLastPlayed: true,
-                      displayPlayedCount: true,
-                      displayQuality: true,
+                      showImage: false,
+                      modules: const [
+                        DesktopTrackModule.title,
+                        DesktopTrackModule.lastPlayed,
+                        DesktopTrackModule.playedCount,
+                        DesktopTrackModule.quality,
+                        DesktopTrackModule.duration,
+                        DesktopTrackModule.moreActions,
+                      ],
                       scrollController: scrollController,
                       scrollToTrackIdOnMounted: openWithScrollOnSpecificTrackId,
                       source: "Album \"${album.name}\"",
