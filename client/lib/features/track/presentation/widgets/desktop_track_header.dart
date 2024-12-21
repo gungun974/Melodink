@@ -16,12 +16,20 @@ class DesktopTrackHeader extends StatelessWidget {
       child: Center(
         child: Container(
           color: Colors.transparent,
-          child: Row(
-            children: modules
-                .map<List<Widget>>((module) {
-                  return switch (module) {
-                    DesktopTrackModule.title => [
-                        const SizedBox(
+          child: DesktopTrackModuleLayout(
+              modules: modules,
+              builder: (context, newModules) {
+                return Row(
+                  children: newModules.expand((module) sync* {
+                    if (module.leftPadding != 0) {
+                      yield SizedBox(
+                        width: module.leftPadding,
+                      );
+                    }
+
+                    switch (module) {
+                      case DesktopTrackModule.title:
+                        yield const SizedBox(
                           width: 28,
                           child: Text(
                             "#",
@@ -32,9 +40,9 @@ class DesktopTrackHeader extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Expanded(
+                        );
+                        yield const SizedBox(width: 24);
+                        yield const Expanded(
                           child: Text(
                             "Title",
                             style: TextStyle(
@@ -43,11 +51,9 @@ class DesktopTrackHeader extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                    DesktopTrackModule.album => [
-                        const Expanded(
+                        );
+                      case DesktopTrackModule.album:
+                        yield const Expanded(
                           child: Text(
                             "Album",
                             style: TextStyle(
@@ -56,12 +62,11 @@ class DesktopTrackHeader extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                        ),
-                      ],
-                    DesktopTrackModule.lastPlayed => [
-                        const SizedBox(
-                          width: 96,
-                          child: Text(
+                        );
+                      case DesktopTrackModule.lastPlayed:
+                        yield SizedBox(
+                          width: module.width,
+                          child: const Text(
                             "Last Played",
                             style: TextStyle(
                               fontSize: 14,
@@ -69,12 +74,11 @@ class DesktopTrackHeader extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                        )
-                      ],
-                    DesktopTrackModule.playedCount => [
-                        const SizedBox(
-                          width: 40,
-                          child: Text(
+                        );
+                      case DesktopTrackModule.playedCount:
+                        yield SizedBox(
+                          width: module.width,
+                          child: const Text(
                             "Count",
                             style: TextStyle(
                               fontSize: 14,
@@ -82,13 +86,11 @@ class DesktopTrackHeader extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                    DesktopTrackModule.dateAdded => [
-                        const SizedBox(
-                          width: 96,
-                          child: Text(
+                        );
+                      case DesktopTrackModule.dateAdded:
+                        yield SizedBox(
+                          width: module.width,
+                          child: const Text(
                             "Date added",
                             style: TextStyle(
                               fontSize: 14,
@@ -96,12 +98,11 @@ class DesktopTrackHeader extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                        ),
-                      ],
-                    DesktopTrackModule.quality => [
-                        const SizedBox(
-                          width: 128,
-                          child: Text(
+                        );
+                      case DesktopTrackModule.quality:
+                        yield SizedBox(
+                          width: module.width,
+                          child: const Text(
                             "Quality",
                             style: TextStyle(
                               fontSize: 14,
@@ -109,12 +110,11 @@ class DesktopTrackHeader extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                        ),
-                      ],
-                    DesktopTrackModule.duration => [
-                        const SizedBox(
-                          width: 60,
-                          child: Text(
+                        );
+                      case DesktopTrackModule.duration:
+                        yield SizedBox(
+                          width: module.width,
+                          child: const Text(
                             "Duration",
                             style: TextStyle(
                               fontSize: 14,
@@ -122,23 +122,21 @@ class DesktopTrackHeader extends StatelessWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                        ),
-                      ],
-                    DesktopTrackModule.moreActions => [
-                        const SizedBox(width: 72),
-                      ],
-                    DesktopTrackModule.reorderable => [
-                        const SizedBox(width: 72),
-                      ],
-                  };
-                })
-                .expand((i) => i)
-                .expand((element) sync* {
-                  yield element;
-                  yield const SizedBox(width: 8);
-                })
-                .toList(),
-          ),
+                        );
+                      case DesktopTrackModule.moreActions:
+                        yield SizedBox(width: module.width);
+                      case DesktopTrackModule.reorderable:
+                        yield SizedBox(width: module.width);
+                    }
+
+                    if (module.rightPadding != 0) {
+                      yield SizedBox(
+                        width: module.rightPadding,
+                      );
+                    }
+                  }).toList(),
+                );
+              }),
         ),
       ),
     );
