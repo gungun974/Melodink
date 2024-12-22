@@ -376,8 +376,6 @@ private:
       }
 
       is_paused = false;
-    } else {
-      is_paused = true;
     }
 
     ma_device_set_master_volume(&audio_device, audio_volume);
@@ -562,6 +560,9 @@ private:
 
         SetPlayerState(MELODINK_PROCESSING_STATE_ERROR);
       } else {
+        bool is_stoped =
+            ma_device_get_state(&audio_device) == ma_device_state_stopped;
+
         ma_device_uninit(&audio_device);
 
         current_track = new_current_track;
