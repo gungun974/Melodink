@@ -60,7 +60,6 @@ dependencies:
   omni_datetime_picker: ^2.0.5
   desktop_drop: ^0.5.0
   file_picker: ^8.1.4
-  confirm_dialog: ^1.0.4
   file_saver: ^0.2.14
   slang: ^4.4.0
   slang_flutter: ^4.4.0
