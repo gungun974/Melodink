@@ -160,9 +160,12 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
 
         _mutex.release();
 
-        await _audioController.reloadPlayerTracks();
+        if (result.shouldDownload) {
+          await _audioController.reloadPlayerTracks();
 
-        final _ = ref.refresh(isTrackDownloadedProvider(currentTask.track.id));
+          final _ =
+              ref.refresh(isTrackDownloadedProvider(currentTask.track.id));
+        }
 
         if (state.isDownloading && state.queueTasks.isEmpty) {
           state = state.copyWith(

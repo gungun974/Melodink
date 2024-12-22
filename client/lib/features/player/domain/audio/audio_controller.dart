@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -587,7 +586,7 @@ class AudioController extends BaseAudioHandler
 
         DownloadTrack? downloadedTrack;
 
-        if (index >= _previousTracks.length - 15 &&
+        if (index >= _previousTracks.length - 3 &&
             getDownloadedTrackByTrackId != null) {
           downloadedTrack = await getDownloadedTrackByTrackId(track.id);
         }
@@ -613,7 +612,7 @@ class AudioController extends BaseAudioHandler
       for (final (index, track) in [..._queueTracks, ..._nextTracks].indexed) {
         DownloadTrack? downloadedTrack;
 
-        if (index <= 15 && getDownloadedTrackByTrackId != null) {
+        if (index <= 3 && getDownloadedTrackByTrackId != null) {
           downloadedTrack = await getDownloadedTrackByTrackId(track.id);
         }
 
