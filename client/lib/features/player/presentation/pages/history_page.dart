@@ -7,6 +7,7 @@ import 'package:melodink_client/features/track/presentation/widgets/desktop_trac
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 import 'package:melodink_client/features/tracker/domain/providers/played_track_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class HistoryPage extends ConsumerWidget {
   const HistoryPage({
@@ -73,7 +74,7 @@ class HistoryPage extends ConsumerWidget {
                 DesktopTrackModule.duration,
                 DesktopTrackModule.moreActions,
               ],
-              source: "Playing from History",
+              source: t.general.playingFromHistory,
             ),
           ),
           const SliverToBoxAdapter(

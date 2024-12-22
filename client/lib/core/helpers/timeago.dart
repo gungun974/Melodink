@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:timeago_flutter/timeago_flutter.dart';
 
-String formatTimeago(DateTime date) {
+String formatTimeago(
+  DateTime date, {
+  String? locale,
+}) {
   final difference = DateTime.now().difference(date);
 
   if (difference.inDays < 30) {
-    return timeago.format(
-      date,
-    );
+    return timeago.format(date, locale: locale);
   }
   return DateFormat.yMMMd().format(date);
 }
@@ -27,7 +29,14 @@ class FormatTimeago extends TimerRefreshWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formatted = formatTimeago(date);
-    return builder(context, formatted);
+    return StreamBuilder(
+        stream: LocaleSettings.getLocaleStream(),
+        builder: (context, snapshot) {
+          final formatted = formatTimeago(
+            date,
+            locale: Localizations.localeOf(context).toString(),
+          );
+          return builder(context, formatted);
+        });
   }
 }

@@ -22,8 +22,8 @@ import 'package:melodink_client/features/track/presentation/widgets/track_contex
 enum DesktopTrackModule {
   title(width: 28 + 24, rightPadding: 24),
   album(width: 0, rightPadding: 4),
-  lastPlayed(leftPadding: 4, width: 96, rightPadding: 4),
-  playedCount(leftPadding: 4, width: 40, rightPadding: 16 + 4),
+  lastPlayed(leftPadding: 4, width: 112, rightPadding: 4),
+  playedCount(leftPadding: 4, width: 48, rightPadding: 8 + 4),
   dateAdded(leftPadding: 4, width: 96, rightPadding: 4),
   quality(leftPadding: 4, width: 128, rightPadding: 4),
   duration(leftPadding: 4, width: 60, rightPadding: 4),

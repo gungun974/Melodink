@@ -6,6 +6,7 @@ import 'package:melodink_client/features/player/domain/audio/audio_controller.da
 import 'package:melodink_client/features/player/presentation/widgets/queue_tracks_panel.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class QueueTrack {
   final MinimalTrack track;
@@ -176,7 +177,7 @@ class _QueueReordableManagerState extends State<QueuePage> {
         slivers: [
           //! Now playing
           QueueTracksPanel(
-            name: 'Now playing',
+            name: t.general.nowPlaying,
             type: QueueTracksPanelType.start,
             size: widget.size,
             tracks: [
@@ -193,7 +194,7 @@ class _QueueReordableManagerState extends State<QueuePage> {
           if (widget.audioController.queueTracks.value.isNotEmpty ||
               queueTracks.isNotEmpty)
             QueueTracksPanel(
-              name: 'Next in Queue',
+              name: t.general.nextInQueue,
               size: widget.size,
               type: QueueTracksPanelType.middle,
               tracks: queueTracks,
@@ -210,7 +211,7 @@ class _QueueReordableManagerState extends State<QueuePage> {
           if (widget.audioController.nextTracks.value.isNotEmpty ||
               nextTracks.isNotEmpty)
             QueueTracksPanel(
-              name: 'Next',
+              name: t.general.next,
               type: QueueTracksPanelType.end,
               size: widget.size,
               tracks: nextTracks,

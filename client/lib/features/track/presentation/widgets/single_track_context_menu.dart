@@ -14,6 +14,7 @@ import 'package:melodink_client/features/player/domain/audio/audio_controller.da
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/presentation/modals/show_track_modal.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class SingleTrackContextMenu extends ConsumerWidget {
   const SingleTrackContextMenu({
@@ -48,14 +49,14 @@ class SingleTrackContextMenu extends ConsumerWidget {
             AdwaitaIcons.playlist,
             size: 20,
           ),
-          child: const Text("Add to queue"),
+          child: Text(t.actions.addToQueue),
           onPressed: () {
             audioController.addTrackToQueue(track);
             menuController.close();
 
             AppNotificationManager.of(context).notify(
               context,
-              message: "1 track have been added to the queue.",
+              message: t.notifications.haveBeenAddedToQueue.message(n: 1),
             );
           },
         ),
@@ -74,9 +75,8 @@ class SingleTrackContextMenu extends ConsumerWidget {
                     if (!NetworkInfo().isServerRecheable()) {
                       AppNotificationManager.of(context).notify(
                         context,
-                        title: "Offline",
-                        message:
-                            "You can't perform this action while being offline.",
+                        title: t.notifications.offline.title,
+                        message: t.notifications.offline.message,
                         type: AppNotificationType.danger,
                       );
                       return;
@@ -93,8 +93,8 @@ class SingleTrackContextMenu extends ConsumerWidget {
                       if (context.mounted) {
                         AppNotificationManager.of(context).notify(
                           context,
-                          title: "Error",
-                          message: "Something went wrong",
+                          title: t.notifications.somethingWentWrong.title,
+                          message: t.notifications.somethingWentWrong.message,
                           type: AppNotificationType.danger,
                         );
                       }
@@ -109,14 +109,17 @@ class SingleTrackContextMenu extends ConsumerWidget {
                     AppNotificationManager.of(context).notify(
                       context,
                       message:
-                          "1 track have been added to playlist \"${playlist.name}\".",
+                          t.notifications.playlistTrackHaveBeenAdded.message(
+                        n: 1,
+                        name: playlist.name,
+                      ),
                     );
                   },
                 );
               }).toList(),
             _ => const [],
           },
-          child: const Text("Add to playlist"),
+          child: Text(t.actions.addToPlaylist),
         ),
         const Divider(height: 8),
         MenuItemButton(
@@ -124,7 +127,7 @@ class SingleTrackContextMenu extends ConsumerWidget {
             AdwaitaIcons.media_optical,
             size: 20,
           ),
-          child: const Text("Go to album"),
+          child: Text(t.actions.goToAlbum),
           onPressed: () {
             while (
                 GoRouter.of(context).location?.startsWith("/queue") ?? true) {
@@ -145,7 +148,7 @@ class SingleTrackContextMenu extends ConsumerWidget {
               AdwaitaIcons.person2,
               size: 20,
             ),
-            child: const Text("Go to artist"),
+            child: Text(t.actions.goToArtist),
             onPressed: () {
               while (
                   GoRouter.of(context).location?.startsWith("/queue") ?? true) {
@@ -192,7 +195,7 @@ class SingleTrackContextMenu extends ConsumerWidget {
                 );
               },
             ).toList(),
-            child: const Text("Go to artist"),
+            child: Text(t.actions.goToArtist),
           ),
         if (customActionsBuilder != null)
           ...customActionsBuilder!(context, menuController, track),
@@ -202,15 +205,15 @@ class SingleTrackContextMenu extends ConsumerWidget {
             AdwaitaIcons.folder_download,
             size: 20,
           ),
-          child: const Text("Export file to device"),
+          child: Text(t.actions.exportFileToDevice),
           onPressed: () async {
             menuController.close();
 
             if (!NetworkInfo().isServerRecheable()) {
               AppNotificationManager.of(context).notify(
                 context,
-                title: "Offline",
-                message: "You can't perform this action while being offline.",
+                title: t.notifications.offline.title,
+                message: t.notifications.offline.message,
                 type: AppNotificationType.danger,
               );
               return;
@@ -218,7 +221,9 @@ class SingleTrackContextMenu extends ConsumerWidget {
 
             AppNotificationManager.of(context).notify(
               context,
-              message: "Start downloading track \"${track.title}\"",
+              message: t.notifications.exportingTrackStart.message(
+                title: track.title,
+              ),
             );
 
             try {
@@ -250,14 +255,16 @@ class SingleTrackContextMenu extends ConsumerWidget {
 
               AppNotificationManager.of(context).notify(
                 context,
-                message: "Finish downloading track \"${track.title}\"",
+                message: t.notifications.exportingTrackEnd.message(
+                  title: track.title,
+                ),
               );
             } catch (e) {
               if (context.mounted) {
                 AppNotificationManager.of(context).notify(
                   context,
-                  title: "Error",
-                  message: "Something went wrong",
+                  title: t.notifications.somethingWentWrong.title,
+                  message: t.notifications.somethingWentWrong.message,
                   type: AppNotificationType.danger,
                 );
               }
@@ -271,15 +278,15 @@ class SingleTrackContextMenu extends ConsumerWidget {
             AdwaitaIcons.info,
             size: 20,
           ),
-          child: const Text("Properties"),
+          child: Text(t.general.properties),
           onPressed: () {
             menuController.close();
 
             if (!NetworkInfo().isServerRecheable()) {
               AppNotificationManager.of(context).notify(
                 context,
-                title: "Offline",
-                message: "You can't perform this action while being offline.",
+                title: t.notifications.offline.title,
+                message: t.notifications.offline.message,
                 type: AppNotificationType.danger,
               );
               return;

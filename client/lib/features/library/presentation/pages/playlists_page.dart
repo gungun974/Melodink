@@ -6,7 +6,7 @@ import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
 import 'package:melodink_client/features/library/presentation/modals/create_playlist_modal.dart';
 import 'package:melodink_client/features/library/presentation/widgets/playlist_collections_grid.dart';
-import 'package:melodink_client/features/track/presentation/modals/import_tracks_modal.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class PlaylistsPage extends ConsumerWidget {
   const PlaylistsPage({super.key});
@@ -37,9 +37,9 @@ class PlaylistsPage extends ConsumerWidget {
             sliver: SliverToBoxAdapter(
               child: Row(
                 children: [
-                  const Text(
-                    "Playlists",
-                    style: TextStyle(
+                  Text(
+                    t.general.playlists,
+                    style: const TextStyle(
                       fontSize: 48,
                       letterSpacing: 48 * 0.03,
                       fontWeight: FontWeight.w600,
@@ -47,7 +47,7 @@ class PlaylistsPage extends ConsumerWidget {
                   ),
                   const Spacer(),
                   AppButton(
-                    text: "New playlist",
+                    text: t.actions.newPlaylist,
                     type: AppButtonType.primary,
                     onPressed: () {
                       CreatePlaylistModal.showModal(context);

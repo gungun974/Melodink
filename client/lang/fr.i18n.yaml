@@ -1,0 +1,288 @@
+---
+locale: "Français"
+
+general:
+  default: "Défaut"
+  search: "Recherche"
+  filter: "Filtrer"
+  import: "Importer"
+  imports: "Importations"
+  never: "Jamais"
+  edit: "Modifier"
+  duplicate: "Dupliquer"
+  delete: "Supprimer"
+  settings: "Paramètres" 
+  offline: "Hors ligne"
+  online: "En ligne"
+  error: "Erreur"
+  unknown: "Inconnu"
+  sort: "Trier"
+  confirm: "Confirmer"
+  cancel: "Annuler"
+  properties: "Propriétés"
+  status: "Statut"
+  deviceId: "ID de l'appareil"
+  host: "Hôte"
+  user: "Utilisateur"
+  network: "Réseau"
+  appearance: "Apparence"
+  theme: "Thème"
+  playing: "Lecture"
+  audioQuality: "Qualité audio"
+  tracking: "Suivi"
+  download: "Télécharger"
+  basic: "De base"
+  lyrics: "Paroles"
+  details: "Détails"
+  save: "Enregistrer"
+  create: "Créer"
+  name: "Nom"
+  description: "Description"
+  date: "Date"
+  year: "Année"
+  composer: "Compositeur"
+  comment: "Commentaire"
+  queue: "File d'attente"
+  next: "Suivant"
+  history: "Historique"
+  and: "et"
+
+  nowPlaying: "En cours de lecture"
+  nextInQueue: "Suivant dans la file d'attente"
+
+  playingFromSearch: "Lecture depuis la recherche"
+  playingFromHistory: "Lecture depuis l'historique"
+
+  advancedScan: "Scanne avancée"
+  scan: "Scanne"
+
+  wifiStreaming: "Streaming WiFi"
+  cellularStreaming: "Streaming cellulaire"
+  downloadQuality: "Qualité de téléchargement"
+  
+  album: "Album"
+  albums: "Albums"
+  editAlbum: "Modifier l'album \"{name}\""
+
+  playlist: "Playlist"
+  playlists: "Playlists"
+  newPlaylist: "Nouvelle playlist"
+  editPlaylist: "Modifier la playlist \"{name}\""
+
+  genre: "Genre"
+  genres: "Genres"
+
+  artist: "Artiste"
+  albumArtist: "Artiste de l'album"
+  trackArtist: "Artiste du morceau"
+
+  artists: "Artistes"
+  albumArtists: "Artistes d'album"
+  trackArtists: "Artistes de morceaux"
+
+  artistAppearedIn: "Apparu dans"
+  artistHasRole: "A un rôle dans"
+
+  editTrack: "Modifier \"{title}\""
+
+  trackNb:
+    one: "{n} Morceau"
+    other: "{n} Morceaux"
+
+  trackTitle: "Titre"
+  lastPlayed: "Dernière lecture"
+  playedCount: "Écoute"
+  dateAdded: "Date ajoutée"
+  quality: "Qualité"
+  duration: "Durée"
+
+  trackNumber: "Numéro du morceau"
+  totalTracks: "Nombre total de morceaux"
+
+  trackDisc: "Disque du morceau"
+  totalDiscs: "Nombre total de disques"
+
+  tagsFormat: "Format des tags"
+  fileType: "Type de fichier"
+  fileSignature: "Signature du fichier"
+
+  musicBrainzReleaseId: "Identifiant de sortie MusicBrainz"
+  musicBrainzTrackId: "Identifiant de piste MusicBrainz"
+  musicBrainzRecordingId: "Identifiant d'enregistrement MusicBrainz"
+
+settings:
+  desktopPlayerBarPosition: "Position de la barre du lecteur en vue ordinateur"
+  rememberLoopAndShuffleAcrossRestarts: "Se souvenir de la boucle et de l'aléatoire entre les redémarrages"
+  autoScrollViewToCurrentTrack: "Faire défiler automatiquement l'écran vers le morceau actuel"
+  enableHistoryTracking: "Activer le suivi de l'historique"
+  shareAllHistoryTrackingToServer: "Partager tout le suivi historique avec le serveur"
+
+  replaceOnlyEmptyFields: "Remplacer uniquement les champs vides"
+
+themes:
+  default: "@:general.kDefault"
+  dark: "Sombre"
+  dynamic: "Dynamique"
+
+positions:
+  top: "Haut"
+  side: "Côté"
+  bottom: "Bas"
+
+audioQualities:
+  low: "Bas - Opus VBR 96 kbps"
+  medium: "Moyen - Opus VBR 320 kbps"
+  high: "Haut - FLAC 44.1KHz"
+  max: "Max - (Encapsulation FLAC)"
+  direct: "Direct - (Lecture depuis le fichier source)"
+  source: "Source"
+
+sorting:
+  newest: "Le plus récent"
+  oldest: "Le plus ancien"
+
+  albums-az: "Albums (A-Z)"
+  albums-za: "Albums (Z-A)"
+
+  artists-az: "Artistes (A-Z)"
+  artists-za: "Artistes (Z-A)"
+
+actions:
+  viewAll: "Voir tout"
+  removeAll: "Tout supprimer"
+
+  addFileOrFiles: "Ajouter un ou des fichiers"
+
+  addToQueue: "Ajouter à la file d'attente"
+  addToPlaylist: "Ajouter à la playlist"
+  removeFromPlaylist: "Retirer de cette playlist"
+  newPlaylist: "Nouvelle playlist"
+
+  goToAlbum: "Aller à l'album"
+  goToArtist: "Aller à l'artiste"
+
+  exportFileToDevice: "Exporter le fichier vers l'appareil"
+
+  forceOffline: "Forcer le mode hors ligne"
+  disableForceOffline: "Désactiver le mode hors ligne forcé"
+
+  downloadAllAlbums: "Télécharger tous les albums"
+  removeAllDownloadedTracks: "Supprimer tous les morceaux téléchargés"
+
+  changeCover: "Changer la couverture"
+  removeCover: "Supprimer la couverture"
+
+  changeAudio: "Changer l'audio"
+  scanMetadata: "Analyser les métadonnées"
+
+  logout: "Se déconnecter"
+
+notifications:
+  offline:
+    title: "@:general.offline"
+    message: "Vous ne pouvez pas effectuer cette action en mode hors ligne."
+
+  somethingWentWrong:
+    title: "@:general.error"
+    message: "Une erreur est survenue."
+
+  haveBeenAddedToQueue:
+    message:
+      one: "{n} morceau a été ajouté à la file d'attente."
+      other: "{n} morceaux ont été ajoutés à la file d'attente."
+
+  playlistHaveBeenCreated:
+    message: "La playlist \"{name}\" a été créée."
+
+  playlistHaveBeenSaved:
+    message: "La playlist \"{name}\" a été enregistrée."
+
+  playlistCoverHaveBeenChanged:
+    message: "La couverture de la playlist \"{name}\" a été modifiée."
+
+  playlistCoverHaveBeenRemoved:
+    message: "La couverture personnalisée de la playlist \"{name}\" a été supprimée."
+
+  playlistHaveBeenDuplicated:
+    message: "La playlist \"{name}\" a été dupliquée avec succès."
+
+  playlistHaveBeenDeleted:
+    message: "La playlist \"{name}\" a été supprimée avec succès."
+
+  playlistTrackHaveBeenAdded:
+    message:
+      one: "{n} morceau a été ajouté à la playlist \"{name}\"."
+      other: "{n} morceaux ont été ajoutés à la playlist \"{name}\"."
+
+  playlistTrackHaveBeenRemoved:
+    message:
+      one: "{n} morceau a été retiré de la playlist \"{name}\"."
+      other: "{n} morceaux ont été retirés de la playlist \"{name}\"."
+
+  albumHaveBeenSaved:
+    message: "L'album \"{name}\" a été enregistré."
+
+  albumCoverHaveBeenChanged:
+    message: "La couverture de l'album \"{name}\" a été modifiée."
+
+  albumCoverHaveBeenRemoved:
+    message: "La couverture personnalisée de l'album \"{name}\" a été supprimée."
+
+  exportingTrackStart:
+    message: "Exportation du morceau \"{title}\" commencée."
+
+  exportingTrackEnd:
+    message: "Exportation du morceau \"{title}\" terminée."
+
+  downloadAllAlbumsStarted:
+    message: "Le téléchargement de tous les morceaux des albums a commencé."
+
+  allDownloadHaveBeenDeleted:
+    message: "Tous les téléchargements ont été supprimés."
+
+  trackHaveBeenScanned:
+    message:
+      one: "{n} morceau a été analysé."
+      other: "{n} morceaux ont été analysés."
+
+  trackScanEnd:
+    message: "L'analyse du morceau \"{title}\" est terminée."
+
+  trackHaveBeenImported:
+    message:
+      one: "{n} morceau a été importé."
+      other: "{n} morceaux ont été importés."
+
+  trackHaveBeenDeleted:
+    message: "Le morceau \"{title}\" a été supprimé."
+
+  trackAudioHaveBeenChanged:
+    message: "L'audio du morceau \"{title}\" a été modifié."
+
+  trackCoverHaveBeenChanged:
+    message: "La couverture du morceau \"{title}\" a été modifiée."
+
+confirms:
+  title: "Confirmer"
+  confirm: "@:general.confirm"
+  cancel: "@:general.cancel"
+  delete: "@:general.delete"
+
+  duplicatePlaylist: "Souhaitez-vous dupliquer cette playlist ?"
+  deletePlaylist: "Souhaitez-vous supprimer cette playlist ?"
+
+  downloadAllAlbums: |
+    Souhaitez-vous télécharger tous les morceaux ?\n
+    Cela peut être un processus long en fonction de la taille de votre bibliothèque.
+
+  deleteAllDownloadedTracks: "Souhaitez-vous supprimer tous les morceaux téléchargés ?"
+
+  deleteTrack: "Souhaitez-vous supprimer ce morceau ?"
+
+  removeCustomCover: "Souhaitez-vous supprimer la couverture personnalisée ?"
+
+validators:
+  fieldShouldNotBeEmpty: "{field} ne doit pas être vide."
+  fieldShouldBeInt: "{field} doit être un entier."
+  fieldShouldBeGreaterOrEqual: "{field} doit être {n} ou plus."
+  fieldShouldBeGreaterOrEqualZero: "{field} doit être zéro ou plus."

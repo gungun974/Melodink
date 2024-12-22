@@ -17,6 +17,7 @@ import 'package:melodink_client/features/track/domain/providers/track_provider.d
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/single_track_context_menu.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class MobilePlayerPage extends HookConsumerWidget {
   const MobilePlayerPage({
@@ -341,13 +342,13 @@ class MobilePlayerPage extends HookConsumerWidget {
                           ),
                         ),
                         if (currentLyrics != null)
-                          const SliverToBoxAdapter(
+                          SliverToBoxAdapter(
                             child: Padding(
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                   horizontal: 16.0, vertical: 8.0),
                               child: Text(
-                                "Lyrics",
-                                style: TextStyle(
+                                t.general.lyrics,
+                                style: const TextStyle(
                                   fontSize: 40,
                                   letterSpacing: 40 * 0.03,
                                   fontWeight: FontWeight.w600,

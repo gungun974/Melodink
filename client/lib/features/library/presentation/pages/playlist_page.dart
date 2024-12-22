@@ -22,6 +22,7 @@ import 'package:melodink_client/features/track/domain/entities/track_compressed_
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class PlaylistPage extends HookConsumerWidget {
   final int playlistId;
@@ -51,7 +52,7 @@ class PlaylistPage extends HookConsumerWidget {
     if (playlist == null) {
       return AppNavigationHeader(
         title: AppScreenTypeLayoutBuilders(
-          mobile: (_) => const Text("Playlist"),
+          mobile: (_) => Text(t.general.playlist),
         ),
         child: Container(),
       );
@@ -67,15 +68,16 @@ class PlaylistPage extends HookConsumerWidget {
                 AdwaitaIcons.playlist,
                 size: 20,
               ),
-              child: const Text("Add to queue"),
+              child: Text(t.actions.addToQueue),
               onPressed: () {
                 audioController.addTracksToQueue(playlist.tracks);
                 playlistContextMenuController.close();
 
                 AppNotificationManager.of(context).notify(
                   context,
-                  message:
-                      "${playlist.tracks.length} track${playlist.tracks.length > 1 ? 's' : ''} have been added to the queue.",
+                  message: t.notifications.haveBeenAddedToQueue.message(
+                    n: playlist.tracks.length,
+                  ),
                 );
               },
             ),
@@ -88,14 +90,13 @@ class PlaylistPage extends HookConsumerWidget {
                   size: 16,
                 ),
               ),
-              child: const Text("Edit"),
+              child: Text(t.general.edit),
               onPressed: () {
                 if (!NetworkInfo().isServerRecheable()) {
                   AppNotificationManager.of(context).notify(
                     context,
-                    title: "Offline",
-                    message:
-                        "You can't perform this action while being offline.",
+                    title: t.notifications.offline.title,
+                    message: t.notifications.offline.message,
                     type: AppNotificationType.danger,
                   );
                   return;
@@ -112,14 +113,13 @@ class PlaylistPage extends HookConsumerWidget {
                   size: 16,
                 ),
               ),
-              child: const Text("Duplicate"),
+              child: Text(t.general.duplicate),
               onPressed: () async {
                 if (!NetworkInfo().isServerRecheable()) {
                   AppNotificationManager.of(context).notify(
                     context,
-                    title: "Offline",
-                    message:
-                        "You can't perform this action while being offline.",
+                    title: t.notifications.offline.title,
+                    message: t.notifications.offline.message,
                     type: AppNotificationType.danger,
                   );
                   return;
@@ -127,9 +127,9 @@ class PlaylistPage extends HookConsumerWidget {
 
                 if (!await appConfirm(
                   context,
-                  title: "Confirm",
-                  content: "Would you like to duplicate this playlist ?'",
-                  textOK: "Confirm",
+                  title: t.confirms.title,
+                  content: t.confirms.duplicatePlaylist,
+                  textOK: t.confirms.confirm,
                 )) {
                   return;
                 }
@@ -152,15 +152,16 @@ class PlaylistPage extends HookConsumerWidget {
 
                   AppNotificationManager.of(context).notify(
                     context,
-                    message:
-                        "The playlist \"${playlist.name}\" has been successfully duplicated.",
+                    message: t.notifications.playlistHaveBeenDuplicated.message(
+                      name: playlist.name,
+                    ),
                   );
                 } catch (_) {
                   if (context.mounted) {
                     AppNotificationManager.of(context).notify(
                       context,
-                      title: "Error",
-                      message: "Something went wrong",
+                      title: t.notifications.somethingWentWrong.title,
+                      message: t.notifications.somethingWentWrong.message,
                       type: AppNotificationType.danger,
                     );
                   }
@@ -177,14 +178,13 @@ class PlaylistPage extends HookConsumerWidget {
                   size: 16,
                 ),
               ),
-              child: const Text("Delete"),
+              child: Text(t.general.delete),
               onPressed: () async {
                 if (!NetworkInfo().isServerRecheable()) {
                   AppNotificationManager.of(context).notify(
                     context,
-                    title: "Offline",
-                    message:
-                        "You can't perform this action while being offline.",
+                    title: t.notifications.offline.title,
+                    message: t.notifications.offline.message,
                     type: AppNotificationType.danger,
                   );
                   return;
@@ -192,9 +192,9 @@ class PlaylistPage extends HookConsumerWidget {
 
                 if (!await appConfirm(
                   context,
-                  title: "Confirm",
-                  content: "Would you like to delete this playlist ?'",
-                  textOK: "DELETE",
+                  title: t.confirms.title,
+                  content: t.confirms.deletePlaylist,
+                  textOK: t.confirms.delete,
                   isDangerous: true,
                 )) {
                   return;
@@ -215,8 +215,9 @@ class PlaylistPage extends HookConsumerWidget {
 
                   AppNotificationManager.of(context).notify(
                     context,
-                    message:
-                        "The playlist \"${playlist.name}\" has been successfully deleted.",
+                    message: t.notifications.playlistHaveBeenDeleted.message(
+                      name: playlist.name,
+                    ),
                   );
 
                   GoRouter.of(context).pop();
@@ -224,8 +225,8 @@ class PlaylistPage extends HookConsumerWidget {
                   if (context.mounted) {
                     AppNotificationManager.of(context).notify(
                       context,
-                      title: "Error",
-                      message: "Something went wrong",
+                      title: t.notifications.somethingWentWrong.title,
+                      message: t.notifications.somethingWentWrong.message,
                       type: AppNotificationType.danger,
                     );
                   }
@@ -238,7 +239,7 @@ class PlaylistPage extends HookConsumerWidget {
         ),
         AppNavigationHeader(
           title: AppScreenTypeLayoutBuilders(
-            mobile: (_) => const Text("Playlist"),
+            mobile: (_) => Text(t.general.playlist),
           ),
           child: AppScreenTypeLayoutBuilder(
             builder: (context, size) {
@@ -261,7 +262,7 @@ class PlaylistPage extends HookConsumerWidget {
                     sliver: size == AppScreenTypeLayout.desktop
                         ? DesktopPlaylistHeader(
                             name: playlist.name,
-                            type: "Playlist",
+                            type: t.general.playlist,
                             imageUrl: playlist.getCompressedCoverUrl(
                               TrackCompressedCoverQuality.high,
                             ),
@@ -271,7 +272,8 @@ class PlaylistPage extends HookConsumerWidget {
                             playCallback: () async {
                               await audioController.loadTracks(
                                 tracks,
-                                source: "Playlist \"${playlist.name}\"",
+                                source:
+                                    "${t.general.playlist} \"${playlist.name}\"",
                               );
                             },
                             downloadCallback: () async {
@@ -293,7 +295,7 @@ class PlaylistPage extends HookConsumerWidget {
                           )
                         : MobilePlaylistHeader(
                             name: playlist.name,
-                            type: "Playlist",
+                            type: t.general.playlist,
                             imageUrl: playlist.getCompressedCoverUrl(
                               TrackCompressedCoverQuality.high,
                             ),
@@ -302,7 +304,8 @@ class PlaylistPage extends HookConsumerWidget {
                             playCallback: () async {
                               await audioController.loadTracks(
                                 tracks,
-                                source: "Playlist \"${playlist.name}\"",
+                                source:
+                                    "${t.general.playlist} \"${playlist.name}\"",
                               );
                             },
                             downloadCallback: () async {
@@ -388,16 +391,15 @@ class PlaylistPage extends HookConsumerWidget {
                               AdwaitaIcons.list_remove,
                               size: 20,
                             ),
-                            child: const Text("Remove from this playlist"),
+                            child: Text(t.actions.removeFromPlaylist),
                             onPressed: () async {
                               menuController.close();
 
                               if (!NetworkInfo().isServerRecheable()) {
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  title: "Offline",
-                                  message:
-                                      "You can't perform this action while being offline.",
+                                  title: t.notifications.offline.title,
+                                  message: t.notifications.offline.message,
                                   type: AppNotificationType.danger,
                                 );
                                 return;
@@ -416,8 +418,10 @@ class PlaylistPage extends HookConsumerWidget {
                                 if (context.mounted) {
                                   AppNotificationManager.of(context).notify(
                                     context,
-                                    title: "Error",
-                                    message: "Something went wrong",
+                                    title: t
+                                        .notifications.somethingWentWrong.title,
+                                    message: t.notifications.somethingWentWrong
+                                        .message,
                                     type: AppNotificationType.danger,
                                   );
                                 }
@@ -429,11 +433,13 @@ class PlaylistPage extends HookConsumerWidget {
                                 return;
                               }
 
-                              AppNotificationManager.of(context).notify(
-                                context,
-                                message:
-                                    "track have been removed from playlist \"${playlist.name}\".",
-                              );
+                              AppNotificationManager.of(context).notify(context,
+                                  message: t.notifications
+                                      .playlistTrackHaveBeenRemoved
+                                      .message(
+                                    n: 1,
+                                    name: playlist.name,
+                                  ));
 
                               unselect();
                             },
@@ -455,14 +461,13 @@ class PlaylistPage extends HookConsumerWidget {
                               AdwaitaIcons.list_remove,
                               size: 20,
                             ),
-                            child: const Text("Remove from this playlist"),
+                            child: Text(t.actions.removeFromPlaylist),
                             onPressed: () async {
                               if (!NetworkInfo().isServerRecheable()) {
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  title: "Offline",
-                                  message:
-                                      "You can't perform this action while being offline.",
+                                  title: t.notifications.offline.title,
+                                  message: t.notifications.offline.message,
                                   type: AppNotificationType.danger,
                                 );
                                 return;
@@ -481,8 +486,10 @@ class PlaylistPage extends HookConsumerWidget {
                                 if (context.mounted) {
                                   AppNotificationManager.of(context).notify(
                                     context,
-                                    title: "Error",
-                                    message: "Something went wrong",
+                                    title: t
+                                        .notifications.somethingWentWrong.title,
+                                    message: t.notifications.somethingWentWrong
+                                        .message,
                                     type: AppNotificationType.danger,
                                   );
                                 }
@@ -496,8 +503,12 @@ class PlaylistPage extends HookConsumerWidget {
 
                               AppNotificationManager.of(context).notify(
                                 context,
-                                message:
-                                    "${tracks.length} track${tracks.length > 1 ? 's' : ''} have been removed from playlist \"${playlist.name}\".",
+                                message: t
+                                    .notifications.playlistTrackHaveBeenRemoved
+                                    .message(
+                                  n: tracks.length,
+                                  name: playlist.name,
+                                ),
                               );
 
                               menuController.close();
@@ -506,7 +517,7 @@ class PlaylistPage extends HookConsumerWidget {
                           ),
                         ];
                       },
-                      source: "Playlist \"${playlist.name}\"",
+                      source: "${t.general.playlist} \"${playlist.name}\"",
                     ),
                   ),
                   const SliverToBoxAdapter(

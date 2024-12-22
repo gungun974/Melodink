@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class ScanConfiguration extends Equatable {
   final bool advancedScan;
@@ -46,7 +47,7 @@ class ScanConfigurationModal extends HookWidget {
             child: IntrinsicHeight(
               child: AppModal(
                 preventUserClose: true,
-                title: const Text("Scan"),
+                title: Text(t.general.scan),
                 body: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24.0,
@@ -58,9 +59,9 @@ class ScanConfigurationModal extends HookWidget {
                     children: [
                       if (!hideAdvancedScanQuestion)
                         CheckboxListTile(
-                          title: const Text(
-                            'Advanced Scan',
-                            style: TextStyle(
+                          title: Text(
+                            t.general.advancedScan,
+                            style: const TextStyle(
                               fontWeight: FontWeight.w400,
                               fontSize: 16,
                               letterSpacing: 16 * 0.04,
@@ -73,9 +74,9 @@ class ScanConfigurationModal extends HookWidget {
                           activeColor: const Color.fromRGBO(196, 126, 208, 1),
                         ),
                       CheckboxListTile(
-                        title: const Text(
-                          'Replace only Empty Fields',
-                          style: TextStyle(
+                        title: Text(
+                          t.settings.replaceOnlyEmptyFields,
+                          style: const TextStyle(
                             fontWeight: FontWeight.w400,
                             fontSize: 16,
                             letterSpacing: 16 * 0.04,
@@ -97,14 +98,14 @@ class ScanConfigurationModal extends HookWidget {
                               onPressed: () {
                                 Navigator.of(context).pop();
                               },
-                              child: const Text('Cancel'),
+                              child: Text(t.general.cancel),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: AppButton(
-                              text: 'Scan',
+                              text: t.general.scan,
                               type: AppButtonType.primary,
                               onPressed: () {
                                 Navigator.of(context).pop(ScanConfiguration(

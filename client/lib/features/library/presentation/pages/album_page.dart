@@ -17,6 +17,7 @@ import 'package:melodink_client/features/track/domain/entities/track_compressed_
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class AlbumPage extends HookConsumerWidget {
   final String albumId;
@@ -49,7 +50,7 @@ class AlbumPage extends HookConsumerWidget {
     if (album == null) {
       return AppNavigationHeader(
         title: AppScreenTypeLayoutBuilders(
-          mobile: (_) => const Text("Album"),
+          mobile: (_) => Text(t.general.album),
         ),
         child: Container(),
       );
@@ -66,15 +67,16 @@ class AlbumPage extends HookConsumerWidget {
                 AdwaitaIcons.playlist,
                 size: 20,
               ),
-              child: const Text("Add to queue"),
+              child: Text(t.actions.addToQueue),
               onPressed: () {
                 audioController.addTracksToQueue(album.tracks);
                 albumContextMenuController.close();
 
                 AppNotificationManager.of(context).notify(
                   context,
-                  message:
-                      "${album.tracks.length} track${album.tracks.length > 1 ? 's' : ''} have been added to the queue.",
+                  message: t.notifications.haveBeenAddedToQueue.message(
+                    n: album.tracks.length,
+                  ),
                 );
               },
             ),
@@ -91,9 +93,8 @@ class AlbumPage extends HookConsumerWidget {
                         if (!NetworkInfo().isServerRecheable()) {
                           AppNotificationManager.of(context).notify(
                             context,
-                            title: "Offline",
-                            message:
-                                "You can't perform this action while being offline.",
+                            title: t.notifications.offline.title,
+                            message: t.notifications.offline.message,
                             type: AppNotificationType.danger,
                           );
                           return;
@@ -111,8 +112,9 @@ class AlbumPage extends HookConsumerWidget {
                           if (context.mounted) {
                             AppNotificationManager.of(context).notify(
                               context,
-                              title: "Error",
-                              message: "Something went wrong",
+                              title: t.notifications.somethingWentWrong.title,
+                              message:
+                                  t.notifications.somethingWentWrong.message,
                               type: AppNotificationType.danger,
                             );
                           }
@@ -126,15 +128,18 @@ class AlbumPage extends HookConsumerWidget {
 
                         AppNotificationManager.of(context).notify(
                           context,
-                          message:
-                              "${album.tracks.length} track${album.tracks.length > 1 ? 's' : ''} have been added to playlist \"${playlist.name}\".",
+                          message: t.notifications.playlistTrackHaveBeenAdded
+                              .message(
+                            n: album.tracks.length,
+                            name: playlist.name,
+                          ),
                         );
                       },
                     );
                   }).toList(),
                 _ => const [],
               },
-              child: const Text("Add to playlist"),
+              child: Text(t.actions.addToPlaylist),
             ),
             const Divider(height: 8),
             MenuItemButton(
@@ -145,14 +150,13 @@ class AlbumPage extends HookConsumerWidget {
                   size: 16,
                 ),
               ),
-              child: const Text("Edit"),
+              child: Text(t.general.edit),
               onPressed: () {
                 if (!NetworkInfo().isServerRecheable()) {
                   AppNotificationManager.of(context).notify(
                     context,
-                    title: "Offline",
-                    message:
-                        "You can't perform this action while being offline.",
+                    title: t.notifications.offline.title,
+                    message: t.notifications.offline.message,
                     type: AppNotificationType.danger,
                   );
                   return;
@@ -166,7 +170,7 @@ class AlbumPage extends HookConsumerWidget {
         ),
         AppNavigationHeader(
           title: AppScreenTypeLayoutBuilders(
-            mobile: (_) => const Text("Album"),
+            mobile: (_) => Text(t.general.album),
           ),
           child: AppScreenTypeLayoutBuilder(
             builder: (context, size) {
@@ -190,7 +194,7 @@ class AlbumPage extends HookConsumerWidget {
                     sliver: size == AppScreenTypeLayout.desktop
                         ? DesktopPlaylistHeader(
                             name: album.name,
-                            type: "Album",
+                            type: t.general.album,
                             imageUrl: album.getCompressedCoverUrl(
                               TrackCompressedCoverQuality.high,
                             ),
@@ -200,7 +204,7 @@ class AlbumPage extends HookConsumerWidget {
                             playCallback: () async {
                               await audioController.loadTracks(
                                 tracks,
-                                source: "Album \"${album.name}\"",
+                                source: "${t.general.album} \"${album.name}\"",
                               );
                             },
                             downloadCallback: () async {
@@ -221,7 +225,7 @@ class AlbumPage extends HookConsumerWidget {
                           )
                         : MobilePlaylistHeader(
                             name: album.name,
-                            type: "Album",
+                            type: t.general.album,
                             imageUrl: album.getCompressedCoverUrl(
                               TrackCompressedCoverQuality.high,
                             ),
@@ -230,7 +234,7 @@ class AlbumPage extends HookConsumerWidget {
                             playCallback: () async {
                               await audioController.loadTracks(
                                 tracks,
-                                source: "Album \"${album.name}\"",
+                                source: "${t.general.album} \"${album.name}\"",
                               );
                             },
                             downloadCallback: () async {
@@ -301,7 +305,7 @@ class AlbumPage extends HookConsumerWidget {
                       ],
                       scrollController: scrollController,
                       scrollToTrackIdOnMounted: openWithScrollOnSpecificTrackId,
-                      source: "Album \"${album.name}\"",
+                      source: "${t.general.album} \"${album.name}\"",
                     ),
                   ),
                   const SliverToBoxAdapter(

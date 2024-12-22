@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/network/network_info.dart';
@@ -17,8 +18,10 @@ import 'package:melodink_client/features/settings/domain/entities/settings.dart'
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/import_tracks_provider.dart';
 import 'package:melodink_client/features/tracker/domain/providers/shared_played_track_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -26,6 +29,9 @@ void main() async {
   MelodinkPlayer().init();
 
   WidgetsFlutterBinding.ensureInitialized();
+  LocaleSettings.useDeviceLocale();
+
+  timeago.setLocaleMessages('fr', timeago.FrShortMessages());
 
   if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
     // Initialize FFI
@@ -62,8 +68,10 @@ void main() async {
     ..maximumSize = 10000
     ..maximumSizeBytes = 750 * 1024 * 1024; // 750 MB
 
-  runApp(const ProviderScope(
-    child: MyApp(),
+  runApp(ProviderScope(
+    child: TranslationProvider(
+      child: const MyApp(),
+    ),
   ));
 }
 
@@ -104,6 +112,9 @@ class MyApp extends StatelessWidget {
               child: AppNotificationManager(
                 child: MaterialApp.router(
                   title: 'Melodink Client',
+                  locale: TranslationProvider.of(context).flutterLocale,
+                  supportedLocales: AppLocaleUtils.supportedLocales,
+                  localizationsDelegates: GlobalMaterialLocalizations.delegates,
                   debugShowCheckedModeBanner: false,
                   theme: ThemeData(
                     useMaterial3: false,

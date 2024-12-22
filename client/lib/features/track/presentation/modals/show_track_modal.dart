@@ -15,6 +15,7 @@ import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/modals/edit_track_modal.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class ShowTrackModal extends HookConsumerWidget {
   final int trackId;
@@ -36,7 +37,7 @@ class ShowTrackModal extends HookConsumerWidget {
       return const AppPageLoader();
     }
 
-    final DateFormat formatter = DateFormat('yyyy-MM-dd HH:mm');
+    final DateFormat formatter = DateFormat.yMd().add_Hm();
 
     return Stack(
       children: [
@@ -84,13 +85,13 @@ class ShowTrackModal extends HookConsumerWidget {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   AppValueTextField(
-                                    labelText: "Title",
+                                    labelText: t.general.trackTitle,
                                     value: track.title,
                                     readOnly: true,
                                   ),
                                   const SizedBox(height: 8),
                                   AppValueTextField(
-                                    labelText: "Duration",
+                                    labelText: t.general.duration,
                                     value: durationToTime(track.duration),
                                     readOnly: true,
                                   ),
@@ -99,7 +100,7 @@ class ShowTrackModal extends HookConsumerWidget {
                                     children: [
                                       Expanded(
                                         child: AppValueTextField(
-                                          labelText: "Tags Format",
+                                          labelText: t.general.tagsFormat,
                                           value: track.tagsFormat,
                                           readOnly: true,
                                         ),
@@ -107,7 +108,7 @@ class ShowTrackModal extends HookConsumerWidget {
                                       const SizedBox(width: 8),
                                       Expanded(
                                         child: AppValueTextField(
-                                          labelText: "File Type",
+                                          labelText: t.general.fileType,
                                           value: track.fileType,
                                           readOnly: true,
                                         ),
@@ -116,13 +117,13 @@ class ShowTrackModal extends HookConsumerWidget {
                                   ),
                                   const SizedBox(height: 8),
                                   AppValueTextField(
-                                    labelText: "File Signature",
+                                    labelText: t.general.fileSignature,
                                     value: track.fileSignature,
                                     readOnly: true,
                                   ),
                                   const SizedBox(height: 8),
                                   AppValueTextField(
-                                    labelText: "Date Added",
+                                    labelText: t.general.dateAdded,
                                     value: formatter.format(track.dateAdded),
                                     readOnly: true,
                                   ),
@@ -166,9 +167,9 @@ class ShowTrackModal extends HookConsumerWidget {
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                "Album Artists",
-                                style: TextStyle(
+                              Text(
+                                t.general.albumArtists,
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w500,
                                   fontSize: 24,
                                   letterSpacing: 24 * 0.04,
@@ -179,7 +180,7 @@ class ShowTrackModal extends HookConsumerWidget {
                                 children: track.metadata.albumArtists
                                     .map(
                                       (artist) => AppValueTextField(
-                                        labelText: "Album Artist",
+                                        labelText: t.general.albumArtist,
                                         value: artist.name,
                                         readOnly: true,
                                       ),
@@ -189,9 +190,9 @@ class ShowTrackModal extends HookConsumerWidget {
                               const Divider(
                                 height: 24,
                               ),
-                              const Text(
-                                "Artists",
-                                style: TextStyle(
+                              Text(
+                                t.general.artists,
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w500,
                                   fontSize: 24,
                                   letterSpacing: 24 * 0.04,
@@ -202,7 +203,7 @@ class ShowTrackModal extends HookConsumerWidget {
                                 children: track.metadata.artists
                                     .map(
                                       (artist) => AppValueTextField(
-                                        labelText: "Artist",
+                                        labelText: t.general.artist,
                                         value: artist.name,
                                         readOnly: true,
                                       ),
@@ -221,7 +222,7 @@ class ShowTrackModal extends HookConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               AppValueTextField(
-                                labelText: "Album",
+                                labelText: t.general.album,
                                 value: track.metadata.album,
                                 readOnly: true,
                               ),
@@ -232,7 +233,7 @@ class ShowTrackModal extends HookConsumerWidget {
                                 children: [
                                   Expanded(
                                     child: AppValueTextField(
-                                      labelText: "Track Number",
+                                      labelText: t.general.trackNumber,
                                       value: "${track.metadata.trackNumber}",
                                       readOnly: true,
                                     ),
@@ -240,7 +241,7 @@ class ShowTrackModal extends HookConsumerWidget {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: AppValueTextField(
-                                      labelText: "Total Tracks",
+                                      labelText: t.general.totalTracks,
                                       value: "${track.metadata.totalTracks}",
                                       readOnly: true,
                                     ),
@@ -252,7 +253,7 @@ class ShowTrackModal extends HookConsumerWidget {
                                 children: [
                                   Expanded(
                                     child: AppValueTextField(
-                                      labelText: "Track Disc",
+                                      labelText: t.general.trackDisc,
                                       value: "${track.metadata.discNumber}",
                                       readOnly: true,
                                     ),
@@ -260,7 +261,7 @@ class ShowTrackModal extends HookConsumerWidget {
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: AppValueTextField(
-                                      labelText: "Total Disc",
+                                      labelText: t.general.totalDiscs,
                                       value: "${track.metadata.totalDiscs}",
                                       readOnly: true,
                                     ),
@@ -271,13 +272,13 @@ class ShowTrackModal extends HookConsumerWidget {
                                 height: 24,
                               ),
                               AppValueTextField(
-                                labelText: "Date",
+                                labelText: t.general.date,
                                 value: track.metadata.date,
                                 readOnly: true,
                               ),
                               const SizedBox(height: 8),
                               AppValueTextField(
-                                labelText: "Year",
+                                labelText: t.general.year,
                                 value: "${track.metadata.year}",
                                 readOnly: true,
                               ),
@@ -285,7 +286,7 @@ class ShowTrackModal extends HookConsumerWidget {
                                 height: 24,
                               ),
                               AppValueTextField(
-                                labelText: "Genres",
+                                labelText: t.general.genres,
                                 value: track.metadata.genres.join(";"),
                                 readOnly: true,
                               ),
@@ -299,19 +300,19 @@ class ShowTrackModal extends HookConsumerWidget {
                               ),
                               const SizedBox(height: 8),
                               AppValueTextField(
-                                labelText: "MusicBrainz Release Id",
+                                labelText: t.general.musicBrainzReleaseId,
                                 value: track.metadata.musicBrainzReleaseId,
                                 readOnly: true,
                               ),
                               const SizedBox(height: 8),
                               AppValueTextField(
-                                labelText: "MusicBrainz Track Id",
+                                labelText: t.general.musicBrainzTrackId,
                                 value: track.metadata.musicBrainzTrackId,
                                 readOnly: true,
                               ),
                               const SizedBox(height: 8),
                               AppValueTextField(
-                                labelText: "MusicBrainz Recording Id",
+                                labelText: t.general.musicBrainzRecordingId,
                                 value: track.metadata.musicBrainzRecordingId,
                                 readOnly: true,
                               ),
@@ -319,13 +320,13 @@ class ShowTrackModal extends HookConsumerWidget {
                                 height: 24,
                               ),
                               AppValueTextField(
-                                labelText: "Composer",
+                                labelText: t.general.composer,
                                 value: track.metadata.composer,
                                 readOnly: true,
                               ),
                               const SizedBox(height: 8),
                               AppValueTextField(
-                                labelText: "Comment",
+                                labelText: t.general.comment,
                                 value: track.metadata.comment,
                                 readOnly: true,
                               ),
@@ -333,15 +334,14 @@ class ShowTrackModal extends HookConsumerWidget {
                                 height: 24,
                               ),
                               AppButton(
-                                text: "Delete",
+                                text: t.general.delete,
                                 type: AppButtonType.danger,
                                 onPressed: () async {
                                   if (!await appConfirm(
                                     context,
-                                    title: "Confirm",
-                                    content:
-                                        "Would you like to delete this track ?'",
-                                    textOK: "DELETE",
+                                    title: t.confirms.title,
+                                    content: t.confirms.deleteTrack,
+                                    textOK: t.confirms.delete,
                                     isDangerous: true,
                                   )) {
                                     return;
@@ -362,10 +362,12 @@ class ShowTrackModal extends HookConsumerWidget {
                                     }
 
                                     AppNotificationManager.of(context).notify(
-                                      context,
-                                      message:
-                                          "Track \"${track.title}\" have been deleted.",
-                                    );
+                                        context,
+                                        message: t
+                                            .notifications.trackHaveBeenDeleted
+                                            .message(
+                                          title: track.title,
+                                        ));
 
                                     Navigator.of(
                                       context,
@@ -382,15 +384,16 @@ class ShowTrackModal extends HookConsumerWidget {
                     ],
                   ),
                 ),
-                const TabBar(
+                TabBar(
                   tabs: [
                     Tab(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AdwaitaIcon(AdwaitaIcons.preferences_system_details),
-                          SizedBox(width: 8),
-                          Text('Basic'),
+                          const AdwaitaIcon(
+                              AdwaitaIcons.preferences_system_details),
+                          const SizedBox(width: 8),
+                          Text(t.general.basic),
                         ],
                       ),
                     ),
@@ -398,9 +401,9 @@ class ShowTrackModal extends HookConsumerWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AdwaitaIcon(AdwaitaIcons.text_justify_left),
-                          SizedBox(width: 8),
-                          Text('Lyrics'),
+                          const AdwaitaIcon(AdwaitaIcons.text_justify_left),
+                          const SizedBox(width: 8),
+                          Text(t.general.lyrics),
                         ],
                       ),
                     ),
@@ -408,9 +411,9 @@ class ShowTrackModal extends HookConsumerWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AdwaitaIcon(AdwaitaIcons.music_artist2),
-                          SizedBox(width: 8),
-                          Text('Artists'),
+                          const AdwaitaIcon(AdwaitaIcons.music_artist2),
+                          const SizedBox(width: 8),
+                          Text(t.general.artists),
                         ],
                       ),
                     ),
@@ -418,9 +421,9 @@ class ShowTrackModal extends HookConsumerWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AdwaitaIcon(AdwaitaIcons.list),
-                          SizedBox(width: 8),
-                          Text('Details'),
+                          const AdwaitaIcon(AdwaitaIcons.list),
+                          const SizedBox(width: 8),
+                          Text(t.general.details),
                         ],
                       ),
                     ),

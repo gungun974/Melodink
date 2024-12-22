@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class AllTrackFilterPanel extends ConsumerWidget {
   const AllTrackFilterPanel({super.key});
@@ -44,7 +45,7 @@ class AllTrackFilterPanel extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             AllTrackFilterCategory(
-              title: "Artist",
+              title: t.general.artists,
               options: artistsOptions.map((artist) => artist.name).toList(),
               selectedOptions: artistsOptions.indexed
                   .where(
@@ -70,7 +71,7 @@ class AllTrackFilterPanel extends ConsumerWidget {
             ),
             const SizedBox(width: 12),
             AllTrackFilterCategory(
-              title: "Album",
+              title: t.general.albums,
               options: albumsOptions.map((album) => album.$2).toList(),
               selectedOptions: albumsOptions.indexed
                   .where(

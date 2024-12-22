@@ -7,6 +7,7 @@ import 'package:melodink_client/features/player/presentation/widgets/desktop_cur
 import 'package:melodink_client/features/player/presentation/widgets/side_player_bar.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class DesktopSidebar extends ConsumerWidget {
   const DesktopSidebar({super.key});
@@ -33,7 +34,7 @@ class DesktopSidebar extends ConsumerWidget {
               child: Column(
                 children: [
                   DesktopSidebarItem(
-                    label: "Search",
+                    label: t.general.search,
                     icon: const AdwaitaIcon(
                       AdwaitaIcons.system_search,
                       size: 24.0,
@@ -44,18 +45,7 @@ class DesktopSidebar extends ConsumerWidget {
                     active: currentUrl == "/track",
                   ),
                   DesktopSidebarItem(
-                    label: "Liked songs",
-                    icon: const AdwaitaIcon(
-                      AdwaitaIcons.heart_outline_thick,
-                      size: 24.0,
-                    ),
-                    onTap: () {
-                      GoRouter.of(context).go("/liked");
-                    },
-                    active: currentUrl == "/liked",
-                  ),
-                  DesktopSidebarItem(
-                    label: "Playlists",
+                    label: t.general.playlists,
                     icon: const AdwaitaIcon(
                       AdwaitaIcons.playlist2,
                       size: 24.0,
@@ -66,7 +56,7 @@ class DesktopSidebar extends ConsumerWidget {
                     active: currentUrl == "/playlist",
                   ),
                   DesktopSidebarItem(
-                    label: "Albums",
+                    label: t.general.albums,
                     icon: const AdwaitaIcon(
                       AdwaitaIcons.media_optical,
                       size: 24.0,
@@ -77,7 +67,7 @@ class DesktopSidebar extends ConsumerWidget {
                     active: currentUrl == "/album",
                   ),
                   DesktopSidebarItem(
-                    label: "Artists",
+                    label: t.general.artists,
                     icon: const AdwaitaIcon(
                       AdwaitaIcons.music_artist2,
                       size: 24.0,
@@ -88,7 +78,7 @@ class DesktopSidebar extends ConsumerWidget {
                     active: currentUrl == "/artist",
                   ),
                   DesktopSidebarItem(
-                    label: "Settings",
+                    label: t.general.settings,
                     icon: const AdwaitaIcon(
                       AdwaitaIcons.gear,
                       size: 24.0,

@@ -11,6 +11,7 @@ import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class CreatePlaylistModal extends HookConsumerWidget {
   const CreatePlaylistModal({
@@ -35,7 +36,7 @@ class CreatePlaylistModal extends HookConsumerWidget {
       child: Stack(
         children: [
           AppModal(
-            title: const Text("New Playlist"),
+            title: Text(t.general.newPlaylist),
             body: Form(
               key: formKey,
               child: SingleChildScrollView(
@@ -45,7 +46,7 @@ class CreatePlaylistModal extends HookConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       AppTextFormField(
-                        labelText: "Name",
+                        labelText: t.general.name,
                         controller: nameTextController,
                         autovalidateMode: autoValidate.value
                             ? AutovalidateMode.always
@@ -53,26 +54,28 @@ class CreatePlaylistModal extends HookConsumerWidget {
                         validator: FormBuilderValidators.compose(
                           [
                             FormBuilderValidators.required(
-                              errorText: "Name should not be empty.",
+                              errorText: t.validators.fieldShouldNotBeEmpty(
+                                field: t.general.name,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 8),
                       AppTextFormField(
-                        labelText: "Description",
+                        labelText: t.general.description,
                         controller: descriptionTextController,
                         maxLines: null,
                       ),
                       const SizedBox(height: 16),
                       if (hasError.value)
-                        const AppErrorBox(
-                          title: "Error",
-                          message: "Something went wrong",
+                        AppErrorBox(
+                          title: t.notifications.somethingWentWrong.title,
+                          message: t.notifications.somethingWentWrong.message,
                         ),
                       if (hasError.value) const SizedBox(height: 16),
                       AppButton(
-                        text: "Create",
+                        text: t.general.create,
                         type: AppButtonType.primary,
                         onPressed: () async {
                           hasError.value = false;
@@ -111,8 +114,10 @@ class CreatePlaylistModal extends HookConsumerWidget {
 
                             AppNotificationManager.of(context).notify(
                               context,
-                              message:
-                                  "Playlist \"${newPlaylist.name}\" have been created",
+                              message: t.notifications.playlistHaveBeenCreated
+                                  .message(
+                                name: newPlaylist.name,
+                              ),
                             );
                           } catch (_) {
                             isLoading.value = false;

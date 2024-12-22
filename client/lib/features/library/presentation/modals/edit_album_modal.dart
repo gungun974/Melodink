@@ -11,6 +11,7 @@ import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/domain/providers/edit_album_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class EditAlbumModal extends HookConsumerWidget {
   final Album album;
@@ -40,7 +41,9 @@ class EditAlbumModal extends HookConsumerWidget {
       child: Stack(
         children: [
           AppModal(
-            title: Text("Edit album \"${album.name}\""),
+            title: Text(
+              t.general.editAlbum(name: album.name),
+            ),
             body: Form(
               key: formKey,
               child: SingleChildScrollView(
@@ -51,7 +54,7 @@ class EditAlbumModal extends HookConsumerWidget {
                     children: [
                       if (coverSignature?.data?.trim() == "")
                         AppButton(
-                          text: "Change Cover",
+                          text: t.actions.changeCover,
                           type: AppButtonType.secondary,
                           onPressed: () async {
                             final file = await pickImageFile();
@@ -72,8 +75,10 @@ class EditAlbumModal extends HookConsumerWidget {
                               if (context.mounted) {
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  title: "Error",
-                                  message: "Something went wrong",
+                                  title:
+                                      t.notifications.somethingWentWrong.title,
+                                  message: t
+                                      .notifications.somethingWentWrong.message,
                                   type: AppNotificationType.danger,
                                 );
                               }
@@ -88,22 +93,23 @@ class EditAlbumModal extends HookConsumerWidget {
 
                             AppNotificationManager.of(context).notify(
                               context,
-                              message:
-                                  "The cover for album \"${album.name}\" have been changed.",
+                              message: t.notifications.albumCoverHaveBeenChanged
+                                  .message(
+                                name: album.name,
+                              ),
                             );
                           },
                         ),
                       if (coverSignature?.data?.trim() != "")
                         AppButton(
-                          text: "Remove Cover",
+                          text: t.actions.removeCover,
                           type: AppButtonType.secondary,
                           onPressed: () async {
                             if (!await appConfirm(
                               context,
-                              title: "Confirm",
-                              content:
-                                  "Would you like to remove the custom cover ?'",
-                              textOK: "Confirm",
+                              title: t.confirms.title,
+                              content: t.confirms.removeCustomCover,
+                              textOK: t.confirms.confirm,
                             )) {
                               return;
                             }
@@ -120,8 +126,10 @@ class EditAlbumModal extends HookConsumerWidget {
                               if (context.mounted) {
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  title: "Error",
-                                  message: "Something went wrong",
+                                  title:
+                                      t.notifications.somethingWentWrong.title,
+                                  message: t
+                                      .notifications.somethingWentWrong.message,
                                   type: AppNotificationType.danger,
                                 );
                               }
@@ -136,14 +144,16 @@ class EditAlbumModal extends HookConsumerWidget {
 
                             AppNotificationManager.of(context).notify(
                               context,
-                              message:
-                                  "The cover for album \"${album.name}\" have been removed.",
+                              message: t.notifications.albumCoverHaveBeenRemoved
+                                  .message(
+                                name: album.name,
+                              ),
                             );
                           },
                         ),
                       const SizedBox(height: 16),
                       AppButton(
-                        text: "Save",
+                        text: t.general.save,
                         type: AppButtonType.primary,
                         onPressed: () async {
                           Navigator.of(
@@ -153,7 +163,9 @@ class EditAlbumModal extends HookConsumerWidget {
 
                           AppNotificationManager.of(context).notify(
                             context,
-                            message: "Album \"${album.name}\" have been saved",
+                            message: t.notifications.albumHaveBeenSaved.message(
+                              name: album.name,
+                            ),
                           );
                         },
                       ),

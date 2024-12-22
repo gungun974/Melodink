@@ -4,6 +4,7 @@ import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class ServerInfo extends ConsumerWidget {
   const ServerInfo({super.key});
@@ -26,9 +27,9 @@ class ServerInfo extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Text(
-                "User :",
-                style: TextStyle(
+              Text(
+                "${t.general.user} :",
+                style: const TextStyle(
                   fontWeight: FontWeight.w400,
                   fontSize: 16,
                   letterSpacing: 16 * 0.04,
@@ -53,9 +54,9 @@ class ServerInfo extends ConsumerWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              const Text(
-                "Host :",
-                style: TextStyle(
+              Text(
+                "${t.general.host} :",
+                style: const TextStyle(
                   fontWeight: FontWeight.w400,
                   fontSize: 16,
                   letterSpacing: 16 * 0.04,
@@ -80,9 +81,9 @@ class ServerInfo extends ConsumerWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              const Text(
-                "Device ID :",
-                style: TextStyle(
+              Text(
+                "${t.general.deviceId} :",
+                style: const TextStyle(
                   fontWeight: FontWeight.w400,
                   fontSize: 16,
                   letterSpacing: 16 * 0.04,
@@ -107,9 +108,9 @@ class ServerInfo extends ConsumerWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              const Text(
-                "Status :",
-                style: TextStyle(
+              Text(
+                "${t.general.status} :",
+                style: const TextStyle(
                   fontWeight: FontWeight.w400,
                   fontSize: 16,
                   letterSpacing: 16 * 0.04,
@@ -118,8 +119,8 @@ class ServerInfo extends ConsumerWidget {
               Expanded(
                 child: Text(
                   switch (isServerReachable) {
-                    true => "Online",
-                    false => "Offline",
+                    true => t.general.online,
+                    false => t.general.offline,
                   },
                   textAlign: TextAlign.right,
                   maxLines: 1,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class DesktopTrackHeader extends StatelessWidget {
   final List<DesktopTrackModule> modules;
@@ -42,10 +43,10 @@ class DesktopTrackHeader extends StatelessWidget {
                           ),
                         );
                         yield const SizedBox(width: 24);
-                        yield const Expanded(
+                        yield Expanded(
                           child: Text(
-                            "Title",
-                            style: TextStyle(
+                            t.general.trackTitle,
+                            style: const TextStyle(
                               fontSize: 14,
                               letterSpacing: 14 * 0.03,
                               fontWeight: FontWeight.w600,
@@ -53,10 +54,10 @@ class DesktopTrackHeader extends StatelessWidget {
                           ),
                         );
                       case DesktopTrackModule.album:
-                        yield const Expanded(
+                        yield Expanded(
                           child: Text(
-                            "Album",
-                            style: TextStyle(
+                            t.general.album,
+                            style: const TextStyle(
                               fontSize: 14,
                               letterSpacing: 14 * 0.03,
                               fontWeight: FontWeight.w500,
@@ -66,9 +67,9 @@ class DesktopTrackHeader extends StatelessWidget {
                       case DesktopTrackModule.lastPlayed:
                         yield SizedBox(
                           width: module.width,
-                          child: const Text(
-                            "Last Played",
-                            style: TextStyle(
+                          child: Text(
+                            t.general.lastPlayed,
+                            style: const TextStyle(
                               fontSize: 14,
                               letterSpacing: 14 * 0.03,
                               fontWeight: FontWeight.w500,
@@ -78,9 +79,9 @@ class DesktopTrackHeader extends StatelessWidget {
                       case DesktopTrackModule.playedCount:
                         yield SizedBox(
                           width: module.width,
-                          child: const Text(
-                            "Count",
-                            style: TextStyle(
+                          child: Text(
+                            t.general.playedCount,
+                            style: const TextStyle(
                               fontSize: 14,
                               letterSpacing: 14 * 0.03,
                               fontWeight: FontWeight.w500,
@@ -90,9 +91,9 @@ class DesktopTrackHeader extends StatelessWidget {
                       case DesktopTrackModule.dateAdded:
                         yield SizedBox(
                           width: module.width,
-                          child: const Text(
-                            "Date added",
-                            style: TextStyle(
+                          child: Text(
+                            t.general.dateAdded,
+                            style: const TextStyle(
                               fontSize: 14,
                               letterSpacing: 14 * 0.03,
                               fontWeight: FontWeight.w500,
@@ -102,9 +103,9 @@ class DesktopTrackHeader extends StatelessWidget {
                       case DesktopTrackModule.quality:
                         yield SizedBox(
                           width: module.width,
-                          child: const Text(
-                            "Quality",
-                            style: TextStyle(
+                          child: Text(
+                            t.general.quality,
+                            style: const TextStyle(
                               fontSize: 14,
                               letterSpacing: 14 * 0.03,
                               fontWeight: FontWeight.w500,
@@ -114,9 +115,9 @@ class DesktopTrackHeader extends StatelessWidget {
                       case DesktopTrackModule.duration:
                         yield SizedBox(
                           width: module.width,
-                          child: const Text(
-                            "Duration",
-                            style: TextStyle(
+                          child: Text(
+                            t.general.duration,
+                            style: const TextStyle(
                               fontSize: 14,
                               letterSpacing: 14 * 0.03,
                               fontWeight: FontWeight.w500,

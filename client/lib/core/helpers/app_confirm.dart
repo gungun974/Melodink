@@ -1,5 +1,6 @@
 import 'package:confirm_dialog/confirm_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 Future<bool> appConfirm(
   BuildContext context, {
@@ -15,7 +16,7 @@ Future<bool> appConfirm(
     content: content != null ? Text(content) : null,
     textOK: textOK != null
         ? Text(
-            textOK,
+            isDangerous ? textOK : textOK,
             style: isDangerous
                 ? const TextStyle(
                     fontWeight: FontWeight.w500,
@@ -23,8 +24,16 @@ Future<bool> appConfirm(
                   )
                 : null,
           )
-        : null,
-    textCancel: textCancel != null ? Text(textCancel) : null,
+        : Text(
+            isDangerous ? t.confirms.confirm.toUpperCase() : t.confirms.confirm,
+            style: isDangerous
+                ? const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFFE84E4A),
+                  )
+                : null,
+          ),
+    textCancel: textCancel != null ? Text(textCancel) : Text(t.confirms.cancel),
     canPop: true,
   );
 }

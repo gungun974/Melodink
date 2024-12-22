@@ -8,6 +8,7 @@ import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/library/domain/providers/artist_provider.dart';
 import 'package:melodink_client/features/library/presentation/widgets/artist_collections_grid.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:popover/popover.dart';
 
 class ArtistsPage extends HookConsumerWidget {
@@ -45,9 +46,9 @@ class ArtistsPage extends HookConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Artists",
-                    style: TextStyle(
+                  Text(
+                    t.general.artists,
+                    style: const TextStyle(
                       fontSize: 48,
                       letterSpacing: 48 * 0.03,
                       fontWeight: FontWeight.w600,
@@ -58,7 +59,7 @@ class ArtistsPage extends HookConsumerWidget {
                     children: [
                       Expanded(
                         child: AppTextFormField(
-                          labelText: "Search",
+                          labelText: t.general.search,
                           prefixIcon: const AdwaitaIcon(
                             size: 20,
                             AdwaitaIcons.system_search,
@@ -72,7 +73,7 @@ class ArtistsPage extends HookConsumerWidget {
                       const SizedBox(width: 16),
                       Builder(builder: (context) {
                         return AppButton(
-                          text: "Sort",
+                          text: t.general.sort,
                           type: AppButtonType.primary,
                           onPressed: () {
                             showPopover(
@@ -126,7 +127,7 @@ class ArtistsSortedPopup extends ConsumerWidget {
         child: Column(
           children: [
             RadioListTile(
-              title: const Text("Newest"),
+              title: Text(t.sorting.newest),
               value: "newest",
               groupValue: sortedMode,
               onChanged: (value) {
@@ -136,7 +137,7 @@ class ArtistsSortedPopup extends ConsumerWidget {
               },
             ),
             RadioListTile(
-              title: const Text("Oldest"),
+              title: Text(t.sorting.oldest),
               value: "oldest",
               groupValue: sortedMode,
               onChanged: (value) {
@@ -146,7 +147,7 @@ class ArtistsSortedPopup extends ConsumerWidget {
               },
             ),
             RadioListTile(
-              title: const Text("Artist (A-Z)"),
+              title: Text(t.sorting.artistsAz),
               value: "name-az",
               groupValue: sortedMode,
               onChanged: (value) {
@@ -156,7 +157,7 @@ class ArtistsSortedPopup extends ConsumerWidget {
               },
             ),
             RadioListTile(
-              title: const Text("Artist (Z-A)"),
+              title: Text(t.sorting.artistsZa),
               value: "name-za",
               groupValue: sortedMode,
               onChanged: (value) {

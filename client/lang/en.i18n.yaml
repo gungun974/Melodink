@@ -1,0 +1,289 @@
+---
+locale: "English"
+
+general:
+  default: "Default"
+  search: "Search"
+  filter: "Filter"
+  import: "Import"
+  imports: "Imports"
+  never: "Never"
+  edit: "Edit"
+  duplicate: "Duplicate"
+  delete: "Delete"
+  settings: "Settings" 
+  offline: "Offline"
+  online: "Online"
+  error: "Error"
+  unknown: "Unknown"
+  sort: "Sort"
+  confirm: "Confirm"
+  cancel: "Cancel"
+  properties: "Properties"
+  status: "Status"
+  deviceId: "Device ID"
+  host: "Host"
+  user: "User"
+  network: "Network"
+  appearance: "Appearance"
+  theme: "Theme"
+  playing: "Playing"
+  audioQuality: "Audio Quality"
+  tracking: "Tracking"
+  download: "Download"
+  basic: "Basic"
+  lyrics: "Lyrics"
+  details: "Details"
+  save: "Save"
+  create: "Create"
+  name: "Name"
+  description: "Description"
+  date: "Date"
+  year: "Year"
+  composer: "Composer"
+  comment: "Comment"
+  queue: "Queue"
+  next: "Next"
+  history: "History"
+  and: "and"
+
+  nowPlaying: "Now playing"
+  nextInQueue: "Next in Queue"
+
+  playingFromSearch: "Playing from Search"
+  playingFromHistory: "Playing from History"
+
+  advancedScan: "Advanced scan"
+  scan: "Scan"
+
+  wifiStreaming: "WiFi streaming"
+  cellularStreaming: "Cellular streaming"
+  downloadQuality: "Download quality"
+  
+  album: "Album"
+  albums: "Albums"
+  editAlbum: "Edit album \"{name}\""
+
+  playlist: "Playlist"
+  playlists: "Playlists"
+  newPlaylist: "New playlist"
+  editPlaylist: "Edit playlist \"{name}\""
+
+  genre: "Genre"
+  genres: "Genres"
+
+  artist: "Artist"
+  albumArtist: "Album Artist"
+  trackArtist: "Track Artist"
+
+  artists: "Artists"
+  albumArtists: "Album Artists"
+  trackArtists: "Track Artists"
+
+  artistAppearedIn: "Appeared in"
+  artistHasRole: "Has role in"
+
+  editTrack: "Edit \"{title}\""
+
+  trackNb:
+    one: "{n} Track"
+    other: "{n} Tracks"
+
+  trackTitle: "Title"
+  lastPlayed: "Last played"
+  playedCount: "Count"
+  dateAdded: "Date added"
+  quality: "Quality"
+  duration: "Duration"
+
+  trackNumber: "Track number"
+  totalTracks: "Total tracks"
+
+  trackDisc: "Track disc"
+  totalDiscs: "Total discs"
+
+  tagsFormat: "Tags format"
+  fileType: "File type"
+  fileSignature: "File signature"
+
+  musicBrainzReleaseId: "MusicBrainz Release Id"
+  musicBrainzTrackId: "MusicBrainz Track Id"
+  musicBrainzRecordingId: "MusicBrainz Recording Id"
+
+settings:
+  desktopPlayerBarPosition: "Desktop Player bar position"
+  rememberLoopAndShuffleAcrossRestarts: "Remember loop and shuffle across restarts"
+  autoScrollViewToCurrentTrack: "Auto scroll view to current track"
+  enableHistoryTracking: "Enable history tracking"
+  shareAllHistoryTrackingToServer: "Share all history tracking to server"
+
+  replaceOnlyEmptyFields: "Replace only Empty Fields"
+
+themes:
+  default: "@:general.kDefault"
+  dark: "Dark"
+  dynamic: "Dynamic"
+
+positions:
+  top: "Top"
+  side: "Side"
+  bottom: "Bottom"
+
+audioQualities:
+  low: "Low - Opus VBR 96 kbps"
+  medium: "Medium - Opus VBR 320 kbps"
+  high: "High - FLAC 44.1KHz"
+  max: "Max - (FLAC wrapping)"
+  direct: "Direct - (Read from source file)"
+  source: "Source"
+
+
+sorting:
+  newest: "Newest"
+  oldest: "Oldest"
+
+  albums-az: "Albums (A-Z)"
+  albums-za: "Albums (Z-A)"
+
+  artists-az: "Artists (A-Z)"
+  artists-za: "Artists (Z-A)"
+
+actions:
+  viewAll: "View all"
+  removeAll: "Remove all"
+
+  addFileOrFiles: "Add file(s)"
+
+  addToQueue: "Add to queue"
+  addToPlaylist: "Add to playlist"
+  removeFromPlaylist: "Remove from this playlist"
+  newPlaylist: "New playlist"
+
+  goToAlbum: "Go to album"
+  goToArtist: "Go to artist"
+
+  exportFileToDevice: "Export file to device"
+
+  forceOffline: "Force offline"
+  disableForceOffline: "Disable force offline"
+
+  downloadAllAlbums: "Download all albums"
+  removeAllDownloadedTracks: "Remove all downloaded tracks"
+
+  changeCover: "Change Cover"
+  removeCover: "Remove Cover"
+
+  changeAudio: "Change Audio"
+  scanMetadata: "Scan Metadata"
+
+  logout: "Logout"
+
+notifications:
+  offline:
+    title: "@:general.offline"
+    message: "You can't perform this action while being offline."
+
+  somethingWentWrong:
+    title: "@:general.error"
+    message: "Something went wrong."
+
+  haveBeenAddedToQueue:
+    message:
+      one: "{n} track have been added to the queue."
+      other: "{n} tracks have been added to the queue."
+
+  playlistHaveBeenCreated:
+    message: "Playlist \"{name}\" have been created."
+
+  playlistHaveBeenSaved:
+    message: "Playlist \"{name}\" have been saved."
+
+  playlistCoverHaveBeenChanged:
+    message: "The cover for playlist \"{name}\" have been changed."
+
+  playlistCoverHaveBeenRemoved:
+    message: "The custom cover for playlist \"{name}\" have been removed."
+
+  playlistHaveBeenDuplicated:
+    message: "The playlist \"{name}\" has been successfully duplicated."
+
+  playlistHaveBeenDeleted:
+    message: "The playlist \"{name}\" has been successfully deleted."
+
+  playlistTrackHaveBeenAdded:
+    message:
+      one: "{n} track have been added to playlist \"{name}\"."
+      other: "{n} tracks have been added to playlist \"{name}\"."
+
+  playlistTrackHaveBeenRemoved:
+    message:
+      one: "{n} track have been removed from playlist \"{name}\"."
+      other: "{n} tracks have been removed from playlist \"{name}\"."
+
+  albumHaveBeenSaved:
+    message: "Album \"{name}\" have been saved."
+
+  albumCoverHaveBeenChanged:
+    message: "The cover for album \"{name}\" have been changed."
+
+  albumCoverHaveBeenRemoved:
+    message: "The custom cover for album \"{name}\" have been removed."
+
+  exportingTrackStart:
+    message: "Start exporting track \"{title}\"."
+
+  exportingTrackEnd:
+    message: "Finish exporting track \"{title}\"."
+
+  downloadAllAlbumsStarted:
+    message: "Download for all albums tracks has started."
+
+  allDownloadHaveBeenDeleted:
+    message: "All download have been deleted."
+
+  trackHaveBeenScanned:
+    message:
+      one: "{n} track have been scanned."
+      other: "{n} tracks have been scanned."
+
+  trackScanEnd:
+    message: "The scan for track \"{title}\" is complete."
+
+  trackHaveBeenImported:
+    message:
+      one: "{n} track have been imported."
+      other: "{n} tracks have been imported."
+
+  trackHaveBeenDeleted:
+    message: "Track \"{title}\" have been deleted."
+
+  trackAudioHaveBeenChanged:
+    message: "The audio for track \"{title}\" have been changed."
+
+  trackCoverHaveBeenChanged:
+    message: "The cover for track \"{title}\" have been changed."
+
+confirms:
+  title: "Confirm"
+  confirm: "@:general.confirm"
+  cancel: "@:general.cancel"
+  delete: "@:general.delete"
+
+  duplicatePlaylist: "Would you like to duplicate this playlist ?"
+  deletePlaylist: "Would you like to delete this playlist ?"
+
+  downloadAllAlbums: |
+    Would you like to download all tracks ?\n
+    This can be a slow process depending on the size of your library.
+
+  deleteAllDownloadedTracks: "Would you like to delete all downloaded tracks ?"
+
+  deleteTrack: "Would you like to delete this track ?"
+
+  removeCustomCover: "Would you like to remove the custom cover ?"
+
+validators:
+  fieldShouldNotBeEmpty: "{field} should not be empty."
+  fieldShouldBeInt: "{field} should be an integer."
+  fieldShouldBeGreaterOrEqual: "{field} should be {n} or greater."
+  fieldShouldBeGreaterOrEqualZero: "{field} should be zero or greater."

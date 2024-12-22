@@ -8,6 +8,7 @@ import 'package:melodink_client/features/library/presentation/widgets/album_coll
 import 'package:melodink_client/features/library/presentation/widgets/desktop_artist_header.dart';
 import 'package:melodink_client/features/library/presentation/widgets/mobile_artist_header.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class ArtistPage extends ConsumerWidget {
   final String artistId;
@@ -26,7 +27,7 @@ class ArtistPage extends ConsumerWidget {
     if (artist == null) {
       return AppNavigationHeader(
         title: AppScreenTypeLayoutBuilders(
-          mobile: (_) => const Text("Artist"),
+          mobile: (_) => Text(t.general.artist),
         ),
         child: Container(),
       );
@@ -38,7 +39,7 @@ class ArtistPage extends ConsumerWidget {
 
     return AppNavigationHeader(
       title: AppScreenTypeLayoutBuilders(
-        mobile: (_) => const Text("Artist"),
+        mobile: (_) => Text(t.general.artist),
       ),
       child: AppScreenTypeLayoutBuilder(builder: (context, size) {
         final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
@@ -75,10 +76,10 @@ class ArtistPage extends ConsumerWidget {
                   right: padding,
                   top: 8.0,
                 ),
-                sliver: const SliverToBoxAdapter(
+                sliver: SliverToBoxAdapter(
                   child: Text(
-                    "Albums",
-                    style: TextStyle(
+                    t.general.albums,
+                    style: const TextStyle(
                       fontSize: 40,
                       letterSpacing: 40 * 0.03,
                       fontWeight: FontWeight.w500,
@@ -106,10 +107,10 @@ class ArtistPage extends ConsumerWidget {
                   right: padding,
                   top: 8.0,
                 ),
-                sliver: const SliverToBoxAdapter(
+                sliver: SliverToBoxAdapter(
                   child: Text(
-                    "Appeared in",
-                    style: TextStyle(
+                    t.general.artistAppearedIn,
+                    style: const TextStyle(
                       fontSize: 40,
                       letterSpacing: 40 * 0.03,
                       fontWeight: FontWeight.w500,
@@ -137,10 +138,10 @@ class ArtistPage extends ConsumerWidget {
                   right: padding,
                   top: 8.0,
                 ),
-                sliver: const SliverToBoxAdapter(
+                sliver: SliverToBoxAdapter(
                   child: Text(
-                    "Has role in",
-                    style: TextStyle(
+                    t.general.artistHasRole,
+                    style: const TextStyle(
                       fontSize: 40,
                       letterSpacing: 40 * 0.03,
                       fontWeight: FontWeight.w500,

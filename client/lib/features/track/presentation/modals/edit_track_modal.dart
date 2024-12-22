@@ -20,6 +20,7 @@ import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/modals/scan_configuration_modal.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class EditTrackModal extends HookConsumerWidget {
   final Track track;
@@ -109,7 +110,11 @@ class EditTrackModal extends HookConsumerWidget {
         children: [
           AppModal(
             preventUserClose: true,
-            title: Text("Edit \"${track.title}\""),
+            title: Text(
+              t.general.editTrack(
+                title: track.title,
+              ),
+            ),
             body: Form(
               key: formKey,
               child: SingleChildScrollView(
@@ -119,7 +124,7 @@ class EditTrackModal extends HookConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       AppTextFormField(
-                        labelText: "Title",
+                        labelText: t.general.trackTitle,
                         controller: titleTextController,
                         autovalidateMode: autoValidate.value
                             ? AutovalidateMode.always
@@ -127,14 +132,16 @@ class EditTrackModal extends HookConsumerWidget {
                         validator: FormBuilderValidators.compose(
                           [
                             FormBuilderValidators.required(
-                              errorText: "Title should not be empty.",
+                              errorText: t.validators.fieldShouldNotBeEmpty(
+                                field: t.general.trackTitle,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 8),
                       AppTextFormField(
-                        labelText: "Album",
+                        labelText: t.general.album,
                         controller: albumTextController,
                       ),
                       const Divider(
@@ -145,9 +152,9 @@ class EditTrackModal extends HookConsumerWidget {
                           Expanded(
                             child: Row(
                               children: [
-                                const Text(
-                                  "Track Artists",
-                                  style: TextStyle(
+                                Text(
+                                  t.general.trackArtists,
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w400,
                                     fontSize: 20,
                                     letterSpacing: 20 * 0.04,
@@ -171,9 +178,9 @@ class EditTrackModal extends HookConsumerWidget {
                           Expanded(
                             child: Row(
                               children: [
-                                const Text(
-                                  "Album Artists",
-                                  style: TextStyle(
+                                Text(
+                                  t.general.albumArtists,
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w400,
                                     fontSize: 20,
                                     letterSpacing: 20 * 0.04,
@@ -208,7 +215,7 @@ class EditTrackModal extends HookConsumerWidget {
                               children: artists.value.indexed.expand(
                                 (entry) sync* {
                                   yield AppValueTextField(
-                                    labelText: "Track Artist",
+                                    labelText: t.general.trackArtist,
                                     value: entry.$2,
                                     suffixIcon: const AdwaitaIcon(
                                       size: 20,
@@ -232,8 +239,10 @@ class EditTrackModal extends HookConsumerWidget {
                                     validator: FormBuilderValidators.compose(
                                       [
                                         FormBuilderValidators.required(
-                                          errorText:
-                                              "Track artist should not be empty.",
+                                          errorText: t.validators
+                                              .fieldShouldNotBeEmpty(
+                                            field: t.general.trackArtist,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -251,7 +260,7 @@ class EditTrackModal extends HookConsumerWidget {
                               children: albumArtists.value.indexed.expand(
                                 (entry) sync* {
                                   yield AppValueTextField(
-                                    labelText: "Album Artist",
+                                    labelText: t.general.albumArtist,
                                     value: entry.$2,
                                     suffixIcon: const AdwaitaIcon(
                                       size: 20,
@@ -278,8 +287,10 @@ class EditTrackModal extends HookConsumerWidget {
                                     validator: FormBuilderValidators.compose(
                                       [
                                         FormBuilderValidators.required(
-                                          errorText:
-                                              "Album artist not be empty.",
+                                          errorText: t.validators
+                                              .fieldShouldNotBeEmpty(
+                                            field: t.general.albumArtist,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -301,7 +312,7 @@ class EditTrackModal extends HookConsumerWidget {
                         children: [
                           Expanded(
                             child: AppTextFormField(
-                              labelText: "Track Number",
+                              labelText: t.general.trackNumber,
                               controller: trackNumberTextController,
                               autovalidateMode: autoValidate.value
                                   ? AutovalidateMode.always
@@ -309,13 +320,16 @@ class EditTrackModal extends HookConsumerWidget {
                               validator: FormBuilderValidators.compose(
                                 [
                                   FormBuilderValidators.integer(
-                                    errorText:
-                                        "Track number should be an integer.",
+                                    errorText: t.validators.fieldShouldBeInt(
+                                      field: t.general.trackNumber,
+                                    ),
                                   ),
                                   FormBuilderValidators.min(
                                     0,
-                                    errorText:
-                                        "Track number should be zero or greater.",
+                                    errorText: t.validators
+                                        .fieldShouldBeGreaterOrEqualZero(
+                                      field: t.general.trackNumber,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -324,7 +338,7 @@ class EditTrackModal extends HookConsumerWidget {
                           const SizedBox(width: 16),
                           Expanded(
                             child: AppTextFormField(
-                              labelText: "Total Tracks",
+                              labelText: t.general.totalTracks,
                               controller: totalTracksTextController,
                               autovalidateMode: autoValidate.value
                                   ? AutovalidateMode.always
@@ -332,13 +346,16 @@ class EditTrackModal extends HookConsumerWidget {
                               validator: FormBuilderValidators.compose(
                                 [
                                   FormBuilderValidators.integer(
-                                    errorText:
-                                        "Total tracks should be an integer.",
+                                    errorText: t.validators.fieldShouldBeInt(
+                                      field: t.general.totalTracks,
+                                    ),
                                   ),
                                   FormBuilderValidators.min(
                                     0,
-                                    errorText:
-                                        "Total tracks should be zero or greater.",
+                                    errorText: t.validators
+                                        .fieldShouldBeGreaterOrEqualZero(
+                                      field: t.general.totalTracks,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -351,7 +368,7 @@ class EditTrackModal extends HookConsumerWidget {
                         children: [
                           Expanded(
                             child: AppTextFormField(
-                              labelText: "Track Disc",
+                              labelText: t.general.trackDisc,
                               controller: discNumberTextController,
                               autovalidateMode: autoValidate.value
                                   ? AutovalidateMode.always
@@ -359,13 +376,16 @@ class EditTrackModal extends HookConsumerWidget {
                               validator: FormBuilderValidators.compose(
                                 [
                                   FormBuilderValidators.integer(
-                                    errorText:
-                                        "Track disc should be an integer.",
+                                    errorText: t.validators.fieldShouldBeInt(
+                                      field: t.general.trackDisc,
+                                    ),
                                   ),
                                   FormBuilderValidators.min(
                                     0,
-                                    errorText:
-                                        "Track disc should be zero or greater.",
+                                    errorText: t.validators
+                                        .fieldShouldBeGreaterOrEqualZero(
+                                      field: t.general.trackDisc,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -374,7 +394,7 @@ class EditTrackModal extends HookConsumerWidget {
                           const SizedBox(width: 16),
                           Expanded(
                             child: AppTextFormField(
-                              labelText: "Total Disc",
+                              labelText: t.general.totalDiscs,
                               controller: totalDiscsTextController,
                               autovalidateMode: autoValidate.value
                                   ? AutovalidateMode.always
@@ -382,13 +402,16 @@ class EditTrackModal extends HookConsumerWidget {
                               validator: FormBuilderValidators.compose(
                                 [
                                   FormBuilderValidators.integer(
-                                    errorText:
-                                        "Total disc should be an integer.",
+                                    errorText: t.validators.fieldShouldBeInt(
+                                      field: t.general.totalDiscs,
+                                    ),
                                   ),
                                   FormBuilderValidators.min(
                                     0,
-                                    errorText:
-                                        "Total disc should be zero or greater.",
+                                    errorText: t.validators
+                                        .fieldShouldBeGreaterOrEqualZero(
+                                      field: t.general.totalDiscs,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -400,12 +423,12 @@ class EditTrackModal extends HookConsumerWidget {
                         height: 24,
                       ),
                       AppTextFormField(
-                        labelText: "Date",
+                        labelText: t.general.date,
                         controller: dateTextController,
                       ),
                       const SizedBox(height: 8),
                       AppTextFormField(
-                        labelText: "Year",
+                        labelText: t.general.year,
                         controller: yearTextController,
                         autovalidateMode: autoValidate.value
                             ? AutovalidateMode.always
@@ -413,11 +436,15 @@ class EditTrackModal extends HookConsumerWidget {
                         validator: FormBuilderValidators.compose(
                           [
                             FormBuilderValidators.integer(
-                              errorText: "Year should be an integer.",
+                              errorText: t.validators.fieldShouldBeInt(
+                                field: t.general.year,
+                              ),
                             ),
                             FormBuilderValidators.min(
                               -1,
-                              errorText: "Year should be -1 or greater.",
+                              errorText: t.validators
+                                  .fieldShouldBeGreaterOrEqual(
+                                      field: t.general.year, n: -1),
                             ),
                           ],
                         ),
@@ -427,9 +454,9 @@ class EditTrackModal extends HookConsumerWidget {
                       ),
                       Row(
                         children: [
-                          const Text(
-                            "Genres",
-                            style: TextStyle(
+                          Text(
+                            t.general.genres,
+                            style: const TextStyle(
                               fontWeight: FontWeight.w400,
                               fontSize: 20,
                               letterSpacing: 20 * 0.04,
@@ -451,7 +478,7 @@ class EditTrackModal extends HookConsumerWidget {
                       Column(
                         children: genres.value.indexed.expand((entry) sync* {
                           yield AppValueTextField(
-                            labelText: "Genre",
+                            labelText: t.general.genre,
                             value: entry.$2,
                             suffixIcon: const AdwaitaIcon(
                               size: 20,
@@ -475,7 +502,9 @@ class EditTrackModal extends HookConsumerWidget {
                             validator: FormBuilderValidators.compose(
                               [
                                 FormBuilderValidators.required(
-                                  errorText: "Genre should not be empty.",
+                                  errorText: t.validators.fieldShouldNotBeEmpty(
+                                    field: t.general.genre,
+                                  ),
                                 ),
                               ],
                             ),
@@ -494,29 +523,29 @@ class EditTrackModal extends HookConsumerWidget {
                       ),
                       const SizedBox(height: 8),
                       AppTextFormField(
-                        labelText: "MusicBrainz Release Id",
+                        labelText: t.general.musicBrainzReleaseId,
                         controller: musicBrainzReleaseIdTextController,
                       ),
                       const SizedBox(height: 8),
                       AppTextFormField(
-                        labelText: "MusicBrainz Track Id",
+                        labelText: t.general.musicBrainzTrackId,
                         controller: musicBrainzTrackIdTextController,
                       ),
                       const SizedBox(height: 8),
                       AppTextFormField(
-                        labelText: "MusicBrainz Recording Id",
+                        labelText: t.general.musicBrainzRecordingId,
                         controller: musicBrainzRecordingIdTextController,
                       ),
                       const Divider(
                         height: 24,
                       ),
                       AppTextFormField(
-                        labelText: "Composer",
+                        labelText: t.general.composer,
                         controller: composerTextController,
                       ),
                       const SizedBox(height: 8),
                       AppTextFormField(
-                        labelText: "Comment",
+                        labelText: t.general.comment,
                         controller: commentTextController,
                       ),
                       if (displayDateAdded)
@@ -525,8 +554,8 @@ class EditTrackModal extends HookConsumerWidget {
                         ),
                       if (displayDateAdded)
                         AppDatetimeFormField(
-                          labelText: "Date Added",
-                          formatter: DateFormat('yyyy-MM-dd HH:mm'),
+                          labelText: t.general.dateAdded,
+                          formatter: DateFormat.yMd().add_Hm(),
                           value: dateAdded.value,
                           onChanged: (value) {
                             dateAdded.value = value;
@@ -538,9 +567,9 @@ class EditTrackModal extends HookConsumerWidget {
                       ExpansionTile(
                         shape: const Border(),
                         tilePadding: const EdgeInsets.all(0),
-                        title: const Text(
-                          "Lyrics",
-                          style: TextStyle(
+                        title: Text(
+                          t.general.lyrics,
+                          style: const TextStyle(
                             fontWeight: FontWeight.w400,
                             fontSize: 20,
                             letterSpacing: 20 * 0.04,
@@ -549,7 +578,7 @@ class EditTrackModal extends HookConsumerWidget {
                         ),
                         children: [
                           AppTextFormField(
-                            labelText: "Lyrics",
+                            labelText: t.general.lyrics,
                             controller: lyricsTextController,
                             maxLines: null,
                           ),
@@ -562,7 +591,7 @@ class EditTrackModal extends HookConsumerWidget {
                         children: [
                           Expanded(
                             child: AppButton(
-                              text: "Change Audio",
+                              text: t.actions.changeAudio,
                               type: AppButtonType.secondary,
                               onPressed: () async {
                                 final file = await pickAudioFile();
@@ -583,8 +612,10 @@ class EditTrackModal extends HookConsumerWidget {
                                   if (context.mounted) {
                                     AppNotificationManager.of(context).notify(
                                       context,
-                                      title: "Error",
-                                      message: "Something went wrong",
+                                      title: t.notifications.somethingWentWrong
+                                          .title,
+                                      message: t.notifications
+                                          .somethingWentWrong.message,
                                       type: AppNotificationType.danger,
                                     );
                                   }
@@ -597,8 +628,11 @@ class EditTrackModal extends HookConsumerWidget {
 
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  message:
-                                      "The audio for track \"${track.title}\" have been changed.",
+                                  message: t
+                                      .notifications.trackAudioHaveBeenChanged
+                                      .message(
+                                    title: track.title,
+                                  ),
                                 );
                               },
                             ),
@@ -606,7 +640,7 @@ class EditTrackModal extends HookConsumerWidget {
                           const SizedBox(width: 16),
                           Expanded(
                             child: AppButton(
-                              text: "Change Cover",
+                              text: t.actions.changeCover,
                               type: AppButtonType.secondary,
                               onPressed: () async {
                                 final file = await pickImageFile();
@@ -627,8 +661,10 @@ class EditTrackModal extends HookConsumerWidget {
                                   if (context.mounted) {
                                     AppNotificationManager.of(context).notify(
                                       context,
-                                      title: "Error",
-                                      message: "Something went wrong",
+                                      title: t.notifications.somethingWentWrong
+                                          .title,
+                                      message: t.notifications
+                                          .somethingWentWrong.message,
                                       type: AppNotificationType.danger,
                                     );
                                   }
@@ -641,8 +677,11 @@ class EditTrackModal extends HookConsumerWidget {
 
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  message:
-                                      "The cover for track \"${track.title}\" have been changed.",
+                                  message: t
+                                      .notifications.trackCoverHaveBeenChanged
+                                      .message(
+                                    title: track.title,
+                                  ),
                                 );
                               },
                             ),
@@ -650,7 +689,7 @@ class EditTrackModal extends HookConsumerWidget {
                           const SizedBox(width: 16),
                           Expanded(
                             child: AppButton(
-                              text: "Scan Metadata",
+                              text: t.actions.scanMetadata,
                               type: AppButtonType.secondary,
                               onPressed: () async {
                                 final configuration =
@@ -859,8 +898,10 @@ class EditTrackModal extends HookConsumerWidget {
                                   if (context.mounted) {
                                     AppNotificationManager.of(context).notify(
                                       context,
-                                      title: "Error",
-                                      message: "Something went wrong",
+                                      title: t.notifications.somethingWentWrong
+                                          .title,
+                                      message: t.notifications
+                                          .somethingWentWrong.message,
                                       type: AppNotificationType.danger,
                                     );
                                   }
@@ -873,8 +914,9 @@ class EditTrackModal extends HookConsumerWidget {
 
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  message:
-                                      "The scan for track \"${track.title}\" is complete.",
+                                  message: t.notifications.trackScanEnd.message(
+                                    title: track.title,
+                                  ),
                                 );
                               },
                             ),
@@ -883,16 +925,16 @@ class EditTrackModal extends HookConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       if (hasError.value)
-                        const AppErrorBox(
-                          title: "Error",
-                          message: "Something went wrong",
+                        AppErrorBox(
+                          title: t.notifications.somethingWentWrong.title,
+                          message: t.notifications.somethingWentWrong.message,
                         ),
                       if (hasError.value) const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
                             child: AppButton(
-                              text: "Cancel",
+                              text: t.general.cancel,
                               type: AppButtonType.danger,
                               onPressed: () {
                                 Navigator.of(
@@ -905,7 +947,7 @@ class EditTrackModal extends HookConsumerWidget {
                           const SizedBox(width: 16),
                           Expanded(
                             child: AppButton(
-                              text: "Save",
+                              text: t.general.save,
                               type: AppButtonType.primary,
                               onPressed: () async {
                                 hasError.value = false;

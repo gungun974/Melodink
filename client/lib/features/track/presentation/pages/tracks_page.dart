@@ -17,6 +17,7 @@ import 'package:melodink_client/features/track/presentation/widgets/all_track_fi
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class TracksPage extends HookConsumerWidget {
   const TracksPage({
@@ -127,7 +128,7 @@ class TracksPage extends HookConsumerWidget {
                         scrollController: scrollController,
                         autoScrollToCurrentTrack:
                             isAutoScrollViewToCurrentTrackEnabled,
-                        source: "Playing from Search",
+                        source: t.general.playingFromSearch,
                       ),
                     ),
                     const SliverToBoxAdapter(
@@ -164,7 +165,7 @@ class TracksPageSearchAndFilterHeader extends HookConsumerWidget {
     return AppScreenTypeLayoutBuilder(
       builder: (context, size) {
         final searchField = AppTextFormField(
-          labelText: "Search",
+          labelText: t.general.search,
           prefixIcon: const AdwaitaIcon(
             size: 20,
             AdwaitaIcons.system_search,
@@ -191,7 +192,7 @@ class TracksPageSearchAndFilterHeader extends HookConsumerWidget {
                     : MainAxisAlignment.start,
                 children: [
                   AppButton(
-                    text: "Filter",
+                    text: t.general.filter,
                     type: showFilterPanel.value
                         ? AppButtonType.primary
                         : AppButtonType.neutral,
@@ -213,7 +214,7 @@ class TracksPageSearchAndFilterHeader extends HookConsumerWidget {
                   ),
                   const SizedBox(width: 16),
                   AppButton(
-                    text: "View All",
+                    text: t.actions.viewAll,
                     type: AppButtonType.primary,
                     onPressed: () {
                       searchTextController.clear();
@@ -233,15 +234,14 @@ class TracksPageSearchAndFilterHeader extends HookConsumerWidget {
                   ),
                   const SizedBox(width: 16),
                   AppButton(
-                    text: "Imports",
+                    text: t.general.import,
                     type: AppButtonType.primary,
                     onPressed: () {
                       if (!NetworkInfo().isServerRecheable()) {
                         AppNotificationManager.of(context).notify(
                           context,
-                          title: "Offline",
-                          message:
-                              "You can't perform this action while being offline.",
+                          title: t.notifications.offline.title,
+                          message: t.notifications.offline.message,
                           type: AppNotificationType.danger,
                         );
                         return;

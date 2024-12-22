@@ -1,41 +1,21 @@
-String durationToHuman(Duration duration) {
-  final List<String> splited = [];
+import 'package:duration/duration.dart';
+import 'package:duration/locale.dart';
+import 'package:flutter/material.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
-  final days = duration.inDays;
-  final hours = duration.inHours.remainder(60);
-  final minutes = duration.inMinutes.remainder(60);
-  final seconds = duration.inSeconds.remainder(60);
+String durationToHuman(
+  Duration duration,
+  BuildContext context,
+) {
+  final locale = DurationLocale.fromLanguageCode(
+    Localizations.localeOf(context).toString(),
+  );
 
-  if (days > 0) {
-    splited.add("$days day${days > 1 ? 's' : ''}");
-  }
-
-  if (duration.inHours > 0) {
-    splited.add("$hours hour${hours > 1 ? 's' : ''}");
-  }
-
-  if (duration.inMinutes > 0) {
-    splited.add("$minutes minute${minutes > 1 ? 's' : ''}");
-  }
-
-  if (duration.inSeconds > 0 && days <= 0) {
-    splited.add("$seconds seconde${seconds > 1 ? 's' : ''}");
-  }
-
-  var human = "";
-
-  for (final (index, element) in splited.indexed) {
-    if (index == splited.length - 1 && splited.length > 1) {
-      human += "and ";
-    }
-
-    human += element;
-
-    if (index == splited.length - 1) {
-      continue;
-    }
-    human += ", ";
-  }
-
-  return human;
+  return prettyDuration(
+    duration,
+    delimiter: ", ",
+    conjunction: " ${t.general.and} ",
+    abbreviated: false,
+    locale: locale ?? const EnglishDurationLocale(),
+  );
 }

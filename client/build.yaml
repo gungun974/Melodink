@@ -1,0 +1,25 @@
+targets:
+  $default:
+    sources:
+      - "lang/**"
+      - lib/**
+      - pubspec.yaml
+      - lib/$lib$
+      - $package$
+    builders:
+      slang_build_runner:
+        enabled: true
+        options:
+          base_locale: en
+          fallback_strategy: base_locale
+          input_directory: lang
+          input_file_pattern: .i18n.yaml
+          output_directory: lib/generated/i18n
+          output_file_name: translations.g.dart
+          string_interpolation: braces
+          timestamp: false # for F-Droid Reproducible Builds
+          flat_map: false
+          key_case: camel
+          format:
+            enabled: true
+            width: 150

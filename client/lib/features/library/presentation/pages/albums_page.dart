@@ -8,6 +8,7 @@ import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/library/domain/providers/album_provider.dart';
 import 'package:melodink_client/features/library/presentation/widgets/album_collections_grid.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:popover/popover.dart';
 
 class AlbumsPage extends HookConsumerWidget {
@@ -45,9 +46,9 @@ class AlbumsPage extends HookConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    "Albums",
-                    style: TextStyle(
+                  Text(
+                    t.general.albums,
+                    style: const TextStyle(
                       fontSize: 48,
                       letterSpacing: 48 * 0.03,
                       fontWeight: FontWeight.w600,
@@ -58,7 +59,7 @@ class AlbumsPage extends HookConsumerWidget {
                     children: [
                       Expanded(
                         child: AppTextFormField(
-                          labelText: "Search",
+                          labelText: t.general.search,
                           prefixIcon: const AdwaitaIcon(
                             size: 20,
                             AdwaitaIcons.system_search,
@@ -70,25 +71,27 @@ class AlbumsPage extends HookConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      Builder(builder: (context) {
-                        return AppButton(
-                          text: "Sort",
-                          type: AppButtonType.primary,
-                          onPressed: () {
-                            showPopover(
-                              context: context,
-                              bodyBuilder: (context) =>
-                                  const AlbumsSortedPopup(),
-                              direction: PopoverDirection.bottom,
-                              arrowDyOffset: 8,
-                              arrowHeight: 0,
-                              arrowWidth: 0,
-                              barrierColor: Colors.transparent,
-                              backgroundColor: Colors.black,
-                            );
-                          },
-                        );
-                      }),
+                      Builder(
+                        builder: (context) {
+                          return AppButton(
+                            text: t.general.sort,
+                            type: AppButtonType.primary,
+                            onPressed: () {
+                              showPopover(
+                                context: context,
+                                bodyBuilder: (context) =>
+                                    const AlbumsSortedPopup(),
+                                direction: PopoverDirection.bottom,
+                                arrowDyOffset: 8,
+                                arrowHeight: 0,
+                                arrowWidth: 0,
+                                barrierColor: Colors.transparent,
+                                backgroundColor: Colors.black,
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ],
                   )
                 ],
@@ -126,7 +129,7 @@ class AlbumsSortedPopup extends ConsumerWidget {
         child: Column(
           children: [
             RadioListTile(
-              title: const Text("Newest"),
+              title: Text(t.sorting.newest),
               value: "newest",
               groupValue: sortedMode,
               onChanged: (value) {
@@ -135,7 +138,7 @@ class AlbumsSortedPopup extends ConsumerWidget {
               },
             ),
             RadioListTile(
-              title: const Text("Oldest"),
+              title: Text(t.sorting.oldest),
               value: "oldest",
               groupValue: sortedMode,
               onChanged: (value) {
@@ -144,7 +147,7 @@ class AlbumsSortedPopup extends ConsumerWidget {
               },
             ),
             RadioListTile(
-              title: const Text("Album (A-Z)"),
+              title: Text(t.sorting.albumsAz),
               value: "name-az",
               groupValue: sortedMode,
               onChanged: (value) {
@@ -154,7 +157,7 @@ class AlbumsSortedPopup extends ConsumerWidget {
               },
             ),
             RadioListTile(
-              title: const Text("Album (Z-A)"),
+              title: Text(t.sorting.albumsZa),
               value: "name-za",
               groupValue: sortedMode,
               onChanged: (value) {
@@ -164,7 +167,7 @@ class AlbumsSortedPopup extends ConsumerWidget {
               },
             ),
             RadioListTile(
-              title: const Text("Artists (A-Z)"),
+              title: Text(t.sorting.artistsAz),
               value: "artist-az",
               groupValue: sortedMode,
               onChanged: (value) {
@@ -174,7 +177,7 @@ class AlbumsSortedPopup extends ConsumerWidget {
               },
             ),
             RadioListTile(
-              title: const Text("Artists (Z-A)"),
+              title: Text(t.sorting.artistsZa),
               value: "artist-za",
               groupValue: sortedMode,
               onChanged: (value) {

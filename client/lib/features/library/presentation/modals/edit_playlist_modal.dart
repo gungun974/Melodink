@@ -14,6 +14,7 @@ import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/edit_playlist_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class EditPlaylistModal extends HookConsumerWidget {
   final Playlist playlist;
@@ -56,7 +57,9 @@ class EditPlaylistModal extends HookConsumerWidget {
       child: Stack(
         children: [
           AppModal(
-            title: Text("Edit playlist \"${playlist.name}\""),
+            title: Text(t.general.editPlaylist(
+              name: playlist.name,
+            )),
             body: Form(
               key: formKey,
               child: SingleChildScrollView(
@@ -66,7 +69,7 @@ class EditPlaylistModal extends HookConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       AppTextFormField(
-                        labelText: "Name",
+                        labelText: t.general.name,
                         controller: nameTextController,
                         autovalidateMode: autoValidate.value
                             ? AutovalidateMode.always
@@ -74,21 +77,23 @@ class EditPlaylistModal extends HookConsumerWidget {
                         validator: FormBuilderValidators.compose(
                           [
                             FormBuilderValidators.required(
-                              errorText: "Name should not be empty.",
+                              errorText: t.validators.fieldShouldNotBeEmpty(
+                                field: t.general.name,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 8),
                       AppTextFormField(
-                        labelText: "Description",
+                        labelText: t.general.description,
                         controller: descriptionTextController,
                         maxLines: null,
                       ),
                       const SizedBox(height: 16),
                       if (coverSignature?.data?.trim() == "")
                         AppButton(
-                          text: "Change Cover",
+                          text: t.actions.changeCover,
                           type: AppButtonType.secondary,
                           onPressed: () async {
                             final file = await pickImageFile();
@@ -109,8 +114,10 @@ class EditPlaylistModal extends HookConsumerWidget {
                               if (context.mounted) {
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  title: "Error",
-                                  message: "Something went wrong",
+                                  title:
+                                      t.notifications.somethingWentWrong.title,
+                                  message: t
+                                      .notifications.somethingWentWrong.message,
                                   type: AppNotificationType.danger,
                                 );
                               }
@@ -123,24 +130,24 @@ class EditPlaylistModal extends HookConsumerWidget {
                               return;
                             }
 
-                            AppNotificationManager.of(context).notify(
-                              context,
-                              message:
-                                  "The cover for playlist \"${playlist.name}\" have been changed.",
-                            );
+                            AppNotificationManager.of(context).notify(context,
+                                message: t
+                                    .notifications.playlistCoverHaveBeenChanged
+                                    .message(
+                                  name: playlist.name,
+                                ));
                           },
                         ),
                       if (coverSignature?.data?.trim() != "")
                         AppButton(
-                          text: "Remove Cover",
+                          text: t.actions.removeCover,
                           type: AppButtonType.secondary,
                           onPressed: () async {
                             if (!await appConfirm(
                               context,
-                              title: "Confirm",
-                              content:
-                                  "Would you like to remove the custom cover ?'",
-                              textOK: "Confirm",
+                              title: t.confirms.title,
+                              content: t.confirms.removeCustomCover,
+                              textOK: t.confirms.confirm,
                             )) {
                               return;
                             }
@@ -157,8 +164,10 @@ class EditPlaylistModal extends HookConsumerWidget {
                               if (context.mounted) {
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  title: "Error",
-                                  message: "Something went wrong",
+                                  title:
+                                      t.notifications.somethingWentWrong.title,
+                                  message: t
+                                      .notifications.somethingWentWrong.message,
                                   type: AppNotificationType.danger,
                                 );
                               }
@@ -173,20 +182,23 @@ class EditPlaylistModal extends HookConsumerWidget {
 
                             AppNotificationManager.of(context).notify(
                               context,
-                              message:
-                                  "The cover for playlist \"${playlist.name}\" have been removed.",
+                              message: t
+                                  .notifications.playlistCoverHaveBeenRemoved
+                                  .message(
+                                name: playlist.name,
+                              ),
                             );
                           },
                         ),
                       const SizedBox(height: 16),
                       if (hasError.value)
-                        const AppErrorBox(
-                          title: "Error",
-                          message: "Something went wrong",
+                        AppErrorBox(
+                          title: t.notifications.somethingWentWrong.title,
+                          message: t.notifications.somethingWentWrong.message,
                         ),
                       if (hasError.value) const SizedBox(height: 16),
                       AppButton(
-                        text: "Save",
+                        text: t.general.save,
                         type: AppButtonType.primary,
                         onPressed: () async {
                           hasError.value = false;
@@ -226,7 +238,9 @@ class EditPlaylistModal extends HookConsumerWidget {
                             AppNotificationManager.of(context).notify(
                               context,
                               message:
-                                  "Playlist \"${newPlaylist.name}\" have been saved",
+                                  t.notifications.playlistHaveBeenSaved.message(
+                                name: newPlaylist.name,
+                              ),
                             );
                           } catch (_) {
                             isLoading.value = false;

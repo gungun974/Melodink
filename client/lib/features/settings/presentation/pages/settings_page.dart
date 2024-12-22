@@ -19,6 +19,7 @@ import 'package:melodink_client/features/settings/presentation/widgets/setting_d
 import 'package:melodink_client/features/settings/presentation/widgets/setting_pannel.dart';
 import 'package:melodink_client/features/settings/presentation/widgets/setting_toggle_option.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({
@@ -39,7 +40,7 @@ class SettingsPage extends ConsumerWidget {
       children: [
         AppNavigationHeader(
           alwayShow: true,
-          title: const Text("Settings"),
+          title: Text(t.general.settings),
           child: AppScreenTypeLayoutBuilder(
             builder: (context, size) {
               final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
@@ -55,7 +56,7 @@ class SettingsPage extends ConsumerWidget {
                       const ServerInfo(),
                       const SizedBox(height: 16),
                       SettingPannel(
-                        title: "Network",
+                        title: t.general.network,
                         children: [
                           const SizedBox(height: 4),
                           Row(
@@ -63,7 +64,7 @@ class SettingsPage extends ConsumerWidget {
                               if (!forceOffline)
                                 Expanded(
                                   child: AppButton(
-                                    text: "Force offline",
+                                    text: t.actions.forceOffline,
                                     type: AppButtonType.primary,
                                     onPressed: () async {
                                       await ref
@@ -75,7 +76,7 @@ class SettingsPage extends ConsumerWidget {
                               if (forceOffline)
                                 Expanded(
                                   child: AppButton(
-                                    text: "Disable force offline",
+                                    text: t.actions.disableForceOffline,
                                     type: AppButtonType.primary,
                                     onPressed: () async {
                                       await ref
@@ -91,10 +92,10 @@ class SettingsPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       SettingPannel(
-                        title: "Appearance",
+                        title: t.general.appearance,
                         children: [
                           SettingDropdownOption(
-                            text: "Theme :",
+                            text: "${t.general.theme} :",
                             value: settings.theme,
                             onChanged: (theme) {
                               ref
@@ -105,24 +106,24 @@ class SettingsPage extends ConsumerWidget {
                                     ),
                                   );
                             },
-                            items: const [
+                            items: [
                               DropdownMenuItem(
                                 value: AppSettingTheme.base,
-                                child: Text("Default"),
+                                child: Text(t.themes.kDefault),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingTheme.dark,
-                                child: Text("Dark"),
+                                child: Text(t.themes.dark),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingTheme.dynamic,
-                                child: Text("Dynamic"),
+                                child: Text(t.themes.dynamic),
                               ),
                             ],
                           ),
                           const Divider(height: 24),
                           SettingDropdownOption(
-                            text: "Desktop Player bar position :",
+                            text: "${t.settings.desktopPlayerBarPosition} :",
                             value: settings.playerBarPosition,
                             onChanged: (position) {
                               ref
@@ -133,18 +134,18 @@ class SettingsPage extends ConsumerWidget {
                                     ),
                                   );
                             },
-                            items: const [
+                            items: [
                               DropdownMenuItem(
                                 value: AppSettingPlayerBarPosition.bottom,
-                                child: Text("Bottom"),
+                                child: Text(t.positions.bottom),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingPlayerBarPosition.top,
-                                child: Text("Top"),
+                                child: Text(t.positions.top),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingPlayerBarPosition.side,
-                                child: Text("Side"),
+                                child: Text(t.positions.side),
                               ),
                             ],
                           ),
@@ -152,10 +153,10 @@ class SettingsPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       SettingPannel(
-                        title: "Audio Quality",
+                        title: t.general.audioQuality,
                         children: [
                           SettingDropdownOption(
-                            text: "WiFi streaming :",
+                            text: "${t.general.wifiStreaming} :",
                             value: settings.wifiAudioQuality,
                             onChanged: (audioQuality) {
                               ref
@@ -166,32 +167,32 @@ class SettingsPage extends ConsumerWidget {
                                     ),
                                   );
                             },
-                            items: const [
+                            items: [
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.low,
-                                child: Text("Low - Opus VBR 96 kbps"),
+                                child: Text(t.audioQualities.low),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.medium,
-                                child: Text("Medium - Opus VBR 320 kbps"),
+                                child: Text(t.audioQualities.medium),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.high,
-                                child: Text("High - FLAC 44.1KHz"),
+                                child: Text(t.audioQualities.high),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.max,
-                                child: Text("Max - (Only seek)"),
+                                child: Text(t.audioQualities.max),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.directFile,
-                                child: Text("Direct - (Read from source file)"),
+                                child: Text(t.audioQualities.direct),
                               ),
                             ],
                           ),
                           const Divider(height: 24),
                           SettingDropdownOption(
-                            text: "Cellular streaming :",
+                            text: "${t.general.cellularStreaming} :",
                             value: settings.cellularAudioQuality,
                             onChanged: (audioQuality) {
                               ref
@@ -202,32 +203,32 @@ class SettingsPage extends ConsumerWidget {
                                     ),
                                   );
                             },
-                            items: const [
+                            items: [
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.low,
-                                child: Text("Low - Opus VBR 96 kbps"),
+                                child: Text(t.audioQualities.low),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.medium,
-                                child: Text("Medium - Opus VBR 320 kbps"),
+                                child: Text(t.audioQualities.medium),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.high,
-                                child: Text("High - FLAC 44.1KHz"),
+                                child: Text(t.audioQualities.high),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.max,
-                                child: Text("Max - (Only seek)"),
+                                child: Text(t.audioQualities.max),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.directFile,
-                                child: Text("Direct - (Read from source file)"),
+                                child: Text(t.audioQualities.direct),
                               ),
                             ],
                           ),
                           const Divider(height: 24),
                           SettingDropdownOption(
-                            text: "Download quality :",
+                            text: "${t.general.downloadQuality} :",
                             value: settings.downloadAudioQuality,
                             onChanged: (audioQuality) {
                               ref
@@ -238,18 +239,18 @@ class SettingsPage extends ConsumerWidget {
                                     ),
                                   );
                             },
-                            items: const [
+                            items: [
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.low,
-                                child: Text("Low - Opus VBR 96 kbps"),
+                                child: Text(t.audioQualities.low),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.medium,
-                                child: Text("Medium - Opus VBR 320 kbps"),
+                                child: Text(t.audioQualities.medium),
                               ),
                               DropdownMenuItem(
                                 value: AppSettingAudioQuality.directFile,
-                                child: Text("Source"),
+                                child: Text(t.audioQualities.source),
                               ),
                             ],
                           ),
@@ -257,10 +258,11 @@ class SettingsPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       SettingPannel(
-                        title: "Playing",
+                        title: t.general.playing,
                         children: [
                           SettingToggleOption(
-                            text: "Remember loop and shuffle across restarts :",
+                            text:
+                                "${t.settings.rememberLoopAndShuffleAcrossRestarts} :",
                             value:
                                 settings.rememberLoopAndShuffleAcrossRestarts,
                             onToggle: (value) {
@@ -276,21 +278,8 @@ class SettingsPage extends ConsumerWidget {
                           ),
                           const Divider(height: 24),
                           SettingToggleOption(
-                            text: "Keep last playing list across restarts :",
-                            value: settings.keepLastPlayingListAcrossRestarts,
-                            onToggle: (value) {
-                              ref
-                                  .read(appSettingsNotifierProvider.notifier)
-                                  .setSettings(
-                                    settings.copyWith(
-                                      keepLastPlayingListAcrossRestarts: value,
-                                    ),
-                                  );
-                            },
-                          ),
-                          const Divider(height: 24),
-                          SettingToggleOption(
-                            text: "Auto scroll view to current track :",
+                            text:
+                                "${t.settings.autoScrollViewToCurrentTrack} :",
                             value: settings.autoScrollViewToCurrentTrack,
                             onToggle: (value) {
                               ref
@@ -306,10 +295,10 @@ class SettingsPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       SettingPannel(
-                        title: "Tracking",
+                        title: t.general.tracking,
                         children: [
                           SettingToggleOption(
-                            text: "Enable history tracking :",
+                            text: "${t.settings.enableHistoryTracking} :",
                             value: settings.enableHistoryTracking,
                             onToggle: (value) {
                               ref
@@ -323,7 +312,8 @@ class SettingsPage extends ConsumerWidget {
                           ),
                           const Divider(height: 24),
                           SettingToggleOption(
-                            text: "Share all history tracking to server :",
+                            text:
+                                "${t.settings.shareAllHistoryTrackingToServer} :",
                             value: settings.shareAllHistoryTrackingToServer,
                             onToggle: (value) {
                               ref
@@ -339,18 +329,17 @@ class SettingsPage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       SettingPannel(
-                        title: "Download",
+                        title: t.general.download,
                         children: [
                           SettingButtonOption(
-                            text: "Download all albums :",
-                            action: "Download",
+                            text: "${t.actions.downloadAllAlbums} :",
+                            action: t.general.download,
                             onPressed: () async {
                               if (!NetworkInfo().isServerRecheable()) {
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  title: "Offline",
-                                  message:
-                                      "You can't perform this action while being offline.",
+                                  title: t.notifications.offline.title,
+                                  message: t.notifications.offline.message,
                                   type: AppNotificationType.danger,
                                 );
                                 return;
@@ -358,10 +347,9 @@ class SettingsPage extends ConsumerWidget {
 
                               if (!await appConfirm(
                                 context,
-                                title: "Confirm",
-                                content:
-                                    "Would you like to download all tracks ?'",
-                                textOK: "DOWNLOAD",
+                                title: t.confirms.title,
+                                content: t.confirms.downloadAllAlbums,
+                                textOK: t.general.download,
                                 isDangerous: true,
                               )) {
                                 return;
@@ -403,16 +391,18 @@ class SettingsPage extends ConsumerWidget {
 
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  message:
-                                      "Download for all albums tracks has started.",
+                                  message: t.notifications
+                                      .downloadAllAlbumsStarted.message,
                                 );
                               } catch (_) {
                                 streamController.close();
                                 if (context.mounted) {
                                   AppNotificationManager.of(context).notify(
                                     context,
-                                    title: "Error",
-                                    message: "Something went wrong",
+                                    title: t
+                                        .notifications.somethingWentWrong.title,
+                                    message: t.notifications.somethingWentWrong
+                                        .message,
                                     type: AppNotificationType.danger,
                                   );
                                 }
@@ -422,15 +412,14 @@ class SettingsPage extends ConsumerWidget {
                           ),
                           const Divider(height: 0),
                           SettingButtonOption(
-                            text: "Remove all offline tracks :",
-                            action: "Remove all",
+                            text: "${t.actions.removeAllDownloadedTracks} :",
+                            action: t.actions.removeAll,
                             onPressed: () async {
                               if (!await appConfirm(
                                 context,
-                                title: "Confirm",
-                                content:
-                                    "Would you like to delete all downloaded tracks ?'",
-                                textOK: "DELETE",
+                                title: t.confirms.title,
+                                content: t.confirms.deleteAllDownloadedTracks,
+                                textOK: t.confirms.delete,
                                 isDangerous: true,
                               )) {
                                 return;
@@ -458,14 +447,17 @@ class SettingsPage extends ConsumerWidget {
 
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  message: "All download have been deleted.",
+                                  message: t.notifications
+                                      .allDownloadHaveBeenDeleted.message,
                                 );
                               } catch (_) {
                                 if (context.mounted) {
                                   AppNotificationManager.of(context).notify(
                                     context,
-                                    title: "Error",
-                                    message: "Something went wrong",
+                                    title: t
+                                        .notifications.somethingWentWrong.title,
+                                    message: t.notifications.somethingWentWrong
+                                        .message,
                                     type: AppNotificationType.danger,
                                   );
                                 }
@@ -480,7 +472,7 @@ class SettingsPage extends ConsumerWidget {
                       const SizedBox(height: 16),
                       Consumer(builder: (context, ref, _) {
                         return AppButton(
-                          text: "Logout",
+                          text: t.actions.logout,
                           type: AppButtonType.primary,
                           onPressed: () async {
                             await ref

@@ -23,6 +23,7 @@ import 'package:melodink_client/features/track/domain/providers/import_tracks_pr
 import 'package:melodink_client/features/track/presentation/modals/edit_track_modal.dart';
 import 'package:melodink_client/features/track/presentation/modals/scan_configuration_modal.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class ImportTracksModal extends HookConsumerWidget {
   const ImportTracksModal({
@@ -40,7 +41,7 @@ class ImportTracksModal extends HookConsumerWidget {
     return Stack(
       children: [
         AppModal(
-          title: const Text("Imports"),
+          title: Text(t.general.imports),
           body: Padding(
             padding: const EdgeInsets.all(24.0),
             child: Column(
@@ -140,7 +141,7 @@ class ImportTracksModal extends HookConsumerWidget {
                     children: [
                       Expanded(
                         child: AppButton(
-                          text: "Add file(s)",
+                          text: t.actions.addFileOrFiles,
                           type: AppButtonType.primary,
                           onPressed: () async {
                             final files = await pickAudioFiles();
@@ -154,7 +155,7 @@ class ImportTracksModal extends HookConsumerWidget {
                       const SizedBox(width: 16),
                       Expanded(
                         child: AppButton(
-                          text: "Advanced scan",
+                          text: t.general.advancedScan,
                           type: AppButtonType.primary,
                           onPressed: state.uploadedTracks.isNotEmpty
                               ? () async {
@@ -206,16 +207,21 @@ class ImportTracksModal extends HookConsumerWidget {
 
                                     AppNotificationManager.of(context).notify(
                                       context,
-                                      message:
-                                          "${state.uploadedTracks.length} track${state.uploadedTracks.length > 1 ? 's' : ''} have been scanned.",
+                                      message: t
+                                          .notifications.trackHaveBeenScanned
+                                          .message(
+                                        n: state.uploadedTracks.length,
+                                      ),
                                     );
                                   } catch (_) {
                                     streamController.close();
                                     if (context.mounted) {
                                       AppNotificationManager.of(context).notify(
                                         context,
-                                        title: "Error",
-                                        message: "Something went wrong",
+                                        title: t.notifications
+                                            .somethingWentWrong.title,
+                                        message: t.notifications
+                                            .somethingWentWrong.message,
                                         type: AppNotificationType.danger,
                                       );
                                     }
@@ -228,7 +234,7 @@ class ImportTracksModal extends HookConsumerWidget {
                       const SizedBox(width: 16),
                       Expanded(
                         child: AppButton(
-                          text: "Imports",
+                          text: t.general.import,
                           type: AppButtonType.primary,
                           onPressed: state.uploadedTracks.isNotEmpty
                               ? () async {
@@ -251,14 +257,19 @@ class ImportTracksModal extends HookConsumerWidget {
 
                                     AppNotificationManager.of(context).notify(
                                       context,
-                                      message:
-                                          "$numberOfTracks track${numberOfTracks > 1 ? 's' : ''} have been imported.",
+                                      message: t
+                                          .notifications.trackHaveBeenImported
+                                          .message(
+                                        n: numberOfTracks,
+                                      ),
                                     );
                                   } else {
                                     AppNotificationManager.of(context).notify(
                                       context,
-                                      title: "Error",
-                                      message: "Something went wrong",
+                                      title: t.notifications.somethingWentWrong
+                                          .title,
+                                      message: t.notifications
+                                          .somethingWentWrong.message,
                                       type: AppNotificationType.danger,
                                     );
                                   }

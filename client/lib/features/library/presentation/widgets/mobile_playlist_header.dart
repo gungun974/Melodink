@@ -11,6 +11,7 @@ import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class MobilePlaylistHeader extends ConsumerWidget {
   final String name;
@@ -108,12 +109,13 @@ class MobilePlaylistHeader extends ConsumerWidget {
                     TextSpan(
                       text: [
                         if (artists.isNotEmpty) "",
-                        "${tracks.length} Track${tracks.length > 1 ? 's' : ''}",
+                        t.general.trackNb(n: tracks.length),
                         durationToHuman(
                           tracks.fold(
                             Duration.zero,
                             (sum, activity) => sum + activity.duration,
                           ),
+                          context,
                         )
                       ].join(" • "),
                       style: TextStyle(

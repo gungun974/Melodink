@@ -6,6 +6,7 @@ import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class MultiTracksContextMenu extends ConsumerWidget {
   const MultiTracksContextMenu({
@@ -48,9 +49,8 @@ class MultiTracksContextMenu extends ConsumerWidget {
                     if (!NetworkInfo().isServerRecheable()) {
                       AppNotificationManager.of(context).notify(
                         context,
-                        title: "Offline",
-                        message:
-                            "You can't perform this action while being offline.",
+                        title: t.notifications.offline.title,
+                        message: t.notifications.offline.message,
                         type: AppNotificationType.danger,
                       );
                       return;
@@ -67,8 +67,8 @@ class MultiTracksContextMenu extends ConsumerWidget {
                       if (context.mounted) {
                         AppNotificationManager.of(context).notify(
                           context,
-                          title: "Error",
-                          message: "Something went wrong",
+                          title: t.notifications.somethingWentWrong.title,
+                          message: t.notifications.somethingWentWrong.message,
                           type: AppNotificationType.danger,
                         );
                       }
@@ -83,28 +83,32 @@ class MultiTracksContextMenu extends ConsumerWidget {
                     AppNotificationManager.of(context).notify(
                       context,
                       message:
-                          "${tracks.length} track${tracks.length > 1 ? 's' : ''} have been added to playlist \"${playlist.name}\".",
+                          t.notifications.playlistTrackHaveBeenAdded.message(
+                        n: tracks.length,
+                        name: playlist.name,
+                      ),
                     );
                   },
                 );
               }).toList(),
             _ => const [],
           },
-          child: const Text("Add to playlist"),
+          child: Text(t.actions.addToPlaylist),
         ),
         MenuItemButton(
           leadingIcon: const AdwaitaIcon(
             AdwaitaIcons.playlist,
             size: 20,
           ),
-          child: const Text("Add tracks to queue"),
+          child: Text(t.actions.addToQueue),
           onPressed: () {
             audioController.addTracksToQueue(tracks);
 
             AppNotificationManager.of(context).notify(
               context,
-              message:
-                  "${tracks.length} track${tracks.length > 1 ? 's' : ''} have been added to the queue.",
+              message: t.notifications.haveBeenAddedToQueue.message(
+                n: tracks.length,
+              ),
             );
           },
         ),

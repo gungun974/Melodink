@@ -12,6 +12,7 @@ import 'package:melodink_client/features/player/presentation/pages/queue_page.da
 import 'package:melodink_client/features/player/presentation/widgets/player_queue_controls.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class QueueAndHistoryPage extends HookConsumerWidget {
   const QueueAndHistoryPage({
@@ -46,7 +47,7 @@ class QueueAndHistoryPage extends HookConsumerWidget {
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     title: Text(
-                      isInQueuePage.value ? "Queue" : "History",
+                      isInQueuePage.value ? t.general.queue : t.general.history,
                       style: const TextStyle(
                         fontSize: 20,
                         letterSpacing: 20 * 0.03,
@@ -104,7 +105,9 @@ class QueueAndHistoryPage extends HookConsumerWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                isInQueuePage.value ? "Queue" : "History",
+                                isInQueuePage.value
+                                    ? t.general.queue
+                                    : t.general.history,
                                 style: const TextStyle(
                                   fontSize: 48,
                                   letterSpacing: 48 * 0.03,
@@ -116,11 +119,11 @@ class QueueAndHistoryPage extends HookConsumerWidget {
                             AppToggleButtons(
                               options: [
                                 AppToggleButtonsOption(
-                                  text: "Queue",
+                                  text: t.general.queue,
                                   icon: AdwaitaIcons.clock,
                                 ),
                                 AppToggleButtonsOption(
-                                  text: "History",
+                                  text: t.general.history,
                                   icon:
                                       "assets/icons/history-undo-symbolic.svg",
                                 ),
