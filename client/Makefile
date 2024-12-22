@@ -6,6 +6,7 @@ endif
 
 watch-code-generation: 
 	@flutter pub run build_runner watch --delete-conflicting-outputs 1>/dev/null &
+	@flutter pub run slang watch 1>/dev/null &
 
 dev: prebuild watch-code-generation
 	flutter run
