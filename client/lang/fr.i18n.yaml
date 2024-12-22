@@ -154,6 +154,7 @@ actions:
   addFileOrFiles: "Ajouter un ou des fichiers"
 
   addToQueue: "Ajouter à la file d'attente"
+  clearQueue: "Vider la fille d'attente"
   addToPlaylist: "Ajouter à la playlist"
   removeFromPlaylist: "Retirer de cette playlist"
   newPlaylist: "Nouvelle playlist"

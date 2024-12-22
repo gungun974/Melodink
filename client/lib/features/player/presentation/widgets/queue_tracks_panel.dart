@@ -7,6 +7,7 @@ import 'package:melodink_client/features/track/domain/entities/minimal_track.dar
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/mobile_track.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
 enum QueueTracksPanelType {
@@ -22,6 +23,7 @@ class QueueTracksPanel extends StatelessWidget {
 
   final List<QueueTrack> tracks;
   final void Function(MinimalTrack track, int index) playCallback;
+  final void Function()? clearQueueCallback;
 
   final bool useQueueTrack;
   final int trackNumberOffset;
@@ -35,6 +37,7 @@ class QueueTracksPanel extends StatelessWidget {
     required this.size,
     required this.tracks,
     required this.playCallback,
+    this.clearQueueCallback,
     this.useQueueTrack = true,
     this.trackNumberOffset = 0,
     this.dragAndDropKeyPrefix = "",
@@ -68,22 +71,42 @@ class QueueTracksPanel extends StatelessWidget {
               padding: EdgeInsets.only(
                 top: 8,
                 left: size == AppScreenTypeLayout.desktop ? 20 : 12,
-                right: size == AppScreenTypeLayout.desktop ? 20 : 12,
+                right: size == AppScreenTypeLayout.desktop ? 28 : 20,
                 bottom: size == AppScreenTypeLayout.desktop ? 4 : 8,
               ),
-              child: Text(
-                name,
-                style: size == AppScreenTypeLayout.desktop
-                    ? const TextStyle(
-                        fontWeight: FontWeight.w400,
-                        fontSize: 20,
-                        letterSpacing: 20 * 0.03,
-                      )
-                    : const TextStyle(
-                        fontWeight: FontWeight.w400,
-                        fontSize: 16,
-                        letterSpacing: 16 * 0.03,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    name,
+                    style: size == AppScreenTypeLayout.desktop
+                        ? const TextStyle(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
+                            letterSpacing: 20 * 0.03,
+                          )
+                        : const TextStyle(
+                            fontWeight: FontWeight.w400,
+                            fontSize: 16,
+                            letterSpacing: 16 * 0.03,
+                          ),
+                  ),
+                  if (clearQueueCallback != null) Spacer(),
+                  if (clearQueueCallback != null)
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: clearQueueCallback,
+                        child: Text(
+                          t.actions.clearQueue,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
+                    ),
+                ],
               ),
             ),
           ),

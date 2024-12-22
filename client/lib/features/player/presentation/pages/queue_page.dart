@@ -203,6 +203,9 @@ class _QueueReordableManagerState extends State<QueuePage> {
                   index + widget.audioController.previousTracks.value.length,
                 );
               },
+              clearQueueCallback: () {
+                widget.audioController.clearQueue();
+              },
               trackNumberOffset: 1,
               dragAndDropKeyPrefix: "queue",
             ),

@@ -247,6 +247,16 @@ class AudioController extends BaseAudioHandler
     player.play();
   }
 
+  Future<void> clearQueue() async {
+    await playlistTracksMutex.protect(() async {
+      _queueTracks.clear();
+
+      await _updatePlayerTracks();
+
+      await _updatePlaybackState();
+    });
+  }
+
   @override
   Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
     player.setLoopMode(const {
