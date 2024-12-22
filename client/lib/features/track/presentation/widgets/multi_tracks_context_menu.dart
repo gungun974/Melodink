@@ -46,6 +46,8 @@ class MultiTracksContextMenu extends ConsumerWidget {
                 return MenuItemButton(
                   child: Text(playlist.name),
                   onPressed: () async {
+                    menuController.close();
+
                     if (!NetworkInfo().isServerRecheable()) {
                       AppNotificationManager.of(context).notify(
                         context,
@@ -102,6 +104,8 @@ class MultiTracksContextMenu extends ConsumerWidget {
           ),
           child: Text(t.actions.addToQueue),
           onPressed: () {
+            menuController.close();
+
             audioController.addTracksToQueue(tracks);
 
             AppNotificationManager.of(context).notify(

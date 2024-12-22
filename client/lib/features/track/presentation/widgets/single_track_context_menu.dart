@@ -51,8 +51,9 @@ class SingleTrackContextMenu extends ConsumerWidget {
           ),
           child: Text(t.actions.addToQueue),
           onPressed: () {
-            audioController.addTrackToQueue(track);
             menuController.close();
+
+            audioController.addTrackToQueue(track);
 
             AppNotificationManager.of(context).notify(
               context,
@@ -129,6 +130,8 @@ class SingleTrackContextMenu extends ConsumerWidget {
           ),
           child: Text(t.actions.goToAlbum),
           onPressed: () {
+            menuController.close();
+
             while (
                 GoRouter.of(context).location?.startsWith("/queue") ?? true) {
               GoRouter.of(context).pop();
@@ -150,6 +153,8 @@ class SingleTrackContextMenu extends ConsumerWidget {
             ),
             child: Text(t.actions.goToArtist),
             onPressed: () {
+              menuController.close();
+
               while (
                   GoRouter.of(context).location?.startsWith("/queue") ?? true) {
                 GoRouter.of(context).pop();
@@ -178,6 +183,8 @@ class SingleTrackContextMenu extends ConsumerWidget {
                   ),
                   child: Text(artist.name),
                   onPressed: () {
+                    menuController.close();
+
                     while (
                         GoRouter.of(context).location?.startsWith("/queue") ??
                             true) {

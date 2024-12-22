@@ -70,8 +70,9 @@ class PlaylistPage extends HookConsumerWidget {
               ),
               child: Text(t.actions.addToQueue),
               onPressed: () {
-                audioController.addTracksToQueue(playlist.tracks);
                 playlistContextMenuController.close();
+
+                audioController.addTracksToQueue(playlist.tracks);
 
                 AppNotificationManager.of(context).notify(
                   context,
@@ -92,6 +93,8 @@ class PlaylistPage extends HookConsumerWidget {
               ),
               child: Text(t.general.edit),
               onPressed: () {
+                playlistContextMenuController.close();
+
                 if (!NetworkInfo().isServerRecheable()) {
                   AppNotificationManager.of(context).notify(
                     context,
@@ -115,6 +118,8 @@ class PlaylistPage extends HookConsumerWidget {
               ),
               child: Text(t.general.duplicate),
               onPressed: () async {
+                playlistContextMenuController.close();
+
                 if (!NetworkInfo().isServerRecheable()) {
                   AppNotificationManager.of(context).notify(
                     context,
@@ -180,6 +185,8 @@ class PlaylistPage extends HookConsumerWidget {
               ),
               child: Text(t.general.delete),
               onPressed: () async {
+                playlistContextMenuController.close();
+
                 if (!NetworkInfo().isServerRecheable()) {
                   AppNotificationManager.of(context).notify(
                     context,
@@ -463,6 +470,8 @@ class PlaylistPage extends HookConsumerWidget {
                             ),
                             child: Text(t.actions.removeFromPlaylist),
                             onPressed: () async {
+                              menuController.close();
+
                               if (!NetworkInfo().isServerRecheable()) {
                                 AppNotificationManager.of(context).notify(
                                   context,

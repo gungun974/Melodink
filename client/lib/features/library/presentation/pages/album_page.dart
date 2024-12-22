@@ -69,8 +69,9 @@ class AlbumPage extends HookConsumerWidget {
               ),
               child: Text(t.actions.addToQueue),
               onPressed: () {
-                audioController.addTracksToQueue(album.tracks);
                 albumContextMenuController.close();
+
+                audioController.addTracksToQueue(album.tracks);
 
                 AppNotificationManager.of(context).notify(
                   context,
@@ -90,6 +91,8 @@ class AlbumPage extends HookConsumerWidget {
                     return MenuItemButton(
                       child: Text(playlist.name),
                       onPressed: () async {
+                        albumContextMenuController.close();
+
                         if (!NetworkInfo().isServerRecheable()) {
                           AppNotificationManager.of(context).notify(
                             context,
@@ -152,6 +155,8 @@ class AlbumPage extends HookConsumerWidget {
               ),
               child: Text(t.general.edit),
               onPressed: () {
+                albumContextMenuController.close();
+
                 if (!NetworkInfo().isServerRecheable()) {
                   AppNotificationManager.of(context).notify(
                     context,
