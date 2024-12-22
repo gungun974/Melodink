@@ -58,10 +58,14 @@ class PlayedTrackRepository {
             WHERE device_id != ?
           )
         ) AS ranked_tracks
-        WHERE track_id != prev_track_id OR prev_track_id IS NULL;
+        WHERE track_id != prev_track_id OR prev_track_id IS NULL
+        ORDER BY finish_at DESC
+        LIMIT 1000;
       """, [deviceId]);
 
-      return data.map(PlayedTrackRepository.decodePlayedTrack).toList();
+      return data.reversed
+          .map(PlayedTrackRepository.decodePlayedTrack)
+          .toList();
     } catch (e) {
       databaseLogger.e(e);
       throw ServerUnknownException();
