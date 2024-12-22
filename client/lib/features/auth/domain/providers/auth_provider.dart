@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
@@ -190,7 +191,7 @@ class AuthNotifier extends _$AuthNotifier {
 }
 
 @riverpod
-Future<bool> isUserAuthenticated(IsUserAuthenticatedRef ref) async {
+Future<bool> isUserAuthenticated(Ref ref) async {
   try {
     final auth = await ref.watch(authNotifierProvider.future);
 
@@ -204,7 +205,7 @@ Future<bool> isUserAuthenticated(IsUserAuthenticatedRef ref) async {
 }
 
 @riverpod
-Future<User?> loggedUser(LoggedUserRef ref) async {
+Future<User?> loggedUser(Ref ref) async {
   try {
     final auth = await ref.watch(authNotifierProvider.future);
 

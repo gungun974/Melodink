@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
@@ -17,7 +18,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'playlist_provider.g.dart';
 
 @riverpod
-Future<List<Playlist>> allPlaylists(AllPlaylistsRef ref) async {
+Future<List<Playlist>> allPlaylists(Ref ref) async {
   final playlistRepository = ref.read(playlistRepositoryProvider);
 
   ref.listen(createPlaylistStreamProvider, (_, rawNewPlaylist) async {
@@ -309,8 +310,7 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
 }
 
 @riverpod
-List<MinimalTrack> playlistSortedTracks(
-    PlaylistSortedTracksRef ref, int playlistId) {
+List<MinimalTrack> playlistSortedTracks(Ref ref, int playlistId) {
   final asyncPlaylist = ref.watch(playlistByIdProvider(playlistId));
 
   final playlist = asyncPlaylist.valueOrNull;

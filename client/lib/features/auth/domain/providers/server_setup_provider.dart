@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/features/auth/data/repository/auth_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -91,7 +92,7 @@ class ServerSetupNotifier extends _$ServerSetupNotifier {
 }
 
 @riverpod
-bool isServerConfigured(IsServerConfiguredRef ref) {
+bool isServerConfigured(Ref ref) {
   final serverSetup = ref.watch(serverSetupNotifierProvider);
 
   return serverSetup is ServerSetupConfigured;

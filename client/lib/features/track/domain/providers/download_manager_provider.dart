@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -310,18 +311,14 @@ class AsyncExecutor {
 }
 
 @riverpod
-bool isDownloadManagerRunning(
-  IsDownloadManagerRunningRef ref,
-) {
+bool isDownloadManagerRunning(Ref ref) {
   final downloadManager = ref.watch(downloadManagerNotifierProvider);
 
   return downloadManager.isDownloading;
 }
 
 @riverpod
-DownloadTask? currentDownloadManagerTask(
-  CurrentDownloadManagerTaskRef ref,
-) {
+DownloadTask? currentDownloadManagerTask(Ref ref) {
   final downloadManager = ref.watch(downloadManagerNotifierProvider);
 
   return downloadManager.currentTask;

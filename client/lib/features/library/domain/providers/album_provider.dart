@@ -18,7 +18,7 @@ part 'album_provider.g.dart';
 //! Albums
 
 @riverpod
-Future<List<Album>> allAlbums(AllAlbumsRef ref) async {
+Future<List<Album>> allAlbums(Ref ref) async {
   final albumRepository = ref.read(albumRepositoryProvider);
 
   ref.listen(editAlbumStreamProvider, (_, rawNewAlbum) async {
@@ -62,7 +62,7 @@ int compareArtists(List<MinimalArtist> a, List<MinimalArtist> b) {
 }
 
 @riverpod
-Future<List<Album>> allAlbumsSorted(AllAlbumsSortedRef ref) async {
+Future<List<Album>> allAlbumsSorted(Ref ref) async {
   final allAlbums = await ref.watch(allAlbumsProvider.future);
 
   final sortedMode = ref.watch(allAlbumsSortedModeProvider);
@@ -89,7 +89,7 @@ Future<List<Album>> allAlbumsSorted(AllAlbumsSortedRef ref) async {
 }
 
 @riverpod
-Future<List<Album>> allSearchAlbums(AllSearchAlbumsRef ref) async {
+Future<List<Album>> allSearchAlbums(Ref ref) async {
   final allAlbums = await ref.watch(allAlbumsSortedProvider.future);
 
   final keepAlphanumeric = RegExp(r'[^a-zA-Z0-9]');
@@ -374,7 +374,7 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
 }
 
 @riverpod
-List<MinimalTrack> albumSortedTracks(AlbumSortedTracksRef ref, String albumId) {
+List<MinimalTrack> albumSortedTracks(Ref ref, String albumId) {
   final asyncAlbum = ref.watch(albumByIdProvider(albumId));
 
   final album = asyncAlbum.valueOrNull;

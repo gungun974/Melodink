@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -21,9 +22,7 @@ class AppSettingsNotifier extends _$AppSettingsNotifier {
 }
 
 @riverpod
-AppSettingTheme currentAppTheme(
-  CurrentAppThemeRef ref,
-) {
+AppSettingTheme currentAppTheme(Ref ref) {
   final currentSettings = ref.watch(appSettingsNotifierProvider).valueOrNull;
 
   if (currentSettings == null) {
@@ -34,9 +33,7 @@ AppSettingTheme currentAppTheme(
 }
 
 @riverpod
-AppSettingPlayerBarPosition currentPlayerBarPosition(
-  CurrentPlayerBarPositionRef ref,
-) {
+AppSettingPlayerBarPosition currentPlayerBarPosition(Ref ref) {
   final currentSettings = ref.watch(appSettingsNotifierProvider).valueOrNull;
 
   if (currentSettings == null) {
@@ -47,16 +44,12 @@ AppSettingPlayerBarPosition currentPlayerBarPosition(
 }
 
 @riverpod
-Future<String> deviceId(
-  DeviceIdRef ref,
-) {
+Future<String> deviceId(Ref ref) {
   return SettingsRepository().getDeviceId();
 }
 
 @riverpod
-bool isAutoScrollViewToCurrentTrackEnabled(
-  IsAutoScrollViewToCurrentTrackEnabledRef ref,
-) {
+bool isAutoScrollViewToCurrentTrackEnabled(Ref ref) {
   final currentSettings = ref.watch(appSettingsNotifierProvider).valueOrNull;
 
   if (currentSettings == null) {

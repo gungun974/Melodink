@@ -8,7 +8,7 @@ part 'artist_provider.g.dart';
 //! Artists
 
 @riverpod
-Future<List<Artist>> allArtists(AllArtistsRef ref) async {
+Future<List<Artist>> allArtists(Ref ref) async {
   final artistRepository = ref.watch(artistRepositoryProvider);
 
   return await artistRepository.getAllArtists();
@@ -21,7 +21,7 @@ final allArtistsSearchInputProvider =
     StateProvider.autoDispose<String>((ref) => '');
 
 @riverpod
-Future<List<Artist>> allArtistsSorted(AllArtistsSortedRef ref) async {
+Future<List<Artist>> allArtistsSorted(Ref ref) async {
   final allArtists = await ref.watch(allArtistsProvider.future);
 
   final sortedMode = ref.watch(allArtistsSortedModeProvider);
@@ -44,7 +44,7 @@ Future<List<Artist>> allArtistsSorted(AllArtistsSortedRef ref) async {
 }
 
 @riverpod
-Future<List<Artist>> allSearchArtists(AllSearchArtistsRef ref) async {
+Future<List<Artist>> allSearchArtists(Ref ref) async {
   final allArtists = await ref.watch(allArtistsSortedProvider.future);
 
   final keepAlphanumeric = RegExp(r'[^a-zA-Z0-9]');
@@ -70,7 +70,7 @@ Future<List<Artist>> allSearchArtists(AllSearchArtistsRef ref) async {
 //! Artist Page
 
 @riverpod
-Future<Artist> artistById(ArtistByIdRef ref, String id) async {
+Future<Artist> artistById(Ref ref, String id) async {
   final artistRepository = ref.watch(artistRepositoryProvider);
 
   final artist = await artistRepository.getArtistById(id);

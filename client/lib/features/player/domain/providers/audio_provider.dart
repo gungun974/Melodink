@@ -4,6 +4,7 @@ import 'package:color_thief_flutter/color_thief_flutter.dart';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
@@ -27,9 +28,7 @@ class AudioControllerPositionData {
 }
 
 @Riverpod(keepAlive: true)
-Stream<AudioControllerPositionData> audioControllerPositionDataStream(
-  AudioControllerPositionDataStreamRef ref,
-) {
+Stream<AudioControllerPositionData> audioControllerPositionDataStream(Ref ref) {
   final audioController = ref.watch(audioControllerProvider);
 
   return Rx.combineLatest3<Duration, PlaybackState, MediaItem?,
@@ -48,7 +47,7 @@ Stream<AudioControllerPositionData> audioControllerPositionDataStream(
 }
 
 @Riverpod(keepAlive: true)
-Stream<MinimalTrack?> currentTrackStream(CurrentTrackStreamRef ref) async* {
+Stream<MinimalTrack?> currentTrackStream(Ref ref) async* {
   final audioController = ref.watch(audioControllerProvider);
 
   await for (final track in audioController.currentTrack.stream) {
@@ -58,10 +57,7 @@ Stream<MinimalTrack?> currentTrackStream(CurrentTrackStreamRef ref) async* {
 }
 
 @riverpod
-bool isCurrentTrack(
-  IsCurrentTrackRef ref,
-  int trackId,
-) {
+bool isCurrentTrack(Ref ref, int trackId) {
   final currentTrackStream = ref.watch(currentTrackStreamProvider);
 
   final currentTrack = currentTrackStream.valueOrNull;
@@ -70,9 +66,7 @@ bool isCurrentTrack(
 }
 
 @riverpod
-Future<List<List<int>>?> currentTrackPalette(
-  CurrentTrackPaletteRef ref,
-) async {
+Future<List<List<int>>?> currentTrackPalette(Ref ref) async {
   final currentTrackStream = ref.watch(currentTrackStreamProvider);
 
   final currentTrack = currentTrackStream.valueOrNull;
@@ -110,9 +104,7 @@ Future<List<List<int>>?> currentTrackPalette(
 }
 
 @riverpod
-double currentPlayerVolume(
-  CurrentPlayerVolumeRef ref,
-) {
+double currentPlayerVolume(Ref ref) {
   final audioController = ref.watch(audioControllerProvider);
 
   return audioController.getVolume();

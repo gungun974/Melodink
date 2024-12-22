@@ -95,14 +95,14 @@ class AllTracks extends _$AllTracks {
 }
 
 @riverpod
-Future<Track> trackById(TrackByIdRef ref, int id) async {
+Future<Track> trackById(Ref ref, int id) async {
   final trackRepository = ref.read(trackRepositoryProvider);
 
   return await trackRepository.getTrackById(id);
 }
 
 @riverpod
-Future<String> trackLyricsById(TrackLyricsByIdRef ref, int id) async {
+Future<String> trackLyricsById(Ref ref, int id) async {
   final trackRepository = ref.read(trackRepositoryProvider);
 
   return await trackRepository.getTrackLyricsById(id);
@@ -114,7 +114,7 @@ final allTracksSearchInputProvider =
     StateProvider.autoDispose<String>((ref) => '');
 
 @riverpod
-Future<List<MinimalTrack>> allSearchTracks(AllSearchTracksRef ref) async {
+Future<List<MinimalTrack>> allSearchTracks(Ref ref) async {
   final allTracks = await ref.watch(allTracksProvider.future);
 
   final keepAlphanumeric = RegExp(r'[^a-zA-Z0-9]');
@@ -172,8 +172,7 @@ final allTracksArtistsSelectedOptionsProvider =
     StateProvider.autoDispose<List<String>>((ref) => []);
 
 @riverpod
-Future<List<MinimalArtist>> allTracksArtistFiltersOptions(
-    AllTracksArtistFiltersOptionsRef ref) async {
+Future<List<MinimalArtist>> allTracksArtistFiltersOptions(Ref ref) async {
   final allSearchTracks = await ref.watch(allSearchTracksProvider.future);
 
   final List<MinimalArtist> artists = [];
@@ -198,9 +197,7 @@ Future<List<MinimalArtist>> allTracksArtistFiltersOptions(
 }
 
 @riverpod
-Future<List<MinimalTrack>> allFilteredArtistsTracks(
-  AllFilteredArtistsTracksRef ref,
-) async {
+Future<List<MinimalTrack>> allFilteredArtistsTracks(Ref ref) async {
   final allSearchTracks = await ref.watch(allSearchTracksProvider.future);
 
   final allTracksArtistsSelectedOptions =
@@ -244,8 +241,7 @@ final allTracksAlbumsSelectedOptionsProvider =
     StateProvider.autoDispose<List<String>>((ref) => []);
 
 @riverpod
-Future<List<(String, String)>> allTracksAlbumFiltersOptions(
-    AllTracksAlbumFiltersOptionsRef ref) async {
+Future<List<(String, String)>> allTracksAlbumFiltersOptions(Ref ref) async {
   final allFilteredArtistsTracks =
       await ref.watch(allFilteredArtistsTracksProvider.future);
 
@@ -269,9 +265,7 @@ Future<List<(String, String)>> allTracksAlbumFiltersOptions(
 }
 
 @riverpod
-Future<List<MinimalTrack>> allFilteredAlbumsTracks(
-  AllFilteredAlbumsTracksRef ref,
-) async {
+Future<List<MinimalTrack>> allFilteredAlbumsTracks(Ref ref) async {
   final allFilteredArtistsTracks =
       await ref.watch(allFilteredArtistsTracksProvider.future);
 
@@ -308,9 +302,7 @@ Future<List<MinimalTrack>> allFilteredAlbumsTracks(
 }
 
 @riverpod
-Future<List<MinimalTrack>> allSortedTracks(
-  AllSortedTracksRef ref,
-) async {
+Future<List<MinimalTrack>> allSortedTracks(Ref ref) async {
   final allFilteredTracks =
       await ref.watch(allFilteredAlbumsTracksProvider.future);
 
@@ -339,10 +331,7 @@ Future<List<MinimalTrack>> allSortedTracks(
 }
 
 @Riverpod()
-Future<DownloadTrack?> isTrackDownloaded(
-  IsTrackDownloadedRef ref,
-  int trackId,
-) async {
+Future<DownloadTrack?> isTrackDownloaded(Ref ref, int trackId) async {
   final downloadTrackRepository = ref.watch(downloadTrackRepositoryProvider);
 
   return await downloadTrackRepository.getDownloadedTrackByTrackId(trackId);
