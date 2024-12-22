@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.29.6)
+cmake_minimum_required(VERSION 3.30.5)
 
 project(melodink_player VERSION 1.0.0 LANGUAGES CXX)
 project(miniaudio VERSION 1.0.0 LANGUAGES C)

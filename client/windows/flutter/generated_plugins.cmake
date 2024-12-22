@@ -6,7 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   desktop_drop
   file_saver
-  screen_retriever
+  screen_retriever_windows
   window_manager
 )
 

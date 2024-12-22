@@ -18,7 +18,7 @@ dependencies:
   audio_service: ^0.18.15
   rxdart: ^0.28.0
   mutex: ^3.1.0
-  audio_service_mpris: ^0.1.5
+  audio_service_mpris: ^0.2.0
   responsive_builder: ^0.7.1
   adwaita_icons:
     git:
@@ -70,14 +70,14 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^4.0.0
-  flutter_launcher_icons: "^0.13.1"
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.2
 
   pigeon: ^22.0.0
   riverpod_generator: ^2.4.3
   build_runner: ^2.4.12
   slang_build_runner: ^4.4.0
-  custom_lint: ^0.6.5
+  custom_lint: ^0.7.0
   riverpod_lint: ^2.3.13
 
 flutter:

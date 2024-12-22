@@ -5,7 +5,7 @@
     # Nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs";
 
-    flutter-nixpkgs.url = "github:nixos/nixpkgs?rev=c1ce56e9c606b4cd31f0950768911b1171b8db51";
+    flutter-nixpkgs.url = "github:nixos/nixpkgs?rev=c09c37319f1c931e17de74fc67aecfd1a6e95092";
 
     flake-utils.url = "github:numtide/flake-utils";
 
@@ -15,8 +15,7 @@
     };
 
     android-nixpkgs = {
-      url = "github:tadfisher/android-nixpkgs";
-      inputs.nixpkgs.follows = "flutter-nixpkgs";
+      url = "github:tadfisher/android-nixpkgs?rev=5a052c62cdb51b210bc0717177d5bd014cba3df1";
     };
   };
 
@@ -76,7 +75,7 @@
           name = "melodink-server";
           src = gitignore.lib.gitignoreSource ./.;
           subPackages = ["cmd/api"];
-          vendorHash = "sha256-llfPPOlO/stm2KSzyWi/V6v2Hl1qAXIWqp+aTGqvJ3o=";
+          vendorHash = "sha256-YPVOIgBswQRnLJ1PfgtnQR8S3veWZ0IHX48v00c6gi4=";
           CGO_ENABLED = 1;
 
           buildInputs = with pkgs; [
@@ -218,6 +217,7 @@
           pkgs.vips
 
           pkgs.zenity
+          pkgs.cmake
         ];
       };
     });
