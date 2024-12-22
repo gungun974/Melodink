@@ -60,7 +60,7 @@ class PlayedTrackRepository {
         ) AS ranked_tracks
         WHERE track_id != prev_track_id OR prev_track_id IS NULL
         ORDER BY finish_at DESC
-        LIMIT 1000;
+        LIMIT 999;
       """, [deviceId]);
 
       return data.reversed

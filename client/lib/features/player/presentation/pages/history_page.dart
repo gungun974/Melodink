@@ -69,6 +69,7 @@ class HistoryPage extends ConsumerWidget {
               tracks: previousTracks,
               size: AppScreenTypeLayout.desktop,
               showImage: false,
+              showTrackIndex: false,
               modules: const [
                 DesktopTrackModule.title,
                 DesktopTrackModule.duration,
