@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
+import 'package:melodink_client/features/track/presentation/widgets/track_score.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class DesktopTrackHeader extends StatelessWidget {
@@ -112,6 +115,25 @@ class DesktopTrackHeader extends StatelessWidget {
                             ),
                           ),
                         );
+                      case DesktopTrackModule.score:
+                        yield Consumer(builder: (context, ref, _) {
+                          final scoringSystem = ref.watch(
+                            currentScoringSystemProvider,
+                          );
+
+                          return SizedBox(
+                            width: TrackScore.getSize(scoringSystem),
+                            child: Text(
+                              t.general.score,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                letterSpacing: 14 * 0.03,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          );
+                        });
                       case DesktopTrackModule.duration:
                         yield SizedBox(
                           width: module.width,

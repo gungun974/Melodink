@@ -44,6 +44,17 @@ AppSettingPlayerBarPosition currentPlayerBarPosition(Ref ref) {
 }
 
 @riverpod
+AppSettingScoringSystem currentScoringSystem(Ref ref) {
+  final currentSettings = ref.watch(appSettingsNotifierProvider).valueOrNull;
+
+  if (currentSettings == null) {
+    return AppSettingScoringSystem.none;
+  }
+
+  return currentSettings.scoringSystem;
+}
+
+@riverpod
 Future<String> deviceId(Ref ref) {
   return SettingsRepository().getDeviceId();
 }

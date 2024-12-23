@@ -290,7 +290,9 @@ class PlaylistPage extends HookConsumerWidget {
                               );
 
                               if (!playlistDownload.downloaded) {
-                                await playlistDownloadNotifier.download();
+                                await playlistDownloadNotifier.download(
+                                  shouldCheckDownload: true,
+                                );
                               } else {
                                 await playlistDownloadNotifier
                                     .deleteDownloaded();
@@ -322,7 +324,9 @@ class PlaylistPage extends HookConsumerWidget {
                               );
 
                               if (!playlistDownload.downloaded) {
-                                await playlistDownloadNotifier.download();
+                                await playlistDownloadNotifier.download(
+                                  shouldCheckDownload: true,
+                                );
                               } else {
                                 await playlistDownloadNotifier
                                     .deleteDownloaded();
@@ -358,6 +362,7 @@ class PlaylistPage extends HookConsumerWidget {
                                   DesktopTrackModule.playedCount,
                                   DesktopTrackModule.quality,
                                   DesktopTrackModule.duration,
+                                  DesktopTrackModule.score,
                                   DesktopTrackModule.moreActions,
                                 ],
                               )
@@ -382,6 +387,7 @@ class PlaylistPage extends HookConsumerWidget {
                         DesktopTrackModule.playedCount,
                         DesktopTrackModule.quality,
                         DesktopTrackModule.duration,
+                        DesktopTrackModule.score,
                         DesktopTrackModule.moreActions,
                       ],
                       singleCustomActionsBuilder: (

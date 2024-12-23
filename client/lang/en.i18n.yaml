@@ -45,6 +45,7 @@ general:
   queue: "Queue"
   next: "Next"
   history: "History"
+  score: "Score"
   and: "and"
 
   nowPlaying: "Now playing"
@@ -118,6 +119,7 @@ settings:
   shareAllHistoryTrackingToServer: "Share all history tracking to server"
 
   replaceOnlyEmptyFields: "Replace only Empty Fields"
+  scoringSystem: "Scoring system"
 
 themes:
   default: "@:general.kDefault"
@@ -128,6 +130,11 @@ positions:
   top: "Top"
   side: "Side"
   bottom: "Bottom"
+
+scoringSystem:
+  none: "None"
+  like: "Like"
+  stars: "5 Stars"
 
 audioQualities:
   low: "Low - Opus VBR 96 kbps"

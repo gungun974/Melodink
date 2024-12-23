@@ -7,7 +7,6 @@ import 'package:melodink_client/features/library/domain/providers/create_playlis
 import 'package:melodink_client/features/library/domain/providers/delete_playlist_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/edit_playlist_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
@@ -86,17 +85,36 @@ class PlaylistById extends _$PlaylistById {
 
       ref.invalidateSelf();
 
-      ref.invalidate(playlistDownloadNotifierProvider(id));
+      ref
+          .read(playlistDownloadNotifierProvider(id).notifier)
+          .refresh(shouldCheckDownload: true);
     });
 
     ref.listen(trackEditStreamProvider, (_, rawNewTrack) async {
-      final newTrack = rawNewTrack.valueOrNull;
+      final newTrackInfo = rawNewTrack.valueOrNull;
 
-      if (newTrack == null) {
+      if (newTrackInfo == null) {
         return;
       }
 
-      await updateTrack(newTrack);
+      final newTrack = newTrackInfo.track;
+
+      final info =
+          await _playedTrackRepository.getTrackHistoryInfo(newTrack.id);
+
+      final playlist = await future;
+
+      final updatedTracks = playlist.tracks.map((track) {
+        return track.id == newTrack.id
+            ? newTrack.toMinimalTrack().copyWith(historyInfo: () => info)
+            : track;
+      }).toList();
+
+      state = AsyncData(playlist.copyWith(tracks: updatedTracks));
+
+      ref.read(playlistDownloadNotifierProvider(id).notifier).refresh(
+            shouldCheckDownload: newTrackInfo.shouldCheckDownload,
+          );
     });
 
     ref.listen(trackDeleteStreamProvider, (_, rawDeletedTrack) async {
@@ -116,7 +134,9 @@ class PlaylistById extends _$PlaylistById {
 
       state = AsyncData(playlist.copyWith(tracks: updatedTracks));
 
-      ref.invalidate(playlistDownloadNotifierProvider(id));
+      ref
+          .read(playlistDownloadNotifierProvider(id).notifier)
+          .refresh(shouldCheckDownload: false);
     });
 
     final result = await playlistRepository.getPlaylistById(id);
@@ -136,22 +156,6 @@ class PlaylistById extends _$PlaylistById {
     }).toList();
 
     state = AsyncData(playlist.copyWith(tracks: updatedTracks));
-  }
-
-  updateTrack(Track newTrack) async {
-    final info = await _playedTrackRepository.getTrackHistoryInfo(newTrack.id);
-
-    final playlist = await future;
-
-    final updatedTracks = playlist.tracks.map((track) {
-      return track.id == newTrack.id
-          ? newTrack.toMinimalTrack().copyWith(historyInfo: () => info)
-          : track;
-    }).toList();
-
-    state = AsyncData(playlist.copyWith(tracks: updatedTracks));
-
-    ref.invalidate(playlistDownloadNotifierProvider(id));
   }
 }
 
@@ -216,16 +220,7 @@ class PlaylistDownloadError extends Equatable {
 class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
   @override
   PlaylistDownloadState build(int playlistId) {
-    ref
-        .watch(playlistRepositoryProvider)
-        .isPlaylistDownloaded(playlistId)
-        .then((downloaded) {
-      state = state.copyWith(downloaded: downloaded);
-
-      if (downloaded) {
-        download();
-      }
-    });
+    refresh(shouldCheckDownload: true);
 
     return const PlaylistDownloadState(
       downloaded: false,
@@ -234,7 +229,24 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
     );
   }
 
-  download() async {
+  refresh({
+    required bool shouldCheckDownload,
+  }) {
+    ref
+        .read(playlistRepositoryProvider)
+        .isPlaylistDownloaded(playlistId)
+        .then((downloaded) {
+      state = state.copyWith(downloaded: downloaded);
+
+      if (downloaded) {
+        download(shouldCheckDownload: shouldCheckDownload);
+      }
+    });
+  }
+
+  download({
+    required bool shouldCheckDownload,
+  }) async {
     if (state.isLoading) {
       return;
     }
@@ -252,16 +264,18 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
         downloaded: true,
       );
 
-      final downloadManagerNotifier =
-          ref.read(downloadManagerNotifierProvider.notifier);
+      if (shouldCheckDownload) {
+        final downloadManagerNotifier =
+            ref.read(downloadManagerNotifierProvider.notifier);
 
-      downloadManagerNotifier.addTracksToDownloadTodo(
-        newPlaylist.tracks,
-      );
+        downloadManagerNotifier.addTracksToDownloadTodo(
+          newPlaylist.tracks,
+        );
 
-      for (final albumId
-          in newPlaylist.tracks.map((track) => track.albumId).toSet()) {
-        await albumRepository.updateAndStoreAlbum(albumId, false);
+        for (final albumId
+            in newPlaylist.tracks.map((track) => track.albumId).toSet()) {
+          await albumRepository.updateAndStoreAlbum(albumId, false);
+        }
       }
 
       ref.invalidate(allPlaylistsProvider);

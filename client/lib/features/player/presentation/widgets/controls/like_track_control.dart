@@ -1,23 +1,27 @@
-import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:melodink_client/core/widgets/app_icon_button.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
+import 'package:melodink_client/features/track/presentation/widgets/track_score.dart';
 
-class LikeTrackControl extends StatelessWidget {
+class CurrentTrackScoreControl extends ConsumerWidget {
   final bool largeControlButton;
 
-  const LikeTrackControl({
+  const CurrentTrackScoreControl({
     super.key,
     this.largeControlButton = false,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return AppIconButton(
-      padding: const EdgeInsets.all(8),
-      icon: const AdwaitaIcon(
-        AdwaitaIcons.heart_outline_thick,
-      ),
-      iconSize: largeControlButton ? 24.0 : 20.0,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTrack = ref.watch(currentTrackStreamProvider).valueOrNull;
+
+    if (currentTrack == null) {
+      return const SizedBox.shrink();
+    }
+
+    return TrackScore(
+      track: currentTrack,
+      largeControlButton: largeControlButton,
     );
   }
 }

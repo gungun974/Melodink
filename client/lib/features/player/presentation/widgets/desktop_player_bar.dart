@@ -1,8 +1,6 @@
-import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/routes/provider.dart';
-import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/features/home/presentation/widgets/desktop_sidebar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/open_queue_control.dart';
@@ -18,6 +16,7 @@ class DesktopPlayerBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUrl = ref.watch(appRouterCurrentUrl);
+    final scoringSystem = ref.watch(currentScoringSystemProvider);
 
     final currentPlayerBarPosition =
         ref.watch(currentPlayerBarPositionProvider);
@@ -34,7 +33,7 @@ class DesktopPlayerBar extends ConsumerWidget {
         child: Container(
           height: 60,
           color: Colors.black,
-          child: const Row(
+          child: Row(
             children: [
               SizedBox(
                 width: DesktopSidebar.width,
@@ -45,8 +44,8 @@ class DesktopPlayerBar extends ConsumerWidget {
                 padding: EdgeInsets.only(left: 12, right: 18),
                 child: Row(
                   children: [
-                    LikeTrackControl(),
-                    SizedBox(width: 2),
+                    if (scoringSystem != AppSettingScoringSystem.none)
+                      CurrentTrackScoreControl(),
                     VolumeControl(),
                     SizedBox(width: 2),
                     OpenQueueControl(),

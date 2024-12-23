@@ -12,12 +12,15 @@ import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
+import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
+import 'package:melodink_client/features/track/presentation/widgets/track_score.dart';
 
 enum DesktopTrackModule {
   title(width: 28 + 24, rightPadding: 24),
@@ -26,8 +29,9 @@ enum DesktopTrackModule {
   playedCount(leftPadding: 4, width: 48, rightPadding: 8 + 4),
   dateAdded(leftPadding: 4, width: 96, rightPadding: 4),
   quality(leftPadding: 4, width: 128, rightPadding: 4),
-  duration(leftPadding: 4, width: 60, rightPadding: 4),
-  moreActions(leftPadding: 4, width: 72, rightPadding: 4),
+  duration(leftPadding: 4, width: 60, rightPadding: 8),
+  score(leftPadding: 0, width: 0, rightPadding: 0),
+  moreActions(leftPadding: 0, width: 72, rightPadding: 4),
   reorderable(leftPadding: 4, width: 72, rightPadding: 4);
 
   final double width;
@@ -41,7 +45,7 @@ enum DesktopTrackModule {
   });
 }
 
-class DesktopTrackModuleLayout extends StatelessWidget {
+class DesktopTrackModuleLayout extends ConsumerWidget {
   final List<DesktopTrackModule> modules;
 
   final Widget Function(
@@ -56,9 +60,15 @@ class DesktopTrackModuleLayout extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scoringSystem = ref.watch(currentScoringSystemProvider);
+
     return LayoutBuilder(builder: (context, constraints) {
       final newModules = modules.toList();
+
+      if (scoringSystem == AppSettingScoringSystem.none) {
+        newModules.remove(DesktopTrackModule.score);
+      }
 
       double calculateRemainingSpace() {
         double totalWidth = 0;
@@ -70,6 +80,10 @@ class DesktopTrackModuleLayout extends StatelessWidget {
           if (module == DesktopTrackModule.title ||
               module == DesktopTrackModule.album) {
             flex += 1;
+          }
+
+          if (module == DesktopTrackModule.score) {
+            totalWidth += TrackScore.getSize(scoringSystem);
           }
         }
 
@@ -412,6 +426,8 @@ class DesktopTrack extends HookConsumerWidget {
                               ),
                             ),
                           );
+                        case DesktopTrackModule.score:
+                          yield TrackScore(track: track);
                         case DesktopTrackModule.duration:
                           yield SizedBox(
                             width: module.width,

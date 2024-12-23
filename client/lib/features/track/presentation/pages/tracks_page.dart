@@ -98,6 +98,7 @@ class TracksPage extends HookConsumerWidget {
                                     DesktopTrackModule.dateAdded,
                                     DesktopTrackModule.quality,
                                     DesktopTrackModule.duration,
+                                    DesktopTrackModule.score,
                                     DesktopTrackModule.moreActions,
                                   ],
                                 )
@@ -122,6 +123,7 @@ class TracksPage extends HookConsumerWidget {
                           DesktopTrackModule.dateAdded,
                           DesktopTrackModule.quality,
                           DesktopTrackModule.duration,
+                          DesktopTrackModule.score,
                           DesktopTrackModule.moreActions,
                         ],
                         showImage: true,

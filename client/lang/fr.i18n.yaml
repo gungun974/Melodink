@@ -45,6 +45,7 @@ general:
   queue: "File d'attente"
   next: "Suivant"
   history: "Historique"
+  score: "Score"
   and: "et"
 
   nowPlaying: "En cours de lecture"
@@ -118,6 +119,7 @@ settings:
   shareAllHistoryTrackingToServer: "Partager tout le suivi historique avec le serveur"
 
   replaceOnlyEmptyFields: "Remplacer uniquement les champs vides"
+  scoringSystem: "Système de scorage"
 
 themes:
   default: "@:general.kDefault"
@@ -128,6 +130,11 @@ positions:
   top: "Haut"
   side: "Côté"
   bottom: "Bas"
+
+scoringSystem:
+  none: "Aucun"
+  like: "Cœur"
+  stars: "5 Étoiles"
 
 audioQualities:
   low: "Bas - Opus VBR 96 kbps"

@@ -13,7 +13,9 @@ import 'package:melodink_client/features/settings/domain/entities/settings.dart'
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
+import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:melodink_client/generated/messages.g.dart';
 import 'package:mutex/mutex.dart';
@@ -820,6 +822,30 @@ class AudioController extends BaseAudioHandler
 
     currentTrack.add(_previousTracks.lastOrNull);
   }
+
+  updateTrack(Track newTrack) async {
+    await playlistTracksMutex.protect(() async {
+      for (final entry in _previousTracks.indexed) {
+        if (entry.$2.id == newTrack.id) {
+          _previousTracks[entry.$1] = newTrack.toMinimalTrack();
+        }
+      }
+
+      for (final entry in _queueTracks.indexed) {
+        if (entry.$2.id == newTrack.id) {
+          _queueTracks[entry.$1] = newTrack.toMinimalTrack();
+        }
+      }
+
+      for (final entry in _nextTracks.indexed) {
+        if (entry.$2.id == newTrack.id) {
+          _nextTracks[entry.$1] = newTrack.toMinimalTrack();
+        }
+      }
+
+      _updateUiTrackLists();
+    });
+  }
 }
 
 final audioControllerProvider = Provider((ref) {
@@ -828,6 +854,16 @@ final audioControllerProvider = Provider((ref) {
 
   _audioController.playerTrackerManager =
       ref.watch(playerTrackerManagerProvider);
+
+  ref.listen(trackEditStreamProvider, (_, rawNewTrack) async {
+    final newTrack = rawNewTrack.valueOrNull?.track;
+
+    if (newTrack == null) {
+      return;
+    }
+
+    await _audioController.updateTrack(newTrack);
+  });
 
   return _audioController;
 });

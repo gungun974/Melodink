@@ -22,6 +22,7 @@ class SettingsRepository {
     final rawTheme = await asyncPrefs.getString("settingTheme");
     final rawPlayerBarPosition =
         await asyncPrefs.getString("settingPlayerBarPosition");
+    final rawScoringSystem = await asyncPrefs.getString("settingScoringSystem");
 
     final rawWifiAudioQuality = await asyncPrefs.getString("wifiAudioQuality");
     final rawCellularAudioQuality =
@@ -31,6 +32,7 @@ class SettingsRepository {
 
     AppSettingTheme? theme;
     AppSettingPlayerBarPosition? playerBarPosition;
+    AppSettingScoringSystem? scoringSystem;
 
     AppSettingAudioQuality? wifiAudioQuality;
     AppSettingAudioQuality? cellularAudioQuality;
@@ -45,6 +47,12 @@ class SettingsRepository {
     if (rawPlayerBarPosition != null) {
       playerBarPosition = AppSettingPlayerBarPosition.values
           .where((value) => value.name == rawPlayerBarPosition)
+          .firstOrNull;
+    }
+
+    if (rawScoringSystem != null) {
+      scoringSystem = AppSettingScoringSystem.values
+          .where((value) => value.name == rawScoringSystem)
           .firstOrNull;
     }
 
@@ -82,6 +90,7 @@ class SettingsRepository {
       theme: theme ?? AppSettingTheme.dynamic,
       playerBarPosition:
           playerBarPosition ?? AppSettingPlayerBarPosition.bottom,
+      scoringSystem: scoringSystem ?? AppSettingScoringSystem.like,
       wifiAudioQuality: wifiAudioQuality ?? AppSettingAudioQuality.max,
       cellularAudioQuality:
           cellularAudioQuality ?? AppSettingAudioQuality.medium,
@@ -107,6 +116,10 @@ class SettingsRepository {
     await asyncPrefs.setString(
       "settingPlayerBarPosition",
       settings.playerBarPosition.name,
+    );
+    await asyncPrefs.setString(
+      "settingScoringSystem",
+      settings.scoringSystem.name,
     );
 
     await asyncPrefs.setString(

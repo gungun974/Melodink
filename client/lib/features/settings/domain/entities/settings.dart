@@ -20,9 +20,16 @@ enum AppSettingAudioQuality {
   directFile,
 }
 
+enum AppSettingScoringSystem {
+  none,
+  like,
+  stars,
+}
+
 class AppSettings extends Equatable {
   final AppSettingTheme theme;
   final AppSettingPlayerBarPosition playerBarPosition;
+  final AppSettingScoringSystem scoringSystem;
 
   final AppSettingAudioQuality wifiAudioQuality;
   final AppSettingAudioQuality cellularAudioQuality;
@@ -38,6 +45,7 @@ class AppSettings extends Equatable {
   const AppSettings({
     required this.theme,
     required this.playerBarPosition,
+    required this.scoringSystem,
     required this.wifiAudioQuality,
     required this.cellularAudioQuality,
     required this.downloadAudioQuality,
@@ -51,6 +59,7 @@ class AppSettings extends Equatable {
   AppSettings copyWith({
     AppSettingTheme? theme,
     AppSettingPlayerBarPosition? playerBarPosition,
+    AppSettingScoringSystem? scoringSystem,
     AppSettingAudioQuality? wifiAudioQuality,
     AppSettingAudioQuality? cellularAudioQuality,
     AppSettingAudioQuality? downloadAudioQuality,
@@ -63,6 +72,7 @@ class AppSettings extends Equatable {
     return AppSettings(
       theme: theme ?? this.theme,
       playerBarPosition: playerBarPosition ?? this.playerBarPosition,
+      scoringSystem: scoringSystem ?? this.scoringSystem,
       wifiAudioQuality: wifiAudioQuality ?? this.wifiAudioQuality,
       cellularAudioQuality: cellularAudioQuality ?? this.cellularAudioQuality,
       downloadAudioQuality: downloadAudioQuality ?? this.downloadAudioQuality,
@@ -84,6 +94,7 @@ class AppSettings extends Equatable {
   List<Object?> get props => [
         theme,
         playerBarPosition,
+        scoringSystem,
         wifiAudioQuality,
         cellularAudioQuality,
         downloadAudioQuality,

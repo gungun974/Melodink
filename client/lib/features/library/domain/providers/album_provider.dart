@@ -159,17 +159,36 @@ class AlbumById extends _$AlbumById {
 
       ref.invalidateSelf();
 
-      ref.invalidate(albumDownloadNotifierProvider(id));
+      ref
+          .read(albumDownloadNotifierProvider(id).notifier)
+          .refresh(shouldCheckDownload: true);
     });
 
     ref.listen(trackEditStreamProvider, (_, rawNewTrack) async {
-      final newTrack = rawNewTrack.valueOrNull;
+      final newTrackInfo = rawNewTrack.valueOrNull;
 
-      if (newTrack == null) {
+      if (newTrackInfo == null) {
         return;
       }
 
-      await updateTrack(newTrack);
+      final newTrack = newTrackInfo.track;
+
+      final info =
+          await _playedTrackRepository.getTrackHistoryInfo(newTrack.id);
+
+      final album = await future;
+
+      final updatedTracks = album.tracks.map((track) {
+        return track.id == newTrack.id
+            ? newTrack.toMinimalTrack().copyWith(historyInfo: () => info)
+            : track;
+      }).toList();
+
+      state = AsyncData(album.copyWith(tracks: updatedTracks));
+
+      ref.read(albumDownloadNotifierProvider(id).notifier).refresh(
+            shouldCheckDownload: newTrackInfo.shouldCheckDownload,
+          );
     });
 
     ref.listen(trackDeleteStreamProvider, (_, rawDeletedTrack) async {
@@ -189,7 +208,9 @@ class AlbumById extends _$AlbumById {
 
       state = AsyncData(album.copyWith(tracks: updatedTracks));
 
-      ref.invalidate(albumDownloadNotifierProvider(id));
+      ref
+          .read(albumDownloadNotifierProvider(id).notifier)
+          .refresh(shouldCheckDownload: false);
     });
 
     final album = await albumRepository.getAlbumById(id);
@@ -209,22 +230,6 @@ class AlbumById extends _$AlbumById {
     }).toList();
 
     state = AsyncData(album.copyWith(tracks: updatedTracks));
-  }
-
-  updateTrack(Track newTrack) async {
-    final info = await _playedTrackRepository.getTrackHistoryInfo(newTrack.id);
-
-    final album = await future;
-
-    final updatedTracks = album.tracks.map((track) {
-      return track.id == newTrack.id
-          ? newTrack.toMinimalTrack().copyWith(historyInfo: () => info)
-          : track;
-    }).toList();
-
-    state = AsyncData(album.copyWith(tracks: updatedTracks));
-
-    ref.invalidate(albumDownloadNotifierProvider(id));
   }
 }
 
@@ -291,17 +296,6 @@ class AlbumDownloadError extends Equatable {
 class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
   @override
   AlbumDownloadState build(String albumId) {
-    ref
-        .watch(albumRepositoryProvider)
-        .isAlbumDownloaded(albumId)
-        .then((downloaded) {
-      state = state.copyWith(downloaded: downloaded);
-
-      if (downloaded) {
-        download();
-      }
-    });
-
     return const AlbumDownloadState(
       downloaded: false,
       isLoading: false,
@@ -309,7 +303,24 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
     );
   }
 
-  download() async {
+  refresh({
+    required bool shouldCheckDownload,
+  }) {
+    ref
+        .read(albumRepositoryProvider)
+        .isAlbumDownloaded(albumId)
+        .then((downloaded) {
+      state = state.copyWith(downloaded: downloaded);
+
+      if (downloaded) {
+        download(shouldCheckDownload: shouldCheckDownload);
+      }
+    });
+  }
+
+  download({
+    required bool shouldCheckDownload,
+  }) async {
     if (state.isLoading) {
       return;
     }
@@ -325,12 +336,14 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
         downloaded: true,
       );
 
-      final downloadManagerNotifier =
-          ref.read(downloadManagerNotifierProvider.notifier);
+      if (shouldCheckDownload) {
+        final downloadManagerNotifier =
+            ref.read(downloadManagerNotifierProvider.notifier);
 
-      downloadManagerNotifier.addTracksToDownloadTodo(
-        newAlbum.tracks,
-      );
+        downloadManagerNotifier.addTracksToDownloadTodo(
+          newAlbum.tracks,
+        );
+      }
 
       ref.invalidate(allAlbumsProvider);
       ref.invalidate(albumByIdProvider(albumId));

@@ -1,7 +1,5 @@
-import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/open_queue_control.dart';
@@ -12,6 +10,8 @@ import 'package:melodink_client/features/player/presentation/widgets/controls/pl
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_skip_to_previous_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/volume_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
+import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 
 class SidePlayerBar extends ConsumerWidget {
   const SidePlayerBar({super.key});
@@ -19,6 +19,7 @@ class SidePlayerBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTrack = ref.watch(currentTrackStreamProvider).valueOrNull;
+    final scoringSystem = ref.watch(currentScoringSystemProvider);
 
     if (currentTrack == null) {
       return const SizedBox.shrink();
@@ -27,7 +28,7 @@ class SidePlayerBar extends ConsumerWidget {
     return Container(
       color: Colors.black,
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: const Column(
+      child: Column(
         children: [
           SizedBox(height: 16),
           Padding(
@@ -66,8 +67,9 @@ class SidePlayerBar extends ConsumerWidget {
           ),
           Row(
             children: [
-              LikeTrackControl(),
-              Spacer(),
+              if (scoringSystem != AppSettingScoringSystem.none)
+                CurrentTrackScoreControl(),
+              if (scoringSystem != AppSettingScoringSystem.none) Spacer(),
               VolumeControl(),
               Spacer(),
               OpenQueueControl(),

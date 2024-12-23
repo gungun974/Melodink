@@ -90,7 +90,7 @@ class ImportTracks extends _$ImportTracks {
     _trackRepository = ref.watch(trackRepositoryProvider);
 
     ref.listen(trackEditStreamProvider, (_, rawNewTrack) async {
-      final newTrack = rawNewTrack.valueOrNull;
+      final newTrack = rawNewTrack.valueOrNull?.track;
 
       if (newTrack == null) {
         return;

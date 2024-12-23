@@ -149,6 +149,34 @@ class SettingsPage extends ConsumerWidget {
                               ),
                             ],
                           ),
+                          const Divider(height: 24),
+                          SettingDropdownOption(
+                            text: "${t.settings.scoringSystem} :",
+                            value: settings.scoringSystem,
+                            onChanged: (scoringSystem) {
+                              ref
+                                  .read(appSettingsNotifierProvider.notifier)
+                                  .setSettings(
+                                    settings.copyWith(
+                                      scoringSystem: scoringSystem,
+                                    ),
+                                  );
+                            },
+                            items: [
+                              DropdownMenuItem(
+                                value: AppSettingScoringSystem.none,
+                                child: Text(t.scoringSystem.none),
+                              ),
+                              DropdownMenuItem(
+                                value: AppSettingScoringSystem.like,
+                                child: Text(t.scoringSystem.like),
+                              ),
+                              DropdownMenuItem(
+                                value: AppSettingScoringSystem.stars,
+                                child: Text(t.scoringSystem.stars),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),

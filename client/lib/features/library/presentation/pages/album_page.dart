@@ -219,7 +219,9 @@ class AlbumPage extends HookConsumerWidget {
                               );
 
                               if (!albumDownload.downloaded) {
-                                await albumDownloadNotifier.download();
+                                await albumDownloadNotifier.download(
+                                  shouldCheckDownload: true,
+                                );
                               } else {
                                 await albumDownloadNotifier.deleteDownloaded();
                               }
@@ -249,7 +251,9 @@ class AlbumPage extends HookConsumerWidget {
                               );
 
                               if (!albumDownload.downloaded) {
-                                await albumDownloadNotifier.download();
+                                await albumDownloadNotifier.download(
+                                  shouldCheckDownload: true,
+                                );
                               } else {
                                 await albumDownloadNotifier.deleteDownloaded();
                               }
@@ -283,6 +287,7 @@ class AlbumPage extends HookConsumerWidget {
                                   DesktopTrackModule.playedCount,
                                   DesktopTrackModule.quality,
                                   DesktopTrackModule.duration,
+                                  DesktopTrackModule.score,
                                   DesktopTrackModule.moreActions,
                                 ],
                               )
@@ -306,6 +311,7 @@ class AlbumPage extends HookConsumerWidget {
                         DesktopTrackModule.playedCount,
                         DesktopTrackModule.quality,
                         DesktopTrackModule.duration,
+                        DesktopTrackModule.score,
                         DesktopTrackModule.moreActions,
                       ],
                       scrollController: scrollController,
