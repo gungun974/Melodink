@@ -21,5 +21,5 @@ func (u *AlbumUsecase) ListUserAlbums(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.albumPresenter.ShowAlbums(albums), nil
+	return u.albumPresenter.ShowAlbums(ctx, albums), nil
 }

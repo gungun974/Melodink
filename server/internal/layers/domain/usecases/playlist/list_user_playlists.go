@@ -21,5 +21,5 @@ func (u *PlaylistUsecase) ListUserPlaylists(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.playlistPresenter.ShowPlaylists(playlists), nil
+	return u.playlistPresenter.ShowPlaylists(ctx, playlists), nil
 }

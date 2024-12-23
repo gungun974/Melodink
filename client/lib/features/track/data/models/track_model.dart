@@ -21,6 +21,8 @@ class TrackModel {
 
   final DateTime dateAdded;
 
+  final double score;
+
   const TrackModel({
     required this.id,
     required this.title,
@@ -34,6 +36,7 @@ class TrackModel {
     required this.bitRate,
     required this.bitsPerRawSample,
     required this.dateAdded,
+    required this.score,
   });
 
   Track toTrack() {
@@ -50,6 +53,7 @@ class TrackModel {
       bitRate: bitRate,
       bitsPerRawSample: bitsPerRawSample,
       dateAdded: dateAdded,
+      score: score,
     );
   }
 
@@ -70,6 +74,7 @@ class TrackModel {
           ? (json['bits_per_raw_sample'] as num).toInt()
           : null,
       dateAdded: DateTime.parse(json['date_added']).toLocal(),
+      score: (json['score'] as num).toDouble(),
     );
   }
 }

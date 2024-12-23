@@ -64,5 +64,5 @@ func (u *TrackUsecase) ScanTrack(
 		}
 	}
 
-	return u.trackPresenter.ShowDetailedTrack(scannedTrack), nil
+	return u.trackPresenter.ShowDetailedTrack(ctx, scannedTrack), nil
 }

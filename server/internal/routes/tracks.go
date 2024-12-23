@@ -233,6 +233,26 @@ func TrackRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
+	router.Put("/{id}/score", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.TrackController.SetTrackScore(r.Context(), id, bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
 	router.Put("/{id}/audio", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 

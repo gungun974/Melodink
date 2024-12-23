@@ -95,7 +95,12 @@ func NewContainer(db *sqlx.DB) Container {
 		playlistPresenter,
 	)
 
-	albumUsecase := album_usecase.NewAlbumUsecase(albumRepository, coverStorage, albumPresenter)
+	albumUsecase := album_usecase.NewAlbumUsecase(
+		albumRepository,
+		trackRepository,
+		coverStorage,
+		albumPresenter,
+	)
 
 	artistUsecase := artist_usecase.NewArtistUsecase(
 		artistRepository,

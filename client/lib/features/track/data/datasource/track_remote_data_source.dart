@@ -359,6 +359,33 @@ class TrackRemoteDataSource {
       throw ServerUnknownException();
     }
   }
+
+  Future<Track> setTrackScore(int id, double score) async {
+    try {
+      final response = await AppApi().dio.put(
+        "/track/$id/score",
+        data: {
+          "score": score,
+        },
+      );
+
+      return TrackModel.fromJson(response.data).toTrack();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw TrackNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
 }
 
 final trackRemoteDataSourceProvider = Provider(

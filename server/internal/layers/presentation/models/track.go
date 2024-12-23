@@ -1,8 +1,10 @@
 package view_models
 
 import (
+	"context"
 	"time"
 
+	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 )
 
@@ -27,10 +29,13 @@ type TrackViewModel struct {
 	BitRate          *int `json:"bit_rate"`
 	BitsPerRawSample *int `json:"bits_per_raw_sample"`
 
+	Score float64 `json:"score"`
+
 	DateAdded string `json:"date_added"`
 }
 
 func ConvertToTrackViewModel(
+	ctx context.Context,
 	track entities.Track,
 ) TrackViewModel {
 	return TrackViewModel{
@@ -55,6 +60,8 @@ func ConvertToTrackViewModel(
 		SampleRate:       track.SampleRate,
 		BitRate:          track.BitRate,
 		BitsPerRawSample: track.BitsPerRawSample,
+
+		Score: getTrackScore(ctx, track),
 	}
 }
 
@@ -192,10 +199,13 @@ type MinimalTrackViewModel struct {
 	BitRate          *int `json:"bit_rate"`
 	BitsPerRawSample *int `json:"bits_per_raw_sample"`
 
+	Score float64 `json:"score"`
+
 	DateAdded string `json:"date_added"`
 }
 
 func ConvertToMinimalTrackViewModel(
+	ctx context.Context,
 	track entities.Track,
 ) MinimalTrackViewModel {
 	albumId := ""
@@ -235,6 +245,26 @@ func ConvertToMinimalTrackViewModel(
 		BitRate:          track.BitRate,
 		BitsPerRawSample: track.BitsPerRawSample,
 
+		Score: getTrackScore(ctx, track),
+
 		DateAdded: track.DateAdded.UTC().Format(time.RFC3339),
 	}
+}
+
+func getTrackScore(
+	ctx context.Context,
+	track entities.Track,
+) float64 {
+	if len(track.Scores) != 0 {
+		user, err := helpers.ExtractCurrentLoggedUser(ctx)
+		if err == nil {
+			for _, trackScore := range track.Scores {
+				if trackScore.UserId == user.Id {
+					return trackScore.Score
+				}
+			}
+		}
+	}
+
+	return 0.0
 }

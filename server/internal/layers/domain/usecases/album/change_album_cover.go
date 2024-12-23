@@ -34,11 +34,16 @@ func (u *AlbumUsecase) ChangeAlbumCover(
 		return nil, entities.NewUnauthorizedError()
 	}
 
+	err = u.trackRepository.LoadAllScoresWithTracks(album.Tracks)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
 	err = u.coverStorage.UploadCustomAlbumCover(&album, file)
 	if err != nil {
 		logger.MainLogger.Error("Failed to save uploaded Cover")
 		return nil, err
 	}
 
-	return u.albumPresenter.ShowAlbum(album), nil
+	return u.albumPresenter.ShowAlbum(ctx, album), nil
 }

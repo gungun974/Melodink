@@ -86,5 +86,5 @@ func (u *TrackUsecase) UploadTrack(
 		}
 	}
 
-	return u.trackPresenter.ShowDetailedTrack(track), nil
+	return u.trackPresenter.ShowDetailedTrack(ctx, track), nil
 }

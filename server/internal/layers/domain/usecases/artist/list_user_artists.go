@@ -21,5 +21,5 @@ func (u *ArtistUsecase) ListUserArtists(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.artistPresenter.ShowArtists(artists), nil
+	return u.artistPresenter.ShowArtists(ctx, artists), nil
 }

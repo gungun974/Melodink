@@ -27,5 +27,5 @@ func (u *ArtistUsecase) GetUserArtistAlbums(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.artistPresenter.ShowAllArtistAlbums(artist), nil
+	return u.artistPresenter.ShowAllArtistAlbums(ctx, artist), nil
 }

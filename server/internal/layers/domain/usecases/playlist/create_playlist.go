@@ -36,5 +36,5 @@ func (u *PlaylistUsecase) CreatePlaylist(
 		return nil, entities.NewInternalError(errors.New("Failed to create playlist"))
 	}
 
-	return u.playlistPresenter.ShowPlaylist(newPlaylist), nil
+	return u.playlistPresenter.ShowPlaylist(ctx, newPlaylist), nil
 }

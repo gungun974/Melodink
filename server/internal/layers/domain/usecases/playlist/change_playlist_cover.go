@@ -40,5 +40,5 @@ func (u *PlaylistUsecase) ChangePlaylistCover(
 		return nil, err
 	}
 
-	return u.playlistPresenter.ShowPlaylist(*playlist), nil
+	return u.playlistPresenter.ShowPlaylist(ctx, *playlist), nil
 }

@@ -63,5 +63,10 @@ func (u *PlaylistUsecase) SetPlaylistTracks(
 		return nil, entities.NewInternalError(errors.New("Failed to update playlist tracks"))
 	}
 
-	return u.playlistPresenter.ShowPlaylist(*playlist), nil
+	err = u.trackRepository.LoadAllScoresWithTracks(playlist.Tracks)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	return u.playlistPresenter.ShowPlaylist(ctx, *playlist), nil
 }

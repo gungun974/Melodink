@@ -21,5 +21,10 @@ func (u *TrackUsecase) ListUserTracks(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.trackPresenter.ShowMinimalTracks(tracks), nil
+	err = u.trackRepository.LoadAllScoresWithTracks(tracks)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	return u.trackPresenter.ShowMinimalTracks(ctx, tracks), nil
 }

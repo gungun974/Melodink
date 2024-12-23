@@ -27,5 +27,10 @@ func (u *AlbumUsecase) GetUserAlbumById(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.albumPresenter.ShowAlbum(album), nil
+	err = u.trackRepository.LoadAllScoresWithTracks(album.Tracks)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	return u.albumPresenter.ShowAlbum(ctx, album), nil
 }

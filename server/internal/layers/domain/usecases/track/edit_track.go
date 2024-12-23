@@ -114,5 +114,10 @@ func (u *TrackUsecase) EditTrack(
 		return nil, entities.NewInternalError(errors.New("Failed to update track"))
 	}
 
-	return u.trackPresenter.ShowDetailedTrack(*track), nil
+	track.Scores, err = u.trackRepository.GetAllScoresByTrack(track.Id)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	return u.trackPresenter.ShowDetailedTrack(ctx, *track), nil
 }

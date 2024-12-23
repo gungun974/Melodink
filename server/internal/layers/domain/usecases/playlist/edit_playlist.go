@@ -39,6 +39,11 @@ func (u *PlaylistUsecase) EditPlaylist(
 		return nil, entities.NewUnauthorizedError()
 	}
 
+	err = u.trackRepository.LoadAllScoresWithTracks(playlist.Tracks)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
 	playlist.Name = params.Name
 	playlist.Description = params.Description
 
@@ -47,5 +52,5 @@ func (u *PlaylistUsecase) EditPlaylist(
 		return nil, entities.NewInternalError(errors.New("Failed to update playlist"))
 	}
 
-	return u.playlistPresenter.ShowPlaylist(*playlist), nil
+	return u.playlistPresenter.ShowPlaylist(ctx, *playlist), nil
 }

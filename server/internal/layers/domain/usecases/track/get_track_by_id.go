@@ -31,5 +31,10 @@ func (u *TrackUsecase) GetTrackById(
 		return nil, entities.NewUnauthorizedError()
 	}
 
-	return u.trackPresenter.ShowDetailedTrack(*track), nil
+	track.Scores, err = u.trackRepository.GetAllScoresByTrack(track.Id)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	return u.trackPresenter.ShowDetailedTrack(ctx, *track), nil
 }

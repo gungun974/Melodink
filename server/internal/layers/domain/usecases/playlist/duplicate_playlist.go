@@ -33,6 +33,11 @@ func (u *PlaylistUsecase) DuplicatePlaylist(
 		return nil, entities.NewUnauthorizedError()
 	}
 
+	err = u.trackRepository.LoadAllScoresWithTracks(originalPlaylist.Tracks)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
 	newPlaylist := *originalPlaylist
 
 	newPlaylist.UserId = &user.Id
@@ -56,5 +61,5 @@ func (u *PlaylistUsecase) DuplicatePlaylist(
 		return nil, err
 	}
 
-	return u.playlistPresenter.ShowPlaylist(newPlaylist), nil
+	return u.playlistPresenter.ShowPlaylist(ctx, newPlaylist), nil
 }

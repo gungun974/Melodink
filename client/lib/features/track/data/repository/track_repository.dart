@@ -102,6 +102,10 @@ class TrackRepository {
   Future<Track> advancedAudioScan(int id) async {
     return await trackRemoteDataSource.advancedAudioScan(id);
   }
+
+  Future<Track> setTrackScore(int id, double score) async {
+    return await trackRemoteDataSource.setTrackScore(id, score);
+  }
 }
 
 final trackRepositoryProvider = Provider(

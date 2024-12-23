@@ -60,5 +60,10 @@ func (u *TrackUsecase) ChangeTrackAudio(
 		return nil, err
 	}
 
-	return u.trackPresenter.ShowDetailedTrack(*track), nil
+	track.Scores, err = u.trackRepository.GetAllScoresByTrack(track.Id)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	return u.trackPresenter.ShowDetailedTrack(ctx, *track), nil
 }

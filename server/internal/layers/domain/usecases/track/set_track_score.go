@@ -3,7 +3,6 @@ package track_usecase
 import (
 	"context"
 	"errors"
-	"io"
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
@@ -12,10 +11,10 @@ import (
 	"github.com/gungun974/Melodink/server/internal/models"
 )
 
-func (u *TrackUsecase) ChangeTrackCover(
+func (u *TrackUsecase) SetTrackScore(
 	ctx context.Context,
 	trackId int,
-	file io.Reader,
+	score float64,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
 	if err != nil {
@@ -34,17 +33,9 @@ func (u *TrackUsecase) ChangeTrackCover(
 		return nil, entities.NewUnauthorizedError()
 	}
 
-	err = u.coverStorage.UploadCustomTrackCover(track, file)
-	if err != nil {
-		logger.MainLogger.Error("Failed to save uploaded Cover")
-		return nil, err
-	}
-
-	track.CoverSignature = u.coverStorage.GetTrackCoverSignature(track)
-
-	err = u.trackRepository.UpdateTrack(track)
-	if err != nil {
-		logger.MainLogger.Error("Failed to update track cover signature in database")
+	if _, err := u.trackRepository.SetUserTrackScore(*track, user.Id, score); err != nil {
+		logger.MainLogger.Error("Couldn't update track score in Database", err, *track)
+		return nil, entities.NewInternalError(errors.New("Failed to update track score"))
 	}
 
 	track.Scores, err = u.trackRepository.GetAllScoresByTrack(track.Id)

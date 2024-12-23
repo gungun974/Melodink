@@ -46,5 +46,5 @@ func (u *TrackUsecase) DeleteTrack(
 		return nil, entities.NewInternalError(errors.New("Failed to delete track"))
 	}
 
-	return u.trackPresenter.ShowDetailedTrack(*track), nil
+	return u.trackPresenter.ShowDetailedTrack(ctx, *track), nil
 }

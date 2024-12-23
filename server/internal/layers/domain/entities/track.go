@@ -30,6 +30,8 @@ type Track struct {
 	BitRate          *int
 	BitsPerRawSample *int
 
+	Scores []TrackScore
+
 	PendingImport bool
 
 	DateAdded time.Time
@@ -109,4 +111,11 @@ func (m TrackMetadata) GetVirtualAlbumId() (string, error) {
 	hashString := hex.EncodeToString(hashBytes)
 
 	return hashString, nil
+}
+
+type TrackScore struct {
+	TrackId int
+	UserId  int
+
+	Score float64
 }

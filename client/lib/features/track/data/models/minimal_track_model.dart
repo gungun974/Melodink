@@ -31,6 +31,8 @@ class MinimalTrackModel {
 
   final DateTime dateAdded;
 
+  final double score;
+
   const MinimalTrackModel({
     required this.id,
     required this.title,
@@ -50,6 +52,7 @@ class MinimalTrackModel {
     required this.bitRate,
     required this.bitsPerRawSample,
     required this.dateAdded,
+    required this.score,
   });
 
   MinimalTrack toMinimalTrack() {
@@ -80,6 +83,7 @@ class MinimalTrackModel {
       bitRate: bitRate,
       bitsPerRawSample: bitsPerRawSample,
       dateAdded: dateAdded,
+      score: score,
     );
   }
 
@@ -111,6 +115,7 @@ class MinimalTrackModel {
       bitRate: track.bitRate,
       bitsPerRawSample: track.bitsPerRawSample,
       dateAdded: track.dateAdded,
+      score: track.score,
     );
   }
 
@@ -145,6 +150,7 @@ class MinimalTrackModel {
           ? (json['bits_per_raw_sample'] as num).toInt()
           : null,
       dateAdded: DateTime.parse(json['date_added']).toLocal(),
+      score: json['score'] != null ? (json['score'] as num).toDouble() : 0.0,
     );
   }
 
@@ -176,6 +182,7 @@ class MinimalTrackModel {
       'bit_rate': bitRate,
       'bits_per_raw_sample': bitsPerRawSample,
       'date_added': dateAdded.toIso8601String(),
+      'score': score,
     };
   }
 }

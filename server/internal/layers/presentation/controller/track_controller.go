@@ -578,6 +578,36 @@ func (c *TrackController) EditTrack(
 	})
 }
 
+func (c *TrackController) SetTrackScore(
+	ctx context.Context,
+	rawId string,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	score, err := validator.ValidateMapFloat(
+		"score",
+		bodyData,
+		validator.FloatValidators{
+			validator.FloatMinValidator{Min: 0},
+			validator.FloatMaxValidator{Max: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.SetTrackScore(ctx, id, score)
+}
+
 func (c *TrackController) ChangeTrackAudio(
 	ctx context.Context,
 	r *http.Request,

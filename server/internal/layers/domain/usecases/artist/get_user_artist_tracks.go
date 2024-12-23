@@ -27,5 +27,5 @@ func (u *ArtistUsecase) GetUserArtistTracks(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.artistPresenter.ShowAllArtistTracks(artist), nil
+	return u.artistPresenter.ShowAllArtistTracks(ctx, artist), nil
 }

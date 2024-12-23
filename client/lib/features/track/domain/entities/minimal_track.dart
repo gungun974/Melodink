@@ -33,6 +33,8 @@ class MinimalTrack extends Equatable {
   final int? bitRate;
   final int? bitsPerRawSample;
 
+  final double score;
+
   final DateTime dateAdded;
 
   final TrackHistoryInfo? historyInfo;
@@ -56,6 +58,7 @@ class MinimalTrack extends Equatable {
     required this.bitRate,
     required this.bitsPerRawSample,
     required this.dateAdded,
+    required this.score,
     this.historyInfo,
   });
 
@@ -78,6 +81,7 @@ class MinimalTrack extends Equatable {
     int? bitRate,
     int? bitsPerRawSample,
     DateTime? dateAdded,
+    double? score,
     TrackHistoryInfo? Function()? historyInfo,
   }) {
     return MinimalTrack(
@@ -99,6 +103,7 @@ class MinimalTrack extends Equatable {
       bitRate: bitRate ?? this.bitRate,
       bitsPerRawSample: bitsPerRawSample ?? this.bitsPerRawSample,
       dateAdded: dateAdded ?? this.dateAdded,
+      score: score ?? this.score,
       historyInfo: historyInfo != null ? historyInfo() : this.historyInfo,
     );
   }
@@ -123,6 +128,7 @@ class MinimalTrack extends Equatable {
         bitRate,
         bitsPerRawSample,
         dateAdded,
+        score,
         historyInfo,
       ];
 

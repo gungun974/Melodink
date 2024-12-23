@@ -1,6 +1,7 @@
 package view_models
 
 import (
+	"context"
 	"time"
 
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
@@ -25,6 +26,7 @@ type ArtistViewModel struct {
 }
 
 func ConvertToArtistsViewModel(
+	ctx context.Context,
 	artists []entities.Artist,
 ) []ArtistViewModel {
 	artistsViewModels := make([]ArtistViewModel, len(artists))
@@ -39,7 +41,7 @@ func ConvertToArtistsViewModel(
 		artist.HasRoleAlbums = nil
 		artist.AllHasRoleTracks = nil
 
-		artistsViewModels[i] = ConvertToArtistViewModel(artist)
+		artistsViewModels[i] = ConvertToArtistViewModel(ctx, artist)
 
 		lastTrack := entities.Track{}
 
@@ -64,6 +66,7 @@ func ConvertToArtistsViewModel(
 }
 
 func ConvertToArtistViewModel(
+	ctx context.Context,
 	artist entities.Artist,
 ) ArtistViewModel {
 	allTracksViewModels := make([]MinimalTrackViewModel, len(artist.AllTracks))
@@ -71,7 +74,7 @@ func ConvertToArtistViewModel(
 	lastTrack := entities.Track{}
 
 	for i, track := range artist.AllTracks {
-		allTracksViewModels[i] = ConvertToMinimalTrackViewModel(track)
+		allTracksViewModels[i] = ConvertToMinimalTrackViewModel(ctx, track)
 		if track.DateAdded.After(lastTrack.DateAdded) {
 			lastTrack = track
 		}
@@ -80,7 +83,7 @@ func ConvertToArtistViewModel(
 	allAppearTracksViewModels := make([]MinimalTrackViewModel, len(artist.AllAppearTracks))
 
 	for i, track := range artist.AllAppearTracks {
-		allAppearTracksViewModels[i] = ConvertToMinimalTrackViewModel(track)
+		allAppearTracksViewModels[i] = ConvertToMinimalTrackViewModel(ctx, track)
 		if track.DateAdded.After(lastTrack.DateAdded) {
 			lastTrack = track
 		}
@@ -89,7 +92,7 @@ func ConvertToArtistViewModel(
 	allHasRoleTracksViewModels := make([]MinimalTrackViewModel, len(artist.AllHasRoleTracks))
 
 	for i, track := range artist.AllHasRoleTracks {
-		allHasRoleTracksViewModels[i] = ConvertToMinimalTrackViewModel(track)
+		allHasRoleTracksViewModels[i] = ConvertToMinimalTrackViewModel(ctx, track)
 	}
 
 	albumsViewModels := make([]AlbumViewModel, len(artist.Albums))
@@ -97,7 +100,7 @@ func ConvertToArtistViewModel(
 	for i, album := range artist.Albums {
 		album.Tracks = nil
 
-		albumsViewModels[i] = ConvertToAlbumViewModel(album)
+		albumsViewModels[i] = ConvertToAlbumViewModel(ctx, album)
 	}
 
 	appearAlbumsViewModels := make([]AlbumViewModel, len(artist.AppearAlbums))
@@ -105,7 +108,7 @@ func ConvertToArtistViewModel(
 	for i, album := range artist.AppearAlbums {
 		album.Tracks = nil
 
-		appearAlbumsViewModels[i] = ConvertToAlbumViewModel(album)
+		appearAlbumsViewModels[i] = ConvertToAlbumViewModel(ctx, album)
 	}
 
 	hasRoleAlbumsViewModels := make([]AlbumViewModel, len(artist.HasRoleAlbums))
@@ -113,7 +116,7 @@ func ConvertToArtistViewModel(
 	for i, album := range artist.HasRoleAlbums {
 		album.Tracks = nil
 
-		hasRoleAlbumsViewModels[i] = ConvertToAlbumViewModel(album)
+		hasRoleAlbumsViewModels[i] = ConvertToAlbumViewModel(ctx, album)
 	}
 
 	return ArtistViewModel{

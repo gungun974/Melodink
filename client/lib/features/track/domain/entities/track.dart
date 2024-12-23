@@ -25,6 +25,8 @@ class Track extends Equatable {
 
   final DateTime dateAdded;
 
+  final double score;
+
   final TrackHistoryInfo? historyInfo;
 
   const Track({
@@ -40,6 +42,7 @@ class Track extends Equatable {
     required this.bitRate,
     required this.bitsPerRawSample,
     required this.dateAdded,
+    required this.score,
     this.historyInfo,
   });
 
@@ -56,6 +59,7 @@ class Track extends Equatable {
     int? bitRate,
     int? bitsPerRawSample,
     DateTime? dateAdded,
+    double? score,
     TrackHistoryInfo? Function()? historyInfo,
   }) {
     return Track(
@@ -71,6 +75,7 @@ class Track extends Equatable {
       bitRate: bitRate ?? this.bitRate,
       bitsPerRawSample: bitsPerRawSample ?? this.bitsPerRawSample,
       dateAdded: dateAdded ?? this.dateAdded,
+      score: score ?? this.score,
       historyInfo: historyInfo != null ? historyInfo() : this.historyInfo,
     );
   }
@@ -89,6 +94,7 @@ class Track extends Equatable {
         bitRate,
         bitsPerRawSample,
         dateAdded,
+        score,
         historyInfo,
       ];
 
@@ -147,6 +153,7 @@ class Track extends Equatable {
       bitRate: bitRate,
       bitsPerRawSample: bitsPerRawSample,
       dateAdded: dateAdded,
+      score: score,
     );
   }
 }

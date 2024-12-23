@@ -1,6 +1,7 @@
 package view_models
 
 import (
+	"context"
 	"time"
 
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
@@ -21,6 +22,7 @@ type AlbumViewModel struct {
 }
 
 func ConvertToAlbumsViewModel(
+	ctx context.Context,
 	albums []entities.Album,
 	showTracks bool,
 ) []AlbumViewModel {
@@ -31,7 +33,7 @@ func ConvertToAlbumsViewModel(
 			album.Tracks = nil
 		}
 
-		albumsViewModels[i] = ConvertToAlbumViewModel(album)
+		albumsViewModels[i] = ConvertToAlbumViewModel(ctx, album)
 
 		if !showTracks {
 			lastTrack := entities.Track{}
@@ -52,6 +54,7 @@ func ConvertToAlbumsViewModel(
 }
 
 func ConvertToAlbumViewModel(
+	ctx context.Context,
 	album entities.Album,
 ) AlbumViewModel {
 	tracksViewModels := make([]MinimalTrackViewModel, len(album.Tracks))
@@ -59,7 +62,7 @@ func ConvertToAlbumViewModel(
 	lastTrack := entities.Track{}
 
 	for i, track := range album.Tracks {
-		tracksViewModels[i] = ConvertToMinimalTrackViewModel(track)
+		tracksViewModels[i] = ConvertToMinimalTrackViewModel(ctx, track)
 		if track.DateAdded.After(lastTrack.DateAdded) {
 			lastTrack = track
 		}

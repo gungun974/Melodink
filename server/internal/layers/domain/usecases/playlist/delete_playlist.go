@@ -41,5 +41,5 @@ func (u *PlaylistUsecase) DeletePlaylist(
 		return nil, entities.NewInternalError(errors.New("Failed to delete playlist"))
 	}
 
-	return u.playlistPresenter.ShowPlaylist(*playlist), nil
+	return u.playlistPresenter.ShowPlaylist(ctx, *playlist), nil
 }
