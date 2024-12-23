@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "air-nixpkgs": {
+      "locked": {
+        "lastModified": 1724824782,
+        "narHash": "sha256-gNbzBakul/iGQgdJHLjfhocuPJGLPw2n4HGCBpKzAfk=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "c1ce56e9c606b4cd31f0950768911b1171b8db51",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "c1ce56e9c606b4cd31f0950768911b1171b8db51",
+        "type": "github"
+      }
+    },
     "android-nixpkgs": {
       "inputs": {
         "devshell": "devshell",
@@ -147,6 +163,7 @@
     },
     "root": {
       "inputs": {
+        "air-nixpkgs": "air-nixpkgs",
         "android-nixpkgs": "android-nixpkgs",
         "flake-utils": "flake-utils_2",
         "flutter-nixpkgs": "flutter-nixpkgs",

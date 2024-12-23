@@ -5,6 +5,8 @@
     # Nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs";
 
+    air-nixpkgs.url = "github:nixos/nixpkgs?rev=c1ce56e9c606b4cd31f0950768911b1171b8db51";
+
     flutter-nixpkgs.url = "github:nixos/nixpkgs?rev=c09c37319f1c931e17de74fc67aecfd1a6e95092";
 
     flake-utils.url = "github:numtide/flake-utils";
@@ -21,6 +23,7 @@
 
   outputs = {
     nixpkgs,
+    air-nixpkgs,
     flutter-nixpkgs,
     gitignore,
     flake-utils,
@@ -41,6 +44,10 @@
           android_sdk.accept_license = true;
           allowUnfree = true;
         };
+      };
+
+      air-pkgs = import air-nixpkgs {
+        inherit system;
       };
 
       ffmpeg = pkgs.ffmpeg.overrideAttrs (oldAttrs: {
@@ -198,7 +205,7 @@
         buildInputs = [
           (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo122Module;})
           pkgs.go_1_22
-          pkgs.air
+          air-pkgs.air
           flutter-sdk
           pinnedJDK
           sdk
