@@ -46,6 +46,13 @@ general:
   next: "Next"
   history: "History"
   score: "Score"
+  signIn: "Sign in"
+  username: "Username"
+  email: "Email"
+  emailAddress: "Email Address"
+  password: "Password"
+  confirmPassword: "Confirm password"
+  connectToServer: "Connect to server"
   and: "and"
 
   nowPlaying: "Now playing"
@@ -184,7 +191,12 @@ actions:
   changeAudio: "Change Audio"
   scanMetadata: "Scan Metadata"
 
+  login: "Connect"
   logout: "Logout"
+  connect: "Connect"
+
+  createAccount: "Create account"
+  changeServer: "Change server"
 
 notifications:
   offline:
@@ -295,3 +307,9 @@ validators:
   fieldShouldBeInt: "{field} should be an integer."
   fieldShouldBeGreaterOrEqual: "{field} should be {n} or greater."
   fieldShouldBeGreaterOrEqualZero: "{field} should be zero or greater."
+  fieldShouldBeValidEmail: "{field} should contain a valid email address."
+  passwordDontMatch: "Passwords do not match second one"
+  fieldMustBeAtLeast: "{field} must be at least {n} characters long"
+  fieldMustNotExceed: "{field} must not exceed {n} characters"
+  fieldShouldBeFilled: "{field} should be filled"
+  fieldShouldBeAValidUrl: "{field} should be a valid url"

@@ -10,6 +10,7 @@ import 'package:melodink_client/core/widgets/form/app_password_form_field.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class LoginPage extends HookConsumerWidget {
   const LoginPage({super.key});
@@ -67,8 +68,8 @@ class LoginPage extends HookConsumerWidget {
                                         image: AssetImage(
                                             "assets/melodink_fulllogo.png")),
                                   ),
-                                  const Text(
-                                    "Please sign in",
+                                  Text(
+                                    t.general.signIn,
                                     textAlign: TextAlign.left,
                                     style: TextStyle(
                                       fontWeight: FontWeight.w500,
@@ -79,7 +80,7 @@ class LoginPage extends HookConsumerWidget {
                                   const SizedBox(height: 12.0),
                                   AppTextFormField(
                                     controller: emailTextController,
-                                    labelText: "Email Address",
+                                    labelText: t.general.emailAddress,
                                     keyboardType: TextInputType.emailAddress,
                                     autovalidateMode: autoValidate.value
                                         ? AutovalidateMode.always
@@ -87,12 +88,16 @@ class LoginPage extends HookConsumerWidget {
                                     validator: FormBuilderValidators.compose(
                                       [
                                         FormBuilderValidators.required(
-                                          errorText:
-                                              "The email field should not be empty.",
+                                          errorText: t.validators
+                                              .fieldShouldNotBeEmpty(
+                                            field: t.general.email,
+                                          ),
                                         ),
                                         FormBuilderValidators.email(
-                                          errorText:
-                                              "The email field should contain a valid email address.",
+                                          errorText: t.validators
+                                              .fieldShouldBeValidEmail(
+                                            field: t.general.email,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -101,13 +106,15 @@ class LoginPage extends HookConsumerWidget {
                                   const SizedBox(height: 12.0),
                                   AppPasswordFormField(
                                     controller: passwordTextController,
-                                    labelText: "Password",
+                                    labelText: t.general.password,
                                     autovalidateMode: autoValidate.value
                                         ? AutovalidateMode.always
                                         : AutovalidateMode.disabled,
                                     validator: FormBuilderValidators.required(
                                       errorText:
-                                          "The password field should not be empty",
+                                          t.validators.fieldShouldNotBeEmpty(
+                                        field: t.general.password,
+                                      ),
                                     ),
                                     autofillHints: const [
                                       AutofillHints.password
@@ -115,7 +122,7 @@ class LoginPage extends HookConsumerWidget {
                                   ),
                                   const SizedBox(height: 12.0),
                                   AppButton(
-                                    text: "Connect",
+                                    text: t.actions.login,
                                     type: AppButtonType.primary,
                                     onPressed: () async {
                                       final currentState = formKey.currentState;
@@ -179,7 +186,7 @@ class LoginPage extends HookConsumerWidget {
                                   const Spacer(),
                                   const SizedBox(height: 24.0),
                                   AppButton(
-                                    text: "Create Account",
+                                    text: t.actions.createAccount,
                                     type: AppButtonType.secondary,
                                     onPressed: () {
                                       GoRouter.of(context)
@@ -188,7 +195,7 @@ class LoginPage extends HookConsumerWidget {
                                   ),
                                   const SizedBox(height: 12.0),
                                   AppButton(
-                                    text: "Change Server",
+                                    text: t.actions.changeServer,
                                     type: AppButtonType.secondary,
                                     onPressed: () {
                                       GoRouter.of(context)

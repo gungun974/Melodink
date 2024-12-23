@@ -10,6 +10,7 @@ import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/auth/domain/providers/server_setup_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class SelectServerPage extends HookConsumerWidget {
   const SelectServerPage({super.key});
@@ -48,8 +49,8 @@ class SelectServerPage extends HookConsumerWidget {
                     ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
-                  title: const Text(
-                    "Change Server",
+                  title: Text(
+                    t.actions.changeServer,
                     style: TextStyle(
                       fontSize: 20,
                       letterSpacing: 20 * 0.03,
@@ -84,8 +85,8 @@ class SelectServerPage extends HookConsumerWidget {
                             ),
                           ),
                         const SizedBox(height: 16.0),
-                        const Text(
-                          "Connect to Server",
+                        Text(
+                          t.general.connectToServer,
                           textAlign: TextAlign.left,
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
@@ -96,7 +97,7 @@ class SelectServerPage extends HookConsumerWidget {
                         const SizedBox(height: 12.0),
                         AppTextFormField(
                           controller: hostTextController,
-                          labelText: "Host",
+                          labelText: t.general.host,
                           keyboardType: TextInputType.url,
                           autovalidateMode: autoValidate.value
                               ? AutovalidateMode.always
@@ -104,18 +105,22 @@ class SelectServerPage extends HookConsumerWidget {
                           validator: FormBuilderValidators.compose(
                             [
                               FormBuilderValidators.required(
-                                errorText: "Server Host field should be filled",
+                                errorText: t.validators.fieldShouldBeFilled(
+                                  field: t.general.host,
+                                ),
                               ),
                               FormBuilderValidators.url(
                                 protocols: ["http", "https"],
-                                errorText: "Server Host field be a valid url",
+                                errorText: t.validators.fieldShouldBeAValidUrl(
+                                  field: t.general.host,
+                                ),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 12.0),
                         AppButton(
-                          text: "Connect",
+                          text: t.actions.connect,
                           type: AppButtonType.primary,
                           onPressed: () async {
                             final currentState = formKey.currentState;

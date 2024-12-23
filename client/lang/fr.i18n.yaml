@@ -46,6 +46,13 @@ general:
   next: "Suivant"
   history: "Historique"
   score: "Score"
+  signIn: "Se connecter"
+  username: "Nom d'utilisateur"
+  email: "E-mail"
+  emailAddress: "Adresse E-mail"
+  password: "Mot de passe"
+  confirmPassword: "Mot de passe de confirmation"
+  connectToServer: "Se connecter au serveur"
   and: "et"
 
   nowPlaying: "En cours de lecture"
@@ -183,7 +190,12 @@ actions:
   changeAudio: "Changer l'audio"
   scanMetadata: "Analyser les métadonnées"
 
+  login: "Connexion"
   logout: "Se déconnecter"
+  connect: "Connecter"
+
+  createAccount: "Créer un compte"
+  changeServer: "Changer de serveur"
 
 notifications:
   offline:
@@ -294,3 +306,9 @@ validators:
   fieldShouldBeInt: "{field} doit être un entier."
   fieldShouldBeGreaterOrEqual: "{field} doit être {n} ou plus."
   fieldShouldBeGreaterOrEqualZero: "{field} doit être zéro ou plus."
+  fieldShouldBeValidEmail: "{field} doit contenir une adresse courriel valide."
+  passwordDontMatch: "Les mots de passe ne correspondent pas"
+  fieldMustBeAtLeast: "{field} doit contenir au moins {n} caractères"
+  fieldMustNotExceed: "{field} ne doit pas dépasser {n} caractères"
+  fieldShouldBeFilled: "{field} doit être rempli"
+  fieldShouldBeAValidUrl: "{field} doit être une URL valide"

@@ -11,6 +11,7 @@ import 'package:melodink_client/core/widgets/form/app_password_form_field.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class RegisterPage extends HookConsumerWidget {
   const RegisterPage({super.key});
@@ -42,8 +43,8 @@ class RegisterPage extends HookConsumerWidget {
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            title: const Text(
-              "Create Account",
+            title: Text(
+              t.actions.createAccount,
               style: TextStyle(
                 fontSize: 20,
                 letterSpacing: 20 * 0.03,
@@ -71,21 +72,22 @@ class RegisterPage extends HookConsumerWidget {
                         children: [
                           AppTextFormField(
                             controller: nameTextController,
-                            labelText: "Username",
+                            labelText: t.general.username,
                             keyboardType: TextInputType.text,
                             autovalidateMode: autoValidate.value
                                 ? AutovalidateMode.always
                                 : AutovalidateMode.disabled,
                             validator: FormBuilderValidators.required(
-                              errorText:
-                                  "The username field should not be empty.",
+                              errorText: t.validators.fieldShouldNotBeEmpty(
+                                field: t.general.username,
+                              ),
                             ),
                             autofillHints: const [AutofillHints.newUsername],
                           ),
                           const SizedBox(height: 12.0),
                           AppTextFormField(
                             controller: emailTextController,
-                            labelText: "Email Address",
+                            labelText: t.general.emailAddress,
                             keyboardType: TextInputType.emailAddress,
                             autovalidateMode: autoValidate.value
                                 ? AutovalidateMode.always
@@ -93,12 +95,15 @@ class RegisterPage extends HookConsumerWidget {
                             validator: FormBuilderValidators.compose(
                               [
                                 FormBuilderValidators.required(
-                                  errorText:
-                                      "The email field should not be empty.",
+                                  errorText: t.validators.fieldShouldNotBeEmpty(
+                                    field: t.general.email,
+                                  ),
                                 ),
                                 FormBuilderValidators.email(
                                   errorText:
-                                      "The email field should contain a valid email address.",
+                                      t.validators.fieldShouldBeValidEmail(
+                                    field: t.general.email,
+                                  ),
                                 ),
                               ],
                             ),
@@ -107,41 +112,49 @@ class RegisterPage extends HookConsumerWidget {
                           const SizedBox(height: 12.0),
                           AppPasswordFormField(
                             controller: passwordTextController,
-                            labelText: "Password",
+                            labelText: t.general.password,
                             autovalidateMode: autoValidate.value
                                 ? AutovalidateMode.always
                                 : AutovalidateMode.disabled,
                             validator: FormBuilderValidators.compose(
                               [
                                 FormBuilderValidators.required(
-                                  errorText:
-                                      "The password field should not be empty",
+                                  errorText: t.validators.fieldShouldNotBeEmpty(
+                                    field: t.general.password,
+                                  ),
                                 ),
-                                FormBuilderValidators.minLength(8,
-                                    errorText:
-                                        "Password must be at least 8 characters long"),
-                                FormBuilderValidators.maxLength(32,
-                                    errorText:
-                                        "Password must not exceed 32 characters"),
+                                FormBuilderValidators.minLength(
+                                  8,
+                                  errorText: t.validators.fieldMustBeAtLeast(
+                                      field: t.general.password, n: 8),
+                                ),
+                                FormBuilderValidators.maxLength(
+                                  32,
+                                  errorText: t.validators.fieldMustNotExceed(
+                                    field: t.general.password,
+                                    n: 32,
+                                  ),
+                                ),
                               ],
                             ),
                             autofillHints: const [AutofillHints.newUsername],
                           ),
                           const SizedBox(height: 12.0),
                           AppPasswordFormField(
-                            labelText: "Confirm Password",
+                            labelText: t.general.confirmPassword,
                             autovalidateMode: autoValidate.value
                                 ? AutovalidateMode.always
                                 : AutovalidateMode.disabled,
                             validator: FormBuilderValidators.compose(
                               [
                                 FormBuilderValidators.required(
-                                  errorText:
-                                      "The confirm password field should not be empty",
+                                  errorText: t.validators.fieldShouldNotBeEmpty(
+                                    field: t.general.confirmPassword,
+                                  ),
                                 ),
                                 (value) {
                                   if (value != passwordTextController.text) {
-                                    return 'Passwords do not match second one';
+                                    return t.validators.passwordDontMatch;
                                   }
                                   return null;
                                 },
@@ -151,7 +164,7 @@ class RegisterPage extends HookConsumerWidget {
                           ),
                           const SizedBox(height: 12.0),
                           AppButton(
-                            text: "Create",
+                            text: t.general.create,
                             type: AppButtonType.primary,
                             onPressed: () async {
                               final currentState = formKey.currentState;
