@@ -174,7 +174,7 @@
             mv $out/app/* $out/melodink/
             mv $out/melodink $out/app/melodink
 
-            makeWrapper $out/app/melodink/melodink_client $out/bin/melodink_client \
+            makeWrapper $out/app/melodink/melodink-client/melodink_client $out/bin/melodink_client \
                 "''${gappsWrapperArgs[@]}" \
                 --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath [pkgs.sqlite pkgs.ffmpeg pkgs.pulseaudio]}
           '';
