@@ -344,8 +344,7 @@ class DesktopPlayerPage extends HookConsumerWidget {
                                     ),
                                     if (scoringSystem !=
                                         AppSettingScoringSystem.none)
-                                      Spacer(),
-                                    SizedBox(width: 4),
+                                      SizedBox(width: 4),
                                     VolumeControl(
                                       largeControlButton: true,
                                     ),
