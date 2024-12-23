@@ -515,6 +515,19 @@ class AudioController extends BaseAudioHandler
   Future<void> _updatePlaylistTracks(int currentTrackIndex,
       {bool updatePlayerTracks = true}) async {
     await playlistTracksMutex.protect(() async {
+      final playerState = player.getCurrentPlayerState();
+
+      bool shouldForcePlay = false;
+
+      if (playerState == MelodinkProcessingState.completed &&
+          !(currentTrackIndex == _previousTracks.length - 1 &&
+              _nextTracks.isEmpty &&
+              _queueTracks.isEmpty)) {
+        currentTrackIndex += 1;
+        updatePlayerTracks = true;
+        shouldForcePlay = true;
+      }
+
       for (int j = 0; j < _queueTracks.length; j++) {
         final i = j + _previousTracks.length;
 
@@ -547,6 +560,10 @@ class AudioController extends BaseAudioHandler
 
       if (updatePlayerTracks) {
         await _updatePlayerTracks();
+      }
+
+      if (shouldForcePlay) {
+        player.play();
       }
 
       await _updatePlaybackState();
