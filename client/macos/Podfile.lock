@@ -6,17 +6,21 @@ PODS:
   - connectivity_plus (0.0.1):
     - Flutter
     - FlutterMacOS
+  - desktop_drop (0.0.1):
+    - FlutterMacOS
+  - file_saver (0.0.1):
+    - FlutterMacOS
   - FlutterMacOS (1.0.0)
   - MelodinkPlayer (1.0.0)
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - screen_retriever (0.0.1):
+  - screen_retriever_macos (0.0.1):
     - FlutterMacOS
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - sqflite (0.0.3):
+  - sqflite_darwin (0.0.4):
     - Flutter
     - FlutterMacOS
   - window_manager (0.2.0):
@@ -26,12 +30,14 @@ DEPENDENCIES:
   - audio_service (from `Flutter/ephemeral/.symlinks/plugins/audio_service/macos`)
   - audio_session (from `Flutter/ephemeral/.symlinks/plugins/audio_session/macos`)
   - connectivity_plus (from `Flutter/ephemeral/.symlinks/plugins/connectivity_plus/darwin`)
+  - desktop_drop (from `Flutter/ephemeral/.symlinks/plugins/desktop_drop/macos`)
+  - file_saver (from `Flutter/ephemeral/.symlinks/plugins/file_saver/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
   - MelodinkPlayer (from `./MelodinkPlayer/MelodinkPlayer.podspec`)
   - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
-  - screen_retriever (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever/macos`)
+  - screen_retriever_macos (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos`)
   - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
-  - sqflite (from `Flutter/ephemeral/.symlinks/plugins/sqflite/darwin`)
+  - sqflite_darwin (from `Flutter/ephemeral/.symlinks/plugins/sqflite_darwin/darwin`)
   - window_manager (from `Flutter/ephemeral/.symlinks/plugins/window_manager/macos`)
 
 EXTERNAL SOURCES:
@@ -41,31 +47,37 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/audio_session/macos
   connectivity_plus:
     :path: Flutter/ephemeral/.symlinks/plugins/connectivity_plus/darwin
+  desktop_drop:
+    :path: Flutter/ephemeral/.symlinks/plugins/desktop_drop/macos
+  file_saver:
+    :path: Flutter/ephemeral/.symlinks/plugins/file_saver/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
   MelodinkPlayer:
     :path: "./MelodinkPlayer/MelodinkPlayer.podspec"
   path_provider_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
-  screen_retriever:
-    :path: Flutter/ephemeral/.symlinks/plugins/screen_retriever/macos
+  screen_retriever_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/screen_retriever_macos/macos
   shared_preferences_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin
-  sqflite:
-    :path: Flutter/ephemeral/.symlinks/plugins/sqflite/darwin
+  sqflite_darwin:
+    :path: Flutter/ephemeral/.symlinks/plugins/sqflite_darwin/darwin
   window_manager:
     :path: Flutter/ephemeral/.symlinks/plugins/window_manager/macos
 
 SPEC CHECKSUMS:
   audio_service: b88ff778e0e3915efd4cd1a5ad6f0beef0c950a9
   audio_session: dea1f41890dbf1718f04a56f1d6150fd50039b72
-  connectivity_plus: ddd7f30999e1faaef5967c23d5b6d503d10434db
+  connectivity_plus: 18382e7311ba19efcaee94442b23b32507b20695
+  desktop_drop: 69eeff437544aa619c8db7f4481b3a65f7696898
+  file_saver: 44e6fbf666677faf097302460e214e977fdd977b
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
   MelodinkPlayer: 3b94bd6d0af70788597f723eb7aa2929d5719a1e
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
-  screen_retriever: 59634572a57080243dd1bf715e55b6c54f241a38
+  screen_retriever_macos: 776e0fa5d42c6163d2bf772d22478df4b302b161
   shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
-  sqflite: 673a0e54cc04b7d6dba8d24fb8095b31c3a99eec
+  sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
   window_manager: 3a1844359a6295ab1e47659b1a777e36773cd6e8
 
 PODFILE CHECKSUM: 2d5302d31b07debf7f04f0bc72e93666941565ea
