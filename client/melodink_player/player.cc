@@ -565,7 +565,7 @@ private:
 
         ma_device_uninit(&audio_device);
 
-        SetPlayerState(MELODINK_PROCESSING_STATE_LOADING);
+        SetPlayerState(MELODINK_PROCESSING_STATE_BUFFERING);
 
         current_track = new_current_track;
 
@@ -574,7 +574,7 @@ private:
 
       reinit_miniaudio_mutex.unlock();
     } else {
-      SetPlayerState(MELODINK_PROCESSING_STATE_LOADING);
+      SetPlayerState(MELODINK_PROCESSING_STATE_BUFFERING);
 
       current_track = new_current_track;
     }
