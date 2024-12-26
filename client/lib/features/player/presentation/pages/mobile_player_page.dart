@@ -216,17 +216,18 @@ class MobilePlayerPage extends HookConsumerWidget {
                               ),
                             ),
                           ),
-                        SliverPadding(
-                          padding: const EdgeInsets.only(
-                              left: 16.0, right: 16.0, bottom: 16.0),
-                          sliver: LiveLyrics(
-                            key: liveLyricsKey,
-                            autoScrollToLyric: autoScrollToLyric,
-                            scrollController: scrollController,
-                            setShouldDisableAutoScrollOnScroll:
-                                setShouldDisableAutoScrollOnScroll,
+                        if (currentLyrics != null)
+                          SliverPadding(
+                            padding: const EdgeInsets.only(
+                                left: 16.0, right: 16.0, bottom: 16.0),
+                            sliver: LiveLyrics(
+                              key: liveLyricsKey,
+                              autoScrollToLyric: autoScrollToLyric,
+                              scrollController: scrollController,
+                              setShouldDisableAutoScrollOnScroll:
+                                  setShouldDisableAutoScrollOnScroll,
+                            ),
                           ),
-                        ),
                       ],
                     );
                   },
