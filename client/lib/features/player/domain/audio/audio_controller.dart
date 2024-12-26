@@ -519,7 +519,8 @@ class AudioController extends BaseAudioHandler
 
       bool shouldForcePlay = false;
 
-      if (playerState == MelodinkProcessingState.completed &&
+      if (currentTrackIndex != 0 &&
+          playerState == MelodinkProcessingState.completed &&
           !(currentTrackIndex == _previousTracks.length - 1 &&
               _nextTracks.isEmpty &&
               _queueTracks.isEmpty)) {
