@@ -294,7 +294,7 @@ private:
     reopen_thread = std::thread([this]() {
       std::unique_lock<std::mutex> lock(open_mutex);
 
-      if (!stop_timeout_reopen) {
+      if (stop_timeout_reopen) {
         return;
       }
 
@@ -312,7 +312,7 @@ private:
       CloseAudio(false);
 
       while (true) {
-        if (!stop_timeout_reopen) {
+        if (stop_timeout_reopen) {
           return;
         }
 
