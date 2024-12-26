@@ -296,6 +296,8 @@ class AlbumDownloadError extends Equatable {
 class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
   @override
   AlbumDownloadState build(String albumId) {
+    refresh(shouldCheckDownload: true);
+
     return const AlbumDownloadState(
       downloaded: false,
       isLoading: false,
@@ -312,6 +314,7 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
         .then((downloaded) {
       state = state.copyWith(downloaded: downloaded);
 
+      print(downloaded);
       if (downloaded) {
         download(shouldCheckDownload: shouldCheckDownload);
       }
