@@ -332,8 +332,8 @@ private:
         if (result != 0) {
           fprintf(stderr, "Failed to reopen file %s\n", loaded_url.c_str());
           CloseFile();
-          audio_retry = false;
-          return;
+          std::this_thread::sleep_for(std::chrono::seconds(1));
+          continue;
         }
 
         if (!is_transcoding) {
@@ -351,8 +351,8 @@ private:
 
         break;
       }
-      StartDecodingThread();
       audio_retry = false;
+      StartDecodingThread();
     });
   }
 
@@ -367,6 +367,10 @@ private:
     if (!audio_opened || av_format_ctx == nullptr) {
       TimeoutReopen();
 
+      return;
+    }
+
+    if (audio_retry) {
       return;
     }
 
@@ -813,8 +817,8 @@ public:
   }
 
   void Close() {
-    StopDecodingThread();
     StopTimeoutReopen();
+    StopDecodingThread();
     CloseFile();
     CloseAudio(true);
     std::unique_lock<std::mutex> lock(open_mutex);
