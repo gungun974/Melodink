@@ -762,6 +762,8 @@ public:
     t.detach();
   }
 
+  std::mutex late_open_track_mutex;
+
   void SetAudios(std::vector<const char *> raw_previous_urls,
                  std::vector<const char *> raw_next_urls) {
     std::vector<std::string> previous_urls;
@@ -793,6 +795,8 @@ public:
     MelodinkTrack *new_current_track = GetTrack(current_url);
 
     if (!new_current_track->IsAudioOpened()) {
+      std::unique_lock<std::mutex> lock(late_open_track_mutex);
+
       current_track = nullptr;
       target_current_track = new_current_track;
 
@@ -810,6 +814,7 @@ public:
 #ifdef MELODINK_PLAYER_LOG
         fprintf(stderr, "FINISH late %s\n", url);
 #endif
+        std::unique_lock<std::mutex> lock(late_open_track_mutex);
 
         if (target_current_track == new_current_track) {
           if (!new_current_track->IsAudioOpened()) {
