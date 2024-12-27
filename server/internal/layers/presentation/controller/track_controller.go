@@ -38,11 +38,16 @@ func (c *TrackController) UploadAudio(
 		defer file.Close()
 
 		if err := checkIfFileIsAudioFile(file, handler); err != nil {
+			_ = r.MultipartForm.RemoveAll()
 			return nil, err
 		}
 	} else {
 		return nil, entities.NewValidationError("File can't be open")
 	}
+
+	defer func() {
+		_ = r.MultipartForm.RemoveAll()
+	}()
 
 	return c.trackUsecase.UploadTrack(ctx,
 		file,
@@ -628,11 +633,16 @@ func (c *TrackController) ChangeTrackAudio(
 		defer file.Close()
 
 		if err := checkIfFileIsAudioFile(file, handler); err != nil {
+			_ = r.MultipartForm.RemoveAll()
 			return nil, err
 		}
 	} else {
 		return nil, entities.NewValidationError("File can't be open")
 	}
+
+	defer func() {
+		_ = r.MultipartForm.RemoveAll()
+	}()
 
 	return c.trackUsecase.ChangeTrackAudio(ctx,
 		id,
@@ -660,11 +670,16 @@ func (c *TrackController) ChangeTrackCover(
 		defer file.Close()
 
 		if err := checkIfFileIsImageFile(file, handler); err != nil {
+			_ = r.MultipartForm.RemoveAll()
 			return nil, err
 		}
 	} else {
 		return nil, entities.NewValidationError("File can't be open")
 	}
+
+	defer func() {
+		_ = r.MultipartForm.RemoveAll()
+	}()
 
 	return c.trackUsecase.ChangeTrackCover(ctx,
 		id,

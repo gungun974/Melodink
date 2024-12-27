@@ -159,11 +159,16 @@ func (c *PlaylistController) ChangePlaylistCover(
 		defer file.Close()
 
 		if err := checkIfFileIsImageFile(file, handler); err != nil {
+			_ = r.MultipartForm.RemoveAll()
 			return nil, err
 		}
 	} else {
 		return nil, entities.NewValidationError("File can't be open")
 	}
+
+	defer func() {
+		_ = r.MultipartForm.RemoveAll()
+	}()
 
 	return c.playlistUsecase.ChangePlaylistCover(ctx,
 		id,

@@ -106,11 +106,16 @@ func (c *AlbumController) ChangeAlbumCover(
 		defer file.Close()
 
 		if err := checkIfFileIsImageFile(file, handler); err != nil {
+			_ = r.MultipartForm.RemoveAll()
 			return nil, err
 		}
 	} else {
 		return nil, entities.NewValidationError("File can't be open")
 	}
+
+	defer func() {
+		_ = r.MultipartForm.RemoveAll()
+	}()
 
 	return c.albumUsecase.ChangeAlbumCover(ctx,
 		id,
