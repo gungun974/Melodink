@@ -705,7 +705,7 @@ func (c *TrackController) DeleteTrack(
 }
 
 func checkIfFileIsAudioFile(file io.ReadSeeker, handler *multipart.FileHeader) error {
-	if handler.Size > 500*1024*1024 {
+	if handler.Size > 1024*1024*1024 {
 		return entities.NewValidationError("File is too big")
 	}
 
