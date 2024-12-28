@@ -6,7 +6,6 @@
 #endif
 
 #include "flutter/generated_plugin_registrant.h"
-#include "messages.g.h"
 
 #include <iostream>
 #include <string>

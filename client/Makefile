@@ -1,6 +1,5 @@
 prebuild:
 ifndef NIX
-	flutter pub run pigeon --input ./pigeon/native_communication.dart
 	flutter pub run build_runner build --delete-conflicting-outputs
 endif
 

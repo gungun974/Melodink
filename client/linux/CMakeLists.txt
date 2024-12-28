@@ -79,7 +79,6 @@ target_link_libraries(melodink_player PRIVATE miniaudio)
 add_executable(${BINARY_NAME}
   "main.cc"
   "my_application.cc"
-  "messages.g.cc"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
 )
 

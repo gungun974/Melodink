@@ -160,7 +160,6 @@
           NIX = "true";
 
           preBuild = ''
-            packageRun pigeon --input ./pigeon/native_communication.dart
             packageRun build_runner build --delete-conflicting-outputs
             make prebuild
           '';
