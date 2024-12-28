@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
+import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_score.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:sliver_tools/sliver_tools.dart';
 
 class DesktopTrackHeader extends StatelessWidget {
   final List<DesktopTrackModule> modules;
@@ -162,6 +166,120 @@ class DesktopTrackHeader extends StatelessWidget {
               }),
         ),
       ),
+    );
+  }
+}
+
+class StickyDesktopTrackHeader extends StatelessWidget {
+  final List<DesktopTrackModule> modules;
+  final ScrollController scrollController;
+  final GlobalKey scrollViewKey;
+
+  const StickyDesktopTrackHeader({
+    super.key,
+    required this.modules,
+    required this.scrollController,
+    required this.scrollViewKey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPinnedHeader(
+      child: HookBuilder(builder: (context) {
+        final isDocked = useState(true);
+
+        final barKey = useMemoized(() => GlobalKey());
+
+        void update() {
+          final barRenderBox = barKey.currentContext?.findRenderObject();
+
+          if (barRenderBox is! RenderBox) {
+            return;
+          }
+
+          final scrollViewRenderBox =
+              scrollViewKey.currentContext?.findRenderObject();
+
+          if (scrollViewRenderBox is! RenderBox) {
+            return;
+          }
+
+          final position = barRenderBox.localToGlobal(Offset.zero,
+              ancestor: scrollViewRenderBox);
+
+          isDocked.value = (position).dy > 0 || scrollController.offset < 1;
+        }
+
+        void onScroll() {
+          update();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            update();
+          });
+        }
+
+        useEffect(() {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (scrollController.hasClients) {
+              onScroll();
+            }
+          });
+
+          scrollController.addListener(onScroll);
+
+          return () {
+            scrollController.removeListener(onScroll);
+          };
+        }, [scrollController]);
+
+        return AppScreenTypeLayoutBuilder(builder: (context, size) {
+          return Stack(
+            children: [
+              if (size == AppScreenTypeLayout.desktop)
+                Opacity(
+                  opacity: isDocked.value ? 0 : 1,
+                  child: RepaintBoundary(
+                    child: SizedBox(
+                      height: 40,
+                      child: LayoutBuilder(builder: (context, layout) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(
+                              8,
+                            ),
+                          ),
+                          child: OverflowBox(
+                            alignment: Alignment.topCenter,
+                            maxWidth: layout.maxWidth * 5,
+                            maxHeight: layout.maxHeight * 50,
+                            child: GradientBackground(),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ),
+              Container(
+                key: barKey,
+                decoration: BoxDecoration(
+                  color: isDocked.value
+                      ? Color.fromRGBO(0, 0, 0, 0.03)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(
+                      8,
+                    ),
+                  ),
+                ),
+                child: size == AppScreenTypeLayout.desktop
+                    ? DesktopTrackHeader(
+                        modules: modules,
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          );
+        });
+      }),
     );
   }
 }

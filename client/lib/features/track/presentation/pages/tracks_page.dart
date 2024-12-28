@@ -36,6 +36,8 @@ class TracksPage extends HookConsumerWidget {
 
     final scrollController = useScrollController();
 
+    final scrollViewKey = useMemoized(() => GlobalKey());
+
     if (tracks == null) {
       return AppNavigationHeader(
         title: AppScreenTypeLayoutBuilders(
@@ -63,6 +65,7 @@ class TracksPage extends HookConsumerWidget {
                 ),
               Expanded(
                 child: CustomScrollView(
+                  key: scrollViewKey,
                   controller: scrollController,
                   slivers: [
                     if (size == AppScreenTypeLayout.mobile)
@@ -78,32 +81,20 @@ class TracksPage extends HookConsumerWidget {
                         left: padding,
                         right: padding,
                       ),
-                      sliver: SliverToBoxAdapter(
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: Color.fromRGBO(0, 0, 0, 0.03),
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(
-                                8,
-                              ),
-                            ),
-                          ),
-                          child: size == AppScreenTypeLayout.desktop
-                              ? const DesktopTrackHeader(
-                                  modules: [
-                                    DesktopTrackModule.title,
-                                    DesktopTrackModule.album,
-                                    DesktopTrackModule.lastPlayed,
-                                    DesktopTrackModule.playedCount,
-                                    DesktopTrackModule.dateAdded,
-                                    DesktopTrackModule.quality,
-                                    DesktopTrackModule.duration,
-                                    DesktopTrackModule.score,
-                                    DesktopTrackModule.moreActions,
-                                  ],
-                                )
-                              : const SizedBox.shrink(),
-                        ),
+                      sliver: StickyDesktopTrackHeader(
+                        modules: [
+                          DesktopTrackModule.title,
+                          DesktopTrackModule.album,
+                          DesktopTrackModule.lastPlayed,
+                          DesktopTrackModule.playedCount,
+                          DesktopTrackModule.dateAdded,
+                          DesktopTrackModule.quality,
+                          DesktopTrackModule.duration,
+                          DesktopTrackModule.score,
+                          DesktopTrackModule.moreActions,
+                        ],
+                        scrollController: scrollController,
+                        scrollViewKey: scrollViewKey,
                       ),
                     ),
                     SliverContainer(
