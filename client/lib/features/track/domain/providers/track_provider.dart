@@ -314,6 +314,11 @@ Future<List<MinimalTrack>> allSortedTracks(Ref ref) async {
       return dateCompare;
     }
 
+    int albumCompare = (a.album + a.albumId).compareTo(b.album + b.albumId);
+    if (albumCompare != 0) {
+      return albumCompare;
+    }
+
     int discCompare = a.discNumber.compareTo(b.discNumber);
     if (discCompare != 0) {
       return discCompare;
