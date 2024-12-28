@@ -12,17 +12,6 @@ import UIKit
             .LaunchOptionsKey: Any]?
     ) -> Bool {
         GeneratedPluginRegistrant.register(with: self)
-        let audioSession = AVAudioSession.sharedInstance()
-        do {
-            // Set the audio session category, mode, and options.
-            try audioSession.setCategory(
-                .playback, mode: .default,
-                options: [.allowAirPlay, .allowBluetooth])
-            try audioSession.setActive(true)
-        } catch {
-            print("Failed to set audio session category.")
-        }
-
         let controller = window?.rootViewController as! FlutterViewController
 
 

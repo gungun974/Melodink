@@ -68,6 +68,7 @@ dependencies:
     git:
       url: https://github.com/gungun974/flutter_rating_bar
       ref: 098aad19d9147e2fa4b36ce6f9671a9b5d89d283
+  audio_session: ^0.1.23
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
@@ -17,7 +18,6 @@ import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
-import 'package:melodink_client/generated/messages.g.dart';
 import 'package:mutex/mutex.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,6 +25,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 late final AudioController _audioController;
 
 Future<AudioController> initAudioService() async {
+  final session = await AudioSession.instance;
+  await session.configure(AudioSessionConfiguration.music());
+
   _audioController = await AudioService.init(
     builder: () => AudioController(),
     config: const AudioServiceConfig(
@@ -35,15 +38,51 @@ Future<AudioController> initAudioService() async {
     ),
   );
 
-  MelodinkHostPlayerApiInfo.setUp(_audioController);
+  bool wasPausedByBeginEvent = false;
+  double currentVolumeBeforeDuck = 1.0;
+
+  session.interruptionEventStream.listen((event) async {
+    if (event.begin) {
+      switch (event.type) {
+        case AudioInterruptionType.duck:
+          currentVolumeBeforeDuck = _audioController.getVolume();
+          _audioController.setVolume(0.5);
+          break;
+        case AudioInterruptionType.pause:
+        case AudioInterruptionType.unknown:
+          {
+            wasPausedByBeginEvent =
+                _audioController.playbackState.value.playing;
+            await _audioController.pause();
+            break;
+          }
+      }
+    } else {
+      switch (event.type) {
+        case AudioInterruptionType.duck:
+          _audioController.setVolume(currentVolumeBeforeDuck);
+          break;
+        case AudioInterruptionType.pause when wasPausedByBeginEvent:
+        case AudioInterruptionType.unknown when wasPausedByBeginEvent:
+          await _audioController.play();
+          wasPausedByBeginEvent = false;
+          break;
+        default:
+          break;
+      }
+    }
+  });
+
+  session.becomingNoisyEventStream.listen((_) {
+    _audioController.pause();
+  });
 
   await _audioController.restoreLastState();
 
   return _audioController;
 }
 
-class AudioController extends BaseAudioHandler
-    implements MelodinkHostPlayerApiInfo {
+class AudioController extends BaseAudioHandler {
   static final Stream<Duration> quickPosition =
       AudioService.createPositionStream(
           steps: 8000,
@@ -720,11 +759,6 @@ class AudioController extends BaseAudioHandler
         updatePlayerTracks: pos != _previousTracks.length - 1,
       );
     });
-  }
-
-  @override
-  Future<void> externalPause() async {
-    await pause();
   }
 
   Future<void> _updatePlaybackState({shouldDoubleCheck = true}) async {
