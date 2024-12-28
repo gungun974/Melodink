@@ -9,8 +9,10 @@ import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/helpers/timeago.dart';
 import 'package:melodink_client/core/network/network_info.dart';
+import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
@@ -159,6 +161,8 @@ class DesktopTrack extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final audioController = ref.watch(audioControllerProvider);
+
     final isServerReachable = ref.watch(isServerReachableProvider);
 
     final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
@@ -242,22 +246,78 @@ class DesktopTrack extends HookConsumerWidget {
 
                       switch (module) {
                         case DesktopTrackModule.title:
-                          yield SizedBox(
-                            width: 28,
-                            child: Text(
-                              "$trackNumber",
-                              textAlign: TextAlign.end,
-                              style: TextStyle(
-                                fontSize: 14,
-                                letterSpacing: 14 * 0.03,
-                                fontWeight: FontWeight.w500,
-                                color: isCurrentTrack
-                                    ? Theme.of(context).colorScheme.primary
-                                    : null,
+                          if (!isHovering.value) {
+                            yield SizedBox(
+                              width: 28,
+                              child: Text(
+                                "$trackNumber",
+                                textAlign: TextAlign.end,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  letterSpacing: 14 * 0.03,
+                                  fontWeight: FontWeight.w500,
+                                  color: isCurrentTrack
+                                      ? Theme.of(context).colorScheme.primary
+                                      : null,
+                                ),
                               ),
-                            ),
-                          );
-                          yield const SizedBox(width: 24);
+                            );
+                            yield const SizedBox(width: 24);
+                          } else {
+                            yield SizedBox(
+                              width: 28 + 24,
+                              child: Center(
+                                child: Listener(
+                                  onPointerDown: (event) async {
+                                    if (event.kind == PointerDeviceKind.touch ||
+                                        (event.kind ==
+                                                PointerDeviceKind.mouse &&
+                                            event.buttons != kPrimaryButton)) {
+                                      return;
+                                    }
+
+                                    if (!isCurrentTrack) {
+                                      playCallback(track);
+                                      return;
+                                    }
+                                    if (audioController
+                                        .playbackState.value.playing) {
+                                      await audioController.pause();
+                                      return;
+                                    }
+                                    await audioController.play();
+                                  },
+                                  child: GestureDetector(
+                                    onDoubleTap: () {},
+                                    child: StreamBuilder(
+                                        stream: audioController
+                                            .playbackState.stream,
+                                        builder: (context, snapshot) {
+                                          return AppIconButton(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: (28 + 24 - 18) / 2,
+                                              vertical: 16,
+                                            ),
+                                            icon: (snapshot.data?.playing ??
+                                                        false) &&
+                                                    isCurrentTrack
+                                                ? const AdwaitaIcon(
+                                                    AdwaitaIcons
+                                                        .media_playback_pause,
+                                                  )
+                                                : const AdwaitaIcon(
+                                                    AdwaitaIcons
+                                                        .media_playback_start,
+                                                  ),
+                                            iconSize: 18,
+                                            onPressed: () {},
+                                          );
+                                        }),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
                           yield Expanded(
                             child: Padding(
                               padding:
@@ -441,27 +501,33 @@ class DesktopTrack extends HookConsumerWidget {
                             ),
                           );
                         case DesktopTrackModule.moreActions:
-                          yield SizedBox(
-                            width: module.width,
-                            child: Center(
-                              child: GestureDetector(
-                                onTap: () {},
-                                onDoubleTap: () {},
-                                child: Listener(
-                                  onPointerDown: (_) {
-                                    final callback = selectCallback;
+                          yield Opacity(
+                            opacity: isTouchDevice(context)
+                                ? 1.0
+                                : (isHovering.value ? 1.0 : 0.0),
+                            child: SizedBox(
+                              width: module.width,
+                              child: Center(
+                                child: GestureDetector(
+                                  onTap: () {},
+                                  onDoubleTap: () {},
+                                  child: Listener(
+                                    onPointerDown: (_) {
+                                      final callback = selectCallback;
 
-                                    if (callback != null) {
-                                      callback(track);
-                                    }
-                                  },
-                                  child: ContextMenuButton(
-                                    contextMenuKey: trackContextMenuKey,
-                                    menuController: trackContextMenuController,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
+                                      if (callback != null) {
+                                        callback(track);
+                                      }
+                                    },
+                                    child: ContextMenuButton(
+                                      contextMenuKey: trackContextMenuKey,
+                                      menuController:
+                                          trackContextMenuController,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                      ),
+                                      direction: Axis.vertical,
                                     ),
-                                    direction: Axis.vertical,
                                   ),
                                 ),
                               ),
