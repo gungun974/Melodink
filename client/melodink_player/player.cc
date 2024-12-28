@@ -400,16 +400,23 @@ private:
 
     new_track->player_load_count += 1;
     track_auto_open_queue.push(new_track);
+    track_auto_open_conditional.notify_one();
 
     loaded_tracks.push_back(new_track);
 
     return new_track;
   }
 
+  std::mutex track_auto_open_mutex;
+  std::condition_variable track_auto_open_conditional;
+
   void TrackAutoOpenThread() {
+    std::unique_lock lock(track_auto_open_mutex);
+
     while (true) {
       while (track_auto_open_queue.empty()) {
-        std::this_thread::sleep_for(std::chrono::microseconds(10));
+        track_auto_open_conditional.wait(
+            lock, [this] { return !track_auto_open_queue.empty(); });
       }
 
       MelodinkTrack *track = track_auto_open_queue.front();
