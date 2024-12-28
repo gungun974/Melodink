@@ -230,6 +230,7 @@ class MobileTrack extends HookConsumerWidget {
                             left: 16,
                             right: 16,
                           ),
+                          direction: Axis.vertical,
                         ),
                       ),
                     ),

@@ -8,12 +8,15 @@ class ContextMenuButton extends StatelessWidget {
     required this.contextMenuKey,
     required this.menuController,
     required this.padding,
+    this.direction = Axis.horizontal,
   });
 
   final EdgeInsets padding;
 
   final GlobalKey<State<StatefulWidget>> contextMenuKey;
   final MenuController menuController;
+
+  final Axis direction;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +59,9 @@ class ContextMenuButton extends StatelessWidget {
         child: AppIconButton(
           padding: padding,
           iconSize: 20,
-          icon: const AdwaitaIcon(AdwaitaIcons.view_more_horizontal),
+          icon: direction == Axis.horizontal
+              ? const AdwaitaIcon(AdwaitaIcons.view_more_horizontal)
+              : const AdwaitaIcon(AdwaitaIcons.view_more),
         ),
       ),
     );

@@ -461,6 +461,7 @@ class DesktopTrack extends HookConsumerWidget {
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 24,
                                     ),
+                                    direction: Axis.vertical,
                                   ),
                                 ),
                               ),
