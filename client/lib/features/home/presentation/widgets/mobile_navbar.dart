@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/routes/provider.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class MobileNavbar extends ConsumerWidget {
   const MobileNavbar({
@@ -19,9 +20,9 @@ class MobileNavbar extends ConsumerWidget {
       child: Row(
         children: [
           MobileNavbarItem(
-            label: 'Search',
+            label: t.general.tracks,
             icon: const AdwaitaIcon(
-              AdwaitaIcons.system_search,
+              AdwaitaIcons.music_note_single,
               size: 24,
             ),
             onTap: () {
@@ -30,7 +31,7 @@ class MobileNavbar extends ConsumerWidget {
             active: currentUrl == "/track",
           ),
           MobileNavbarItem(
-            label: 'Playlists',
+            label: t.general.playlists,
             icon: const AdwaitaIcon(
               AdwaitaIcons.playlist2,
               size: 24,
@@ -41,7 +42,7 @@ class MobileNavbar extends ConsumerWidget {
             active: currentUrl == "/playlist",
           ),
           MobileNavbarItem(
-            label: 'Albums',
+            label: t.general.albums,
             icon: const AdwaitaIcon(
               AdwaitaIcons.media_optical,
               size: 24,
@@ -52,7 +53,7 @@ class MobileNavbar extends ConsumerWidget {
             active: currentUrl == "/album",
           ),
           MobileNavbarItem(
-            label: 'Artists',
+            label: t.general.artists,
             icon: const AdwaitaIcon(
               AdwaitaIcons.music_artist2,
               size: 24,
@@ -63,7 +64,7 @@ class MobileNavbar extends ConsumerWidget {
             active: currentUrl == "/artist",
           ),
           MobileNavbarItem(
-            label: 'Settings',
+            label: t.general.settings,
             icon: const AdwaitaIcon(
               AdwaitaIcons.gear,
               size: 24,

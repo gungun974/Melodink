@@ -34,9 +34,9 @@ class DesktopSidebar extends ConsumerWidget {
               child: Column(
                 children: [
                   DesktopSidebarItem(
-                    label: t.general.search,
+                    label: t.general.tracks,
                     icon: const AdwaitaIcon(
-                      AdwaitaIcons.system_search,
+                      AdwaitaIcons.music_note_single,
                       size: 24.0,
                     ),
                     onTap: () {
