@@ -130,6 +130,8 @@ class DesktopTrack extends HookConsumerWidget {
   final void Function(MinimalTrack track)? selectCallback;
 
   final bool selected;
+  final bool selectedTop;
+  final bool selectedBottom;
 
   final List<MinimalTrack> selectedTracks;
 
@@ -154,6 +156,8 @@ class DesktopTrack extends HookConsumerWidget {
     this.showImage = true,
     this.selectCallback,
     this.selected = false,
+    this.selectedTop = true,
+    this.selectedBottom = true,
     this.selectedTracks = const [],
     this.singleCustomActionsBuilder,
     this.multiCustomActionsBuilder,
@@ -231,7 +235,11 @@ class DesktopTrack extends HookConsumerWidget {
                     : (isHovering.value
                         ? const Color.fromRGBO(0, 0, 0, 0.05)
                         : Colors.transparent),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.vertical(
+                  top: selectedTop ? const Radius.circular(8) : Radius.zero,
+                  bottom:
+                      selectedBottom ? const Radius.circular(8) : Radius.zero,
+                ),
               ),
               child: DesktopTrackModuleLayout(
                 modules: modules,

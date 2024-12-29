@@ -299,6 +299,8 @@ class TrackList extends HookConsumerWidget {
                 );
               },
               selected: selected,
+              selectedTop: !selectedElements.value.contains(index - 1),
+              selectedBottom: !selectedElements.value.contains(index + 1),
               selectedTracks: selectedTracks.length == 1 ? [] : selectedTracks,
               selectCallback: selectCallback,
               singleCustomActionsBuilder: localSingleCustomActionsBuilder,
@@ -321,6 +323,8 @@ class TrackList extends HookConsumerWidget {
               selected: selected,
               selectedTracks: selectedTracks.length == 1 ? [] : selectedTracks,
               selectCallback: selectCallback,
+              selectedTop: !selectedElements.value.contains(index - 1),
+              selectedBottom: !selectedElements.value.contains(index + 1),
               singleCustomActionsBuilder: localSingleCustomActionsBuilder,
               multiCustomActionsBuilder: localMultiCustomActionsBuilder,
             );
