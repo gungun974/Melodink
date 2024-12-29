@@ -10,6 +10,8 @@ import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
+import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
@@ -64,6 +66,8 @@ class MobileTrack extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentTheme = ref.watch(currentAppThemeProvider);
+
     final isServerReachable = ref.watch(isServerReachableProvider);
 
     final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
@@ -128,9 +132,13 @@ class MobileTrack extends HookConsumerWidget {
               padding: const EdgeInsets.only(left: 12),
               decoration: BoxDecoration(
                 color: selected
-                    ? const Color.fromRGBO(0, 0, 0, 0.075)
+                    ? (currentTheme == AppSettingTheme.dark
+                        ? const Color.fromRGBO(160, 160, 160, 0.139)
+                        : const Color.fromRGBO(0, 0, 0, 0.139))
                     : (isHovering.value
-                        ? const Color.fromRGBO(0, 0, 0, 0.05)
+                        ? (currentTheme == AppSettingTheme.dark
+                            ? const Color.fromRGBO(160, 160, 160, 0.05)
+                            : const Color.fromRGBO(0, 0, 0, 0.05))
                         : Colors.transparent),
                 borderRadius: BorderRadius.vertical(
                   top: selectedTop ? const Radius.circular(8) : Radius.zero,

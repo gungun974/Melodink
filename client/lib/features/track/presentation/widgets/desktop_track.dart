@@ -165,6 +165,8 @@ class DesktopTrack extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentTheme = ref.watch(currentAppThemeProvider);
+
     final audioController = ref.watch(audioControllerProvider);
 
     final isServerReachable = ref.watch(isServerReachableProvider);
@@ -231,9 +233,13 @@ class DesktopTrack extends HookConsumerWidget {
               height: 50,
               decoration: BoxDecoration(
                 color: selected
-                    ? const Color.fromRGBO(0, 0, 0, 0.075)
+                    ? (currentTheme == AppSettingTheme.dark
+                        ? const Color.fromRGBO(160, 160, 160, 0.139)
+                        : const Color.fromRGBO(0, 0, 0, 0.139))
                     : (isHovering.value
-                        ? const Color.fromRGBO(0, 0, 0, 0.05)
+                        ? (currentTheme == AppSettingTheme.dark
+                            ? const Color.fromRGBO(160, 160, 160, 0.05)
+                            : const Color.fromRGBO(0, 0, 0, 0.05))
                         : Colors.transparent),
                 borderRadius: BorderRadius.vertical(
                   top: selectedTop ? const Radius.circular(8) : Radius.zero,
