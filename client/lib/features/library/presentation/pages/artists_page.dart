@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
+import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/library/domain/providers/artist_provider.dart';
 import 'package:melodink_client/features/library/presentation/widgets/artist_collections_grid.dart';
@@ -29,20 +30,20 @@ class ArtistsPage extends HookConsumerWidget {
       return Container();
     }
 
-    return AppScreenTypeLayoutBuilder(builder: (context, size) {
-      final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
-      final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
+    return AppScreenTypeLayoutBuilder(
+      builder: (context, size) {
+        final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
+        final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
 
-      return CustomScrollView(
-        slivers: [
-          SliverContainer(
-            maxWidth: maxWidth,
-            padding: EdgeInsets.only(
-              left: padding,
-              right: padding,
-              top: 16.0,
-            ),
-            sliver: SliverToBoxAdapter(
+        return Column(
+          children: [
+            MaxContainer(
+              maxWidth: maxWidth,
+              padding: EdgeInsets.only(
+                left: padding,
+                right: padding,
+                top: 16.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -107,21 +108,27 @@ class ArtistsPage extends HookConsumerWidget {
                 ],
               ),
             ),
-          ),
-          SliverContainer(
-            maxWidth: maxWidth,
-            padding: EdgeInsets.only(
-              left: padding,
-              right: padding,
-              top: 16.0,
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  SliverContainer(
+                    maxWidth: maxWidth,
+                    padding: EdgeInsets.only(
+                      left: padding,
+                      right: padding,
+                      top: 16.0,
+                    ),
+                    sliver: ArtistCollectionsGrid(
+                      artists: artists,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            sliver: ArtistCollectionsGrid(
-              artists: artists,
-            ),
-          ),
-        ],
-      );
-    });
+          ],
+        );
+      },
+    );
   }
 }
 
