@@ -7,6 +7,7 @@ import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
+import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
@@ -157,12 +158,7 @@ class TracksPageSearchAndFilterHeader extends HookConsumerWidget {
 
     return AppScreenTypeLayoutBuilder(
       builder: (context, size) {
-        final searchField = AppTextFormField(
-          labelText: t.general.search,
-          prefixIcon: const AdwaitaIcon(
-            size: 20,
-            AdwaitaIcons.system_search,
-          ),
+        final searchField = AppSearchFormField(
           controller: searchTextController,
           onChanged: (value) =>
               ref.read(allTracksSearchInputProvider.notifier).state = value,

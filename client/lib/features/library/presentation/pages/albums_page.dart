@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
+import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
@@ -70,12 +71,7 @@ class AlbumsPage extends HookConsumerWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: AppTextFormField(
-                        labelText: t.general.search,
-                        prefixIcon: const AdwaitaIcon(
-                          size: 20,
-                          AdwaitaIcons.system_search,
-                        ),
+                      child: AppSearchFormField(
                         controller: searchTextController,
                         onChanged: (value) => ref
                             .read(allAlbumsSearchInputProvider.notifier)
