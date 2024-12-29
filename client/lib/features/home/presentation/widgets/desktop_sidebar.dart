@@ -12,6 +12,7 @@ import 'package:melodink_client/generated/i18n/translations.g.dart';
 class DesktopSidebar extends ConsumerWidget {
   const DesktopSidebar({super.key});
 
+  static const smallWidth = 180.0;
   static const width = 220.0;
   static const largeWidth = 280.0;
 
@@ -23,9 +24,11 @@ class DesktopSidebar extends ConsumerWidget {
         ref.watch(currentPlayerBarPositionProvider);
 
     return Container(
-      width: currentPlayerBarPosition == AppSettingPlayerBarPosition.side
-          ? largeWidth
-          : width,
+      width: switch (currentPlayerBarPosition) {
+        AppSettingPlayerBarPosition.side => largeWidth,
+        AppSettingPlayerBarPosition.center => smallWidth,
+        _ => width,
+      },
       color: const Color.fromRGBO(0, 0, 0, 0.08),
       child: Column(
         children: [
@@ -92,7 +95,8 @@ class DesktopSidebar extends ConsumerWidget {
               ),
             ),
           ),
-          const DesktopCurrentTrack(),
+          if (currentPlayerBarPosition != AppSettingPlayerBarPosition.center)
+            const DesktopCurrentTrack(),
           if (currentPlayerBarPosition == AppSettingPlayerBarPosition.side)
             const SidePlayerBar(),
         ],

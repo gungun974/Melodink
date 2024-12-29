@@ -76,6 +76,8 @@ class AlbumLinkText extends StatelessWidget {
                     decoration: TextDecoration.underline,
                   ),
             textAlign: textAlign,
+            maxLines: maxLines,
+            overflow: overflow,
           ),
         ),
       ),

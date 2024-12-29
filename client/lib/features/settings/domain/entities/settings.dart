@@ -10,6 +10,7 @@ enum AppSettingPlayerBarPosition {
   bottom,
   top,
   side,
+  center,
 }
 
 enum AppSettingAudioQuality {

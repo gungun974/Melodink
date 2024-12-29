@@ -179,6 +179,10 @@ class SettingsPage extends ConsumerWidget {
                                 value: AppSettingPlayerBarPosition.side,
                                 child: Text(t.positions.side),
                               ),
+                              DropdownMenuItem(
+                                value: AppSettingPlayerBarPosition.center,
+                                child: Text(t.positions.center),
+                              ),
                             ],
                           ),
                           const Divider(height: 24),

@@ -139,6 +139,7 @@ positions:
   top: "Haut"
   side: "Côté"
   bottom: "Bas"
+  center: "Centrer"
 
 scoringSystem:
   none: "Aucun"

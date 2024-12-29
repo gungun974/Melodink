@@ -10,6 +10,7 @@ import 'package:melodink_client/features/auth/domain/providers/server_setup_prov
 import 'package:melodink_client/features/home/presentation/widgets/desktop_sidebar.dart';
 import 'package:melodink_client/features/home/presentation/widgets/mobile_navbar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/desktop_player_bar.dart';
+import 'package:melodink_client/features/player/presentation/widgets/large_desktop_player_bar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/mobile_current_track.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
@@ -144,6 +145,9 @@ final appRouterProvider = Provider((ref) {
                         if (currentPlayerBarPosition ==
                             AppSettingPlayerBarPosition.bottom)
                           const DesktopPlayerBar(),
+                        if (currentPlayerBarPosition ==
+                            AppSettingPlayerBarPosition.center)
+                          const LargeDesktopPlayerBar(),
                       ],
                     ),
                   );

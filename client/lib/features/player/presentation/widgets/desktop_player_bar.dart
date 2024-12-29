@@ -46,6 +46,8 @@ class DesktopPlayerBar extends ConsumerWidget {
                   children: [
                     if (scoringSystem != AppSettingScoringSystem.none)
                       CurrentTrackScoreControl(),
+                    if (scoringSystem != AppSettingScoringSystem.none)
+                      SizedBox(width: 10),
                     VolumeControl(),
                     SizedBox(width: 2),
                     OpenQueueControl(),
