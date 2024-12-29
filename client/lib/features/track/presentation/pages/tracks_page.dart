@@ -221,24 +221,6 @@ class TracksPageSearchAndFilterHeader extends HookConsumerWidget {
                           .state = [];
                     },
                   ),
-                  const SizedBox(width: 16),
-                  AppButton(
-                    text: t.general.import,
-                    type: AppButtonType.primary,
-                    onPressed: () {
-                      if (!NetworkInfo().isServerRecheable()) {
-                        AppNotificationManager.of(context).notify(
-                          context,
-                          title: t.notifications.offline.title,
-                          message: t.notifications.offline.message,
-                          type: AppNotificationType.danger,
-                        );
-                        return;
-                      }
-
-                      ImportTracksModal.showModal(context);
-                    },
-                  ),
                   if (size == AppScreenTypeLayout.desktop)
                     const SizedBox(width: 24),
                   if (size == AppScreenTypeLayout.desktop)

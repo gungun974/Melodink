@@ -77,6 +77,8 @@ general:
   newPlaylist: "Nouvelle playlist"
   editPlaylist: "Modifier la playlist \"{name}\""
 
+  tracks: "Morceaux"
+
   genre: "Genre"
   genres: "Genres"
 
@@ -189,6 +191,8 @@ actions:
 
   changeAudio: "Changer l'audio"
   scanMetadata: "Analyser les métadonnées"
+
+  importTracks: "Importer de nouveaux morceaux"
 
   login: "Connexion"
   logout: "Se déconnecter"

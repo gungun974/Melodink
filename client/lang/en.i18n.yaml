@@ -77,6 +77,8 @@ general:
   newPlaylist: "New playlist"
   editPlaylist: "Edit playlist \"{name}\""
 
+  tracks: "Tracks"
+
   genre: "Genre"
   genres: "Genres"
 
@@ -190,6 +192,8 @@ actions:
 
   changeAudio: "Change Audio"
   scanMetadata: "Scan Metadata"
+
+  importTracks: "Import new tracks"
 
   login: "Connect"
   logout: "Logout"

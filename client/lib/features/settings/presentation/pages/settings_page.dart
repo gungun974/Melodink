@@ -19,6 +19,7 @@ import 'package:melodink_client/features/settings/presentation/widgets/setting_d
 import 'package:melodink_client/features/settings/presentation/widgets/setting_pannel.dart';
 import 'package:melodink_client/features/settings/presentation/widgets/setting_toggle_option.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
+import 'package:melodink_client/features/track/presentation/modals/import_tracks_modal.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -55,6 +56,37 @@ class SettingsPage extends ConsumerWidget {
                       SizedBox(height: padding),
                       const ServerInfo(),
                       const SizedBox(height: 16),
+                      SettingPannel(
+                        title: t.general.tracks,
+                        children: [
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppButton(
+                                  text: t.actions.importTracks,
+                                  type: AppButtonType.primary,
+                                  onPressed: () {
+                                    if (!NetworkInfo().isServerRecheable()) {
+                                      AppNotificationManager.of(context).notify(
+                                        context,
+                                        title: t.notifications.offline.title,
+                                        message:
+                                            t.notifications.offline.message,
+                                        type: AppNotificationType.danger,
+                                      );
+                                      return;
+                                    }
+
+                                    ImportTracksModal.showModal(context);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                        ],
+                      ),
                       SettingPannel(
                         title: t.general.network,
                         children: [
