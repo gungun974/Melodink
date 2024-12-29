@@ -38,10 +38,18 @@ class PlaylistsPage extends ConsumerWidget {
               child: Row(
                 children: [
                   Text(
-                    t.general.playlists,
+                    "${t.general.playlists} ",
                     style: const TextStyle(
                       fontSize: 48,
                       letterSpacing: 48 * 0.03,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    "(${playlists.length})",
+                    style: const TextStyle(
+                      fontSize: 35,
+                      letterSpacing: 35 * 0.03,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

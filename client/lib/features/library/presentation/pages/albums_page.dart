@@ -46,13 +46,25 @@ class AlbumsPage extends HookConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    t.general.albums,
-                    style: const TextStyle(
-                      fontSize: 48,
-                      letterSpacing: 48 * 0.03,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        "${t.general.albums} ",
+                        style: const TextStyle(
+                          fontSize: 48,
+                          letterSpacing: 48 * 0.03,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        "(${albums.length})",
+                        style: const TextStyle(
+                          fontSize: 35,
+                          letterSpacing: 35 * 0.03,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Row(
