@@ -721,7 +721,8 @@ public:
     seek_duration = position_ms;
 
     std::thread t([this, position_ms]() {
-      if (current_track == nullptr) {
+      MelodinkTrack *local_current_track = current_track;
+      if (local_current_track == nullptr) {
         seek_duration = -1;
         return;
       }
@@ -732,7 +733,7 @@ public:
 
       send_event_update_state(state);
 
-      current_track->player_load_count += 1;
+      local_current_track->player_load_count += 1;
 
       ma_device_state device_state = ma_device_get_state(&audio_device);
 
@@ -743,7 +744,7 @@ public:
         reinit_miniaudio_mutex.unlock();
       }
 
-      current_track->Seek(position_ms);
+      local_current_track->Seek(position_ms);
 
       seek_duration = -1;
 
@@ -763,7 +764,7 @@ public:
         reinit_miniaudio_mutex.unlock();
       }
 
-      current_track->player_load_count -= 1;
+      local_current_track->player_load_count -= 1;
     });
 
     t.detach();
