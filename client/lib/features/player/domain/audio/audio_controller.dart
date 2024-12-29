@@ -38,7 +38,6 @@ Future<AudioController> initAudioService() async {
     ),
   );
 
-  bool wasPausedByBeginEvent = false;
   double currentVolumeBeforeDuck = 1.0;
 
   session.interruptionEventStream.listen((event) async {
@@ -51,8 +50,6 @@ Future<AudioController> initAudioService() async {
         case AudioInterruptionType.pause:
         case AudioInterruptionType.unknown:
           {
-            wasPausedByBeginEvent =
-                _audioController.playbackState.value.playing;
             await _audioController.pause();
             break;
           }
@@ -61,11 +58,6 @@ Future<AudioController> initAudioService() async {
       switch (event.type) {
         case AudioInterruptionType.duck:
           _audioController.setVolume(currentVolumeBeforeDuck);
-          break;
-        case AudioInterruptionType.pause when wasPausedByBeginEvent:
-        case AudioInterruptionType.unknown when wasPausedByBeginEvent:
-          await _audioController.play();
-          wasPausedByBeginEvent = false;
           break;
         default:
           break;
