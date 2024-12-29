@@ -30887,6 +30887,16 @@ MA_API ma_result ma_device_start(ma_device* pDevice)
 
     ma_mutex_lock(&pDevice->startStopLock);
     {
+        if (ma_device_get_state(pDevice) == ma_device_state_uninitialized) {
+                ma_mutex_unlock(&pDevice->startStopLock);
+                return MA_INVALID_OPERATION;    /* Not initialized. */
+        }
+
+        if (ma_device_get_state(pDevice) == ma_device_state_started) {
+                ma_mutex_unlock(&pDevice->startStopLock);
+                return MA_SUCCESS;  /* Already started. */
+        }
+
         /* Starting and stopping are wrapped in a mutex which means we can assert that the device is in a stopped or paused state. */
         MA_ASSERT(ma_device_get_state(pDevice) == ma_device_state_stopped);
 
@@ -30947,6 +30957,16 @@ MA_API ma_result ma_device_stop(ma_device* pDevice)
 
     ma_mutex_lock(&pDevice->startStopLock);
     {
+        if (ma_device_get_state(pDevice) == ma_device_state_uninitialized) {
+                ma_mutex_unlock(&pDevice->startStopLock);
+                return MA_INVALID_OPERATION;    /* Not initialized. */
+        }
+
+        if (ma_device_get_state(pDevice) == ma_device_state_stopped) {
+                ma_mutex_unlock(&pDevice->startStopLock);
+                return MA_SUCCESS;  /* Already stopped. */
+        }
+
         /* Starting and stopping are wrapped in a mutex which means we can assert that the device is in a started or paused state. */
         MA_ASSERT(ma_device_get_state(pDevice) == ma_device_state_started);
 
