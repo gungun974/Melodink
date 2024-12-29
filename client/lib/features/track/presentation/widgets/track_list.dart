@@ -69,6 +69,52 @@ class TrackList extends HookConsumerWidget {
     final startSelect = useState<int?>(null);
     final endSelect = useState<int?>(null);
 
+    final startElement = useState<int>(-1);
+
+    final selectedElements = useState(<int>{});
+
+    selectMultiple(int index) {
+      if (!selectedElements.value.contains(index)) {
+        selectedElements.value = {...selectedElements.value, index};
+      } else {
+        selectedElements.value = selectedElements.value
+            .where(
+              (el) => el != index,
+            )
+            .toSet();
+      }
+
+      if (selectedElements.value.length == 1) {
+        startElement.value = index;
+      }
+    }
+
+    selectMultipleRange(int index) {
+      selectedElements.value = {...selectedElements.value, index};
+
+      if (selectedElements.value.length == 1) {
+        startElement.value = index;
+      }
+
+      final startIndex = startElement.value;
+      final endIndex = index;
+
+      if (startIndex == -1 || endIndex == -1) {
+        return;
+      }
+
+      final minIndex = min(startIndex, endIndex);
+      final maxIndex = max(endIndex, startIndex);
+
+      final newElements = <int>{};
+
+      for (var i = minIndex; i <= maxIndex; i++) {
+        newElements.add(i);
+      }
+
+      selectedElements.value = newElements;
+    }
+
     final listController = useListController();
 
     ref.listen(currentTrackStreamProvider, (asyncPrevTrack, asyncCurrentTrack) {
@@ -171,38 +217,32 @@ class TrackList extends HookConsumerWidget {
         (context, index) {
           late final Widget child;
 
-          final selected = startSelect.value == index ||
-              (startSelect.value != null &&
-                  endSelect.value != null &&
-                  index >= min(startSelect.value!, endSelect.value!) &&
-                  index <= max(startSelect.value!, endSelect.value!));
+          final selected = selectedElements.value.contains(index);
 
-          late final List<MinimalTrack> selectedTracks;
-
-          if (selected &&
-              startSelect.value != null &&
-              endSelect.value != null) {
-            selectedTracks = tracks.sublist(
-                min(startSelect.value!, endSelect.value!),
-                max(startSelect.value!, endSelect.value!) + 1);
-          } else {
-            selectedTracks = const [];
-          }
+          final List<MinimalTrack> selectedTracks = tracks.indexed
+              .where(
+                (entry) => selectedElements.value.contains(
+                  entry.$1,
+                ),
+              )
+              .map(
+                (entry) => entry.$2,
+              )
+              .toList();
 
           selectCallback(track) {
             if (HardwareKeyboard.instance.isShiftPressed) {
-              startSelect.value ??= 0;
-
-              if (startSelect.value == index) {
-                endSelect.value = null;
-                return;
-              }
-              endSelect.value = index;
+              selectMultipleRange(index);
               return;
             }
 
-            startSelect.value = index;
-            endSelect.value = null;
+            if (HardwareKeyboard.instance.isControlPressed) {
+              selectMultiple(index);
+              return;
+            }
+
+            selectedElements.value = {index};
+            startElement.value = index;
           }
 
           List<Widget> Function(
@@ -259,7 +299,7 @@ class TrackList extends HookConsumerWidget {
                 );
               },
               selected: selected,
-              selectedTracks: selectedTracks,
+              selectedTracks: selectedTracks.length == 1 ? [] : selectedTracks,
               selectCallback: selectCallback,
               singleCustomActionsBuilder: localSingleCustomActionsBuilder,
               multiCustomActionsBuilder: localMultiCustomActionsBuilder,
@@ -279,7 +319,7 @@ class TrackList extends HookConsumerWidget {
               modules: modules,
               showImage: showImage,
               selected: selected,
-              selectedTracks: selectedTracks,
+              selectedTracks: selectedTracks.length == 1 ? [] : selectedTracks,
               selectCallback: selectCallback,
               singleCustomActionsBuilder: localSingleCustomActionsBuilder,
               multiCustomActionsBuilder: localMultiCustomActionsBuilder,
