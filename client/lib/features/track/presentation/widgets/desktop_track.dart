@@ -23,6 +23,7 @@ import 'package:melodink_client/features/track/presentation/widgets/album_link_t
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_score.dart';
+import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 enum DesktopTrackModule {
   title(width: 28 + 24, rightPadding: 24),
@@ -437,7 +438,7 @@ class DesktopTrack extends HookConsumerWidget {
                             width: module.width,
                             child: track.historyInfo?.lastPlayedDate == null
                                 ? Text(
-                                    "Never",
+                                    t.general.never,
                                     style: TextStyle(
                                       fontSize: 12,
                                       letterSpacing: 14 * 0.03,
@@ -463,7 +464,7 @@ class DesktopTrack extends HookConsumerWidget {
                             width: module.width,
                             child: Text(
                               track.historyInfo?.playedCount == 0
-                                  ? "Never"
+                                  ? t.general.never
                                   : "${track.historyInfo?.playedCount}",
                               style: TextStyle(
                                 fontSize: 12,
