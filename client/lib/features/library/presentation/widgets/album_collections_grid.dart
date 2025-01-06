@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
+import 'package:melodink_client/features/library/presentation/widgets/album_context_menu.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 
 class AlbumCollectionsGrid extends StatelessWidget {
@@ -46,78 +48,99 @@ class AlbumCollectionsGrid extends StatelessWidget {
             (context, index) {
               final album = albums[index];
 
-              return InkWell(
-                onTap: () {
-                  GoRouter.of(context).push("/album/${album.id}");
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AuthCachedNetworkImage(
-                      imageUrl: album.getCompressedCoverUrl(
-                        TrackCompressedCoverQuality.medium,
-                      ),
-                      placeholder: (context, url) => Image.asset(
-                        "assets/melodink_track_cover_not_found.png",
-                      ),
-                      errorWidget: (context, url, error) {
-                        return Image.asset(
-                          "assets/melodink_track_cover_not_found.png",
+              return HookBuilder(
+                builder: (context) {
+                  final albumContextMenuKey = useMemoized(() => GlobalKey());
+
+                  final albumContextMenuController = useMemoized(
+                    () => MenuController(),
+                  );
+
+                  return AlbumContextMenu(
+                    key: albumContextMenuKey,
+                    menuController: albumContextMenuController,
+                    album: album,
+                    child: InkWell(
+                      onTap: () {
+                        GoRouter.of(context).push("/album/${album.id}");
+                      },
+                      onSecondaryTapDown: (TapDownDetails details) {
+                        albumContextMenuController.open(
+                          position: details.localPosition + const Offset(5, 5),
                         );
                       },
-                    ),
-                    const SizedBox(height: 8),
-                    Tooltip(
-                      message: album.name,
-                      waitDuration: const Duration(milliseconds: 800),
-                      child: Text(
-                        album.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: Tooltip(
-                            message: album.albumArtists
-                                .map((artist) => artist.name)
-                                .join(", "),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AuthCachedNetworkImage(
+                            imageUrl: album.getCompressedCoverUrl(
+                              TrackCompressedCoverQuality.medium,
+                            ),
+                            placeholder: (context, url) => Image.asset(
+                              "assets/melodink_track_cover_not_found.png",
+                            ),
+                            errorWidget: (context, url, error) {
+                              return Image.asset(
+                                "assets/melodink_track_cover_not_found.png",
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          Tooltip(
+                            message: album.name,
                             waitDuration: const Duration(milliseconds: 800),
                             child: Text(
-                              album.albumArtists
-                                  .map((artist) => artist.name)
-                                  .join(", "),
+                              album.name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[400],
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
                           ),
-                        ),
-                        album.isDownloaded && album.downloadTracks
-                            ? Padding(
-                                padding: const EdgeInsets.only(left: 4.0),
-                                child: SvgPicture.asset(
-                                  "assets/icons/download2.svg",
-                                  width: 15,
-                                  height: 15,
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Tooltip(
+                                  message: album.albumArtists
+                                      .map((artist) => artist.name)
+                                      .join(", "),
+                                  waitDuration:
+                                      const Duration(milliseconds: 800),
+                                  child: Text(
+                                    album.albumArtists
+                                        .map((artist) => artist.name)
+                                        .join(", "),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
                                 ),
-                              )
-                            : const SizedBox.shrink(),
-                      ],
+                              ),
+                              album.isDownloaded && album.downloadTracks
+                                  ? Padding(
+                                      padding: const EdgeInsets.only(left: 4.0),
+                                      child: SvgPicture.asset(
+                                        "assets/icons/download2.svg",
+                                        width: 15,
+                                        height: 15,
+                                      ),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  );
+                },
               );
             },
             childCount: albums.length,

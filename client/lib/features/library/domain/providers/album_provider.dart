@@ -5,7 +5,6 @@ import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/library/domain/providers/edit_album_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
@@ -390,14 +389,8 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
 }
 
 @riverpod
-List<MinimalTrack> albumSortedTracks(Ref ref, String albumId) {
-  final asyncAlbum = ref.watch(albumByIdProvider(albumId));
-
-  final album = asyncAlbum.valueOrNull;
-
-  if (album == null) {
-    return [];
-  }
+Future<List<MinimalTrack>> albumSortedTracks(Ref ref, String albumId) async {
+  final album = await ref.watch(albumByIdProvider(albumId).future);
 
   final tracks = [...album.tracks];
 

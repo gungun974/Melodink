@@ -324,14 +324,8 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
 }
 
 @riverpod
-List<MinimalTrack> playlistSortedTracks(Ref ref, int playlistId) {
-  final asyncPlaylist = ref.watch(playlistByIdProvider(playlistId));
-
-  final playlist = asyncPlaylist.valueOrNull;
-
-  if (playlist == null) {
-    return [];
-  }
+Future<List<MinimalTrack>> playlistSortedTracks(Ref ref, int playlistId) async {
+  final playlist = await ref.watch(playlistByIdProvider(playlistId).future);
 
   final tracks = [...playlist.tracks];
 
