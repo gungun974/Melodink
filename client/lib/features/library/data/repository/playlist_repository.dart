@@ -95,19 +95,15 @@ class PlaylistRepository {
     }
   }
 
-  Future<void> removePlaylistTracks(
+  Future<void> setPlaylistTracks(
     int playlistId,
-    int fromIndex,
-    int toIndex,
+    List<MinimalTrack> tracks,
   ) async {
     final playlist = await playlistRemoteDataSource.getPlaylistById(playlistId);
 
     await playlistRemoteDataSource.setPlaylistTracks(
       playlist.id,
-      [
-        ...playlist.tracks.sublist(0, fromIndex),
-        ...playlist.tracks.sublist(toIndex + 1),
-      ],
+      tracks,
     );
 
     if (await playlistLocalDataSource.getPlaylistById(playlist.id) != null) {

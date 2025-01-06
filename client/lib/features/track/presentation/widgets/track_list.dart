@@ -40,8 +40,7 @@ class TrackList extends HookConsumerWidget {
     BuildContext context,
     MenuController menuController,
     List<MinimalTrack> tracks,
-    int startIndex,
-    int endIndex,
+    Set<int> selectedIndexes,
     VoidCallback unselect,
   )? multiCustomActionsBuilder;
 
@@ -271,15 +270,13 @@ class TrackList extends HookConsumerWidget {
               List<MinimalTrack> tracks)? localMultiCustomActionsBuilder;
 
           if (multiCustomActionsBuilder != null &&
-              startSelect.value != null &&
-              endSelect.value != null) {
+              selectedElements.value.isNotEmpty) {
             localMultiCustomActionsBuilder = (context, menuController, tracks) {
               return multiCustomActionsBuilder!(
                 context,
                 menuController,
                 tracks,
-                min(startSelect.value!, endSelect.value!),
-                max(startSelect.value!, endSelect.value!),
+                selectedElements.value,
                 () {
                   startSelect.value = null;
                   endSelect.value = null;

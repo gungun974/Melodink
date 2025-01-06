@@ -38,11 +38,10 @@ class PlaylistContextMenuNotifier extends _$PlaylistContextMenuNotifier {
     final _ = ref.refresh(playlistByIdProvider(playlist.id));
   }
 
-  removeTracks(Playlist playlist, int fromIndex, int toIndex) async {
-    await _playlistRepository.removePlaylistTracks(
+  setTracks(Playlist playlist, List<MinimalTrack> tracks) async {
+    await _playlistRepository.setPlaylistTracks(
       playlist.id,
-      fromIndex,
-      toIndex,
+      tracks,
     );
 
     await ref

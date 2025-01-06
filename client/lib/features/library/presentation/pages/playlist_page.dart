@@ -309,10 +309,12 @@ class PlaylistPage extends HookConsumerWidget {
                                   await ref
                                       .read(playlistContextMenuNotifierProvider
                                           .notifier)
-                                      .removeTracks(
+                                      .setTracks(
                                         playlist,
-                                        index,
-                                        index,
+                                        playlist.tracks.indexed
+                                            .where((entry) => entry.$1 != index)
+                                            .map((entry) => entry.$2)
+                                            .toList(),
                                       );
                                 } catch (_) {
                                   if (context.mounted) {
@@ -351,8 +353,7 @@ class PlaylistPage extends HookConsumerWidget {
                           context,
                           menuController,
                           tracks,
-                          startIndex,
-                          endIndex,
+                          selectedIndexes,
                           unselect,
                         ) {
                           return [
@@ -380,10 +381,15 @@ class PlaylistPage extends HookConsumerWidget {
                                   await ref
                                       .read(playlistContextMenuNotifierProvider
                                           .notifier)
-                                      .removeTracks(
+                                      .setTracks(
                                         playlist,
-                                        startIndex,
-                                        endIndex,
+                                        playlist.tracks.indexed
+                                            .where(
+                                              (entry) => !selectedIndexes
+                                                  .contains(entry.$1),
+                                            )
+                                            .map((entry) => entry.$2)
+                                            .toList(),
                                       );
                                 } catch (_) {
                                   if (context.mounted) {
