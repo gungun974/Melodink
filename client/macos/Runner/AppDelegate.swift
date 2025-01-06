@@ -19,14 +19,12 @@ class AppDelegate: FlutterAppDelegate {
 
     override func applicationDidFinishLaunching(_ aNotification: Notification) {
         statusItem = NSStatusBar.system.statusItem(
-            withLength: NSStatusItem.variableLength)
+            withLength: NSStatusItem.squareLength)
 
         if let button = statusItem?.button {
             if let originalImage = NSImage(named: NSImage.Name("AppIcon")) {
-                let resizedImage = resizeImageToFitStatusBar(
-                    image: originalImage, height: NSStatusBar.system.thickness)
                 let grayscaleImage =
-                    self.whitenedImage(image: resizedImage) ?? resizedImage
+                    self.whitenedImage(image: originalImage) ?? originalImage
                 button.image = grayscaleImage
                 button.imageScaling = .scaleProportionallyDown
             }
@@ -68,20 +66,5 @@ class AppDelegate: FlutterAppDelegate {
         let nsImage = NSImage(size: rep.size)
         nsImage.addRepresentation(rep)
         return nsImage
-    }
-
-    func resizeImageToFitStatusBar(image: NSImage, height: CGFloat) -> NSImage {
-        let ratio = image.size.width / image.size.height
-        let newSize = NSSize(width: height * ratio, height: height)
-
-        let newImage = NSImage(size: newSize)
-        newImage.lockFocus()
-        image.draw(
-            in: NSRect(
-                x: 0, y: 0, width: newSize.width, height: newSize.height),
-            from: NSRect.zero, operation: .copy, fraction: 1.0)
-        newImage.unlockFocus()
-
-        return newImage
     }
 }
