@@ -52,155 +52,153 @@ class DesktopPlaylistHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final audioController = ref.watch(audioControllerProvider);
 
-    return SliverToBoxAdapter(
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            AuthCachedNetworkImage(
-              imageUrl: imageUrl,
-              placeholder: (context, url) => Image.asset(
-                "assets/melodink_track_cover_not_found.png",
-              ),
-              errorWidget: (context, url, error) {
-                return Image.asset(
-                  "assets/melodink_track_cover_not_found.png",
-                );
-              },
-              height: 256,
+    return IntrinsicHeight(
+      child: Row(
+        children: [
+          AuthCachedNetworkImage(
+            imageUrl: imageUrl,
+            placeholder: (context, url) => Image.asset(
+              "assets/melodink_track_cover_not_found.png",
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    type,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      letterSpacing: 16 * 0.03,
-                      fontWeight: FontWeight.w500,
-                    ),
+            errorWidget: (context, url, error) {
+              return Image.asset(
+                "assets/melodink_track_cover_not_found.png",
+              );
+            },
+            height: 256,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  type,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    letterSpacing: 16 * 0.03,
+                    fontWeight: FontWeight.w500,
                   ),
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 48,
-                      letterSpacing: 48 * 0.03,
-                      fontWeight: FontWeight.w600,
-                    ),
+                ),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 48,
+                    letterSpacing: 48 * 0.03,
+                    fontWeight: FontWeight.w600,
                   ),
-                  Text(
-                    [
-                      t.general.trackNb(n: tracks.length),
-                      durationToHuman(
-                        tracks.fold(
-                          Duration.zero,
-                          (sum, activity) => sum + activity.duration,
-                        ),
-                        context,
-                      )
-                    ].join(" • "),
+                ),
+                Text(
+                  [
+                    t.general.trackNb(n: tracks.length),
+                    durationToHuman(
+                      tracks.fold(
+                        Duration.zero,
+                        (sum, activity) => sum + activity.duration,
+                      ),
+                      context,
+                    )
+                  ].join(" • "),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    letterSpacing: 14 * 0.03,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Text(
+                    description,
                     style: const TextStyle(
                       fontSize: 14,
                       letterSpacing: 14 * 0.03,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: Text(
-                      description,
+                ),
+                Row(
+                  children: [
+                    AppIconButton(
+                      onPressed: playCallback,
+                      padding: const EdgeInsets.only(right: 8),
+                      iconSize: 48,
+                      icon: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC47ED0),
+                          borderRadius: BorderRadius.circular(100.0),
+                        ),
+                        child: const Center(
+                          child: AdwaitaIcon(
+                            size: 32,
+                            AdwaitaIcons.media_playback_start,
+                          ),
+                        ),
+                      ),
+                    ),
+                    StreamBuilder(
+                      stream: audioController.playbackState,
+                      builder: (context, snapshot) {
+                        return AppIconButton(
+                          padding: const EdgeInsets.all(8),
+                          icon: const AdwaitaIcon(
+                            AdwaitaIcons.media_playlist_shuffle,
+                          ),
+                          color: snapshot.data?.shuffleMode ==
+                                  AudioServiceShuffleMode.all
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white,
+                          iconSize: 24.0,
+                          onPressed: () async {
+                            await audioController.toogleShufle();
+                          },
+                        );
+                      },
+                    ),
+                    if (contextMenuKey != null && menuController != null)
+                      ContextMenuButton(
+                        contextMenuKey: contextMenuKey!,
+                        menuController: menuController!,
+                        padding: const EdgeInsets.only(left: 12, right: 16),
+                      ),
+                    ArtistsLinksText(
+                      artists: artists,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 14,
                         letterSpacing: 14 * 0.03,
-                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ),
-                  Row(
-                    children: [
-                      AppIconButton(
-                        onPressed: playCallback,
-                        padding: const EdgeInsets.only(right: 8),
-                        iconSize: 48,
-                        icon: Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFC47ED0),
-                            borderRadius: BorderRadius.circular(100.0),
-                          ),
-                          child: const Center(
-                            child: AdwaitaIcon(
-                              size: 32,
-                              AdwaitaIcons.media_playback_start,
-                            ),
-                          ),
-                        ),
-                      ),
-                      StreamBuilder(
-                        stream: audioController.playbackState,
-                        builder: (context, snapshot) {
-                          return AppIconButton(
-                            padding: const EdgeInsets.all(8),
-                            icon: const AdwaitaIcon(
-                              AdwaitaIcons.media_playlist_shuffle,
-                            ),
-                            color: snapshot.data?.shuffleMode ==
-                                    AudioServiceShuffleMode.all
-                                ? Theme.of(context).colorScheme.primary
-                                : Colors.white,
-                            iconSize: 24.0,
-                            onPressed: () async {
-                              await audioController.toogleShufle();
-                            },
-                          );
-                        },
-                      ),
-                      if (contextMenuKey != null && menuController != null)
-                        ContextMenuButton(
-                          contextMenuKey: contextMenuKey!,
-                          menuController: menuController!,
-                          padding: const EdgeInsets.only(left: 12, right: 16),
-                        ),
-                      ArtistsLinksText(
-                        artists: artists,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          letterSpacing: 14 * 0.03,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const Spacer(),
-                      const SizedBox(width: 8),
-                      AppIconButton(
-                        padding:
-                            const EdgeInsets.only(left: 8, top: 8, bottom: 8),
-                        icon: downloaded
-                            ? SvgPicture.asset(
-                                "assets/icons/download2.svg",
-                                width: 24,
-                                height: 24,
-                              )
-                            : SvgPicture.asset(
-                                "assets/icons/download.svg",
-                                width: 24,
-                                height: 24,
-                                colorFilter: const ColorFilter.mode(
-                                  Colors.white,
-                                  BlendMode.srcIn,
-                                ),
+                    const Spacer(),
+                    const SizedBox(width: 8),
+                    AppIconButton(
+                      padding:
+                          const EdgeInsets.only(left: 8, top: 8, bottom: 8),
+                      icon: downloaded
+                          ? SvgPicture.asset(
+                              "assets/icons/download2.svg",
+                              width: 24,
+                              height: 24,
+                            )
+                          : SvgPicture.asset(
+                              "assets/icons/download.svg",
+                              width: 24,
+                              height: 24,
+                              colorFilter: const ColorFilter.mode(
+                                Colors.white,
+                                BlendMode.srcIn,
                               ),
-                        iconSize: 24.0,
-                        onPressed: downloadCallback,
-                      )
-                    ],
-                  )
-                ],
-              ),
+                            ),
+                      iconSize: 24.0,
+                      onPressed: downloadCallback,
+                    )
+                  ],
+                )
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

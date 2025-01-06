@@ -54,149 +54,153 @@ class AlbumPage extends HookConsumerWidget {
       );
     }
 
-    return AlbumContextMenu(
-      key: albumContextMenuKey,
-      menuController: albumContextMenuController,
-      album: album,
-      child: AppNavigationHeader(
-        title: AppScreenTypeLayoutBuilders(
-          mobile: (_) => Text(t.general.album),
-        ),
-        child: AppScreenTypeLayoutBuilder(
-          builder: (context, size) {
-            final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
-            final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
+    return AppNavigationHeader(
+      title: AppScreenTypeLayoutBuilders(
+        mobile: (_) => Text(t.general.album),
+      ),
+      child: AppScreenTypeLayoutBuilder(
+        builder: (context, size) {
+          final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
+          final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
 
-            final separator = size == AppScreenTypeLayout.desktop ? 16.0 : 12.0;
+          final separator = size == AppScreenTypeLayout.desktop ? 16.0 : 12.0;
 
-            return CustomScrollView(
-              key: scrollViewKey,
-              controller: scrollController,
-              slivers: [
-                SliverContainer(
-                  maxWidth: maxWidth,
-                  padding: EdgeInsets.only(
-                    left: padding,
-                    right: padding,
-                    top: padding,
-                    bottom: separator,
-                  ),
-                  sliver: size == AppScreenTypeLayout.desktop
-                      ? DesktopPlaylistHeader(
-                          name: album.name,
-                          type: t.general.album,
-                          imageUrl: album.getCompressedCoverUrl(
-                            TrackCompressedCoverQuality.high,
-                          ),
-                          description: "",
-                          tracks: tracks,
-                          artists: album.albumArtists,
-                          playCallback: () async {
-                            await audioController.loadTracks(
-                              tracks,
-                              source: "${t.general.album} \"${album.name}\"",
-                            );
-                          },
-                          downloadCallback: () async {
-                            final albumDownloadNotifier = ref.read(
-                              albumDownloadNotifierProvider(album.id).notifier,
-                            );
-
-                            if (!albumDownload.downloaded) {
-                              await albumDownloadNotifier.download(
-                                shouldCheckDownload: true,
+          return CustomScrollView(
+            key: scrollViewKey,
+            controller: scrollController,
+            slivers: [
+              SliverContainer(
+                maxWidth: maxWidth,
+                padding: EdgeInsets.only(
+                  left: padding,
+                  right: padding,
+                  top: padding,
+                  bottom: separator,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: AlbumContextMenu(
+                    key: albumContextMenuKey,
+                    menuController: albumContextMenuController,
+                    album: album,
+                    child: size == AppScreenTypeLayout.desktop
+                        ? DesktopPlaylistHeader(
+                            name: album.name,
+                            type: t.general.album,
+                            imageUrl: album.getCompressedCoverUrl(
+                              TrackCompressedCoverQuality.high,
+                            ),
+                            description: "",
+                            tracks: tracks,
+                            artists: album.albumArtists,
+                            playCallback: () async {
+                              await audioController.loadTracks(
+                                tracks,
+                                source: "${t.general.album} \"${album.name}\"",
                               );
-                            } else {
-                              await albumDownloadNotifier.deleteDownloaded();
-                            }
-                          },
-                          downloaded: albumDownload.downloaded,
-                          contextMenuKey: albumContextMenuKey,
-                          menuController: albumContextMenuController,
-                        )
-                      : MobilePlaylistHeader(
-                          name: album.name,
-                          type: t.general.album,
-                          imageUrl: album.getCompressedCoverUrl(
-                            TrackCompressedCoverQuality.high,
-                          ),
-                          tracks: tracks,
-                          artists: album.albumArtists,
-                          playCallback: () async {
-                            await audioController.loadTracks(
-                              tracks,
-                              source: "${t.general.album} \"${album.name}\"",
-                            );
-                          },
-                          downloadCallback: () async {
-                            final albumDownloadNotifier = ref.read(
-                              albumDownloadNotifierProvider(album.id).notifier,
-                            );
-
-                            if (!albumDownload.downloaded) {
-                              await albumDownloadNotifier.download(
-                                shouldCheckDownload: true,
+                            },
+                            downloadCallback: () async {
+                              final albumDownloadNotifier = ref.read(
+                                albumDownloadNotifierProvider(album.id)
+                                    .notifier,
                               );
-                            } else {
-                              await albumDownloadNotifier.deleteDownloaded();
-                            }
-                          },
-                          downloaded: albumDownload.downloaded,
-                          contextMenuKey: albumContextMenuKey,
-                          menuController: albumContextMenuController,
-                        ),
-                ),
-                SliverContainer(
-                  maxWidth: maxWidth,
-                  padding: EdgeInsets.only(
-                    left: padding,
-                    right: padding,
-                  ),
-                  sliver: StickyDesktopTrackHeader(
-                    modules: [
-                      DesktopTrackModule.title,
-                      DesktopTrackModule.lastPlayed,
-                      DesktopTrackModule.playedCount,
-                      DesktopTrackModule.quality,
-                      DesktopTrackModule.duration,
-                      DesktopTrackModule.score,
-                      DesktopTrackModule.moreActions,
-                    ],
-                    scrollController: scrollController,
-                    scrollViewKey: scrollViewKey,
-                  ),
-                ),
-                SliverContainer(
-                  maxWidth: maxWidth,
-                  padding: EdgeInsets.only(
-                    left: padding,
-                    right: padding,
-                  ),
-                  sliver: TrackList(
-                    tracks: tracks,
-                    size: size,
-                    showImage: false,
-                    modules: const [
-                      DesktopTrackModule.title,
-                      DesktopTrackModule.lastPlayed,
-                      DesktopTrackModule.playedCount,
-                      DesktopTrackModule.quality,
-                      DesktopTrackModule.duration,
-                      DesktopTrackModule.score,
-                      DesktopTrackModule.moreActions,
-                    ],
-                    scrollController: scrollController,
-                    scrollToTrackIdOnMounted: openWithScrollOnSpecificTrackId,
-                    source: "${t.general.album} \"${album.name}\"",
+
+                              if (!albumDownload.downloaded) {
+                                await albumDownloadNotifier.download(
+                                  shouldCheckDownload: true,
+                                );
+                              } else {
+                                await albumDownloadNotifier.deleteDownloaded();
+                              }
+                            },
+                            downloaded: albumDownload.downloaded,
+                            contextMenuKey: albumContextMenuKey,
+                            menuController: albumContextMenuController,
+                          )
+                        : MobilePlaylistHeader(
+                            name: album.name,
+                            type: t.general.album,
+                            imageUrl: album.getCompressedCoverUrl(
+                              TrackCompressedCoverQuality.high,
+                            ),
+                            tracks: tracks,
+                            artists: album.albumArtists,
+                            playCallback: () async {
+                              await audioController.loadTracks(
+                                tracks,
+                                source: "${t.general.album} \"${album.name}\"",
+                              );
+                            },
+                            downloadCallback: () async {
+                              final albumDownloadNotifier = ref.read(
+                                albumDownloadNotifierProvider(album.id)
+                                    .notifier,
+                              );
+
+                              if (!albumDownload.downloaded) {
+                                await albumDownloadNotifier.download(
+                                  shouldCheckDownload: true,
+                                );
+                              } else {
+                                await albumDownloadNotifier.deleteDownloaded();
+                              }
+                            },
+                            downloaded: albumDownload.downloaded,
+                            contextMenuKey: albumContextMenuKey,
+                            menuController: albumContextMenuController,
+                          ),
                   ),
                 ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 8),
+              ),
+              SliverContainer(
+                maxWidth: maxWidth,
+                padding: EdgeInsets.only(
+                  left: padding,
+                  right: padding,
                 ),
-              ],
-            );
-          },
-        ),
+                sliver: StickyDesktopTrackHeader(
+                  modules: [
+                    DesktopTrackModule.title,
+                    DesktopTrackModule.lastPlayed,
+                    DesktopTrackModule.playedCount,
+                    DesktopTrackModule.quality,
+                    DesktopTrackModule.duration,
+                    DesktopTrackModule.score,
+                    DesktopTrackModule.moreActions,
+                  ],
+                  scrollController: scrollController,
+                  scrollViewKey: scrollViewKey,
+                ),
+              ),
+              SliverContainer(
+                maxWidth: maxWidth,
+                padding: EdgeInsets.only(
+                  left: padding,
+                  right: padding,
+                ),
+                sliver: TrackList(
+                  tracks: tracks,
+                  size: size,
+                  showImage: false,
+                  modules: const [
+                    DesktopTrackModule.title,
+                    DesktopTrackModule.lastPlayed,
+                    DesktopTrackModule.playedCount,
+                    DesktopTrackModule.quality,
+                    DesktopTrackModule.duration,
+                    DesktopTrackModule.score,
+                    DesktopTrackModule.moreActions,
+                  ],
+                  scrollController: scrollController,
+                  scrollToTrackIdOnMounted: openWithScrollOnSpecificTrackId,
+                  source: "${t.general.album} \"${album.name}\"",
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 8),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
