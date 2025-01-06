@@ -26,6 +26,8 @@ class LargePlayerSeeker extends HookConsumerWidget {
       audioControllerPositionDataStreamProvider,
     );
 
+    final showRemainingDuration = ref.watch(showTrackRemainingDurationProvider);
+
     final newSeekFuture = useState<Duration?>(null);
 
     final positionData = audioControllerPositionDataStream.valueOrNull;
@@ -47,14 +49,11 @@ class LargePlayerSeeker extends HookConsumerWidget {
       duration = trackDuration;
     }
 
-    if ((position - duration).inMilliseconds.abs() < 800 &&
-        audioController.playbackState.value.playing == false) {
-      position = duration;
-    }
-
     if (newSeekFuture.value != null) {
       position = newSeekFuture.value ?? position;
     }
+
+    final remainingDuration = position - duration;
 
     final progressBar = AbsorbPointer(
       absorbing: duration.inMilliseconds < 100,
@@ -108,12 +107,20 @@ class LargePlayerSeeker extends HookConsumerWidget {
                   fontWeight: FontWeight.w300,
                 ),
               ),
-              Text(
-                durationToTime(duration),
-                style: const TextStyle(
-                  fontSize: 12,
-                  letterSpacing: 12 * 0.03,
-                  fontWeight: FontWeight.w300,
+              GestureDetector(
+                onTap: () {
+                  ref
+                      .read(showTrackRemainingDurationProvider.notifier)
+                      .toggle();
+                },
+                child: Text(
+                  durationToTime(
+                      showRemainingDuration ? remainingDuration : duration),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    letterSpacing: 12 * 0.03,
+                    fontWeight: FontWeight.w300,
+                  ),
                 ),
               ),
             ],
@@ -138,12 +145,18 @@ class LargePlayerSeeker extends HookConsumerWidget {
           child: progressBar,
         ),
         const SizedBox(width: 12.0),
-        Text(
-          durationToTime(duration),
-          style: const TextStyle(
-            fontSize: 12,
-            letterSpacing: 12 * 0.03,
-            fontWeight: FontWeight.w300,
+        GestureDetector(
+          onTap: () {
+            ref.read(showTrackRemainingDurationProvider.notifier).toggle();
+          },
+          child: Text(
+            durationToTime(
+                showRemainingDuration ? remainingDuration : duration),
+            style: const TextStyle(
+              fontSize: 12,
+              letterSpacing: 12 * 0.03,
+              fontWeight: FontWeight.w300,
+            ),
           ),
         ),
       ],

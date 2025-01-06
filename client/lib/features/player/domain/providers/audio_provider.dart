@@ -12,6 +12,7 @@ import 'package:melodink_client/features/track/domain/entities/track_compressed_
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 part 'audio_provider.g.dart';
 
@@ -108,4 +109,24 @@ double currentPlayerVolume(Ref ref) {
   final audioController = ref.watch(audioControllerProvider);
 
   return audioController.getVolume();
+}
+
+@riverpod
+class ShowTrackRemainingDuration extends _$ShowTrackRemainingDuration {
+  final SharedPreferencesAsync _asyncPrefs = SharedPreferencesAsync();
+
+  @override
+  bool build() {
+    loadSavedState();
+    return false;
+  }
+
+  loadSavedState() async {
+    state = await _asyncPrefs.getBool("showTrackRemainingDuration") ?? false;
+  }
+
+  toggle() {
+    state = !state;
+    _asyncPrefs.setBool("showTrackRemainingDuration", state);
+  }
 }

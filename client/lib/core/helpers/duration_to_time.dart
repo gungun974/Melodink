@@ -1,10 +1,16 @@
 String durationToTime(Duration time) {
-  final minutes = time.inMinutes.remainder(Duration.minutesPerHour).toString();
-  final seconds = time.inSeconds
+  final absTime = time.abs();
+  final minutes =
+      absTime.inMinutes.remainder(Duration.minutesPerHour).toString();
+  final seconds = absTime.inSeconds
       .remainder(Duration.secondsPerMinute)
       .toString()
       .padLeft(2, '0');
-  return time.inHours > 0
-      ? "${time.inHours}:${minutes.padLeft(2, "0")}:$seconds"
-      : "$minutes:$seconds";
+
+  final isNegative = time <= const Duration(seconds: -1);
+
+  return (isNegative ? "-" : "") +
+      (absTime.inHours > 0
+          ? "${absTime.inHours}:${minutes.padLeft(2, "0")}:$seconds"
+          : "$minutes:$seconds");
 }
