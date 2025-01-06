@@ -18,6 +18,24 @@ const darkTheme = [
   Color.fromRGBO(60, 80, 80, 1),
 ];
 
+const purpleTheme = [
+  Color.fromRGBO(205, 207, 224, 1),
+  Color.fromRGBO(111, 86, 179, 1),
+  Color.fromRGBO(159, 108, 177, 1),
+];
+
+const greyTheme = [
+  Color.fromRGBO(235, 235, 235, 1),
+  Color.fromRGBO(195, 195, 195, 1),
+  Color.fromRGBO(133, 133, 133, 1),
+];
+
+const cyanTheme = [
+  Color.fromRGBO(128, 216, 183, 1),
+  Color.fromRGBO(79, 187, 151, 1),
+  Color.fromRGBO(48, 156, 217, 1),
+];
+
 class GradientBackground extends ConsumerWidget {
   const GradientBackground({
     super.key,
@@ -49,6 +67,8 @@ class GradientBackground extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTheme = ref.watch(currentAppThemeProvider);
+    final dynamicBackgroundColors =
+        ref.watch(shouldDynamicBackgroundColorsProvider);
 
     final asyncPalette = ref.watch(currentTrackPaletteProvider);
 
@@ -56,37 +76,41 @@ class GradientBackground extends ConsumerWidget {
 
     List<Color> appliedTheme = defaultTheme;
 
-    if (currentTheme == AppSettingTheme.dark) {
+    if (dynamicBackgroundColors && palette != null) {
+      appliedTheme = [
+        adjustColorLightness(
+          Color.fromRGBO(
+            palette[1][0],
+            palette[1][1],
+            palette[1][2],
+            1,
+          ),
+        ),
+        adjustColorLightness(
+          Color.fromRGBO(
+            palette[3][0],
+            palette[3][1],
+            palette[3][2],
+            1,
+          ),
+        ),
+        adjustColorLightness(
+          Color.fromRGBO(
+            palette[0][0],
+            palette[0][1],
+            palette[0][2],
+            1,
+          ),
+        ),
+      ];
+    } else if (currentTheme == AppSettingTheme.dark) {
       appliedTheme = darkTheme;
-    } else if (currentTheme == AppSettingTheme.dynamic) {
-      if (palette != null) {
-        appliedTheme = [
-          adjustColorLightness(
-            Color.fromRGBO(
-              palette[1][0],
-              palette[1][1],
-              palette[1][2],
-              1,
-            ),
-          ),
-          adjustColorLightness(
-            Color.fromRGBO(
-              palette[3][0],
-              palette[3][1],
-              palette[3][2],
-              1,
-            ),
-          ),
-          adjustColorLightness(
-            Color.fromRGBO(
-              palette[0][0],
-              palette[0][1],
-              palette[0][2],
-              1,
-            ),
-          ),
-        ];
-      }
+    } else if (currentTheme == AppSettingTheme.purple) {
+      appliedTheme = purpleTheme;
+    } else if (currentTheme == AppSettingTheme.cyan) {
+      appliedTheme = cyanTheme;
+    } else if (currentTheme == AppSettingTheme.grey) {
+      appliedTheme = greyTheme;
     }
 
     return Stack(

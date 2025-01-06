@@ -44,6 +44,9 @@ class SettingsRepository {
           .firstOrNull;
     }
 
+    final dynamicBackgroundColors =
+        await asyncPrefs.getBool("settingDynamicBackgroundColors");
+
     if (rawPlayerBarPosition != null) {
       playerBarPosition = AppSettingPlayerBarPosition.values
           .where((value) => value.name == rawPlayerBarPosition)
@@ -87,7 +90,8 @@ class SettingsRepository {
         await asyncPrefs.getBool("settingShareAllHistoryTrackingToServer");
 
     return AppSettings(
-      theme: theme ?? AppSettingTheme.dynamic,
+      theme: theme ?? AppSettingTheme.base,
+      dynamicBackgroundColors: dynamicBackgroundColors ?? true,
       playerBarPosition:
           playerBarPosition ?? AppSettingPlayerBarPosition.bottom,
       scoringSystem: scoringSystem ?? AppSettingScoringSystem.like,
@@ -113,6 +117,12 @@ class SettingsRepository {
       "settingTheme",
       settings.theme.name,
     );
+
+    await asyncPrefs.setBool(
+      "settingDynamicBackgroundColors",
+      settings.dynamicBackgroundColors,
+    );
+
     await asyncPrefs.setString(
       "settingPlayerBarPosition",
       settings.playerBarPosition.name,

@@ -26,10 +26,21 @@ AppSettingTheme currentAppTheme(Ref ref) {
   final currentSettings = ref.watch(appSettingsNotifierProvider).valueOrNull;
 
   if (currentSettings == null) {
-    return AppSettingTheme.dynamic;
+    return AppSettingTheme.base;
   }
 
   return currentSettings.theme;
+}
+
+@riverpod
+bool shouldDynamicBackgroundColors(Ref ref) {
+  final currentSettings = ref.watch(appSettingsNotifierProvider).valueOrNull;
+
+  if (currentSettings == null) {
+    return true;
+  }
+
+  return currentSettings.dynamicBackgroundColors;
 }
 
 @riverpod

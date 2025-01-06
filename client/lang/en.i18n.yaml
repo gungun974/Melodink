@@ -121,6 +121,7 @@ general:
   musicBrainzRecordingId: "MusicBrainz Recording Id"
 
 settings:
+  dynamicBackgroundColors: "Dynamic background colors based on the current track"
   desktopPlayerBarPosition: "Desktop Player bar position"
   rememberLoopAndShuffleAcrossRestarts: "Remember loop and shuffle across restarts"
   autoScrollViewToCurrentTrack: "Auto scroll view to current track"
@@ -133,7 +134,9 @@ settings:
 themes:
   default: "@:general.kDefault"
   dark: "Dark"
-  dynamic: "Dynamic"
+  purple: "Purple"
+  cyan: "Cyan"
+  grey: "Grey"
 
 positions:
   top: "Top"

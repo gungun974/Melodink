@@ -148,10 +148,32 @@ class SettingsPage extends ConsumerWidget {
                                 child: Text(t.themes.dark),
                               ),
                               DropdownMenuItem(
-                                value: AppSettingTheme.dynamic,
-                                child: Text(t.themes.dynamic),
+                                value: AppSettingTheme.purple,
+                                child: Text(t.themes.purple),
+                              ),
+                              DropdownMenuItem(
+                                value: AppSettingTheme.cyan,
+                                child: Text(t.themes.cyan),
+                              ),
+                              DropdownMenuItem(
+                                value: AppSettingTheme.grey,
+                                child: Text(t.themes.grey),
                               ),
                             ],
+                          ),
+                          const Divider(height: 24),
+                          SettingToggleOption(
+                            text: "${t.settings.dynamicBackgroundColors} :",
+                            value: settings.dynamicBackgroundColors,
+                            onToggle: (value) {
+                              ref
+                                  .read(appSettingsNotifierProvider.notifier)
+                                  .setSettings(
+                                    settings.copyWith(
+                                      dynamicBackgroundColors: value,
+                                    ),
+                                  );
+                            },
                           ),
                           const Divider(height: 24),
                           SettingDropdownOption(

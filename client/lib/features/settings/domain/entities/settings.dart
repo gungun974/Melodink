@@ -3,7 +3,9 @@ import 'package:equatable/equatable.dart';
 enum AppSettingTheme {
   base,
   dark,
-  dynamic,
+  purple,
+  cyan,
+  grey,
 }
 
 enum AppSettingPlayerBarPosition {
@@ -29,6 +31,7 @@ enum AppSettingScoringSystem {
 
 class AppSettings extends Equatable {
   final AppSettingTheme theme;
+  final bool dynamicBackgroundColors;
   final AppSettingPlayerBarPosition playerBarPosition;
   final AppSettingScoringSystem scoringSystem;
 
@@ -45,6 +48,7 @@ class AppSettings extends Equatable {
 
   const AppSettings({
     required this.theme,
+    required this.dynamicBackgroundColors,
     required this.playerBarPosition,
     required this.scoringSystem,
     required this.wifiAudioQuality,
@@ -59,6 +63,7 @@ class AppSettings extends Equatable {
 
   AppSettings copyWith({
     AppSettingTheme? theme,
+    bool? dynamicBackgroundColors,
     AppSettingPlayerBarPosition? playerBarPosition,
     AppSettingScoringSystem? scoringSystem,
     AppSettingAudioQuality? wifiAudioQuality,
@@ -72,6 +77,8 @@ class AppSettings extends Equatable {
   }) {
     return AppSettings(
       theme: theme ?? this.theme,
+      dynamicBackgroundColors:
+          dynamicBackgroundColors ?? this.dynamicBackgroundColors,
       playerBarPosition: playerBarPosition ?? this.playerBarPosition,
       scoringSystem: scoringSystem ?? this.scoringSystem,
       wifiAudioQuality: wifiAudioQuality ?? this.wifiAudioQuality,
@@ -94,6 +101,7 @@ class AppSettings extends Equatable {
   @override
   List<Object?> get props => [
         theme,
+        dynamicBackgroundColors,
         playerBarPosition,
         scoringSystem,
         wifiAudioQuality,
