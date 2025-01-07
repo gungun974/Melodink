@@ -36,7 +36,6 @@ void main() async {
   if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
     // Initialize FFI
     sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
 
     await windowManager.ensureInitialized();
 
@@ -51,6 +50,8 @@ void main() async {
 
     windowManager.waitUntilReadyToShow(windowOptions);
   }
+
+  databaseFactory = databaseFactoryFfi;
 
   try {
     await DatabaseService.getDatabase();

@@ -169,6 +169,7 @@ class DatabaseService {
         } catch (e) {
           databaseLogger
               .e("Failed to apply database migration ${migrationFile.version}");
+          databaseLogger.e(e);
           rethrow;
         }
 
