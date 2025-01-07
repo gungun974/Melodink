@@ -24,7 +24,14 @@ class CreatePlaylistStream extends _$CreatePlaylistStream {
   }
 
   Future<Playlist> createPlaylist(Playlist playlist) async {
-    final newPlaylist = await _playlistRepository.createPlaylist(playlist);
+    Playlist newPlaylist = await _playlistRepository.createPlaylist(playlist);
+
+    if (playlist.tracks.isNotEmpty) {
+      newPlaylist = await _playlistRepository.setPlaylistTracks(
+        newPlaylist.id,
+        playlist.tracks,
+      );
+    }
 
     if (!_controller.isClosed) {
       _controller.add(newPlaylist);

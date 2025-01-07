@@ -95,13 +95,13 @@ class PlaylistRepository {
     }
   }
 
-  Future<void> setPlaylistTracks(
+  Future<Playlist> setPlaylistTracks(
     int playlistId,
     List<MinimalTrack> tracks,
   ) async {
     final playlist = await playlistRemoteDataSource.getPlaylistById(playlistId);
 
-    await playlistRemoteDataSource.setPlaylistTracks(
+    final newPlaylist = await playlistRemoteDataSource.setPlaylistTracks(
       playlist.id,
       tracks,
     );
@@ -109,6 +109,8 @@ class PlaylistRepository {
     if (await playlistLocalDataSource.getPlaylistById(playlist.id) != null) {
       await updateAndStorePlaylist(playlist.id);
     }
+
+    return newPlaylist;
   }
 
   Future<Playlist> updateAndStorePlaylist(int id) async {

@@ -10,6 +10,7 @@ import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
+import 'package:melodink_client/features/library/presentation/modals/create_playlist_modal.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
@@ -66,60 +67,75 @@ class SingleTrackContextMenu extends ConsumerWidget {
             AdwaitaIcons.playlist2,
             size: 20,
           ),
-          menuChildren: switch (asyncPlaylists) {
-            AsyncData(:final value) => value.map((playlist) {
-                return MenuItemButton(
-                  child: Text(playlist.name),
-                  onPressed: () async {
-                    menuController.close();
+          menuChildren: [
+            MenuItemButton(
+              child: Text(t.actions.newPlaylist),
+              onPressed: () {
+                menuController.close();
 
-                    if (!NetworkInfo().isServerRecheable()) {
-                      AppNotificationManager.of(context).notify(
-                        context,
-                        title: t.notifications.offline.title,
-                        message: t.notifications.offline.message,
-                        type: AppNotificationType.danger,
-                      );
-                      return;
-                    }
+                CreatePlaylistModal.showModal(
+                  context,
+                  tracks: [track],
+                  pushRouteToNewPlaylist: true,
+                );
+              },
+            ),
+            const Divider(height: 0),
+            ...switch (asyncPlaylists) {
+              AsyncData(:final value) => value.map((playlist) {
+                  return MenuItemButton(
+                    child: Text(playlist.name),
+                    onPressed: () async {
+                      menuController.close();
 
-                    try {
-                      await ref
-                          .read(playlistContextMenuNotifierProvider.notifier)
-                          .addTracks(
-                        playlist,
-                        [track],
-                      );
-                    } catch (_) {
-                      if (context.mounted) {
+                      if (!NetworkInfo().isServerRecheable()) {
                         AppNotificationManager.of(context).notify(
                           context,
-                          title: t.notifications.somethingWentWrong.title,
-                          message: t.notifications.somethingWentWrong.message,
+                          title: t.notifications.offline.title,
+                          message: t.notifications.offline.message,
                           type: AppNotificationType.danger,
                         );
+                        return;
                       }
 
-                      rethrow;
-                    }
+                      try {
+                        await ref
+                            .read(playlistContextMenuNotifierProvider.notifier)
+                            .addTracks(
+                          playlist,
+                          [track],
+                        );
+                      } catch (_) {
+                        if (context.mounted) {
+                          AppNotificationManager.of(context).notify(
+                            context,
+                            title: t.notifications.somethingWentWrong.title,
+                            message: t.notifications.somethingWentWrong.message,
+                            type: AppNotificationType.danger,
+                          );
+                        }
 
-                    if (!context.mounted) {
-                      return;
-                    }
+                        rethrow;
+                      }
 
-                    AppNotificationManager.of(context).notify(
-                      context,
-                      message:
-                          t.notifications.playlistTrackHaveBeenAdded.message(
-                        n: 1,
-                        name: playlist.name,
-                      ),
-                    );
-                  },
-                );
-              }).toList(),
-            _ => const [],
-          },
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      AppNotificationManager.of(context).notify(
+                        context,
+                        message:
+                            t.notifications.playlistTrackHaveBeenAdded.message(
+                          n: 1,
+                          name: playlist.name,
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+              _ => const [],
+            },
+          ],
           child: Text(t.actions.addToPlaylist),
         ),
         const Divider(height: 8),

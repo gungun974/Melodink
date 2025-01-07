@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
@@ -11,11 +12,18 @@ import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class CreatePlaylistModal extends HookConsumerWidget {
+  final List<MinimalTrack> tracks;
+
+  final bool pushRouteToNewPlaylist;
+
   const CreatePlaylistModal({
     super.key,
+    this.tracks = const [],
+    this.pushRouteToNewPlaylist = false,
   });
 
   @override
@@ -98,7 +106,7 @@ class CreatePlaylistModal extends HookConsumerWidget {
                                   id: -1,
                                   name: nameTextController.text,
                                   description: descriptionTextController.text,
-                                  tracks: const [],
+                                  tracks: tracks,
                                 ));
 
                             isLoading.value = false;
@@ -111,6 +119,11 @@ class CreatePlaylistModal extends HookConsumerWidget {
                               context,
                               rootNavigator: true,
                             ).pop();
+
+                            if (pushRouteToNewPlaylist) {
+                              GoRouter.of(context)
+                                  .push("/playlist/${newPlaylist.id}");
+                            }
 
                             AppNotificationManager.of(context).notify(
                               context,
@@ -138,21 +151,26 @@ class CreatePlaylistModal extends HookConsumerWidget {
   }
 
   static showModal(
-    BuildContext context,
-  ) {
+    BuildContext context, {
+    List<MinimalTrack> tracks = const [],
+    bool pushRouteToNewPlaylist = false,
+  }) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: "CreatePlaylistModal",
       pageBuilder: (_, __, ___) {
-        return const Center(
+        return Center(
           child: MaxContainer(
             maxWidth: 420,
             padding: EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 64,
             ),
-            child: CreatePlaylistModal(),
+            child: CreatePlaylistModal(
+              tracks: tracks,
+              pushRouteToNewPlaylist: pushRouteToNewPlaylist,
+            ),
           ),
         );
       },
