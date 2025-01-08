@@ -411,7 +411,7 @@ private:
   std::condition_variable track_auto_open_conditional;
 
   void TrackAutoOpenThread() {
-    std::unique_lock lock(track_auto_open_mutex);
+    std::unique_lock<std::mutex> lock(track_auto_open_mutex);
 
     while (true) {
       while (track_auto_open_queue.empty()) {
