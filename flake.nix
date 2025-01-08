@@ -70,6 +70,7 @@
           platform-tools
           platforms-android-34
           platforms-android-33
+          platforms-android-32
           platforms-android-31
           platforms-android-28
           system-images-android-34-google-apis-playstore-x86-64
