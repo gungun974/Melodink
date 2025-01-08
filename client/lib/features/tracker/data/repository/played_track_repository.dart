@@ -3,6 +3,7 @@ import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
+import 'package:melodink_client/features/track/data/datasource/track_remote_data_source.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/tracker/domain/entities/played_track.dart';
 import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
@@ -384,6 +385,45 @@ class PlayedTrackRepository {
           historyInfo: () => infos[infoIndex],
         );
       }
+    }
+  }
+
+  Future<void> fix() async {
+    final db = await DatabaseService.getDatabase();
+
+    await db.rawDelete("DELETE FROM track_history_info_cache");
+    await db.rawDelete("DELETE FROM shared_played_tracks");
+
+    final data = await db.rawQuery(
+      """
+        SELECT *
+        FROM played_tracks
+      """,
+    );
+
+    final tracks = await TrackRemoteDataSource().getAllTracks();
+
+    final played =
+        data.reversed.map(PlayedTrackRepository.decodePlayedTrack).toList();
+
+    for (final p in played) {
+      final track = tracks.where((t) => t.id == p.trackId).firstOrNull;
+      if (track != null) {
+        await db.update(
+          "played_tracks",
+          {
+            "track_duration": track.duration.inMilliseconds,
+          },
+          where: "id = ?",
+          whereArgs: [
+            p.id,
+          ],
+        );
+      }
+    }
+
+    for (final t in tracks) {
+      await updateTrackHistoryInfoCache(t.id);
     }
   }
 }

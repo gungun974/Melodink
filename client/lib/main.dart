@@ -17,6 +17,7 @@ import 'package:melodink_client/features/player/domain/audio/melodink_player.dar
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/import_tracks_provider.dart';
+import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/providers/shared_played_track_provider.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -62,6 +63,8 @@ void main() async {
   await AppApi().configureDio();
 
   await NetworkInfo().setSavedForceOffline();
+
+  await PlayedTrackRepository().fix();
 
   await initAudioService();
 
