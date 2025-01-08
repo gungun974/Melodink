@@ -144,6 +144,15 @@ func (c *SharedPlayedTrackController) UploadPlayedTrack(
 		return nil, entities.NewValidationError(err.Error())
 	}
 
+	trackDuration, err := validator.ValidateMapInt(
+		"track_duration",
+		bodyData,
+		validator.IntValidators{},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
 	return c.sharedPlayedTrackUsecase.UploadPlayedTrack(
 		ctx,
 		shared_played_track_usecase.UploadPlayedTrackParams{
@@ -162,6 +171,8 @@ func (c *SharedPlayedTrackController) UploadPlayedTrack(
 			Shuffle: shuffle,
 
 			TrackEnded: trackEnded,
+
+			TrackDuration: trackDuration,
 		},
 	)
 }

@@ -14,6 +14,8 @@ class PlayedTrack extends Equatable {
 
   final bool trackEnded;
 
+  final Duration trackDuration;
+
   const PlayedTrack({
     required this.id,
     required this.trackId,
@@ -23,6 +25,7 @@ class PlayedTrack extends Equatable {
     required this.endedAt,
     required this.shuffle,
     required this.trackEnded,
+    required this.trackDuration,
   });
 
   @override
@@ -35,5 +38,6 @@ class PlayedTrack extends Equatable {
         endedAt,
         shuffle,
         trackEnded,
+        trackDuration,
       ];
 }

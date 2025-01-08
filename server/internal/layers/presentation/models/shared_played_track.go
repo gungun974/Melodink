@@ -25,6 +25,8 @@ type SharedPlayedTrackViewModel struct {
 
 	TrackEnded bool `json:"track_ended"`
 
+	TrackDuration int `json:"track_duration"`
+
 	SharedAt string `json:"shared_at"`
 }
 
@@ -49,6 +51,8 @@ func ConvertToSharedPlayedTrackViewModel(
 		Shuffle: playedTrack.Shuffle,
 
 		TrackEnded: playedTrack.TrackEnded,
+
+		TrackDuration: playedTrack.TrackDuration,
 
 		SharedAt: playedTrack.SharedAt.UTC().Format(time.RFC3339),
 	}

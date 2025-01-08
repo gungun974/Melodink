@@ -1,7 +1,5 @@
 import 'dart:math';
 
-import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
-import 'package:melodink_client/features/tracker/domain/providers/played_track_provider.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -151,6 +149,7 @@ class PlayerTrackerManager {
             endedAt: endedAt,
             shuffle: _isShuffled,
             trackEnded: trackEnded,
+            trackDuration: currentTrack.duration,
           )
           .then(newPlayedTrack.add);
 

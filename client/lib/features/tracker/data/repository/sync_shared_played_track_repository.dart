@@ -51,6 +51,7 @@ class SyncSharedPlayedTrackRepository {
             "ended_at": sharedPlayedTrack.endedAt.inMilliseconds,
             "shuffle": sharedPlayedTrack.shuffle ? 1 : 0,
             "track_ended": sharedPlayedTrack.trackEnded ? 1 : 0,
+            "track_duration": sharedPlayedTrack.trackDuration.inMilliseconds,
             "shared_at": sharedPlayedTrack.sharedAt.millisecondsSinceEpoch,
           },
           conflictAlgorithm: ConflictAlgorithm.replace,
@@ -96,6 +97,7 @@ class SyncSharedPlayedTrackRepository {
           "finish_at": playedTrack.finishAt.toUtc().toIso8601String(),
           "begin_at": playedTrack.beginAt.inMilliseconds,
           "ended_at": playedTrack.endedAt.inMilliseconds,
+          "track_duration": playedTrack.trackDuration.inMilliseconds,
           "shuffle": playedTrack.shuffle,
           "track_ended": playedTrack.trackEnded,
         });

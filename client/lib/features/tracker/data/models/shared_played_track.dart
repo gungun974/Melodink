@@ -18,6 +18,8 @@ class SharedPlayedTrackModel {
 
   final DateTime sharedAt;
 
+  final Duration trackDuration;
+
   const SharedPlayedTrackModel({
     required this.id,
     required this.internalDeviceId,
@@ -29,6 +31,7 @@ class SharedPlayedTrackModel {
     required this.endedAt,
     required this.shuffle,
     required this.trackEnded,
+    required this.trackDuration,
     required this.sharedAt,
   });
 
@@ -44,6 +47,7 @@ class SharedPlayedTrackModel {
       endedAt: Duration(milliseconds: json['ended_at'] as int),
       shuffle: json['shuffle'] as bool,
       trackEnded: json['track_ended'] as bool,
+      trackDuration: Duration(milliseconds: json['track_duration'] as int),
       sharedAt: DateTime.parse(json['shared_at'] as String),
     );
   }

@@ -27,6 +27,8 @@ type UploadPlayedTrackParams struct {
 	Shuffle bool
 
 	TrackEnded bool
+
+	TrackDuration int
 }
 
 func (u *SharedPlayedTrackUsecase) UploadPlayedTrack(
@@ -56,6 +58,8 @@ func (u *SharedPlayedTrackUsecase) UploadPlayedTrack(
 		Shuffle: params.Shuffle,
 
 		TrackEnded: params.TrackEnded,
+
+		TrackDuration: params.TrackDuration,
 	}
 
 	if err := u.sharedPlayedTrackRepository.AddSharedPlayedTrack(&newSharedPlayedTrack); err != nil {

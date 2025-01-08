@@ -33,8 +33,9 @@ type SharedPlayedTrackModel struct {
 	BeginAt int `db:"begin_at"`
 	EndedAt int `db:"ended_at"`
 
-	Shuffle    bool `db:"shuffle"`
-	TrackEnded bool `db:"track_ended"`
+	Shuffle       bool `db:"shuffle"`
+	TrackEnded    bool `db:"track_ended"`
+	TrackDuration int  `db:"track_duration"`
 
 	SharedAt time.Time `db:"shared_at"`
 }
@@ -55,8 +56,9 @@ func (m *SharedPlayedTrackModel) ToSharedPlayedTrack() entities.SharedPlayedTrac
 		BeginAt: m.BeginAt,
 		EndedAt: m.EndedAt,
 
-		Shuffle:    m.Shuffle,
-		TrackEnded: m.TrackEnded,
+		Shuffle:       m.Shuffle,
+		TrackEnded:    m.TrackEnded,
+		TrackDuration: m.TrackDuration,
 
 		SharedAt: m.SharedAt,
 	}

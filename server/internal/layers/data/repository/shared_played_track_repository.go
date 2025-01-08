@@ -52,6 +52,7 @@ func (r *SharedPlayedTrackRepository) AddSharedPlayedTrack(
         ended_at = ?,
         shuffle = ?,
         track_ended = ?
+        track_duration = ?
     WHERE internal_device_id = ? AND device_id = ?
     RETURNING *;
   `,
@@ -67,6 +68,7 @@ func (r *SharedPlayedTrackRepository) AddSharedPlayedTrack(
 
 		playedTrack.Shuffle,
 		playedTrack.TrackEnded,
+		playedTrack.TrackDuration,
 
 		playedTrack.InternalDeviceId,
 		playedTrack.DeviceId,
@@ -95,10 +97,12 @@ func (r *SharedPlayedTrackRepository) AddSharedPlayedTrack(
         ended_at,
 
         shuffle,
-        track_ended
+        track_ended,
+        track_duration
       )
     VALUES
       (
+        ?,
         ?,
         ?,
         ?,
@@ -127,6 +131,7 @@ func (r *SharedPlayedTrackRepository) AddSharedPlayedTrack(
 
 		playedTrack.Shuffle,
 		playedTrack.TrackEnded,
+		playedTrack.TrackDuration,
 	)
 	if err != nil {
 		logger.DatabaseLogger.Error(err)

@@ -19,6 +19,7 @@ class PlayedTrackRepository {
       endedAt: Duration(milliseconds: data["ended_at"] as int),
       shuffle: data["shuffle"] == 0 ? false : true,
       trackEnded: data["track_ended"] == 0 ? false : true,
+      trackDuration: Duration(milliseconds: data["track_duration"] as int),
     );
   }
 
@@ -48,12 +49,12 @@ class PlayedTrackRepository {
                   ORDER BY finish_at ASC
                 ) AS prev_track_id
           FROM (
-            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended
+            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended, track_duration
             FROM played_tracks
 
             UNION ALL
 
-            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended
+            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended, track_duration
             FROM shared_played_tracks
             WHERE device_id != ?
           )
@@ -79,21 +80,61 @@ class PlayedTrackRepository {
 
     try {
       final data = await db.rawQuery("""
-        SELECT * FROM (
-            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended 
-            FROM played_tracks 
-            
-            UNION ALL 
-            
-            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended 
-            FROM shared_played_tracks
-            WHERE device_id != ?
-        ) 
-        WHERE track_id = ? 
-            AND track_ended = 1 
-        ORDER BY finish_at DESC 
+        WITH SegmentedTracks AS (SELECT *,
+                                        CASE
+                                            WHEN LEAD(begin_at, 1, begin_at)
+                                                      OVER (PARTITION BY track_id, device_id ORDER BY finish_at) >=
+                                                MIN(track_duration * 0.2, 5000.0) AND
+                                                LEAD(track_id, 1, track_id)
+                                                      OVER (PARTITION BY track_id, device_id ORDER BY finish_at) == track_id
+                                                THEN 0
+                                            ELSE 1
+                                            END AS is_new_segment
+                                FROM (SELECT id,
+                                              track_id,
+                                              start_at,
+                                              finish_at,
+                                              begin_at,
+                                              ended_at,
+                                              shuffle,
+                                              track_ended,
+                                              track_duration,
+                                              ? as device_id
+                                      FROM played_tracks
+
+                                      UNION ALL
+
+                                      SELECT id,
+                                              track_id,
+                                              start_at,
+                                              finish_at,
+                                              begin_at,
+                                              ended_at,
+                                              shuffle,
+                                              track_ended,
+                                              track_duration,
+                                              device_id
+                                      FROM shared_played_tracks
+                                      WHERE device_id != ?)
+                                WHERE track_id = ?),
+            NumberedTracks AS (SELECT *,
+                                      SUM(is_new_segment) OVER (PARTITION BY track_id, device_id ORDER BY finish_at DESC) AS segment_number
+                                FROM SegmentedTracks)
+        SELECT id,
+              track_id,
+              start_at,
+              finish_at,
+              begin_at,
+              ended_at,
+              shuffle,
+              track_ended,
+              track_duration
+        FROM NumberedTracks
+        GROUP BY track_id, device_id, segment_number
+        HAVING SUM(ended_at - begin_at) > MIN(track_duration * 0.4, 30000.0)
+        ORDER BY finish_at DESC
         LIMIT 1
-        """, [deviceId, trackId]);
+        """, [deviceId, deviceId, trackId]);
 
       if (data.firstOrNull == null) {
         return null;
@@ -113,12 +154,57 @@ class PlayedTrackRepository {
 
     try {
       final data = await db.rawQuery("""
-        SELECT (
-            SELECT COUNT(*) FROM played_tracks WHERE track_id = ? AND track_ended = 1
-        ) + (
-            SELECT COUNT(*) FROM shared_played_tracks WHERE track_id = ? AND track_ended = 1 AND device_id != ?
-        ) as total_plays;
-        """, [trackId, trackId, deviceId]);
+        WITH SegmentedTracks AS (SELECT *,
+                                        CASE
+                                            WHEN LEAD(begin_at, 1, begin_at)
+                                                      OVER (PARTITION BY track_id, device_id ORDER BY finish_at) >=
+                                                MIN(track_duration * 0.2, 5000.0) AND
+                                                LEAD(track_id, 1, track_id)
+                                                      OVER (PARTITION BY track_id, device_id ORDER BY finish_at) == track_id
+                                                THEN 0
+                                            ELSE 1
+                                            END AS is_new_segment
+                                FROM (SELECT id,
+                                              track_id,
+                                              start_at,
+                                              finish_at,
+                                              begin_at,
+                                              ended_at,
+                                              shuffle,
+                                              track_ended,
+                                              track_duration,
+                                              ? as device_id
+                                      FROM played_tracks
+
+                                      UNION ALL
+
+                                      SELECT id,
+                                              track_id,
+                                              start_at,
+                                              finish_at,
+                                              begin_at,
+                                              ended_at,
+                                              shuffle,
+                                              track_ended,
+                                              track_duration,
+                                              device_id
+                                      FROM shared_played_tracks
+                                      WHERE device_id != ?)
+                                WHERE track_id = ?),
+            NumberedTracks AS (SELECT *,
+                                      SUM(is_new_segment) OVER (PARTITION BY track_id, device_id ORDER BY finish_at DESC) AS segment_number
+                                FROM SegmentedTracks),
+            FilteredTracks AS (SELECT track_id,
+                                      device_id,
+                                      segment_number,
+                                      finish_at,
+                                      SUM(ended_at - begin_at)
+                                FROM NumberedTracks
+                                GROUP BY track_id, device_id, segment_number
+                                HAVING SUM(ended_at - begin_at) > MIN(track_duration * 0.4, 30000.0))
+        SELECT COUNT(*)
+        FROM FilteredTracks order by finish_at desc;
+        """, [deviceId, deviceId, trackId]);
 
       if (data.firstOrNull == null) {
         return 0;
@@ -153,6 +239,7 @@ class PlayedTrackRepository {
     required Duration endedAt,
     required bool shuffle,
     required bool trackEnded,
+    required Duration trackDuration,
   }) async {
     final db = await DatabaseService.getDatabase();
 
@@ -164,6 +251,7 @@ class PlayedTrackRepository {
       "ended_at": endedAt.inMilliseconds,
       "shuffle": shuffle ? 1 : 0,
       "track_ended": trackEnded ? 1 : 0,
+      "track_duration": trackDuration.inMilliseconds,
     });
 
     await updateTrackHistoryInfoCache(trackId);

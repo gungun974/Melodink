@@ -21,7 +21,8 @@ type SharedPlayedTrack struct {
 
 	Shuffle bool
 
-	TrackEnded bool
+	TrackEnded    bool
+	TrackDuration int
 
 	SharedAt time.Time
 }
