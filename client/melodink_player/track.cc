@@ -42,6 +42,8 @@ private:
   std::atomic<bool> finished_reading{true};
   std::atomic<bool> keep_loading{true};
 
+  std::atomic<bool> is_track_will_be_destroy{false};
+
   std::atomic<int64_t> max_preload_cache{100 * 1024}; // 100KiB
 
   std::atomic<bool> infinite_loop{false};
@@ -291,6 +293,10 @@ private:
     audio_retry = true;
     stop_timeout_reopen = false;
 
+    if (is_track_will_be_destroy) {
+      return;
+    }
+
     reopen_thread = std::thread([this]() {
       std::unique_lock<std::mutex> lock(open_mutex);
 
@@ -313,6 +319,10 @@ private:
 
       while (true) {
         if (stop_timeout_reopen) {
+          return;
+        }
+
+        if (is_track_will_be_destroy) {
           return;
         }
 
@@ -783,7 +793,10 @@ private:
 public:
   MelodinkTrack() {}
 
-  ~MelodinkTrack() { Close(); }
+  ~MelodinkTrack() {
+    is_track_will_be_destroy = true;
+    Close();
+  }
 
   void SetLoadedUrl(const char *filename) { loaded_url = filename; }
 
