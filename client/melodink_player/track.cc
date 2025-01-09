@@ -931,8 +931,8 @@ public:
       return -1;
     }
 
-    shouldBufferPauseAndPreloadAMinimumAmount =
-        sample_count > audio_fifo.size();
+    // shouldBufferPauseAndPreloadAMinimumAmount =
+    //     sample_count > audio_fifo.size();
 
     int samples_read = audio_fifo.pop(output, sample_count);
 
