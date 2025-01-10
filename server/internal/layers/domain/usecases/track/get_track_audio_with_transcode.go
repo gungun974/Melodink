@@ -73,7 +73,7 @@ func (u *TrackUsecase) GetTrackAudioWithTranscode(
 		}
 	}
 
-	if !helpers.IsEmptyOrWhitespace(shouldAddEndOfFileDelemiter) {
+	if !helpers.IsEmptyOrWhitespace(shouldAddEndOfFileDelemiter) && ctx.Err() == nil {
 		_, _ = w.Write([]byte("MelodinkStreamEndOfFile"))
 	}
 
