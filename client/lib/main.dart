@@ -44,7 +44,8 @@ void main() async {
       skipTaskbar: false,
       titleBarStyle:
           Platform.isLinux ? TitleBarStyle.hidden : TitleBarStyle.normal,
-      minimumSize: const Size(300, 534),
+      minimumSize: kReleaseMode ? const Size(972, 534) : const Size(300, 534),
+      size: const Size(1200, 720),
       fullScreen: false,
     );
 
