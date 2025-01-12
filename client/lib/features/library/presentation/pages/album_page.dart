@@ -65,23 +65,23 @@ class AlbumPage extends HookConsumerWidget {
 
           final separator = size == AppScreenTypeLayout.desktop ? 16.0 : 12.0;
 
-          return CustomScrollView(
-            key: scrollViewKey,
-            controller: scrollController,
-            slivers: [
-              SliverContainer(
-                maxWidth: maxWidth,
-                padding: EdgeInsets.only(
-                  left: padding,
-                  right: padding,
-                  top: padding,
-                  bottom: separator,
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: AlbumContextMenu(
-                    key: albumContextMenuKey,
-                    menuController: albumContextMenuController,
-                    album: album,
+          return AlbumContextMenu(
+            key: albumContextMenuKey,
+            menuController: albumContextMenuController,
+            album: album,
+            child: CustomScrollView(
+              key: scrollViewKey,
+              controller: scrollController,
+              slivers: [
+                SliverContainer(
+                  maxWidth: maxWidth,
+                  padding: EdgeInsets.only(
+                    left: padding,
+                    right: padding,
+                    top: padding,
+                    bottom: separator,
+                  ),
+                  sliver: SliverToBoxAdapter(
                     child: size == AppScreenTypeLayout.desktop
                         ? DesktopPlaylistHeader(
                             name: album.name,
@@ -150,55 +150,55 @@ class AlbumPage extends HookConsumerWidget {
                           ),
                   ),
                 ),
-              ),
-              SliverContainer(
-                maxWidth: maxWidth,
-                padding: EdgeInsets.only(
-                  left: padding,
-                  right: padding,
+                SliverContainer(
+                  maxWidth: maxWidth,
+                  padding: EdgeInsets.only(
+                    left: padding,
+                    right: padding,
+                  ),
+                  sliver: StickyDesktopTrackHeader(
+                    modules: [
+                      DesktopTrackModule.title,
+                      DesktopTrackModule.lastPlayed,
+                      DesktopTrackModule.playedCount,
+                      DesktopTrackModule.quality,
+                      DesktopTrackModule.duration,
+                      DesktopTrackModule.score,
+                      DesktopTrackModule.moreActions,
+                    ],
+                    scrollController: scrollController,
+                    scrollViewKey: scrollViewKey,
+                  ),
                 ),
-                sliver: StickyDesktopTrackHeader(
-                  modules: [
-                    DesktopTrackModule.title,
-                    DesktopTrackModule.lastPlayed,
-                    DesktopTrackModule.playedCount,
-                    DesktopTrackModule.quality,
-                    DesktopTrackModule.duration,
-                    DesktopTrackModule.score,
-                    DesktopTrackModule.moreActions,
-                  ],
-                  scrollController: scrollController,
-                  scrollViewKey: scrollViewKey,
+                SliverContainer(
+                  maxWidth: maxWidth,
+                  padding: EdgeInsets.only(
+                    left: padding,
+                    right: padding,
+                  ),
+                  sliver: TrackList(
+                    tracks: tracks,
+                    size: size,
+                    showImage: false,
+                    modules: const [
+                      DesktopTrackModule.title,
+                      DesktopTrackModule.lastPlayed,
+                      DesktopTrackModule.playedCount,
+                      DesktopTrackModule.quality,
+                      DesktopTrackModule.duration,
+                      DesktopTrackModule.score,
+                      DesktopTrackModule.moreActions,
+                    ],
+                    scrollController: scrollController,
+                    scrollToTrackIdOnMounted: openWithScrollOnSpecificTrackId,
+                    source: "${t.general.album} \"${album.name}\"",
+                  ),
                 ),
-              ),
-              SliverContainer(
-                maxWidth: maxWidth,
-                padding: EdgeInsets.only(
-                  left: padding,
-                  right: padding,
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: 8),
                 ),
-                sliver: TrackList(
-                  tracks: tracks,
-                  size: size,
-                  showImage: false,
-                  modules: const [
-                    DesktopTrackModule.title,
-                    DesktopTrackModule.lastPlayed,
-                    DesktopTrackModule.playedCount,
-                    DesktopTrackModule.quality,
-                    DesktopTrackModule.duration,
-                    DesktopTrackModule.score,
-                    DesktopTrackModule.moreActions,
-                  ],
-                  scrollController: scrollController,
-                  scrollToTrackIdOnMounted: openWithScrollOnSpecificTrackId,
-                  source: "${t.general.album} \"${album.name}\"",
-                ),
-              ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 8),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),

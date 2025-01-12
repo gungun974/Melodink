@@ -38,140 +38,144 @@ class PlaylistContextMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final audioController = ref.watch(audioControllerProvider);
 
-    return MenuAnchor(
-      clipBehavior: Clip.antiAlias,
-      menuChildren: [
-        MenuItemButton(
-          leadingIcon: const AdwaitaIcon(
-            AdwaitaIcons.playlist,
-            size: 20,
-          ),
-          child: Text(t.actions.addToQueue),
-          onPressed: () async {
-            menuController.close();
-
-            final tracks = await ref.read(
-              playlistSortedTracksProvider(playlist.id).future,
-            );
-
-            audioController.addTracksToQueue(tracks);
-
-            if (!context.mounted) {
-              return;
-            }
-
-            AppNotificationManager.of(context).notify(
-              context,
-              message: t.notifications.haveBeenAddedToQueue.message(
-                n: tracks.length,
+    return Stack(
+      children: [
+        MenuAnchor(
+          clipBehavior: Clip.antiAlias,
+          menuChildren: [
+            MenuItemButton(
+              leadingIcon: const AdwaitaIcon(
+                AdwaitaIcons.playlist,
+                size: 20,
               ),
-            );
-          },
-        ),
-        const Divider(height: 8),
-        MenuItemButton(
-          leadingIcon: const Padding(
-            padding: EdgeInsets.all(2.0),
-            child: AdwaitaIcon(
-              AdwaitaIcons.edit,
-              size: 16,
-            ),
-          ),
-          child: Text(t.general.edit),
-          onPressed: () {
-            menuController.close();
+              child: Text(t.actions.addToQueue),
+              onPressed: () async {
+                menuController.close();
 
-            if (!NetworkInfo().isServerRecheable()) {
-              AppNotificationManager.of(context).notify(
-                context,
-                title: t.notifications.offline.title,
-                message: t.notifications.offline.message,
-                type: AppNotificationType.danger,
-              );
-              return;
-            }
+                final tracks = await ref.read(
+                  playlistSortedTracksProvider(playlist.id).future,
+                );
 
-            EditPlaylistModal.showModal(context, playlist);
-          },
-        ),
-        MenuItemButton(
-          leadingIcon: const Padding(
-            padding: EdgeInsets.all(2.0),
-            child: AdwaitaIcon(
-              AdwaitaIcons.edit_copy,
-              size: 16,
-            ),
-          ),
-          child: Text(t.general.duplicate),
-          onPressed: () async {
-            menuController.close();
+                audioController.addTracksToQueue(tracks);
 
-            if (!NetworkInfo().isServerRecheable()) {
-              AppNotificationManager.of(context).notify(
-                context,
-                title: t.notifications.offline.title,
-                message: t.notifications.offline.message,
-                type: AppNotificationType.danger,
-              );
-              return;
-            }
+                if (!context.mounted) {
+                  return;
+                }
 
-            if (!await appConfirm(
-              context,
-              title: t.confirms.title,
-              content: t.confirms.duplicatePlaylist,
-              textOK: t.confirms.confirm,
-            )) {
-              return;
-            }
-
-            final loadingWidget = OverlayEntry(
-              builder: (context) => AppPageLoader(),
-            );
-
-            if (context.mounted) {
-              Overlay.of(context, rootOverlay: true).insert(loadingWidget);
-            }
-
-            try {
-              final newPlaylist = await ref
-                  .read(createPlaylistStreamProvider.notifier)
-                  .duplicatePlaylist(playlist.id);
-
-              loadingWidget.remove();
-
-              if (!context.mounted) {
-                return;
-              }
-
-              GoRouter.of(context)
-                  .pushReplacement("/playlist/${newPlaylist.id}");
-
-              AppNotificationManager.of(context).notify(
-                context,
-                message: t.notifications.playlistHaveBeenDuplicated.message(
-                  name: playlist.name,
-                ),
-              );
-            } catch (_) {
-              if (context.mounted) {
                 AppNotificationManager.of(context).notify(
                   context,
-                  title: t.notifications.somethingWentWrong.title,
-                  message: t.notifications.somethingWentWrong.message,
-                  type: AppNotificationType.danger,
+                  message: t.notifications.haveBeenAddedToQueue.message(
+                    n: tracks.length,
+                  ),
                 );
-              }
+              },
+            ),
+            const Divider(height: 8),
+            MenuItemButton(
+              leadingIcon: const Padding(
+                padding: EdgeInsets.all(2.0),
+                child: AdwaitaIcon(
+                  AdwaitaIcons.edit,
+                  size: 16,
+                ),
+              ),
+              child: Text(t.general.edit),
+              onPressed: () {
+                menuController.close();
 
-              loadingWidget.remove();
-            }
-          },
+                if (!NetworkInfo().isServerRecheable()) {
+                  AppNotificationManager.of(context).notify(
+                    context,
+                    title: t.notifications.offline.title,
+                    message: t.notifications.offline.message,
+                    type: AppNotificationType.danger,
+                  );
+                  return;
+                }
+
+                EditPlaylistModal.showModal(context, playlist);
+              },
+            ),
+            MenuItemButton(
+              leadingIcon: const Padding(
+                padding: EdgeInsets.all(2.0),
+                child: AdwaitaIcon(
+                  AdwaitaIcons.edit_copy,
+                  size: 16,
+                ),
+              ),
+              child: Text(t.general.duplicate),
+              onPressed: () async {
+                menuController.close();
+
+                if (!NetworkInfo().isServerRecheable()) {
+                  AppNotificationManager.of(context).notify(
+                    context,
+                    title: t.notifications.offline.title,
+                    message: t.notifications.offline.message,
+                    type: AppNotificationType.danger,
+                  );
+                  return;
+                }
+
+                if (!await appConfirm(
+                  context,
+                  title: t.confirms.title,
+                  content: t.confirms.duplicatePlaylist,
+                  textOK: t.confirms.confirm,
+                )) {
+                  return;
+                }
+
+                final loadingWidget = OverlayEntry(
+                  builder: (context) => AppPageLoader(),
+                );
+
+                if (context.mounted) {
+                  Overlay.of(context, rootOverlay: true).insert(loadingWidget);
+                }
+
+                try {
+                  final newPlaylist = await ref
+                      .read(createPlaylistStreamProvider.notifier)
+                      .duplicatePlaylist(playlist.id);
+
+                  loadingWidget.remove();
+
+                  if (!context.mounted) {
+                    return;
+                  }
+
+                  GoRouter.of(context)
+                      .pushReplacement("/playlist/${newPlaylist.id}");
+
+                  AppNotificationManager.of(context).notify(
+                    context,
+                    message: t.notifications.playlistHaveBeenDuplicated.message(
+                      name: playlist.name,
+                    ),
+                  );
+                } catch (_) {
+                  if (context.mounted) {
+                    AppNotificationManager.of(context).notify(
+                      context,
+                      title: t.notifications.somethingWentWrong.title,
+                      message: t.notifications.somethingWentWrong.message,
+                      type: AppNotificationType.danger,
+                    );
+                  }
+
+                  loadingWidget.remove();
+                }
+              },
+            ),
+            if (customActionsBuilder != null)
+              ...customActionsBuilder!(context, menuController, playlist),
+          ],
+          controller: menuController,
         ),
-        if (customActionsBuilder != null)
-          ...customActionsBuilder!(context, menuController, playlist),
+        child,
       ],
-      controller: menuController,
-      child: child,
     );
   }
 }

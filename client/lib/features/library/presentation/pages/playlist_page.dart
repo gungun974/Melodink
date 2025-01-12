@@ -76,99 +76,96 @@ class PlaylistPage extends HookConsumerWidget {
               final separator =
                   size == AppScreenTypeLayout.desktop ? 16.0 : 12.0;
 
-              return CustomScrollView(
-                key: scrollViewKey,
-                controller: scrollController,
-                slivers: [
-                  SliverContainer(
-                    maxWidth: maxWidth,
-                    padding: EdgeInsets.only(
-                      left: padding,
-                      right: padding,
-                      top: padding,
-                      bottom: separator,
-                    ),
-                    sliver: SliverToBoxAdapter(
-                      child: PlaylistContextMenu(
-                        key: playlistContextMenuKey,
-                        menuController: playlistContextMenuController,
-                        playlist: playlist,
-                        customActionsBuilder: (context, _, __) {
-                          return [
-                            const Divider(height: 8),
-                            MenuItemButton(
-                              leadingIcon: const Padding(
-                                padding: EdgeInsets.all(2.0),
-                                child: AdwaitaIcon(
-                                  AdwaitaIcons.edit_delete,
-                                  size: 16,
-                                ),
-                              ),
-                              child: Text(t.general.delete),
-                              onPressed: () async {
-                                playlistContextMenuController.close();
+              return PlaylistContextMenu(
+                key: playlistContextMenuKey,
+                menuController: playlistContextMenuController,
+                playlist: playlist,
+                customActionsBuilder: (context, _, __) {
+                  return [
+                    const Divider(height: 8),
+                    MenuItemButton(
+                      leadingIcon: const Padding(
+                        padding: EdgeInsets.all(2.0),
+                        child: AdwaitaIcon(
+                          AdwaitaIcons.edit_delete,
+                          size: 16,
+                        ),
+                      ),
+                      child: Text(t.general.delete),
+                      onPressed: () async {
+                        playlistContextMenuController.close();
 
-                                if (!NetworkInfo().isServerRecheable()) {
-                                  AppNotificationManager.of(context).notify(
-                                    context,
-                                    title: t.notifications.offline.title,
-                                    message: t.notifications.offline.message,
-                                    type: AppNotificationType.danger,
-                                  );
-                                  return;
-                                }
+                        if (!NetworkInfo().isServerRecheable()) {
+                          AppNotificationManager.of(context).notify(
+                            context,
+                            title: t.notifications.offline.title,
+                            message: t.notifications.offline.message,
+                            type: AppNotificationType.danger,
+                          );
+                          return;
+                        }
 
-                                if (!await appConfirm(
-                                  context,
-                                  title: t.confirms.title,
-                                  content: t.confirms.deletePlaylist,
-                                  textOK: t.confirms.delete,
-                                  isDangerous: true,
-                                )) {
-                                  return;
-                                }
+                        if (!await appConfirm(
+                          context,
+                          title: t.confirms.title,
+                          content: t.confirms.deletePlaylist,
+                          textOK: t.confirms.delete,
+                          isDangerous: true,
+                        )) {
+                          return;
+                        }
 
-                                isLoading.value = true;
+                        isLoading.value = true;
 
-                                try {
-                                  await ref
-                                      .read(
-                                          deletePlaylistStreamProvider.notifier)
-                                      .deletePlaylist(playlist.id);
+                        try {
+                          await ref
+                              .read(deletePlaylistStreamProvider.notifier)
+                              .deletePlaylist(playlist.id);
 
-                                  isLoading.value = false;
+                          isLoading.value = false;
 
-                                  if (!context.mounted) {
-                                    return;
-                                  }
+                          if (!context.mounted) {
+                            return;
+                          }
 
-                                  AppNotificationManager.of(context).notify(
-                                    context,
-                                    message: t
-                                        .notifications.playlistHaveBeenDeleted
-                                        .message(
-                                      name: playlist.name,
-                                    ),
-                                  );
-
-                                  GoRouter.of(context).pop();
-                                } catch (_) {
-                                  if (context.mounted) {
-                                    AppNotificationManager.of(context).notify(
-                                      context,
-                                      title: t.notifications.somethingWentWrong
-                                          .title,
-                                      message: t.notifications
-                                          .somethingWentWrong.message,
-                                      type: AppNotificationType.danger,
-                                    );
-                                  }
-                                }
-                                isLoading.value = false;
-                              },
+                          AppNotificationManager.of(context).notify(
+                            context,
+                            message:
+                                t.notifications.playlistHaveBeenDeleted.message(
+                              name: playlist.name,
                             ),
-                          ];
-                        },
+                          );
+
+                          GoRouter.of(context).pop();
+                        } catch (_) {
+                          if (context.mounted) {
+                            AppNotificationManager.of(context).notify(
+                              context,
+                              title: t.notifications.somethingWentWrong.title,
+                              message:
+                                  t.notifications.somethingWentWrong.message,
+                              type: AppNotificationType.danger,
+                            );
+                          }
+                        }
+                        isLoading.value = false;
+                      },
+                    ),
+                  ];
+                },
+                child: CustomScrollView(
+                  key: scrollViewKey,
+                  controller: scrollController,
+                  slivers: [
+                    SliverContainer(
+                      maxWidth: maxWidth,
+                      padding: EdgeInsets.only(
+                        left: padding,
+                        right: padding,
+                        top: padding,
+                        bottom: separator,
+                      ),
+                      sliver: SliverToBoxAdapter(
                         child: size == AppScreenTypeLayout.desktop
                             ? DesktopPlaylistHeader(
                                 name: playlist.name,
@@ -243,203 +240,204 @@ class PlaylistPage extends HookConsumerWidget {
                               ),
                       ),
                     ),
-                  ),
-                  SliverContainer(
-                    maxWidth: maxWidth,
-                    padding: EdgeInsets.only(
-                      left: padding,
-                      right: padding,
+                    SliverContainer(
+                      maxWidth: maxWidth,
+                      padding: EdgeInsets.only(
+                        left: padding,
+                        right: padding,
+                      ),
+                      sliver: StickyDesktopTrackHeader(
+                        modules: [
+                          DesktopTrackModule.title,
+                          DesktopTrackModule.album,
+                          DesktopTrackModule.lastPlayed,
+                          DesktopTrackModule.playedCount,
+                          DesktopTrackModule.quality,
+                          DesktopTrackModule.duration,
+                          DesktopTrackModule.score,
+                          DesktopTrackModule.moreActions,
+                        ],
+                        scrollController: scrollController,
+                        scrollViewKey: scrollViewKey,
+                      ),
                     ),
-                    sliver: StickyDesktopTrackHeader(
-                      modules: [
-                        DesktopTrackModule.title,
-                        DesktopTrackModule.album,
-                        DesktopTrackModule.lastPlayed,
-                        DesktopTrackModule.playedCount,
-                        DesktopTrackModule.quality,
-                        DesktopTrackModule.duration,
-                        DesktopTrackModule.score,
-                        DesktopTrackModule.moreActions,
-                      ],
-                      scrollController: scrollController,
-                      scrollViewKey: scrollViewKey,
-                    ),
-                  ),
-                  SliverContainer(
-                    maxWidth: maxWidth,
-                    padding: EdgeInsets.only(
-                      left: padding,
-                      right: padding,
-                    ),
-                    sliver: TrackList(
-                      tracks: tracks,
-                      size: size,
-                      showTrackIndex: false,
-                      modules: const [
-                        DesktopTrackModule.title,
-                        DesktopTrackModule.album,
-                        DesktopTrackModule.lastPlayed,
-                        DesktopTrackModule.playedCount,
-                        DesktopTrackModule.quality,
-                        DesktopTrackModule.duration,
-                        DesktopTrackModule.score,
-                        DesktopTrackModule.moreActions,
-                      ],
-                      singleCustomActionsBuilder: (
-                        context,
-                        menuController,
-                        tracks,
-                        index,
-                        unselect,
-                      ) {
-                        return [
-                          const Divider(height: 8),
-                          MenuItemButton(
-                            leadingIcon: const AdwaitaIcon(
-                              AdwaitaIcons.list_remove,
-                              size: 20,
-                            ),
-                            child: Text(t.actions.removeFromPlaylist),
-                            onPressed: () async {
-                              menuController.close();
+                    SliverContainer(
+                      maxWidth: maxWidth,
+                      padding: EdgeInsets.only(
+                        left: padding,
+                        right: padding,
+                      ),
+                      sliver: TrackList(
+                        tracks: tracks,
+                        size: size,
+                        showTrackIndex: false,
+                        modules: const [
+                          DesktopTrackModule.title,
+                          DesktopTrackModule.album,
+                          DesktopTrackModule.lastPlayed,
+                          DesktopTrackModule.playedCount,
+                          DesktopTrackModule.quality,
+                          DesktopTrackModule.duration,
+                          DesktopTrackModule.score,
+                          DesktopTrackModule.moreActions,
+                        ],
+                        singleCustomActionsBuilder: (
+                          context,
+                          menuController,
+                          tracks,
+                          index,
+                          unselect,
+                        ) {
+                          return [
+                            const Divider(height: 8),
+                            MenuItemButton(
+                              leadingIcon: const AdwaitaIcon(
+                                AdwaitaIcons.list_remove,
+                                size: 20,
+                              ),
+                              child: Text(t.actions.removeFromPlaylist),
+                              onPressed: () async {
+                                menuController.close();
 
-                              if (!NetworkInfo().isServerRecheable()) {
-                                AppNotificationManager.of(context).notify(
-                                  context,
-                                  title: t.notifications.offline.title,
-                                  message: t.notifications.offline.message,
-                                  type: AppNotificationType.danger,
-                                );
-                                return;
-                              }
-
-                              try {
-                                await ref
-                                    .read(playlistContextMenuNotifierProvider
-                                        .notifier)
-                                    .setTracks(
-                                      playlist,
-                                      playlist.tracks.indexed
-                                          .where((entry) => entry.$1 != index)
-                                          .map((entry) => entry.$2)
-                                          .toList(),
-                                    );
-                              } catch (_) {
-                                if (context.mounted) {
+                                if (!NetworkInfo().isServerRecheable()) {
                                   AppNotificationManager.of(context).notify(
                                     context,
-                                    title: t
-                                        .notifications.somethingWentWrong.title,
-                                    message: t.notifications.somethingWentWrong
-                                        .message,
+                                    title: t.notifications.offline.title,
+                                    message: t.notifications.offline.message,
                                     type: AppNotificationType.danger,
                                   );
+                                  return;
                                 }
 
-                                rethrow;
-                              }
+                                try {
+                                  await ref
+                                      .read(playlistContextMenuNotifierProvider
+                                          .notifier)
+                                      .setTracks(
+                                        playlist,
+                                        playlist.tracks.indexed
+                                            .where((entry) => entry.$1 != index)
+                                            .map((entry) => entry.$2)
+                                            .toList(),
+                                      );
+                                } catch (_) {
+                                  if (context.mounted) {
+                                    AppNotificationManager.of(context).notify(
+                                      context,
+                                      title: t.notifications.somethingWentWrong
+                                          .title,
+                                      message: t.notifications
+                                          .somethingWentWrong.message,
+                                      type: AppNotificationType.danger,
+                                    );
+                                  }
 
-                              if (!context.mounted) {
-                                return;
-                              }
+                                  rethrow;
+                                }
 
-                              AppNotificationManager.of(context).notify(context,
+                                if (!context.mounted) {
+                                  return;
+                                }
+
+                                AppNotificationManager.of(context).notify(
+                                    context,
+                                    message: t.notifications
+                                        .playlistTrackHaveBeenRemoved
+                                        .message(
+                                      n: 1,
+                                      name: playlist.name,
+                                    ));
+
+                                unselect();
+                              },
+                            ),
+                          ];
+                        },
+                        multiCustomActionsBuilder: (
+                          context,
+                          menuController,
+                          tracks,
+                          selectedIndexes,
+                          unselect,
+                        ) {
+                          return [
+                            const Divider(height: 8),
+                            MenuItemButton(
+                              leadingIcon: const AdwaitaIcon(
+                                AdwaitaIcons.list_remove,
+                                size: 20,
+                              ),
+                              child: Text(t.actions.removeFromPlaylist),
+                              onPressed: () async {
+                                menuController.close();
+
+                                if (!NetworkInfo().isServerRecheable()) {
+                                  AppNotificationManager.of(context).notify(
+                                    context,
+                                    title: t.notifications.offline.title,
+                                    message: t.notifications.offline.message,
+                                    type: AppNotificationType.danger,
+                                  );
+                                  return;
+                                }
+
+                                try {
+                                  await ref
+                                      .read(playlistContextMenuNotifierProvider
+                                          .notifier)
+                                      .setTracks(
+                                        playlist,
+                                        playlist.tracks.indexed
+                                            .where(
+                                              (entry) => !selectedIndexes
+                                                  .contains(entry.$1),
+                                            )
+                                            .map((entry) => entry.$2)
+                                            .toList(),
+                                      );
+                                } catch (_) {
+                                  if (context.mounted) {
+                                    AppNotificationManager.of(context).notify(
+                                      context,
+                                      title: t.notifications.somethingWentWrong
+                                          .title,
+                                      message: t.notifications
+                                          .somethingWentWrong.message,
+                                      type: AppNotificationType.danger,
+                                    );
+                                  }
+
+                                  rethrow;
+                                }
+
+                                if (!context.mounted) {
+                                  return;
+                                }
+
+                                AppNotificationManager.of(context).notify(
+                                  context,
                                   message: t.notifications
                                       .playlistTrackHaveBeenRemoved
                                       .message(
-                                    n: 1,
+                                    n: tracks.length,
                                     name: playlist.name,
-                                  ));
-
-                              unselect();
-                            },
-                          ),
-                        ];
-                      },
-                      multiCustomActionsBuilder: (
-                        context,
-                        menuController,
-                        tracks,
-                        selectedIndexes,
-                        unselect,
-                      ) {
-                        return [
-                          const Divider(height: 8),
-                          MenuItemButton(
-                            leadingIcon: const AdwaitaIcon(
-                              AdwaitaIcons.list_remove,
-                              size: 20,
-                            ),
-                            child: Text(t.actions.removeFromPlaylist),
-                            onPressed: () async {
-                              menuController.close();
-
-                              if (!NetworkInfo().isServerRecheable()) {
-                                AppNotificationManager.of(context).notify(
-                                  context,
-                                  title: t.notifications.offline.title,
-                                  message: t.notifications.offline.message,
-                                  type: AppNotificationType.danger,
+                                  ),
                                 );
-                                return;
-                              }
 
-                              try {
-                                await ref
-                                    .read(playlistContextMenuNotifierProvider
-                                        .notifier)
-                                    .setTracks(
-                                      playlist,
-                                      playlist.tracks.indexed
-                                          .where(
-                                            (entry) => !selectedIndexes
-                                                .contains(entry.$1),
-                                          )
-                                          .map((entry) => entry.$2)
-                                          .toList(),
-                                    );
-                              } catch (_) {
-                                if (context.mounted) {
-                                  AppNotificationManager.of(context).notify(
-                                    context,
-                                    title: t
-                                        .notifications.somethingWentWrong.title,
-                                    message: t.notifications.somethingWentWrong
-                                        .message,
-                                    type: AppNotificationType.danger,
-                                  );
-                                }
-
-                                rethrow;
-                              }
-
-                              if (!context.mounted) {
-                                return;
-                              }
-
-                              AppNotificationManager.of(context).notify(
-                                context,
-                                message: t
-                                    .notifications.playlistTrackHaveBeenRemoved
-                                    .message(
-                                  n: tracks.length,
-                                  name: playlist.name,
-                                ),
-                              );
-
-                              menuController.close();
-                              unselect();
-                            },
-                          ),
-                        ];
-                      },
-                      source: "${t.general.playlist} \"${playlist.name}\"",
+                                menuController.close();
+                                unselect();
+                              },
+                            ),
+                          ];
+                        },
+                        source: "${t.general.playlist} \"${playlist.name}\"",
+                      ),
                     ),
-                  ),
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 8),
-                  ),
-                ],
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 8),
+                    ),
+                  ],
+                ),
               );
             },
           ),
