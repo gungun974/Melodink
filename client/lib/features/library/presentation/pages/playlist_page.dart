@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/app_confirm.dart';
+import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
@@ -52,6 +53,8 @@ class PlaylistPage extends HookConsumerWidget {
     final scrollController = useScrollController();
 
     final scrollViewKey = useMemoized(() => GlobalKey());
+
+    useAutoCloseContextMenuOnScroll(scrollController: scrollController);
 
     if (playlist == null) {
       return AppNavigationHeader(

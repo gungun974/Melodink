@@ -1,6 +1,7 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
@@ -35,108 +36,113 @@ class MultiTracksContextMenu extends ConsumerWidget {
     final audioController = ref.watch(audioControllerProvider);
     final asyncPlaylists = ref.watch(playlistContextMenuNotifierProvider);
 
-    return MenuAnchor(
-      menuChildren: [
-        SubmenuButton(
-          leadingIcon: const AdwaitaIcon(
-            AdwaitaIcons.playlist2,
-            size: 20,
-          ),
-          menuChildren: [
-            MenuItemButton(
-              child: Text(t.actions.newPlaylist),
-              onPressed: () {
-                menuController.close();
-
-                CreatePlaylistModal.showModal(
-                  context,
-                  tracks: tracks,
-                  pushRouteToNewPlaylist: true,
-                );
-              },
+    return AutoCloseContextMenuOnScroll(
+      menuController: menuController,
+      child: MenuAnchor(
+        menuChildren: [
+          SubmenuButton(
+            leadingIcon: const AdwaitaIcon(
+              AdwaitaIcons.playlist2,
+              size: 20,
             ),
-            const Divider(height: 0),
-            ...switch (asyncPlaylists) {
-              AsyncData(:final value) => value.map((playlist) {
-                  return MenuItemButton(
-                    child: Text(playlist.name),
-                    onPressed: () async {
-                      menuController.close();
+            menuChildren: [
+              MenuItemButton(
+                child: Text(t.actions.newPlaylist),
+                onPressed: () {
+                  menuController.close();
 
-                      if (!NetworkInfo().isServerRecheable()) {
-                        AppNotificationManager.of(context).notify(
-                          context,
-                          title: t.notifications.offline.title,
-                          message: t.notifications.offline.message,
-                          type: AppNotificationType.danger,
-                        );
-                        return;
-                      }
+                  CreatePlaylistModal.showModal(
+                    context,
+                    tracks: tracks,
+                    pushRouteToNewPlaylist: true,
+                  );
+                },
+              ),
+              const Divider(height: 0),
+              ...switch (asyncPlaylists) {
+                AsyncData(:final value) => value.map((playlist) {
+                    return MenuItemButton(
+                      child: Text(playlist.name),
+                      onPressed: () async {
+                        menuController.close();
 
-                      try {
-                        await ref
-                            .read(playlistContextMenuNotifierProvider.notifier)
-                            .addTracks(
-                              playlist,
-                              tracks,
-                            );
-                      } catch (_) {
-                        if (context.mounted) {
+                        if (!NetworkInfo().isServerRecheable()) {
                           AppNotificationManager.of(context).notify(
                             context,
-                            title: t.notifications.somethingWentWrong.title,
-                            message: t.notifications.somethingWentWrong.message,
+                            title: t.notifications.offline.title,
+                            message: t.notifications.offline.message,
                             type: AppNotificationType.danger,
                           );
+                          return;
                         }
 
-                        rethrow;
-                      }
+                        try {
+                          await ref
+                              .read(
+                                  playlistContextMenuNotifierProvider.notifier)
+                              .addTracks(
+                                playlist,
+                                tracks,
+                              );
+                        } catch (_) {
+                          if (context.mounted) {
+                            AppNotificationManager.of(context).notify(
+                              context,
+                              title: t.notifications.somethingWentWrong.title,
+                              message:
+                                  t.notifications.somethingWentWrong.message,
+                              type: AppNotificationType.danger,
+                            );
+                          }
 
-                      if (!context.mounted) {
-                        return;
-                      }
+                          rethrow;
+                        }
 
-                      AppNotificationManager.of(context).notify(
-                        context,
-                        message:
-                            t.notifications.playlistTrackHaveBeenAdded.message(
-                          n: tracks.length,
-                          name: playlist.name,
-                        ),
-                      );
-                    },
-                  );
-                }).toList(),
-              _ => const [],
-            },
-          ],
-          child: Text(t.actions.addToPlaylist),
-        ),
-        MenuItemButton(
-          leadingIcon: const AdwaitaIcon(
-            AdwaitaIcons.playlist,
-            size: 20,
+                        if (!context.mounted) {
+                          return;
+                        }
+
+                        AppNotificationManager.of(context).notify(
+                          context,
+                          message: t.notifications.playlistTrackHaveBeenAdded
+                              .message(
+                            n: tracks.length,
+                            name: playlist.name,
+                          ),
+                        );
+                      },
+                    );
+                  }).toList(),
+                _ => const [],
+              },
+            ],
+            child: Text(t.actions.addToPlaylist),
           ),
-          child: Text(t.actions.addToQueue),
-          onPressed: () {
-            menuController.close();
+          MenuItemButton(
+            leadingIcon: const AdwaitaIcon(
+              AdwaitaIcons.playlist,
+              size: 20,
+            ),
+            child: Text(t.actions.addToQueue),
+            onPressed: () {
+              menuController.close();
 
-            audioController.addTracksToQueue(tracks);
+              audioController.addTracksToQueue(tracks);
 
-            AppNotificationManager.of(context).notify(
-              context,
-              message: t.notifications.haveBeenAddedToQueue.message(
-                n: tracks.length,
-              ),
-            );
-          },
-        ),
-        if (customActionsBuilder != null)
-          ...customActionsBuilder!(context, menuController, tracks),
-      ],
-      controller: menuController,
-      child: child,
+              AppNotificationManager.of(context).notify(
+                context,
+                message: t.notifications.haveBeenAddedToQueue.message(
+                  n: tracks.length,
+                ),
+              );
+            },
+          ),
+          if (customActionsBuilder != null)
+            ...customActionsBuilder!(context, menuController, tracks),
+        ],
+        controller: menuController,
+        child: child,
+      ),
     );
   }
 }

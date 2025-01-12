@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
@@ -44,6 +45,8 @@ class AlbumPage extends HookConsumerWidget {
     final scrollController = useScrollController();
 
     final scrollViewKey = useMemoized(() => GlobalKey());
+
+    useAutoCloseContextMenuOnScroll(scrollController: scrollController);
 
     if (album == null) {
       return AppNavigationHeader(

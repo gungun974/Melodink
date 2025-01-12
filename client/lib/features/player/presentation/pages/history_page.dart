@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
@@ -9,7 +11,7 @@ import 'package:melodink_client/features/track/presentation/widgets/track_list.d
 import 'package:melodink_client/features/tracker/domain/providers/played_track_provider.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
-class HistoryPage extends ConsumerWidget {
+class HistoryPage extends HookConsumerWidget {
   const HistoryPage({
     super.key,
   });
@@ -20,6 +22,10 @@ class HistoryPage extends ConsumerWidget {
 
     final previousTracks = asyncPreviousTracks.valueOrNull;
 
+    final scrollController = useScrollController();
+
+    useAutoCloseContextMenuOnScroll(scrollController: scrollController);
+
     if (previousTracks == null) {
       return const AppPageLoader();
     }
@@ -29,6 +35,7 @@ class HistoryPage extends ConsumerWidget {
       final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
 
       return CustomScrollView(
+        controller: scrollController,
         slivers: [
           SliverContainer(
             maxWidth: maxWidth,
