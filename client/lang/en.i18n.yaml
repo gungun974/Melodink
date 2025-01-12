@@ -58,7 +58,7 @@ general:
   nowPlaying: "Now playing"
   nextInQueue: "Next in Queue"
 
-  playingFromSearch: "Playing from Search"
+  playingFromAllTracks: "Playing from all Tracks"
   playingFromHistory: "Playing from History"
 
   advancedScan: "Advanced scan"

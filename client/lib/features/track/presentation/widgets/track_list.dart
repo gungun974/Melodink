@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -46,6 +45,8 @@ class TrackList extends HookConsumerWidget {
 
   final String? source;
 
+  final void Function(MinimalTrack track, int index)? playCallback;
+
   const TrackList({
     super.key,
     required this.tracks,
@@ -59,6 +60,7 @@ class TrackList extends HookConsumerWidget {
     this.autoScrollToCurrentTrack = false,
     this.scrollToTrackIdOnMounted,
     this.source,
+    this.playCallback,
   });
 
   @override
@@ -289,6 +291,10 @@ class TrackList extends HookConsumerWidget {
             child = MobileTrack(
               track: tracks[index],
               playCallback: (track) async {
+                if (playCallback != null) {
+                  playCallback?.call(track, index);
+                  return;
+                }
                 await audioController.loadTracks(
                   tracks,
                   startAt: index,
@@ -309,6 +315,10 @@ class TrackList extends HookConsumerWidget {
               trackNumber:
                   showTrackIndex ? tracks[index].trackNumber : index + 1,
               playCallback: (track) async {
+                if (playCallback != null) {
+                  playCallback?.call(track, index);
+                  return;
+                }
                 await audioController.loadTracks(
                   tracks,
                   startAt: index,

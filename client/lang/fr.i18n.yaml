@@ -58,7 +58,7 @@ general:
   nowPlaying: "En cours de lecture"
   nextInQueue: "Suivant dans la file d'attente"
 
-  playingFromSearch: "Lecture depuis la recherche"
+  playingFromAllTracks: "Lecture depuis tous les morceaux"
   playingFromHistory: "Lecture depuis l'historique"
 
   advancedScan: "Scanne avancée"

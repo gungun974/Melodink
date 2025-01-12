@@ -108,6 +108,39 @@ Future<String> trackLyricsById(Ref ref, int id) async {
   return await trackRepository.getTrackLyricsById(id);
 }
 
+@riverpod
+Future<List<MinimalTrack>> allSortedTracks(Ref ref) async {
+  final allTracks = await ref.watch(allTracksProvider.future);
+
+  final tracks = [...allTracks];
+
+  tracks.sort((a, b) {
+    int dateCompare = b.dateAdded.compareTo(a.dateAdded);
+    if (dateCompare != 0) {
+      return dateCompare;
+    }
+
+    int albumCompare = (a.album + a.albumId).compareTo(b.album + b.albumId);
+    if (albumCompare != 0) {
+      return albumCompare;
+    }
+
+    int discCompare = a.discNumber.compareTo(b.discNumber);
+    if (discCompare != 0) {
+      return discCompare;
+    }
+
+    int trackCompare = a.trackNumber.compareTo(b.trackNumber);
+    if (trackCompare != 0) {
+      return trackCompare;
+    }
+
+    return a.title.compareTo(b.title);
+  });
+
+  return tracks;
+}
+
 //! Search
 
 final allTracksSearchInputProvider =
@@ -115,7 +148,7 @@ final allTracksSearchInputProvider =
 
 @riverpod
 Future<List<MinimalTrack>> allSearchTracks(Ref ref) async {
-  final allTracks = await ref.watch(allTracksProvider.future);
+  final allTracks = await ref.watch(allSortedTracksProvider.future);
 
   final keepAlphanumeric = RegExp(r'[^a-zA-Z0-9]');
 
@@ -297,40 +330,6 @@ Future<List<MinimalTrack>> allFilteredAlbumsTracks(Ref ref) async {
   if (tracks.isEmpty) {
     ref.read(allTracksAlbumsSelectedOptionsProvider.notifier).state = [];
   }
-
-  return tracks;
-}
-
-@riverpod
-Future<List<MinimalTrack>> allSortedTracks(Ref ref) async {
-  final allFilteredTracks =
-      await ref.watch(allFilteredAlbumsTracksProvider.future);
-
-  final tracks = [...allFilteredTracks];
-
-  tracks.sort((a, b) {
-    int dateCompare = b.dateAdded.compareTo(a.dateAdded);
-    if (dateCompare != 0) {
-      return dateCompare;
-    }
-
-    int albumCompare = (a.album + a.albumId).compareTo(b.album + b.albumId);
-    if (albumCompare != 0) {
-      return albumCompare;
-    }
-
-    int discCompare = a.discNumber.compareTo(b.discNumber);
-    if (discCompare != 0) {
-      return discCompare;
-    }
-
-    int trackCompare = a.trackNumber.compareTo(b.trackNumber);
-    if (trackCompare != 0) {
-      return trackCompare;
-    }
-
-    return a.title.compareTo(b.title);
-  });
 
   return tracks;
 }

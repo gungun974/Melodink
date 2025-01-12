@@ -1,20 +1,16 @@
-import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
-import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
-import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
-import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
-import 'package:melodink_client/features/track/presentation/modals/import_tracks_modal.dart';
 import 'package:melodink_client/features/track/presentation/widgets/all_track_filter_panel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
@@ -28,13 +24,14 @@ class TracksPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncTracks = ref.watch(allSortedTracksProvider);
+    final audioController = ref.watch(audioControllerProvider);
+
+    final tracks = ref.watch(allSortedTracksProvider).valueOrNull;
+    final searchTracks = ref.watch(allFilteredAlbumsTracksProvider).valueOrNull;
 
     final isAutoScrollViewToCurrentTrackEnabled = ref.watch(
       isAutoScrollViewToCurrentTrackEnabledProvider,
     );
-
-    final tracks = asyncTracks.valueOrNull;
 
     final scrollController = useScrollController();
 
@@ -42,7 +39,7 @@ class TracksPage extends HookConsumerWidget {
 
     useAutoCloseContextMenuOnScroll(scrollController: scrollController);
 
-    if (tracks == null) {
+    if (searchTracks == null || tracks == null) {
       return AppNavigationHeader(
         title: AppScreenTypeLayoutBuilders(
           mobile: (_) => const Text("Tracks"),
@@ -108,7 +105,7 @@ class TracksPage extends HookConsumerWidget {
                         right: padding,
                       ),
                       sliver: TrackList(
-                        tracks: tracks,
+                        tracks: searchTracks,
                         size: size,
                         modules: const [
                           DesktopTrackModule.title,
@@ -125,7 +122,21 @@ class TracksPage extends HookConsumerWidget {
                         scrollController: scrollController,
                         autoScrollToCurrentTrack:
                             isAutoScrollViewToCurrentTrackEnabled,
-                        source: t.general.playingFromSearch,
+                        playCallback: (track, _) async {
+                          final index = tracks.indexWhere(
+                            (trackd) => trackd.id == track.id,
+                          );
+
+                          if (index < 0) {
+                            return;
+                          }
+
+                          await audioController.loadTracks(
+                            tracks,
+                            startAt: index,
+                            source: t.general.playingFromAllTracks,
+                          );
+                        },
                       ),
                     ),
                     const SliverToBoxAdapter(
