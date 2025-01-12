@@ -51,11 +51,11 @@ function(check_directory_exists_and_not_empty dir result_var)
 endfunction()
 
 # libmpv archive containing the pre-built shared libraries & headers.
-set(FFMPEG "ffmpeg-n7.1-latest-win64-lgpl-shared-7.1.zip")
+set(FFMPEG "ffmpeg-n7.1-152-gd72536008a-win64-lgpl-shared-7.1.zip")
 
 # Download URL & MD5 hash of the libmpv archive.
-set(FFMPEG_URL "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/${FFMPEG}")
-set(FFMPEG_MD5 "c62e1ec41c757bdbebbbb8a2c9881e28")
+set(FFMPEG_URL "https://github.com/gungun974/melodink-ffmpeg-win32-build/releases/download/autobuild-2025-01-12-12-13/${FFMPEG}")
+set(FFMPEG_MD5 "3da17e79ef202cbfa00f181bc8e83ae8")
 
 # Download location of the libmpv archive.
 set(FFMPEG_ARCHIVE "${CMAKE_BINARY_DIR}/${FFMPEG}")
