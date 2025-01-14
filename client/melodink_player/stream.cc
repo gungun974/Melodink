@@ -97,7 +97,7 @@ public:
 
   int init(const char *filename, AVDictionary **options) {
     if (has_been_open) {
-      return -1;
+      return 0;
     }
 
     int response =
@@ -121,8 +121,7 @@ public:
       av_freep(&buffer);
       avio_closep(&source_avio_ctx);
 
-      fprintf(stderr, "Could not open custom AVIOContext\n",
-              GetError(response));
+      fprintf(stderr, "Could not open custom AVIOContext\n");
       return -1;
     }
 
