@@ -19,7 +19,6 @@ extern "C" {
 #include <cstdio>
 
 #include "fifo.cc"
-#include "stream.cc"
 
 typedef struct FrameData {
   int64_t pkt_pos;
@@ -33,7 +32,6 @@ private:
     return pos != std::string::npos && pos == str.size() - suffix.size();
   }
 
-  StreamAvio *stream_avio = nullptr;
   AVFormatContext *av_format_ctx = nullptr;
 
   std::string loaded_url = "";
@@ -86,11 +84,10 @@ private:
 
     AVDictionary *options = NULL;
 
-    char headers[2048];
+    char headers[1024];
     snprintf(headers, sizeof(headers),
              "Cookie: %s\r\n"
              "User-Agent: Melodink-Player\r\n"
-             "X-Melodink-Stream-End-Delimiter: true\r\n"
              "X-Melodink-Stream-Offset: %" PRIu64 "\r\n",
              auth_token, streamOffset);
 
@@ -118,35 +115,8 @@ private:
 
     is_transcoding = endsWith(cleaned_filename, "/transcode");
 
-    stream_avio = new StreamAvio();
-
-    av_format_ctx = avformat_alloc_context();
-    if (!av_format_ctx) {
-      fprintf(stderr, "Could not allocate AVFormatContext\n");
-      if (stream_avio != nullptr) {
-        delete stream_avio;
-        stream_avio = nullptr;
-      }
-      return -1;
-    }
-
-    if (is_transcoding) {
-      response = stream_avio->init(cleaned_filename, &options);
-      if (response < 0) {
-        delete stream_avio;
-        stream_avio = nullptr;
-        return response;
-      }
-
-      av_format_ctx->pb = stream_avio->avio_ctx;
-      av_format_ctx->flags |= AVFMT_FLAG_CUSTOM_IO;
-
-      response = avformat_open_input(&av_format_ctx, NULL, NULL, NULL);
-    } else {
-      response =
-          avformat_open_input(&av_format_ctx, cleaned_filename, NULL, &options);
-    }
-
+    response =
+        avformat_open_input(&av_format_ctx, cleaned_filename, NULL, &options);
     if (response < 0) {
       fprintf(stderr, "avformat_open_input response: %s\n", GetError(response));
     }
@@ -160,10 +130,6 @@ private:
     if (response < 0) {
       fprintf(stderr, "Couldn't find stream info\n");
       avformat_close_input(&av_format_ctx);
-      if (stream_avio != nullptr) {
-        delete stream_avio;
-        stream_avio = nullptr;
-      }
       avformat_free_context(av_format_ctx);
       return -1;
     }
@@ -173,10 +139,6 @@ private:
 
   void CloseFile() {
     avformat_close_input(&av_format_ctx);
-    if (stream_avio != nullptr) {
-      delete stream_avio;
-      stream_avio = nullptr;
-    }
     avformat_free_context(av_format_ctx);
   }
 
@@ -323,16 +285,10 @@ private:
     }
   }
 
-  std::atomic<bool> reopen_thread_active{false};
-
   void TimeoutReopen() {
-    if (reopen_thread_active) {
+    if (reopen_thread.joinable()) {
       return;
     }
-
-    StopTimeoutReopen();
-
-    reopen_thread_active = true;
 
     audio_retry = true;
     stop_timeout_reopen = false;
@@ -345,7 +301,6 @@ private:
       std::unique_lock<std::mutex> lock(open_mutex);
 
       if (stop_timeout_reopen) {
-        reopen_thread_active = false;
         return;
       }
 
@@ -364,12 +319,10 @@ private:
 
       while (true) {
         if (stop_timeout_reopen) {
-          reopen_thread_active = false;
           return;
         }
 
         if (is_track_will_be_destroy) {
-          reopen_thread_active = false;
           return;
         }
 
@@ -410,7 +363,6 @@ private:
       }
       audio_retry = false;
       StartDecodingThread();
-      reopen_thread_active = false;
     });
   }
 
@@ -905,8 +857,8 @@ public:
     std::unique_lock<std::mutex> lock2(open_mutex);
 
     if (!audio_opened) {
-      TimeoutReopen();
-      return 0;
+      fprintf(stderr, "ERROR SEEK %s\n", loaded_url.c_str());
+      return -1;
     }
 
     int64_t current = GetCurrentPlaybackTime();
