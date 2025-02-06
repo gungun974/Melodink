@@ -64,23 +64,21 @@ class DesktopCurrentTrack extends ConsumerWidget {
                     },
                     child: MouseRegion(
                       cursor: SystemMouseCursors.click,
-                      child: AspectRatio(
-                        aspectRatio: 1.0,
-                        child: PlayerErrorOverlay(
-                          child: AuthCachedNetworkImage(
-                            imageUrl: downloadedTrack?.getCoverUrl() ??
-                                currentTrack.getCompressedCoverUrl(
-                                  TrackCompressedCoverQuality.medium,
-                                ),
-                            placeholder: (context, url) => Image.asset(
-                              "assets/melodink_track_cover_not_found.png",
-                            ),
-                            errorWidget: (context, url, error) {
-                              return Image.asset(
-                                "assets/melodink_track_cover_not_found.png",
-                              );
-                            },
+                      child: PlayerErrorOverlay(
+                        child: AuthCachedNetworkImage(
+                          fit: BoxFit.contain,
+                          imageUrl: downloadedTrack?.getCoverUrl() ??
+                              currentTrack.getCompressedCoverUrl(
+                                TrackCompressedCoverQuality.medium,
+                              ),
+                          placeholder: (context, url) => Image.asset(
+                            "assets/melodink_track_cover_not_found.png",
                           ),
+                          errorWidget: (context, url, error) {
+                            return Image.asset(
+                              "assets/melodink_track_cover_not_found.png",
+                            );
+                          },
                         ),
                       ),
                     ),

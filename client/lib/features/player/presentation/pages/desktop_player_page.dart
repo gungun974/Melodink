@@ -166,6 +166,7 @@ class DesktopPlayerPage extends HookConsumerWidget {
 
                                     final image = PlayerErrorOverlay(
                                       child: AuthCachedNetworkImage(
+                                        fit: BoxFit.contain,
                                         imageUrl: downloadedTrack
                                                 ?.getCoverUrl() ??
                                             currentTrack.getCompressedCoverUrl(

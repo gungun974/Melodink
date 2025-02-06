@@ -186,6 +186,10 @@ class AuthCachedNetworkImage extends StatelessWidget {
 
   final double? height;
 
+  final BoxFit? fit;
+
+  final AlignmentGeometry? alignment;
+
   final Widget Function(
     BuildContext context,
     String url,
@@ -202,6 +206,8 @@ class AuthCachedNetworkImage extends StatelessWidget {
     required this.imageUrl,
     this.height,
     this.width,
+    this.fit,
+    this.alignment,
     this.placeholder,
     this.errorWidget,
   });
@@ -224,7 +230,8 @@ class AuthCachedNetworkImage extends StatelessWidget {
       image: imageProvider,
       height: height,
       width: width,
-      fit: BoxFit.fitHeight,
+      fit: fit ?? BoxFit.fitHeight,
+      alignment: alignment ?? Alignment.bottomCenter,
       errorBuilder: localErrorWidget != null
           ? (BuildContext context, Object error, StackTrace? stackTrace) {
               return SizedBox(

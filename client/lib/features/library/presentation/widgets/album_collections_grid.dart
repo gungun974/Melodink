@@ -72,18 +72,22 @@ class AlbumCollectionsGrid extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          AuthCachedNetworkImage(
-                            imageUrl: album.getCompressedCoverUrl(
-                              TrackCompressedCoverQuality.medium,
-                            ),
-                            placeholder: (context, url) => Image.asset(
-                              "assets/melodink_track_cover_not_found.png",
-                            ),
-                            errorWidget: (context, url, error) {
-                              return Image.asset(
+                          AspectRatio(
+                            aspectRatio: 1,
+                            child: AuthCachedNetworkImage(
+                              fit: BoxFit.contain,
+                              imageUrl: album.getCompressedCoverUrl(
+                                TrackCompressedCoverQuality.medium,
+                              ),
+                              placeholder: (context, url) => Image.asset(
                                 "assets/melodink_track_cover_not_found.png",
-                              );
-                            },
+                              ),
+                              errorWidget: (context, url, error) {
+                                return Image.asset(
+                                  "assets/melodink_track_cover_not_found.png",
+                                );
+                              },
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Tooltip(

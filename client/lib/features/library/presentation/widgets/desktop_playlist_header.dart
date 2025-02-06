@@ -56,6 +56,8 @@ class DesktopPlaylistHeader extends ConsumerWidget {
       child: Row(
         children: [
           AuthCachedNetworkImage(
+            fit: BoxFit.contain,
+            alignment: Alignment.center,
             imageUrl: imageUrl,
             placeholder: (context, url) => Image.asset(
               "assets/melodink_track_cover_not_found.png",
@@ -65,7 +67,7 @@ class DesktopPlaylistHeader extends ConsumerWidget {
                 "assets/melodink_track_cover_not_found.png",
               );
             },
-            height: 256,
+            width: 256,
           ),
           const SizedBox(width: 16),
           Expanded(

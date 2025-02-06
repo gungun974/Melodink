@@ -57,19 +57,17 @@ class MobilePlaylistHeader extends ConsumerWidget {
             horizontal: 48.0,
             vertical: 6.0,
           ),
-          child: AspectRatio(
-            aspectRatio: 1.0,
-            child: AuthCachedNetworkImage(
-              imageUrl: imageUrl,
-              placeholder: (context, url) => Image.asset(
-                "assets/melodink_track_cover_not_found.png",
-              ),
-              errorWidget: (context, url, error) {
-                return Image.asset(
-                  "assets/melodink_track_cover_not_found.png",
-                );
-              },
+          child: AuthCachedNetworkImage(
+            fit: BoxFit.contain,
+            imageUrl: imageUrl,
+            placeholder: (context, url) => Image.asset(
+              "assets/melodink_track_cover_not_found.png",
             ),
+            errorWidget: (context, url, error) {
+              return Image.asset(
+                "assets/melodink_track_cover_not_found.png",
+              );
+            },
           ),
         ),
         const SizedBox(height: 8),

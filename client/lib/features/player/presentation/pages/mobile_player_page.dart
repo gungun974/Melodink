@@ -272,6 +272,7 @@ class _MobilePlayerInfo extends StatelessWidget {
 
         final image = PlayerErrorOverlay(
           child: AuthCachedNetworkImage(
+            fit: BoxFit.contain,
             imageUrl: downloadedTrack?.getCoverUrl() ??
                 currentTrack.getCompressedCoverUrl(
                   TrackCompressedCoverQuality.high,
