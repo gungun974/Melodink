@@ -265,7 +265,7 @@ class DesktopTrack extends HookConsumerWidget {
                             yield SizedBox(
                               width: 28,
                               child: Text(
-                                "$trackNumber",
+                                trackNumber > 0 ? "$trackNumber" : "",
                                 textAlign: TextAlign.end,
                                 style: TextStyle(
                                   fontSize: 14,
