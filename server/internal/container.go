@@ -47,6 +47,7 @@ func NewContainer(db *sqlx.DB) Container {
 
 	trackStorage := storage.NewTrackStorage()
 	coverStorage := storage.NewCoverStorage()
+	transcodeStorage := storage.NewTranscodeStorage()
 
 	//! Scanner
 
@@ -55,7 +56,7 @@ func NewContainer(db *sqlx.DB) Container {
 
 	//! Processor
 
-	transcodePRocessor := processor.NewTranscodeProcessor()
+	transcodeProcessor := processor.NewTranscodeProcessor()
 
 	//! Presenter
 
@@ -82,9 +83,10 @@ func NewContainer(db *sqlx.DB) Container {
 		trackRepository,
 		trackStorage,
 		coverStorage,
+		transcodeStorage,
 		acoustIdScanner,
 		musicBrainzScanner,
-		transcodePRocessor,
+		transcodeProcessor,
 		trackPresenter,
 	)
 

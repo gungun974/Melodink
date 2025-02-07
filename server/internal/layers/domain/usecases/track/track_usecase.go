@@ -12,6 +12,7 @@ type TrackUsecase struct {
 	trackRepository    repository.TrackRepository
 	trackStorage       storage.TrackStorage
 	coverStorage       storage.CoverStorage
+	transcodeStorage   storage.TranscodeStorage
 	acoustIdScanner    scanner.AcoustIdScanner
 	musicBrainzScanner scanner.MusicBrainzScanner
 	transcodeProcessor processor.TranscodeProcessor
@@ -22,6 +23,7 @@ func NewTrackUsecase(
 	trackRepository repository.TrackRepository,
 	trackStorage storage.TrackStorage,
 	coverStorage storage.CoverStorage,
+	transcodeStorage storage.TranscodeStorage,
 	acoustIdScanner scanner.AcoustIdScanner,
 	musicBrainzScanner scanner.MusicBrainzScanner,
 	transcodeProcessor processor.TranscodeProcessor,
@@ -31,6 +33,7 @@ func NewTrackUsecase(
 		trackRepository,
 		trackStorage,
 		coverStorage,
+		transcodeStorage,
 		acoustIdScanner,
 		musicBrainzScanner,
 		transcodeProcessor,

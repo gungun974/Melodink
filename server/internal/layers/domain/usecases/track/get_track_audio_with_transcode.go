@@ -3,83 +3,51 @@ package track_usecase
 import (
 	"context"
 	"errors"
-	"net/http"
-	"strconv"
-	"time"
+	"path"
 
-	"github.com/gabriel-vasile/mimetype"
-	"github.com/gungun974/Melodink/server/internal/helpers"
-	"github.com/gungun974/Melodink/server/internal/layers/data/processor"
 	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
-)
-
-type AudioTranscodeQuality string
-
-const (
-	AudioTranscodeMax    AudioTranscodeQuality = "max"
-	AudioTranscodeHigh   AudioTranscodeQuality = "high"
-	AudioTranscodeMedium AudioTranscodeQuality = "medium"
-	AudioTranscodeLow    AudioTranscodeQuality = "low"
+	"github.com/gungun974/Melodink/server/internal/models"
 )
 
 func (u *TrackUsecase) GetTrackAudioWithTranscode(
 	ctx context.Context,
 	trackId int,
 	quality AudioTranscodeQuality,
-	w http.ResponseWriter, r *http.Request,
-) error {
+) (models.APIResponse, error) {
 	track, err := u.trackRepository.GetTrack(trackId)
 	if err != nil {
 		if errors.Is(err, repository.TrackNotFoundError) {
-			return entities.NewNotFoundError("Track not found")
+			return nil, entities.NewNotFoundError("Track not found")
 		}
-		return entities.NewInternalError(err)
+		return nil, entities.NewInternalError(err)
 	}
 
-	shouldAddEndOfFileDelemiter := r.Header.Get("X-Melodink-Stream-End-Delimiter")
-	timeOffsetRaw := r.Header.Get("X-Melodink-Stream-Offset")
-
-	timeOffset, _ := strconv.Atoi(timeOffsetRaw)
-
-	if quality == AudioTranscodeMax {
-		mtype, err := mimetype.DetectFile(track.Path)
-		if err != nil {
-			return entities.NewInternalError(err)
-		}
-
-		w.Header().Set("Content-Type", mtype.String())
-		if err := u.transcodeProcessor.TranscodeMax(ctx, time.Duration(timeOffset)*time.Millisecond, track.Path, w); err != nil &&
-			!errors.Is(err, processor.TranscoderKilledError) {
-			return entities.NewInternalError(err)
-		}
-	} else if quality == AudioTranscodeHigh {
-		w.Header().Set("Content-Type", "audio/flac")
-		if err := u.transcodeProcessor.TranscodeHigh(ctx, time.Duration(timeOffset)*time.Millisecond, track.Path, w); err != nil &&
-			!errors.Is(err, processor.TranscoderKilledError) {
-			return entities.NewInternalError(err)
-		}
-	} else if quality == AudioTranscodeMedium {
-		w.Header().Set("Content-Type", "audio/ogg")
-		if err := u.transcodeProcessor.TranscodeMedium(ctx, time.Duration(timeOffset)*time.Millisecond, track.Path, w); err != nil &&
-			!errors.Is(err, processor.TranscoderKilledError) {
-			return entities.NewInternalError(err)
-		}
-	} else {
-		w.Header().Set("Content-Type", "audio/ogg")
-		if err := u.transcodeProcessor.TranscodeLow(ctx, time.Duration(timeOffset)*time.Millisecond, track.Path, w); err != nil &&
-			!errors.Is(err, processor.TranscoderKilledError) {
-			return entities.NewInternalError(err)
-		}
+	err = u.TranscodeTrack(ctx, trackId, quality)
+	if err != nil {
+		return nil, err
 	}
 
-	if !helpers.IsEmptyOrWhitespace(shouldAddEndOfFileDelemiter) && ctx.Err() == nil {
-		_, _ = w.Write([]byte("MelodinkStreamEndOfFile"))
+	transcodingDirectory, err := u.transcodeStorage.GetTrackTranscodeDirectory(track.Id)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
 	}
 
-	if f, ok := w.(http.Flusher); ok {
-		f.Flush()
+	if quality == AudioTranscodeHigh {
+		return models.FileAPIResponse{
+			MIMEType: "audio/ogg",
+			Path:     path.Join(transcodingDirectory, "high.ogg"),
+		}, nil
+	}
+	if quality == AudioTranscodeMedium {
+		return models.FileAPIResponse{
+			MIMEType: "audio/ogg",
+			Path:     path.Join(transcodingDirectory, "medium.ogg"),
+		}, nil
 	}
 
-	return nil
+	return models.FileAPIResponse{
+		MIMEType: "audio/ogg",
+		Path:     path.Join(transcodingDirectory, "low.ogg"),
+	}, nil
 }

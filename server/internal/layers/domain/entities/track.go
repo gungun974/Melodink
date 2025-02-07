@@ -24,6 +24,10 @@ type Track struct {
 	FileSignature  string
 	CoverSignature string
 
+	TranscodingLowSignature    string
+	TranscodingMediumSignature string
+	TranscodingHighSignature   string
+
 	Metadata TrackMetadata
 
 	SampleRate       int

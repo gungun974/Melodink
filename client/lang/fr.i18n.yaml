@@ -150,12 +150,10 @@ scoringSystem:
   stars: "5 Étoiles"
 
 audioQualities:
-  low: "Bas - Opus VBR 96 kbps"
-  medium: "Moyen - Opus VBR 320 kbps"
-  high: "Haut - FLAC 44.1KHz"
-  max: "Max - (Encapsulation FLAC)"
-  direct: "Direct - (Lecture depuis le fichier source)"
-  source: "Source"
+  low: "Low - Opus VBR 96 kbps"
+  medium: "Medium - Opus VBR 128 kbps"
+  high: "High - Opus VBR 320 kbps"
+  lossless: "Sans perte"
 
 sorting:
   newest: "Le plus récent"

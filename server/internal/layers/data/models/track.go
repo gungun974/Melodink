@@ -34,6 +34,10 @@ type TrackModel struct {
 	FileSignature  string `db:"file_signature"`
 	CoverSignature string `db:"cover_signature"`
 
+	TranscodingLowSignature    string `db:"transcoding_low_signature"`
+	TranscodingMediumSignature string `db:"transcoding_medium_signature"`
+	TranscodingHighSignature   string `db:"transcoding_high_signature"`
+
 	MetadataAlbum string `db:"metadata_album"`
 
 	MetadataTrackNumber int `db:"metadata_track_number"`
@@ -113,6 +117,10 @@ func (m *TrackModel) ToTrack() entities.Track {
 		Path:           m.Path,
 		FileSignature:  m.FileSignature,
 		CoverSignature: m.CoverSignature,
+
+		TranscodingLowSignature:    m.TranscodingLowSignature,
+		TranscodingMediumSignature: m.TranscodingMediumSignature,
+		TranscodingHighSignature:   m.TranscodingHighSignature,
 
 		DateAdded: m.DateAdded,
 

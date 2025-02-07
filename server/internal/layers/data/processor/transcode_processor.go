@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os/exec"
-	"time"
 
 	"github.com/gungun974/Melodink/server/internal/logger"
 )
@@ -25,71 +23,55 @@ var (
 
 func (p *TranscodeProcessor) TranscodeLow(
 	ctx context.Context,
-	seek time.Duration,
 	sourcePath string,
-	out io.Writer,
+	destinationPath string,
 ) error {
-	return p.transcode(ctx, seek, []string{
+	return p.transcode(ctx, []string{
 		"-b:a", "96k",
 		"-c:a", "libopus",
 		"-vbr", "on",
 		"-f", "opus",
-	}, sourcePath, out)
+	}, sourcePath, destinationPath)
 }
 
 func (p *TranscodeProcessor) TranscodeMedium(
 	ctx context.Context,
-	seek time.Duration,
 	sourcePath string,
-	out io.Writer,
+	destinationPath string,
 ) error {
-	return p.transcode(ctx, seek, []string{
-		"-b:a", "320k",
+	return p.transcode(ctx, []string{
+		"-b:a", "128k",
 		"-c:a", "libopus",
 		"-vbr", "on",
 		"-f", "opus",
-	}, sourcePath, out)
+	}, sourcePath, destinationPath)
 }
 
 func (p *TranscodeProcessor) TranscodeHigh(
 	ctx context.Context,
-	seek time.Duration,
 	sourcePath string,
-	out io.Writer,
+	destinationPath string,
 ) error {
-	return p.transcode(ctx, seek, []string{
-		"-c:a", "flac",
-		"-ar", "44100",
-		"-f", "flac",
-	}, sourcePath, out)
-}
-
-func (p *TranscodeProcessor) TranscodeMax(
-	ctx context.Context,
-	seek time.Duration,
-	sourcePath string,
-	out io.Writer,
-) error {
-	return p.transcode(ctx, seek, []string{
-		"-c:a", "flac",
-		"-f", "flac",
-	}, sourcePath, out)
+	return p.transcode(ctx, []string{
+		"-b:a", "320k",
+		"-c:a", "libopus",
+		"-vbr", "on",
+		"-f", "opus",
+	}, sourcePath, destinationPath)
 }
 
 func (*TranscodeProcessor) transcode(
 	ctx context.Context,
-	seek time.Duration,
 	audioArguments []string,
 	sourcePath string,
-	out io.Writer,
+	destinationPath string,
 ) error {
 	args := []string{}
 
 	args = append(args,
 		"-v", "0",
-		"-accurate_seek",
-		"-ss", fmt.Sprintf("%dus", seek.Microseconds()),
 		"-i", sourcePath,
+		"-map_metadata", "-1",
 		"-map", "0:a:0",
 		"-vn",
 	)
@@ -99,17 +81,15 @@ func (*TranscodeProcessor) transcode(
 	)
 
 	args = append(args,
-		"-",
+		destinationPath,
 	)
 
 	logger.TranscoderLogger.Infof(
-		"Start transcoding file %s at %d",
+		"Start transcoding file %s",
 		sourcePath,
-		seek.Milliseconds(),
 	)
 
 	cmd := exec.CommandContext(ctx, "ffmpeg", args...)
-	cmd.Stdout = out
 
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("starting cmd: %w", err)
@@ -120,33 +100,29 @@ func (*TranscodeProcessor) transcode(
 	switch err := cmd.Wait(); {
 	case errors.As(err, &exitErr):
 		logger.TranscoderLogger.Infof(
-			"Stop transcoding file %s at %d : %v",
+			"Stop transcoding file %s : %v",
 			sourcePath,
-			seek.Milliseconds(),
 			err,
 		)
 		return fmt.Errorf("waiting cmd: %w: %w", err, TranscoderKilledError)
 	case err != nil:
 		logger.TranscoderLogger.Errorf(
-			"Failed transcoding file %s at %d : %v",
+			"Failed transcoding file %s : %v",
 			sourcePath,
-			seek.Milliseconds(),
 			err,
 		)
 		return fmt.Errorf("waiting cmd: %w", err)
 	}
 	if code := cmd.ProcessState.ExitCode(); code > 1 {
 		logger.TranscoderLogger.Errorf(
-			"Failed transcoding file %s at %d with an unknow error",
+			"Failed transcoding file %s with an unknow error",
 			sourcePath,
-			seek.Milliseconds(),
 		)
 		return fmt.Errorf("%w: bbal %d", TranscoderExitError, code)
 	}
 	logger.TranscoderLogger.Infof(
-		"Finish transcoding file %s at %d",
+		"Finish transcoding file %s",
 		sourcePath,
-		seek.Milliseconds(),
 	)
 	return nil
 }

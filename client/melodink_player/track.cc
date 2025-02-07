@@ -76,8 +76,6 @@ private:
   int audio_sample_rate = 0;
   int audio_channel_count = 0;
 
-  bool is_transcoding = false;
-
   int OpenFile(const char *filename, const char *auth_token,
                int64_t streamOffset) {
     int response;
@@ -112,8 +110,6 @@ private:
     if (unique_index_mark != nullptr) {
       *unique_index_mark = '\0';
     }
-
-    is_transcoding = endsWith(cleaned_filename, "/transcode");
 
     response =
         avformat_open_input(&av_format_ctx, cleaned_filename, NULL, &options);
@@ -346,16 +342,14 @@ private:
           continue;
         }
 
-        if (!is_transcoding) {
-          // Note: Zero some time don't reset, so if we try to set 0, we got
-          // a little higher
-          int response = av_seek_frame(
-              av_format_ctx, -1,
-              int64_t(end_audio_time == 0
-                          ? 1953
-                          : AV_TIME_BASE * double(end_audio_time) / 1000.0),
-              AVSEEK_FLAG_BACKWARD);
-        }
+        // Note: Zero some time don't reset, so if we try to set 0, we got
+        // a little higher
+        int response = av_seek_frame(
+            av_format_ctx, -1,
+            int64_t(end_audio_time == 0
+                        ? 1953
+                        : AV_TIME_BASE * double(end_audio_time) / 1000.0),
+            AVSEEK_FLAG_BACKWARD);
 
         audio_opened = true;
 
@@ -879,41 +873,23 @@ public:
 
     int result = 0;
 
-    if (is_transcoding) {
-      CloseFile();
-      CloseAudio(true);
+    // Note: Zero some time don't reset, so if we try to set 0, we got a
+    // little higher
+    int response = av_seek_frame(
+        av_format_ctx, -1,
+        int64_t(new_time == 0 ? 1953
+                              : AV_TIME_BASE * double(new_time) / 1000.0),
+        AVSEEK_FLAG_BACKWARD);
 
-      int response =
-          OpenFile(loaded_url.c_str(), stored_auth_token.c_str(), new_time);
-
-      if (response >= 0) {
-        result = InitAudio(true);
-      } else {
-        result = -1;
+    if (response >= 0) {
+      if (audio_opened) {
+        audio_fifo.clear();
+        avcodec_flush_buffers(av_audio_codec_ctx);
       }
 
-      if (result != -1) {
-        time_offset = new_time;
-      }
+      result = AdjustSeekedPosition(new_time);
     } else {
-      // Note: Zero some time don't reset, so if we try to set 0, we got a
-      // little higher
-      int response = av_seek_frame(
-          av_format_ctx, -1,
-          int64_t(new_time == 0 ? 1953
-                                : AV_TIME_BASE * double(new_time) / 1000.0),
-          AVSEEK_FLAG_BACKWARD);
-
-      if (response >= 0) {
-        if (audio_opened) {
-          audio_fifo.clear();
-          avcodec_flush_buffers(av_audio_codec_ctx);
-        }
-
-        result = AdjustSeekedPosition(new_time);
-      } else {
-        result = -1;
-      }
+      result = -1;
     }
 
     StartDecodingThread();

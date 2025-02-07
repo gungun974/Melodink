@@ -152,8 +152,6 @@ class MinimalTrack extends Equatable {
         return "${AppApi().getServerUrl()}track/$id/audio/medium/transcode";
       case AppSettingAudioQuality.high:
         return "${AppApi().getServerUrl()}track/$id/audio/high/transcode";
-      case AppSettingAudioQuality.max:
-        return "${AppApi().getServerUrl()}track/$id/audio/max/transcode";
       default:
         return "${AppApi().getServerUrl()}track/$id/audio";
     }

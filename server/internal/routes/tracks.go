@@ -126,17 +126,23 @@ func TrackRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
-	for _, quality := range []string{"low", "medium", "high", "max"} {
+	for _, quality := range []string{"low", "medium", "high"} {
 		router.Get(
 			"/{id}/audio/"+quality+"/transcode",
 			func(w http.ResponseWriter, r *http.Request) {
 				id := chi.URLParam(r, "id")
 
-				err := c.TrackController.GetTrackAudioWithTranscode(r.Context(), id, quality, w, r)
+				response, err := c.TrackController.GetTrackAudioWithTranscode(
+					r.Context(),
+					id,
+					quality,
+				)
 				if err != nil {
 					handleHTTPError(err, w)
 					return
 				}
+
+				response.WriteResponse(w, r)
 			},
 		)
 	}

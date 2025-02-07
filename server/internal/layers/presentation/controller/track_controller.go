@@ -171,8 +171,7 @@ func (c *TrackController) GetTrackAudioWithTranscode(
 	ctx context.Context,
 	rawId string,
 	quality string,
-	w http.ResponseWriter, r *http.Request,
-) error {
+) (models.APIResponse, error) {
 	id, err := validator.CoerceAndValidateInt(
 		rawId,
 		validator.IntValidators{
@@ -180,15 +179,13 @@ func (c *TrackController) GetTrackAudioWithTranscode(
 		},
 	)
 	if err != nil {
-		return entities.NewValidationError(err.Error())
+		return nil, entities.NewValidationError(err.Error())
 	}
 
 	return c.trackUsecase.GetTrackAudioWithTranscode(
 		ctx,
 		id,
 		track_usecase.AudioTranscodeQuality(quality),
-		w,
-		r,
 	)
 }
 

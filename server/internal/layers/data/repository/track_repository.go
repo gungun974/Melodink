@@ -132,6 +132,10 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
         file_signature,
         cover_signature,
 
+        transcoding_low_signature,
+        transcoding_medium_signature,
+        transcoding_high_signature,
+
         metadata_album,
 
         metadata_track_number,
@@ -196,6 +200,9 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
         ?,
         ?,
         ?,
+        ?,
+        ?,
+        ?,
         ? 
       )
     RETURNING *
@@ -211,6 +218,10 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 		track.Path,
 		track.FileSignature,
 		track.CoverSignature,
+
+		track.TranscodingLowSignature,
+		track.TranscodingMediumSignature,
+		track.TranscodingHighSignature,
 
 		track.Metadata.Album,
 
@@ -301,6 +312,10 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
         file_signature = ?,
         cover_signature = ?,
 
+        transcoding_low_signature = ?,
+        transcoding_medium_signature = ?,
+        transcoding_high_signature = ?,
+
         metadata_album = ?,
 
         metadata_track_number = ?,
@@ -350,6 +365,10 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 		track.Path,
 		track.FileSignature,
 		track.CoverSignature,
+
+		track.TranscodingLowSignature,
+		track.TranscodingMediumSignature,
+		track.TranscodingHighSignature,
 
 		track.Metadata.Album,
 

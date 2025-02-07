@@ -46,5 +46,9 @@ func (u *TrackUsecase) DeleteTrack(
 		return nil, entities.NewInternalError(errors.New("Failed to delete track"))
 	}
 
+	if err := u.transcodeStorage.RemoveTrackTranscocdeDirectry(track.Id); err != nil {
+		logger.MainLogger.Warn("Couldn't delete transcode files from storage", err, *track)
+	}
+
 	return u.trackPresenter.ShowDetailedTrack(ctx, *track), nil
 }

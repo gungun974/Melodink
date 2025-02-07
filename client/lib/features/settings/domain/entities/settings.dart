@@ -19,8 +19,7 @@ enum AppSettingAudioQuality {
   low,
   medium,
   high,
-  max,
-  directFile,
+  lossless,
 }
 
 enum AppSettingScoringSystem {

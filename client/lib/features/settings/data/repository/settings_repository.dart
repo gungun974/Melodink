@@ -95,13 +95,12 @@ class SettingsRepository {
       playerBarPosition:
           playerBarPosition ?? AppSettingPlayerBarPosition.bottom,
       scoringSystem: scoringSystem ?? AppSettingScoringSystem.like,
-      wifiAudioQuality: wifiAudioQuality ?? AppSettingAudioQuality.max,
-      cellularAudioQuality:
-          cellularAudioQuality ?? AppSettingAudioQuality.medium,
+      wifiAudioQuality: wifiAudioQuality ?? AppSettingAudioQuality.lossless,
+      cellularAudioQuality: cellularAudioQuality ?? AppSettingAudioQuality.low,
       downloadAudioQuality: downloadAudioQuality ??
           (!kIsWeb && (Platform.isIOS || Platform.isAndroid)
               ? AppSettingAudioQuality.medium
-              : AppSettingAudioQuality.directFile),
+              : AppSettingAudioQuality.lossless),
       rememberLoopAndShuffleAcrossRestarts:
           rememberLoopAndShuffleAcrossRestarts ?? true,
       keepLastPlayingListAcrossRestarts:

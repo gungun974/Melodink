@@ -271,7 +271,7 @@ class SingleTrackContextMenu extends ConsumerWidget {
                       "${track.trackNumber.toString().padLeft(2, '0')} - ${track.title}"
                           .trim(),
                   link: LinkDetails(
-                    link: track.getUrl(AppSettingAudioQuality.directFile),
+                    link: track.getUrl(AppSettingAudioQuality.lossless),
                     headers: {"Cookie": AppApi().generateCookieHeader()},
                     method: "GET",
                   ),

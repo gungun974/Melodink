@@ -267,12 +267,8 @@ class SettingsPage extends ConsumerWidget {
                                 child: Text(t.audioQualities.high),
                               ),
                               DropdownMenuItem(
-                                value: AppSettingAudioQuality.max,
-                                child: Text(t.audioQualities.max),
-                              ),
-                              DropdownMenuItem(
-                                value: AppSettingAudioQuality.directFile,
-                                child: Text(t.audioQualities.direct),
+                                value: AppSettingAudioQuality.lossless,
+                                child: Text(t.audioQualities.lossless),
                               ),
                             ],
                           ),
@@ -303,12 +299,8 @@ class SettingsPage extends ConsumerWidget {
                                 child: Text(t.audioQualities.high),
                               ),
                               DropdownMenuItem(
-                                value: AppSettingAudioQuality.max,
-                                child: Text(t.audioQualities.max),
-                              ),
-                              DropdownMenuItem(
-                                value: AppSettingAudioQuality.directFile,
-                                child: Text(t.audioQualities.direct),
+                                value: AppSettingAudioQuality.lossless,
+                                child: Text(t.audioQualities.lossless),
                               ),
                             ],
                           ),
@@ -335,8 +327,12 @@ class SettingsPage extends ConsumerWidget {
                                 child: Text(t.audioQualities.medium),
                               ),
                               DropdownMenuItem(
-                                value: AppSettingAudioQuality.directFile,
-                                child: Text(t.audioQualities.source),
+                                value: AppSettingAudioQuality.high,
+                                child: Text(t.audioQualities.high),
+                              ),
+                              DropdownMenuItem(
+                                value: AppSettingAudioQuality.lossless,
+                                child: Text(t.audioQualities.lossless),
                               ),
                             ],
                           ),

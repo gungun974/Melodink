@@ -86,5 +86,9 @@ func (u *TrackUsecase) UploadTrack(
 		}
 	}
 
+	_ = u.TranscodeTrack(ctx, track.Id, AudioTranscodeLow)
+	_ = u.TranscodeTrack(ctx, track.Id, AudioTranscodeMedium)
+	_ = u.TranscodeTrack(ctx, track.Id, AudioTranscodeHigh)
+
 	return u.trackPresenter.ShowDetailedTrack(ctx, track), nil
 }

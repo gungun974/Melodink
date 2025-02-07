@@ -151,10 +151,9 @@ scoringSystem:
 
 audioQualities:
   low: "Low - Opus VBR 96 kbps"
-  medium: "Medium - Opus VBR 320 kbps"
-  high: "High - FLAC 44.1KHz"
-  max: "Max - (FLAC wrapping)"
-  direct: "Direct - (Read from source file)"
+  medium: "Medium - Opus VBR 128 kbps"
+  high: "High - Opus VBR 320 kbps"
+  lossless: "Lossless"
   source: "Source"
 
 
