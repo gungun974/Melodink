@@ -2,9 +2,6 @@
 
 // #define MELODINK_PLAYER_LOG
 
-#define MELODINK_KEEP_PREV_TRACKS 1
-#define MELODINK_KEEP_NEXT_TRACKS 2
-
 #define AVMediaType FF_AVMediaType
 #include "miniaudio.h"
 #undef AVMediaType
@@ -452,8 +449,7 @@ private:
     return LoadTrack(url);
   }
 
-  void UnloadTracks(std::vector<std::string> previous_urls,
-                    std::vector<std::string> next_urls) {
+  void UnloadTracks(std::vector<std::string> urls) {
     WriteLock w_lock(loaded_tracks_lock);
     for (size_t i = loaded_tracks.size(); i > 0; --i) {
       size_t index = i - 1;
@@ -477,26 +473,8 @@ private:
 
       bool should_skip = false;
 
-      size_t start_previous =
-          previous_urls.size() > MELODINK_KEEP_PREV_TRACKS
-              ? previous_urls.size() - MELODINK_KEEP_PREV_TRACKS
-              : 0;
-      for (size_t j = start_previous; j < previous_urls.size(); ++j) {
-        if (strcmp(track->GetLoadedUrl(), previous_urls[j].c_str()) == 0) {
-          should_skip = true;
-          break;
-        }
-      }
-
-      if (should_skip) {
-        continue;
-      }
-
-      size_t end_next = next_urls.size() > MELODINK_KEEP_NEXT_TRACKS
-                            ? MELODINK_KEEP_NEXT_TRACKS
-                            : next_urls.size();
-      for (size_t j = 0; j < end_next; ++j) {
-        if (strcmp(track->GetLoadedUrl(), next_urls[j].c_str()) == 0) {
+      for (size_t j = 0; j < urls.size(); ++j) {
+        if (strcmp(track->GetLoadedUrl(), urls[j].c_str()) == 0) {
           should_skip = true;
           break;
         }
@@ -587,11 +565,10 @@ private:
     }
   }
 
-  void SetAudioPrev(std::vector<std::string> previous_urls,
-                    std::vector<std::string> next_urls) {
-    if (previous_urls.size() > 1) {
+  void SetAudioPrev(int current_url_index, std::vector<std::string> urls) {
+    if (urls.size() - 1 >= current_url_index - 1) {
       MelodinkTrack *new_prev_track =
-          GetTrack(previous_urls[previous_urls.size() - 2].c_str());
+          GetTrack(urls[current_url_index - 1].c_str());
       prev_track = new_prev_track;
 
       prev_track->SetMaxPreloadCache(100 * 1024); // 100KiB
@@ -608,12 +585,11 @@ private:
     }
   }
 
-  void SetAudioNext(std::vector<std::string> previous_urls,
-                    std::vector<std::string> next_urls) {
-    if (next_urls.size() == 0) {
+  void SetAudioNext(int current_url_index, std::vector<std::string> urls) {
+    if (urls.size() <= current_url_index + 1) {
       if (loop_mode == MELODINK_LOOP_MODE_ALL) {
         next_track_index = 0;
-        MelodinkTrack *new_next_track = GetTrack(previous_urls[0].c_str());
+        MelodinkTrack *new_next_track = GetTrack(urls[0].c_str());
         next_track = new_next_track;
 
         next_track->SetMaxPreloadCache(100 * 1024); // 100KiB
@@ -627,12 +603,12 @@ private:
           t.detach();
         }
         new_next_track->player_load_count -= 1;
-
       } else {
         next_track = nullptr;
       }
     } else {
-      MelodinkTrack *new_next_track = GetTrack(next_urls[0].c_str());
+      MelodinkTrack *new_next_track =
+          GetTrack(urls[current_url_index + 1].c_str());
       next_track = new_next_track;
 
       next_track->SetMaxPreloadCache(100 * 1024); // 100KiB
@@ -772,29 +748,23 @@ public:
 
   std::mutex late_open_track_mutex;
 
-  void SetAudios(std::vector<const char *> raw_previous_urls,
-                 std::vector<const char *> raw_next_urls) {
-    std::vector<std::string> previous_urls;
-    previous_urls.reserve(raw_previous_urls.size());
-    for (const auto &cstr : raw_previous_urls) {
-      previous_urls.emplace_back(cstr);
+  void SetAudios(int new_current_track_index, int current_url_index,
+                 std::vector<const char *> raw_urls) {
+    std::vector<std::string> urls;
+    urls.reserve(raw_urls.size());
+    for (const auto &cstr : raw_urls) {
+      urls.emplace_back(cstr);
     }
 
-    std::vector<std::string> next_urls;
-    next_urls.reserve(raw_next_urls.size());
-    for (const auto &cstr : raw_next_urls) {
-      next_urls.emplace_back(cstr);
-    }
-
-    if (previous_urls.size() == 0) {
+    if (urls.size() == 0 || current_url_index >= urls.size()) {
       current_track = nullptr;
-      UnloadTracks(previous_urls, next_urls);
+      UnloadTracks(urls);
       return;
     }
 
-    const char *current_url = previous_urls.back().c_str();
+    const char *current_url = urls[current_url_index].c_str();
 
-    current_track_index = previous_urls.size() - 1;
+    current_track_index = new_current_track_index;
     prev_track_index = current_track_index - 1;
     next_track_index = current_track_index + 1;
 
@@ -845,30 +815,17 @@ public:
 
     new_current_track->player_load_count -= 1;
 
-    SetAudioPrev(previous_urls, next_urls);
+    SetAudioPrev(current_url_index, urls);
 
-    SetAudioNext(previous_urls, next_urls);
+    SetAudioNext(current_url_index, urls);
 
-    size_t start_previous =
-        previous_urls.size() > MELODINK_KEEP_PREV_TRACKS
-            ? previous_urls.size() - MELODINK_KEEP_PREV_TRACKS
-            : 0;
-    for (size_t j = start_previous; j < previous_urls.size(); ++j) {
-      MelodinkTrack *track = GetTrack(previous_urls[j].c_str());
+    for (size_t j = 0; j < urls.size(); ++j) {
+      MelodinkTrack *track = GetTrack(urls[j].c_str());
       track->SetMaxPreloadCache(100 * 1024); // 100KiB
       track->player_load_count -= 1;
     }
 
-    size_t end_next = next_urls.size() > MELODINK_KEEP_NEXT_TRACKS
-                          ? MELODINK_KEEP_NEXT_TRACKS
-                          : next_urls.size();
-    for (size_t j = 0; j < end_next; ++j) {
-      MelodinkTrack *track = GetTrack(next_urls[j].c_str());
-      track->SetMaxPreloadCache(100 * 1024); // 100KiB
-      track->player_load_count -= 1;
-    }
-
-    UnloadTracks(previous_urls, next_urls);
+    UnloadTracks(urls);
   }
 
   int64_t GetCurrentTrackPos() { return current_track_index; }

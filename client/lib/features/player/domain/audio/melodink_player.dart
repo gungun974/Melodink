@@ -144,7 +144,8 @@ class MelodinkPlayer {
         .lookup<
             ffi.NativeFunction<
                 ffi.Void Function(
-                  ffi.Pointer<ffi.Pointer<ffi.Utf8>>,
+                  ffi.Int64,
+                  ffi.Int64,
                   ffi.Pointer<ffi.Pointer<ffi.Utf8>>,
                 )>>('mi_player_set_audios')
         .asFunction();
@@ -238,7 +239,8 @@ class MelodinkPlayer {
   late final void Function() _skipToNext;
 
   late final void Function(
-    ffi.Pointer<ffi.Pointer<ffi.Utf8>>,
+    int,
+    int,
     ffi.Pointer<ffi.Pointer<ffi.Utf8>>,
   ) _setAudios;
 
@@ -261,35 +263,22 @@ class MelodinkPlayer {
   void skipToPrevious() => _skipToPrevious();
   void skipToNext() => _skipToNext();
 
-  void setAudios(List<String> previousUrls, List<String> nextUrls) {
-    final previousUrlPointers =
-        ffi.calloc<ffi.Pointer<ffi.Utf8>>(previousUrls.length + 1);
-
-    final nextUrlPointers =
-        ffi.calloc<ffi.Pointer<ffi.Utf8>>(nextUrls.length + 1);
+  void setAudios(
+      int newCurrentTrackIndex, int currentUrlIndex, List<String> urls) {
+    final urlPointers = ffi.calloc<ffi.Pointer<ffi.Utf8>>(urls.length + 1);
 
     try {
-      for (var i = 0; i < previousUrls.length; i++) {
-        previousUrlPointers[i] = previousUrls[i].toNativeUtf8();
+      for (var i = 0; i < urls.length; i++) {
+        urlPointers[i] = urls[i].toNativeUtf8();
       }
-      previousUrlPointers[previousUrls.length] = ffi.nullptr;
+      urlPointers[urls.length] = ffi.nullptr;
 
-      for (var i = 0; i < nextUrls.length; i++) {
-        nextUrlPointers[i] = nextUrls[i].toNativeUtf8();
-      }
-      nextUrlPointers[nextUrls.length] = ffi.nullptr;
-
-      _setAudios(previousUrlPointers, nextUrlPointers);
+      _setAudios(newCurrentTrackIndex, currentUrlIndex, urlPointers);
     } finally {
-      for (var i = 0; i < previousUrls.length; i++) {
-        ffi.calloc.free(previousUrlPointers[i]);
+      for (var i = 0; i < urls.length; i++) {
+        ffi.calloc.free(urlPointers[i]);
       }
-      ffi.calloc.free(previousUrlPointers);
-
-      for (var i = 0; i < nextUrls.length; i++) {
-        ffi.calloc.free(nextUrlPointers[i]);
-      }
-      ffi.calloc.free(nextUrlPointers);
+      ffi.calloc.free(urlPointers);
     }
   }
 

@@ -634,21 +634,34 @@ class AudioController extends BaseAudioHandler {
       final getDownloadedTrackByTrackId =
           downloadTrackRepository?.getDownloadedTrackByTrackId;
 
-      final List<String> prevUrls = [];
+      final List<String> urls = [];
 
-      for (final (index, track) in _previousTracks.indexed) {
+      int currentUrlIndex = 0;
+
+      for (final (index, track) in [
+        ..._previousTracks,
+        ..._queueTracks,
+        ..._nextTracks,
+      ].indexed) {
+        if (index != 0 && index <= _previousTracks.length - 3) {
+          continue;
+        }
+
+        if (index > _previousTracks.length + 3) {
+          continue;
+        }
+
         if (index == _previousTracks.length - 1) {
           if (_lastCurrentTrackId == track.id) {
-            prevUrls
-                .add(_lastCurrentTrackUrl ?? track.getUrl(currentAudioQuality));
+            urls.add(_lastCurrentTrackUrl ?? track.getUrl(currentAudioQuality));
+            currentUrlIndex = urls.length - 1;
             continue;
           }
         }
 
         DownloadTrack? downloadedTrack;
 
-        if (index >= _previousTracks.length - 3 &&
-            getDownloadedTrackByTrackId != null) {
+        if (getDownloadedTrackByTrackId != null) {
           downloadedTrack = await getDownloadedTrackByTrackId(track.id);
         }
 
@@ -660,34 +673,18 @@ class AudioController extends BaseAudioHandler {
           url = downloadedTrack.getUrl();
         }
 
-        prevUrls.add(url);
+        urls.add(url);
 
         if (index == _previousTracks.length - 1) {
           _lastCurrentTrackId = track.id;
           _lastCurrentTrackUrl = url;
-        }
-      }
-
-      final List<String> nextUrls = [];
-
-      for (final (index, track) in [..._queueTracks, ..._nextTracks].indexed) {
-        DownloadTrack? downloadedTrack;
-
-        if (index <= 3 && getDownloadedTrackByTrackId != null) {
-          downloadedTrack = await getDownloadedTrackByTrackId(track.id);
-        }
-
-        if (downloadedTrack == null) {
-          nextUrls.add(track.getUrl(currentAudioQuality));
-        } else {
-          nextUrls.add(downloadedTrack.getUrl());
+          currentUrlIndex = urls.length - 1;
         }
       }
 
       Map<String, int> urlCount = {};
 
-      final List<String> uniquePreviousUrls = [];
-      final List<String> uniqueNextUrls = [];
+      final List<String> uniqueUrls = [];
 
       void addUrl(String url, List<String> list, List<String> output) {
         if (urlCount.containsKey(url)) {
@@ -698,18 +695,15 @@ class AudioController extends BaseAudioHandler {
         output.add('$url?i=${urlCount[url]}');
       }
 
-      for (String url in prevUrls) {
-        addUrl(url, prevUrls, uniquePreviousUrls);
+      for (String url in urls) {
+        addUrl(url, urls, uniqueUrls);
       }
 
-      for (String url in nextUrls) {
-        addUrl(url, nextUrls, uniqueNextUrls);
-      }
-
-      if (prevUrls.isNotEmpty) {
+      if (urls.isNotEmpty) {
         player.setAudios(
-          uniquePreviousUrls,
-          uniqueNextUrls,
+          _previousTracks.length - 1,
+          currentUrlIndex,
+          uniqueUrls,
         );
       }
     });

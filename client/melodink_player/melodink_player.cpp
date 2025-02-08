@@ -53,20 +53,15 @@ extern "C" void mi_player_skip_to_next() {
   return;
 }
 
-extern "C" void mi_player_set_audios(const char **previous_urls,
-                                     const char **next_urls) {
-  std::vector<const char *> vector_previous_urls;
-  std::vector<const char *> vector_next_urls;
+extern "C" void mi_player_set_audios(int new_current_track_index,
+                                     int current_url_index, const char **urls) {
+  std::vector<const char *> vector_urls;
 
-  for (const char **ptr = previous_urls; *ptr != nullptr; ptr++) {
-    vector_previous_urls.push_back(*ptr);
+  for (const char **ptr = urls; *ptr != nullptr; ptr++) {
+    vector_urls.push_back(*ptr);
   }
 
-  for (const char **ptr = next_urls; *ptr != nullptr; ptr++) {
-    vector_next_urls.push_back(*ptr);
-  }
-
-  player->SetAudios(vector_previous_urls, vector_next_urls);
+  player->SetAudios(new_current_track_index, current_url_index, vector_urls);
 
   return;
 }
