@@ -682,28 +682,11 @@ class AudioController extends BaseAudioHandler {
         }
       }
 
-      Map<String, int> urlCount = {};
-
-      final List<String> uniqueUrls = [];
-
-      void addUrl(String url, List<String> list, List<String> output) {
-        if (urlCount.containsKey(url)) {
-          urlCount[url] = urlCount[url]! + 1;
-        } else {
-          urlCount[url] = 1;
-        }
-        output.add('$url?i=${urlCount[url]}');
-      }
-
-      for (String url in urls) {
-        addUrl(url, urls, uniqueUrls);
-      }
-
       if (urls.isNotEmpty) {
         player.setAudios(
           _previousTracks.length - 1,
           currentUrlIndex,
-          uniqueUrls,
+          urls,
         );
       }
     });

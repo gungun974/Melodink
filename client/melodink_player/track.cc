@@ -48,6 +48,8 @@ private:
 
   std::atomic<bool> infinite_loop{false};
 
+  std::atomic<bool> infinite_next_loop{false};
+
   std::thread decoding_thread;
   std::mutex decoding_mutex;
 
@@ -480,7 +482,8 @@ private:
         forceUnloadCache = false;
         // Return if error or end of file was encountered
         if (read_packet_response < 0) {
-          if (read_packet_response == AVERROR_EOF && infinite_loop) {
+          if (read_packet_response == AVERROR_EOF &&
+              (infinite_loop || infinite_next_loop)) {
             audio_frames_consumed_max =
                 audio_frames_consumed + audio_fifo.size();
 
@@ -898,6 +901,12 @@ public:
 
   void SetLoop(bool enabled) { infinite_loop = enabled; }
 
+  void SetNextLoop(bool enabled) { infinite_next_loop = enabled; }
+
+  bool GetNextLoop() { return infinite_next_loop; }
+
+  bool has_loop_into_next = false;
+
   int GetAudioFrame(void **output, int sample_count) {
     if (!output || !(*output) || sample_count < 0) {
       return -1;
@@ -917,11 +926,16 @@ public:
 
     audio_frames_consumed += samples_read;
 
-    if (infinite_loop && audio_frames_consumed_max != 0 &&
+    has_loop_into_next = false;
+
+    if ((infinite_loop || infinite_next_loop) &&
+        audio_frames_consumed_max != 0 &&
         audio_frames_consumed >= audio_frames_consumed_max) {
       audio_frames_consumed %= audio_frames_consumed_max;
       audio_frames_consumed_max = 0;
       time_offset = 0;
+
+      has_loop_into_next = infinite_next_loop;
     }
 
     audio_time =

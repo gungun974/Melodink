@@ -117,7 +117,7 @@ private:
   }
 
   std::mutex set_next_and_prev_audio_mutex;
-  void PlayNextAudio(bool reinit) {
+  void PlayNextAudio(bool reinit, bool canResetTime) {
     std::unique_lock<std::mutex> lock(set_next_and_prev_audio_mutex);
 
     if (next_track == nullptr) {
@@ -145,6 +145,11 @@ private:
     current_track_index = next_track_index;
 
     if (is_track_loaded) {
+      if (canResetTime && current_track == next_track) {
+        std::thread t([this]() { current_track->Seek(0); });
+        t.detach();
+      }
+
       current_track = next_track;
     }
 
@@ -185,7 +190,7 @@ private:
     send_event_audio_changed(current_track_index);
   }
 
-  void PlayPrevAudio(bool reinit) {
+  void PlayPrevAudio(bool reinit, bool canResetTime) {
     std::unique_lock<std::mutex> lock(set_next_and_prev_audio_mutex);
 
     if (prev_track == nullptr) {
@@ -202,6 +207,11 @@ private:
     current_track_index = prev_track_index;
 
     if (is_track_loaded) {
+      if (canResetTime && current_track == prev_track) {
+        std::thread t([this]() { current_track->Seek(0); });
+        t.detach();
+      }
+
       current_track = prev_track;
     }
 
@@ -226,7 +236,7 @@ private:
 
       can_auto_next_audio_mismatch = false;
 
-      PlayNextAudio(true);
+      PlayNextAudio(true, true);
     }
   }
 
@@ -240,7 +250,8 @@ private:
     PlayAudioData(pDevice, player, pOutput, frameCount, true);
 
     if (player->current_track != nullptr &&
-        player->loop_mode == MELODINK_LOOP_MODE_ONE) {
+        (player->loop_mode == MELODINK_LOOP_MODE_ONE ||
+         player->current_track->GetNextLoop())) {
       int64_t current_position =
           player->current_track->GetCurrentPlaybackTime();
 
@@ -248,6 +259,11 @@ private:
         send_event_update_state(player->state);
       }
       player->previous_position = current_position;
+    }
+
+    if (player->current_track != nullptr &&
+        player->current_track->has_loop_into_next) {
+      player->PlayNextAudio(false, false);
     }
 
     (void)pInput;
@@ -312,7 +328,7 @@ private:
             player->current_track->GetAudioChannelCount() *
             player->current_track->GetAudioSampleSize() * frame_read;
 
-        player->PlayNextAudio(false);
+        player->PlayNextAudio(false, true);
         PlayAudioData(pDevice, player, pOutputByteOffset, remaining_frame,
                       false);
         return;
@@ -563,6 +579,8 @@ private:
 
       current_track = new_current_track;
     }
+
+    HandleNextLoop();
   }
 
   void SetAudioPrev(int current_url_index, std::vector<std::string> urls) {
@@ -570,6 +588,11 @@ private:
       MelodinkTrack *new_prev_track =
           GetTrack(urls[current_url_index - 1].c_str());
       prev_track = new_prev_track;
+
+      if (prev_track == current_track) {
+        new_prev_track->player_load_count -= 1;
+        return;
+      }
 
       prev_track->SetMaxPreloadCache(100 * 1024); // 100KiB
 
@@ -585,12 +608,32 @@ private:
     }
   }
 
+  bool HandleNextLoop() {
+    if (current_track == nullptr) {
+      return false;
+    }
+
+    if (next_track == current_track) {
+      current_track->SetNextLoop(true);
+      return true;
+    }
+
+    current_track->SetNextLoop(false);
+
+    return false;
+  }
+
   void SetAudioNext(int current_url_index, std::vector<std::string> urls) {
     if (urls.size() <= current_url_index + 1) {
       if (loop_mode == MELODINK_LOOP_MODE_ALL) {
         next_track_index = 0;
         MelodinkTrack *new_next_track = GetTrack(urls[0].c_str());
         next_track = new_next_track;
+
+        if (HandleNextLoop()) {
+          new_next_track->player_load_count -= 1;
+          return;
+        }
 
         next_track->SetMaxPreloadCache(100 * 1024); // 100KiB
 
@@ -610,6 +653,11 @@ private:
       MelodinkTrack *new_next_track =
           GetTrack(urls[current_url_index + 1].c_str());
       next_track = new_next_track;
+
+      if (HandleNextLoop()) {
+        new_next_track->player_load_count -= 1;
+        return;
+      }
 
       next_track->SetMaxPreloadCache(100 * 1024); // 100KiB
 
@@ -687,9 +735,9 @@ public:
     is_paused = true;
   }
 
-  void Next() { PlayNextAudio(true); }
+  void Next() { PlayNextAudio(true, true); }
 
-  void Prev() { PlayPrevAudio(true); }
+  void Prev() { PlayPrevAudio(true, true); }
 
   std::atomic<int64_t> seek_duration{-1};
 
