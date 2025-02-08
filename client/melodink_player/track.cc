@@ -91,13 +91,13 @@ private:
 
     av_dict_set(&options, "headers", headers, 0);
 
-    av_dict_set(&options, "reconnect", "0", 0);
+    av_dict_set(&options, "reconnect", "1", 0);
 
-    av_dict_set(&options, "reconnect_on_network_error", "0", 0);
-
-    av_dict_set(&options, "reconnect_at_eof", "0", 0);
+    av_dict_set(&options, "reconnect_on_network_error", "1", 0);
 
     av_dict_set(&options, "reconnect_streamed", "1", 0);
+
+    av_dict_set(&options, "reconnect_max_retries", "3", 0);
 
     av_dict_set(&options, "rw_timeout", "45000000", 0);
 
