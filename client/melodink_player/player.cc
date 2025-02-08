@@ -820,6 +820,9 @@ public:
     SetAudioNext(current_url_index, urls);
 
     for (size_t j = 0; j < urls.size(); ++j) {
+      if (j == current_url_index) {
+        continue;
+      }
       MelodinkTrack *track = GetTrack(urls[j].c_str());
       track->SetMaxPreloadCache(100 * 1024); // 100KiB
       track->player_load_count -= 1;
