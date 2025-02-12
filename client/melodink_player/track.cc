@@ -18,6 +18,7 @@ extern "C" {
 
 #include <cstdio>
 
+#include "cache.cc"
 #include "fifo.cc"
 
 typedef struct FrameData {
@@ -32,6 +33,7 @@ private:
     return pos != std::string::npos && pos == str.size() - suffix.size();
   }
 
+  CacheAvio *cache_avio = nullptr;
   AVFormatContext *av_format_ctx = nullptr;
 
   std::string loaded_url = "";
@@ -113,8 +115,30 @@ private:
       *unique_index_mark = '\0';
     }
 
-    response =
-        avformat_open_input(&av_format_ctx, cleaned_filename, NULL, &options);
+    cache_avio = new CacheAvio();
+
+    av_format_ctx = avformat_alloc_context();
+    if (!av_format_ctx) {
+      fprintf(stderr, "Could not allocate AVFormatContext\n");
+      if (cache_avio != nullptr) {
+        delete cache_avio;
+        cache_avio = nullptr;
+      }
+      return -1;
+    }
+
+    response = cache_avio->init(cleaned_filename, &options);
+    if (response < 0) {
+      delete cache_avio;
+      cache_avio = nullptr;
+      return response;
+    }
+
+    av_format_ctx->pb = cache_avio->avio_ctx;
+    av_format_ctx->flags |= AVFMT_FLAG_CUSTOM_IO;
+
+    response = avformat_open_input(&av_format_ctx, NULL, NULL, NULL);
+
     if (response < 0) {
       fprintf(stderr, "avformat_open_input response: %s\n", GetError(response));
     }
@@ -128,6 +152,10 @@ private:
     if (response < 0) {
       fprintf(stderr, "Couldn't find stream info\n");
       avformat_close_input(&av_format_ctx);
+      if (cache_avio != nullptr) {
+        delete cache_avio;
+        cache_avio = nullptr;
+      }
       avformat_free_context(av_format_ctx);
       return -1;
     }
@@ -137,6 +165,10 @@ private:
 
   void CloseFile() {
     avformat_close_input(&av_format_ctx);
+    if (cache_avio != nullptr) {
+      delete cache_avio;
+      cache_avio = nullptr;
+    }
     avformat_free_context(av_format_ctx);
   }
 
