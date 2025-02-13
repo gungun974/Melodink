@@ -311,6 +311,14 @@ public:
     has_been_open = false;
   }
 
+  void EvictCache() {
+    if (!has_been_open) {
+      return;
+    }
+
+    removeDirectoryRecursive(cache_directory);
+  }
+
   static void CheckAndCleanOldCaches(const std::string &cachePath,
                                      const std::string &protectedCacheIndex) {
     std::unique_lock<std::mutex> lock(CacheAvio_clean_cache_mutex);

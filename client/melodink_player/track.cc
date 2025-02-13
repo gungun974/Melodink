@@ -593,7 +593,9 @@ private:
           if (response != AVERROR(EAGAIN)) {
             fprintf(stderr, "Failed to decode packet\n");
             av_packet_unref(&av_packet);
-            continue;
+            cache_avio->EvictCache();
+            TimeoutReopen();
+            break;
           }
         }
 
