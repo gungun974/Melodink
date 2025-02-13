@@ -12,6 +12,7 @@ extern "C" {
 #include <string>
 #include <thread>
 #include <unordered_set>
+#include <vector>
 
 #include <cstdio>
 
@@ -51,16 +52,15 @@ private:
   FILE *data_file;
   FILE *index_file;
 
-  uint8_t *index_map;
+  std::vector<uint8_t> index_map;
   size_t index_size;
   size_t current_offset;
 
   bool IsBlockCached(size_t block_id) {
     size_t byte_index = block_id / 8;
-    size_t bit_index = block_id % 8;
     if (byte_index >= index_size)
       return false;
-    return (index_map[byte_index] >> bit_index) & 1;
+    return (index_map[byte_index] >> (block_id % 8)) & 1;
   }
 
   void MarkBlockAsCached(size_t block_id) {
@@ -68,10 +68,8 @@ private:
     size_t bit_index = block_id % 8;
 
     if (byte_index >= index_size) {
-      size_t new_size = byte_index + 1;
-      index_map = (uint8_t *)realloc(index_map, new_size);
-      memset(index_map + index_size, 0, new_size - index_size);
-      index_size = new_size;
+      index_map.resize(byte_index + 1);
+      index_size = index_map.size();
     }
 
     index_map[byte_index] |= (1 << bit_index);
@@ -261,8 +259,8 @@ public:
       fwrite(&fileTotalSize, sizeof(int64_t), 1, index_file);
     }
 
-    index_map = (uint8_t *)malloc(index_size);
-    response = fread(index_map, 1, index_size, index_file);
+    index_map.resize(index_size);
+    response = fread(index_map.data(), 1, index_size, index_file);
 
     if (response < 0) {
       return -1;
@@ -305,7 +303,6 @@ public:
 
     fclose(data_file);
     fclose(index_file);
-    free(index_map);
 
     CacheAvio_opened_paths_mutex.lock();
     CacheAvio_opened_paths.erase(join(cache_directory, INDEX_FILE));
