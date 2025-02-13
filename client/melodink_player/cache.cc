@@ -96,7 +96,12 @@ private:
     size_t offset = block_id * BLOCK_SIZE;
     avio_seek(source_avio_ctx, offset, SEEK_SET);
 
-    size_t bytes_read = avio_read(source_avio_ctx, buffer, BLOCK_SIZE);
+    int bytes_read = avio_read(source_avio_ctx, buffer, BLOCK_SIZE);
+
+    if (bytes_read == AVERROR_EOF) {
+      MarkBlockAsCached(block_id);
+      return 1;
+    }
 
     if (bytes_read <= 0) {
       return bytes_read;
@@ -125,7 +130,7 @@ private:
     }
 
     fseek(cacheAvio->data_file, cacheAvio->current_offset, SEEK_SET);
-    size_t bytes_read = fread(buf, 1, buf_size, cacheAvio->data_file);
+    int bytes_read = fread(buf, 1, buf_size, cacheAvio->data_file);
 
     if (!bytes_read)
       return AVERROR_EOF;
