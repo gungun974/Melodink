@@ -20,10 +20,12 @@ extern "C" {
 
 #include "cache.cc"
 #include "fifo.cc"
+#include "fs.cc"
 
 extern "C" {
 typedef struct MelodinkTrackRequest {
   char *serverURL;
+  char *cachePath;
   int64_t trackId;
   int64_t quality;
   char *originalAudioHash;
@@ -39,6 +41,7 @@ typedef struct FrameData {
 class MelodinkTrack {
 private:
   std::string server_url;
+  std::string cache_path;
   int64_t track_id;
   int64_t quality;
   std::string original_audio_hash;
@@ -115,7 +118,7 @@ private:
     av_dict_set(&options, "rw_timeout", "45000000", 0);
 
     char url[2048];
-    snprintf(url, sizeof(url), "%strack/%d/audio", server_url.c_str(),
+    snprintf(url, sizeof(url), "%strack/%" PRIu64 "/audio", server_url.c_str(),
              track_id);
 
     cache_avio = new CacheAvio();
@@ -132,7 +135,11 @@ private:
 
     fprintf(stderr, "URL: %s\n", url);
 
-    response = cache_avio->init(url, &options);
+    char cacheKey[1024];
+    snprintf(cacheKey, sizeof(cacheKey), "%" PRIi64 "-%" PRIi64 "-%s", track_id,
+             quality, original_audio_hash.c_str());
+
+    response = cache_avio->init(cache_path.c_str(), cacheKey, url, &options);
     if (response < 0) {
       delete cache_avio;
       cache_avio = nullptr;
@@ -824,13 +831,15 @@ private:
   }
 
 public:
-  MelodinkTrack(char *serverURL, int64_t trackId, int64_t quality,
-                char *originalAudioHash, char *downloadedPath) {
-    server_url = serverURL;
-    track_id = trackId;
-    quality = quality;
-    original_audio_hash = originalAudioHash;
-    downloaded_path = downloadedPath;
+  MelodinkTrack(char *serverURL, char *cachePath, int64_t trackId,
+                int64_t quality, char *originalAudioHash,
+                char *downloadedPath) {
+    this->server_url = serverURL;
+    this->cache_path = cachePath;
+    this->track_id = trackId;
+    this->quality = quality;
+    this->original_audio_hash = originalAudioHash;
+    this->downloaded_path = downloadedPath;
   }
 
   ~MelodinkTrack() {
@@ -1109,6 +1118,9 @@ public:
       return false;
     }
     if (downloaded_path != request.downloadedPath) {
+      return false;
+    }
+    if (cache_path != request.cachePath) {
       return false;
     }
     return server_url == request.serverURL;

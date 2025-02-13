@@ -5,6 +5,7 @@ import 'package:audio_session/audio_session.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/core/network/network_info.dart';
@@ -19,6 +20,7 @@ import 'package:melodink_client/features/track/domain/entities/track_compressed_
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:mutex/mutex.dart';
+import 'package:path/path.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -703,6 +705,7 @@ class AudioController extends BaseAudioHandler {
       if (requests.isNotEmpty) {
         player.setAudios(
           AppApi().getServerUrl(),
+          join((await getMelodinkInstanceCacheDirectory()).path, "audioCache"),
           _previousTracks.length - 1,
           currentRequestIndex,
           requests,

@@ -14,7 +14,9 @@ extern "C" {
 
 #include <cstdio>
 
-#define BLOCK_SIZE 4096 // Taille des blocs
+#include "fs.cc"
+
+#define BLOCK_SIZE 4096
 #define INDEX_FILE "cache_index.bin"
 #define DATA_FILE "cache_data.bin"
 
@@ -24,9 +26,9 @@ private:
 
   FILE *data_file;
   FILE *index_file;
-  uint8_t *index_map;    // Bitmap indiquant quels blocs sont en cache
-  size_t index_size;     // Taille de l'index en octets
-  size_t current_offset; // Position actuelle pour les lectures
+  uint8_t *index_map;
+  size_t index_size;
+  size_t current_offset;
 
   // Vérifie si un bloc est en cache
   bool is_block_cached(size_t block_id) {
@@ -189,22 +191,33 @@ public:
 
   int64_t fileTotalSize = 0;
 
-  int init(const char *filename, AVDictionary **newOptions) {
+  int init(const char *cachePath, const char *cacheKey, const char *url,
+           AVDictionary **newOptions) {
     if (has_been_open) {
       return 0;
     }
 
-    file_url = filename;
+    file_url = url;
 
     av_dict_copy(&options, *newOptions, 0);
 
-    data_file = fopen(DATA_FILE, "rb+");
-    if (!data_file)
-      data_file = fopen(DATA_FILE, "wb+");
+    std::string cacheDirectory = join(cachePath, sanitizeForPath(cacheKey));
 
-    index_file = fopen(INDEX_FILE, "rb+");
+    createDirectoryRecursive(cacheDirectory);
+
+    data_file = fopen(join(cacheDirectory, DATA_FILE).c_str(), "rb+");
+    if (!data_file)
+      data_file = fopen(join(cacheDirectory, DATA_FILE).c_str(), "wb+");
+
+    if (!data_file)
+      return -1;
+
+    index_file = fopen(join(cacheDirectory, INDEX_FILE).c_str(), "rb+");
     if (!index_file)
-      index_file = fopen(INDEX_FILE, "wb+");
+      index_file = fopen(join(cacheDirectory, INDEX_FILE).c_str(), "wb+");
+
+    if (!index_file)
+      return -1;
 
     // Charge l'index en mémoire
     fseek(index_file, 0, SEEK_END);

@@ -4,7 +4,6 @@ import 'dart:io';
 import 'dart:isolate';
 import 'package:ffi/ffi.dart' as ffi;
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 
 enum MelodinkProcessingState {
   /// There hasn't been any resource loaded yet.
@@ -59,6 +58,7 @@ final class MelodinkTrackRequest {
 
 final class NativeMelodinkTrackRequest extends ffi.Struct {
   external ffi.Pointer<ffi.Char> serverURL;
+  external ffi.Pointer<ffi.Char> cachePath;
   @ffi.Int64()
   external int trackId;
   @ffi.Int64()
@@ -292,6 +292,7 @@ class MelodinkPlayer {
 
   void setAudios(
     String serverURL,
+    String cachePath,
     int newCurrentTrackIndex,
     int currentRequestIndex,
     List<MelodinkTrackRequest> requests,
@@ -301,9 +302,12 @@ class MelodinkPlayer {
 
     final serverURLPointer = serverURL.toNativeUtf8().cast<ffi.Char>();
 
+    final cachePathPointer = cachePath.toNativeUtf8().cast<ffi.Char>();
+
     try {
       for (var i = 0; i < requests.length; i++) {
         requestsPointers[i].serverURL = serverURLPointer;
+        requestsPointers[i].cachePath = cachePathPointer;
         requestsPointers[i].trackId = requests[i].id;
         requestsPointers[i].quality = switch (requests[i].quality) {
           AppSettingAudioQuality.lossless => 0,
@@ -324,6 +328,7 @@ class MelodinkPlayer {
         ffi.calloc.free(requestsPointers[i].originalAudioHash);
         ffi.calloc.free(requestsPointers[i].downloadedPath);
       }
+      ffi.calloc.free(cachePathPointer);
       ffi.calloc.free(serverURLPointer);
       ffi.calloc.free(requestsPointers);
     }

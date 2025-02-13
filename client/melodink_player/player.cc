@@ -405,9 +405,9 @@ private:
   std::queue<MelodinkTrack *> track_auto_open_queue;
 
   MelodinkTrack *LoadTrack(const MelodinkTrackRequest request) {
-    MelodinkTrack *new_track =
-        new MelodinkTrack(request.serverURL, request.trackId, request.quality,
-                          request.originalAudioHash, request.downloadedPath);
+    MelodinkTrack *new_track = new MelodinkTrack(
+        request.serverURL, request.cachePath, request.trackId, request.quality,
+        request.originalAudioHash, request.downloadedPath);
 
     new_track->player_load_count += 1;
 
