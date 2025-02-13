@@ -31,16 +31,31 @@ std::unordered_set<std::string> CacheAvio_opened_paths = {};
 
 class CacheAvio {
 private:
-  int seek_offset = 0;
+  bool has_been_open = false;
+
+  int buffer_size = 4096;
+
+  std::string file_url = "";
+
+  std::string cache_directory = "";
+
+  AVIOContext *source_avio_ctx = nullptr;
+  AVIOContext *avio_ctx = nullptr;
+
+  AVDictionary *options = NULL;
+
+  int64_t fileTotalSize = 0;
+
+  bool has_been_open_http = false;
 
   FILE *data_file;
   FILE *index_file;
+
   uint8_t *index_map;
   size_t index_size;
   size_t current_offset;
 
-  // Vérifie si un bloc est en cache
-  bool is_block_cached(size_t block_id) {
+  bool IsBlockCached(size_t block_id) {
     size_t byte_index = block_id / 8;
     size_t bit_index = block_id % 8;
     if (byte_index >= index_size)
@@ -48,8 +63,7 @@ private:
     return (index_map[byte_index] >> bit_index) & 1;
   }
 
-  // Marque un bloc comme téléchargé
-  void mark_block_as_cached(size_t block_id) {
+  void MarkBlockAsCached(size_t block_id) {
     size_t byte_index = block_id / 8;
     size_t bit_index = block_id % 8;
 
@@ -62,14 +76,13 @@ private:
 
     index_map[byte_index] |= (1 << bit_index);
 
-    // Met à jour l'index sur le disque
     fseek(index_file, byte_index + sizeof(int64_t), SEEK_SET);
     fwrite(&index_map[byte_index], 1, 1, index_file);
     fflush(index_file);
   }
 
-  int download_block(size_t block_id) {
-    if (is_block_cached(block_id)) {
+  int DownloadBlock(size_t block_id) {
+    if (IsBlockCached(block_id)) {
       return 1;
     }
 
@@ -80,23 +93,20 @@ private:
 
     uint8_t buffer[BLOCK_SIZE] = {0};
 
-    // Déplacer la lecture HTTP à la bonne position
     size_t offset = block_id * BLOCK_SIZE;
     avio_seek(source_avio_ctx, offset, SEEK_SET);
 
-    // Lire les données via HTTP
     size_t bytes_read = avio_read(source_avio_ctx, buffer, BLOCK_SIZE);
 
     if (bytes_read <= 0) {
       return bytes_read;
     }
 
-    // Stocker en cache
     fseek(data_file, offset, SEEK_SET);
     fwrite(buffer, 1, bytes_read, data_file);
     fflush(data_file);
 
-    mark_block_as_cached(block_id);
+    MarkBlockAsCached(block_id);
 
     return 1;
   }
@@ -108,7 +118,7 @@ private:
     size_t end_block = (cacheAvio->current_offset + buf_size - 1) / BLOCK_SIZE;
 
     for (size_t block_id = start_block; block_id <= end_block; block_id++) {
-      int result = cacheAvio->download_block(block_id);
+      int result = cacheAvio->DownloadBlock(block_id);
       if (result <= 0) {
         return 0;
       }
@@ -154,14 +164,6 @@ private:
     return av_make_error_string(str, AV_ERROR_MAX_STRING_SIZE, errnum);
   }
 
-  bool has_been_open = false;
-
-  int buffer_size = 4096;
-
-  bool has_been_open_http = false;
-
-  std::string file_url = "";
-
   int OpenHttp() {
     if (has_been_open_http) {
       return 0;
@@ -188,66 +190,64 @@ private:
     has_been_open_http = false;
   }
 
-  std::string cacheDirectory = "";
-
 public:
-  AVIOContext *source_avio_ctx = nullptr;
-  AVIOContext *avio_ctx = nullptr;
-
   CacheAvio() {}
 
-  ~CacheAvio() { freeCache(); }
+  ~CacheAvio() { FreeCache(); }
 
-  AVDictionary *options = NULL;
+  AVIOContext *GetAvioCtx() { return avio_ctx; }
 
-  int64_t fileTotalSize = 0;
-
-  int init(const char *cachePath, const char *cacheKey, const char *url,
-           AVDictionary **newOptions) {
+  int Init(const std::string &cache_path, const std::string &cache_key,
+           const std::string &url, AVDictionary **new_options) {
     if (has_been_open) {
       return 0;
     }
 
     file_url = url;
 
-    av_dict_copy(&options, *newOptions, 0);
+    av_dict_copy(&options, *new_options, 0);
 
-    cacheDirectory = join(cachePath, sanitizeForPath(cacheKey));
+    cache_directory = join(cache_path, sanitizeForPath(cache_key));
 
-    createDirectoryRecursive(cacheDirectory);
+    createDirectoryRecursive(cache_directory);
 
-    data_file = fopen(join(cacheDirectory, DATA_FILE).c_str(), "rb+");
+    data_file = fopen(join(cache_directory, DATA_FILE).c_str(), "rb+");
     if (!data_file)
-      data_file = fopen(join(cacheDirectory, DATA_FILE).c_str(), "wb+");
+      data_file = fopen(join(cache_directory, DATA_FILE).c_str(), "wb+");
 
     if (!data_file)
       return -1;
 
-    index_file = fopen(join(cacheDirectory, INDEX_FILE).c_str(), "rb+");
+    index_file = fopen(join(cache_directory, INDEX_FILE).c_str(), "rb+");
     if (!index_file)
-      index_file = fopen(join(cacheDirectory, INDEX_FILE).c_str(), "wb+");
+      index_file = fopen(join(cache_directory, INDEX_FILE).c_str(), "wb+");
 
     if (!index_file)
       return -1;
 
-    touch(join(cacheDirectory, INDEX_FILE));
+    touch(join(cache_directory, INDEX_FILE));
 
     CacheAvio_opened_paths_mutex.lock();
-    CacheAvio_opened_paths.insert(join(cacheDirectory, INDEX_FILE));
+    CacheAvio_opened_paths.insert(join(cache_directory, INDEX_FILE));
     CacheAvio_opened_paths_mutex.unlock();
 
-    CacheAvio::CheckAndCleanOldCaches(cachePath,
-                                      join(cacheDirectory, INDEX_FILE));
+    CacheAvio::CheckAndCleanOldCaches(cache_path,
+                                      join(cache_directory, INDEX_FILE));
 
     fseek(index_file, 0, SEEK_END);
     index_size = ftell(index_file);
     rewind(index_file);
 
+    int response = 0;
+
     if (index_size >= 8) {
-      fread(&fileTotalSize, sizeof(int64_t), 1, index_file);
-      index_size -= sizeof(int64_t);
+      response = fread(&fileTotalSize, sizeof(int64_t), 1, index_file);
+      if (response <= 0) {
+        return -1;
+      }
+      index_size -= fread(&fileTotalSize, sizeof(int64_t), 1, index_file);
     } else {
-      int response = OpenHttp();
+      response = OpenHttp();
       if (response != 0) {
         return response;
       }
@@ -257,7 +257,11 @@ public:
     }
 
     index_map = (uint8_t *)malloc(index_size);
-    fread(index_map, 1, index_size, index_file);
+    response = fread(index_map, 1, index_size, index_file);
+
+    if (response < 0) {
+      return -1;
+    }
 
     current_offset = 0;
 
@@ -282,7 +286,7 @@ public:
     return 0;
   }
 
-  void freeCache() {
+  void FreeCache() {
     if (!has_been_open) {
       return;
     }
@@ -299,14 +303,14 @@ public:
     free(index_map);
 
     CacheAvio_opened_paths_mutex.lock();
-    CacheAvio_opened_paths.erase(join(cacheDirectory, INDEX_FILE));
+    CacheAvio_opened_paths.erase(join(cache_directory, INDEX_FILE));
     CacheAvio_opened_paths_mutex.unlock();
 
     has_been_open = false;
   }
 
-  static void CheckAndCleanOldCaches(const char *cachePath,
-                                     const std::string protectedCacheIndex) {
+  static void CheckAndCleanOldCaches(const std::string &cachePath,
+                                     const std::string &protectedCacheIndex) {
     std::unique_lock<std::mutex> lock(CacheAvio_clean_cache_mutex);
 
     int64_t folderSize = getDirectorySize(cachePath);

@@ -93,7 +93,7 @@ private:
   int audio_sample_rate = 0;
   int audio_channel_count = 0;
 
-  int OpenFile(const char *auth_token, int64_t streamOffset) {
+  int OpenFile(const char *auth_token) {
     int response;
 
     AVDictionary *options = NULL;
@@ -101,9 +101,8 @@ private:
     char headers[1024];
     snprintf(headers, sizeof(headers),
              "Cookie: %s\r\n"
-             "User-Agent: Melodink-Player\r\n"
-             "X-Melodink-Stream-Offset: %" PRIu64 "\r\n",
-             auth_token, streamOffset);
+             "User-Agent: Melodink-Player\r\n",
+             auth_token);
 
     av_dict_set(&options, "headers", headers, 0);
 
@@ -135,19 +134,19 @@ private:
 
     fprintf(stderr, "URL: %s\n", url);
 
-    char cacheKey[1024];
-    snprintf(cacheKey, sizeof(cacheKey), "%" PRIi64 "-%" PRIi64 "-%s", track_id,
-             quality, original_audio_hash.c_str());
+    char cache_key[1024];
+    snprintf(cache_key, sizeof(cache_key), "%" PRIi64 "-%" PRIi64 "-%s",
+             track_id, quality, original_audio_hash.c_str());
 
     if (downloaded_path.empty()) {
-      response = cache_avio->init(cache_path.c_str(), cacheKey, url, &options);
+      response = cache_avio->Init(cache_path, cache_key, url, &options);
       if (response < 0) {
         delete cache_avio;
         cache_avio = nullptr;
         return response;
       }
 
-      av_format_ctx->pb = cache_avio->avio_ctx;
+      av_format_ctx->pb = cache_avio->GetAvioCtx();
       av_format_ctx->flags |= AVFMT_FLAG_CUSTOM_IO;
 
       response = avformat_open_input(&av_format_ctx, NULL, NULL, NULL);
@@ -378,8 +377,7 @@ private:
              double(audio_sample_rate)) *
             1000;
 
-        int result =
-            OpenFile(stored_auth_token.c_str(), end_audio_time + time_offset);
+        int result = OpenFile(stored_auth_token.c_str());
         if (result != 0) {
           std::this_thread::sleep_for(std::chrono::seconds(1));
           continue;
@@ -544,7 +542,7 @@ private:
               CloseFile();
               CloseAudio(false);
 
-              int result = OpenFile(stored_auth_token.c_str(), 0);
+              int result = OpenFile(stored_auth_token.c_str());
               if (result != 0) {
                 return;
               }
@@ -865,7 +863,7 @@ public:
 
     stored_auth_token = auth_token;
 
-    result = OpenFile(auth_token, 0);
+    result = OpenFile(auth_token);
     if (result != 0) {
       return result;
     }
