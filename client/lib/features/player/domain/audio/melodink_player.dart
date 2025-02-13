@@ -3,6 +3,7 @@ import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'dart:isolate';
 import 'package:ffi/ffi.dart' as ffi;
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 
 enum MelodinkProcessingState {
   /// There hasn't been any resource loaded yet.
@@ -41,6 +42,31 @@ typedef Int64SetCallbackFunction = void Function(
     ffi.Pointer<ffi.NativeFunction<NativeInt64Callback>>);
 typedef Int64NativeSetCallbackFunction = ffi.Void Function(
     ffi.Pointer<ffi.NativeFunction<NativeInt64Callback>>);
+
+final class MelodinkTrackRequest {
+  final int id;
+  final AppSettingAudioQuality quality;
+  final String originalAudioHash;
+  final String downloadedPath;
+
+  MelodinkTrackRequest({
+    required this.id,
+    required this.quality,
+    required this.originalAudioHash,
+    required this.downloadedPath,
+  });
+}
+
+final class NativeMelodinkTrackRequest extends ffi.Struct {
+  external ffi.Pointer<ffi.Char> serverURL;
+  external ffi.Pointer<ffi.Char> cachePath;
+  @ffi.Int64()
+  external int trackId;
+  @ffi.Int64()
+  external int quality;
+  external ffi.Pointer<ffi.Char> originalAudioHash;
+  external ffi.Pointer<ffi.Char> downloadedPath;
+}
 
 class MelodinkPlayer {
   MelodinkPlayer._privateConstructor();
@@ -146,7 +172,8 @@ class MelodinkPlayer {
                 ffi.Void Function(
                   ffi.Int64,
                   ffi.Int64,
-                  ffi.Pointer<ffi.Pointer<ffi.Utf8>>,
+                  ffi.Pointer<NativeMelodinkTrackRequest>,
+                  ffi.Size,
                 )>>('mi_player_set_audios')
         .asFunction();
     _setLoopMode = _lib
@@ -241,7 +268,8 @@ class MelodinkPlayer {
   late final void Function(
     int,
     int,
-    ffi.Pointer<ffi.Pointer<ffi.Utf8>>,
+    ffi.Pointer<NativeMelodinkTrackRequest>,
+    int,
   ) _setAudios;
 
   late final void Function(int) _setLoopMode;
@@ -264,21 +292,46 @@ class MelodinkPlayer {
   void skipToNext() => _skipToNext();
 
   void setAudios(
-      int newCurrentTrackIndex, int currentUrlIndex, List<String> urls) {
-    final urlPointers = ffi.calloc<ffi.Pointer<ffi.Utf8>>(urls.length + 1);
+    String serverURL,
+    String cachePath,
+    int newCurrentTrackIndex,
+    int currentRequestIndex,
+    List<MelodinkTrackRequest> requests,
+  ) {
+    final requestsPointers =
+        ffi.calloc<NativeMelodinkTrackRequest>(requests.length);
+
+    final serverURLPointer = serverURL.toNativeUtf8().cast<ffi.Char>();
+
+    final cachePathPointer = cachePath.toNativeUtf8().cast<ffi.Char>();
 
     try {
-      for (var i = 0; i < urls.length; i++) {
-        urlPointers[i] = urls[i].toNativeUtf8();
+      for (var i = 0; i < requests.length; i++) {
+        requestsPointers[i].serverURL = serverURLPointer;
+        requestsPointers[i].cachePath = cachePathPointer;
+        requestsPointers[i].trackId = requests[i].id;
+        requestsPointers[i].quality = switch (requests[i].quality) {
+          AppSettingAudioQuality.lossless => 0,
+          AppSettingAudioQuality.low => 1,
+          AppSettingAudioQuality.medium => 2,
+          AppSettingAudioQuality.high => 3,
+        };
+        requestsPointers[i].originalAudioHash =
+            requests[i].originalAudioHash.toNativeUtf8().cast<ffi.Char>();
+        requestsPointers[i].downloadedPath =
+            requests[i].downloadedPath.toNativeUtf8().cast<ffi.Char>();
       }
-      urlPointers[urls.length] = ffi.nullptr;
 
-      _setAudios(newCurrentTrackIndex, currentUrlIndex, urlPointers);
+      _setAudios(newCurrentTrackIndex, currentRequestIndex, requestsPointers,
+          requests.length);
     } finally {
-      for (var i = 0; i < urls.length; i++) {
-        ffi.calloc.free(urlPointers[i]);
+      for (var i = 0; i < requests.length; i++) {
+        ffi.calloc.free(requestsPointers[i].originalAudioHash);
+        ffi.calloc.free(requestsPointers[i].downloadedPath);
       }
-      ffi.calloc.free(urlPointers);
+      ffi.calloc.free(cachePathPointer);
+      ffi.calloc.free(serverURLPointer);
+      ffi.calloc.free(requestsPointers);
     }
   }
 

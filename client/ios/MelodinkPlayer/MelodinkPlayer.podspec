@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.source       = { :path => '.' }
 
   s.platform     = :ios, '12.0'
-  s.source_files = 'Src/**/*.{cc,mm,cpp,c}'
+  s.source_files = 'Src/**/{melodink_player.cpp,miniaudio.mm,sendevent.cc}'
 
   s.vendored_frameworks = [
     'Frameworks/Avcodec.xcframework',

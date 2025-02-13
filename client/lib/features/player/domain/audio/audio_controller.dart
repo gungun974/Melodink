@@ -5,6 +5,7 @@ import 'package:audio_session/audio_session.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/core/network/network_info.dart';
@@ -19,6 +20,7 @@ import 'package:melodink_client/features/track/domain/entities/track_compressed_
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:mutex/mutex.dart';
+import 'package:path/path.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -603,7 +605,7 @@ class AudioController extends BaseAudioHandler {
   }
 
   int? _lastCurrentTrackId;
-  String? _lastCurrentTrackUrl;
+  MelodinkTrackRequest? _lastCurrentTrackRequest;
 
   DateTime _lastUpdatePlayerTracks = DateTime.fromMillisecondsSinceEpoch(0);
 
@@ -634,9 +636,9 @@ class AudioController extends BaseAudioHandler {
       final getDownloadedTrackByTrackId =
           downloadTrackRepository?.getDownloadedTrackByTrackId;
 
-      final List<String> urls = [];
+      final List<MelodinkTrackRequest> requests = [];
 
-      int currentUrlIndex = 0;
+      int currentRequestIndex = 0;
 
       for (final (index, track) in [
         ..._previousTracks,
@@ -653,8 +655,16 @@ class AudioController extends BaseAudioHandler {
 
         if (index == _previousTracks.length - 1) {
           if (_lastCurrentTrackId == track.id) {
-            urls.add(_lastCurrentTrackUrl ?? track.getUrl(currentAudioQuality));
-            currentUrlIndex = urls.length - 1;
+            requests.add(
+              _lastCurrentTrackRequest ??
+                  MelodinkTrackRequest(
+                    id: track.id,
+                    quality: currentAudioQuality,
+                    originalAudioHash: track.fileSignature,
+                    downloadedPath: "",
+                  ),
+            );
+            currentRequestIndex = requests.length - 1;
             continue;
           }
         }
@@ -665,28 +675,40 @@ class AudioController extends BaseAudioHandler {
           downloadedTrack = await getDownloadedTrackByTrackId(track.id);
         }
 
-        late String url;
+        late MelodinkTrackRequest request;
 
         if (downloadedTrack == null) {
-          url = track.getUrl(currentAudioQuality);
+          request = MelodinkTrackRequest(
+            id: track.id,
+            quality: currentAudioQuality,
+            originalAudioHash: track.fileSignature,
+            downloadedPath: "",
+          );
         } else {
-          url = downloadedTrack.getUrl();
+          request = MelodinkTrackRequest(
+            id: track.id,
+            quality: currentAudioQuality,
+            originalAudioHash: track.fileSignature,
+            downloadedPath: downloadedTrack.getUrl(),
+          );
         }
 
-        urls.add(url);
+        requests.add(request);
 
         if (index == _previousTracks.length - 1) {
           _lastCurrentTrackId = track.id;
-          _lastCurrentTrackUrl = url;
-          currentUrlIndex = urls.length - 1;
+          _lastCurrentTrackRequest = request;
+          currentRequestIndex = requests.length - 1;
         }
       }
 
-      if (urls.isNotEmpty) {
+      if (requests.isNotEmpty) {
         player.setAudios(
+          AppApi().getServerUrl(),
+          join((await getMelodinkInstanceCacheDirectory()).path, "audioCache"),
           _previousTracks.length - 1,
-          currentUrlIndex,
-          urls,
+          currentRequestIndex,
+          requests,
         );
       }
     });

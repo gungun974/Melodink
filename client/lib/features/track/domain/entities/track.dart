@@ -149,6 +149,7 @@ class Track extends Equatable {
       albumArtists: metadata.albumArtists,
       composer: metadata.composer,
       fileType: fileType,
+      fileSignature: fileSignature,
       sampleRate: sampleRate,
       bitRate: bitRate,
       bitsPerRawSample: bitsPerRawSample,

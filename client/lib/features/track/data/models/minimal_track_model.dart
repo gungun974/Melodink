@@ -25,6 +25,8 @@ class MinimalTrackModel {
 
   final String fileType;
 
+  final String fileSignature;
+
   final int sampleRate;
   final int? bitRate;
   final int? bitsPerRawSample;
@@ -48,6 +50,7 @@ class MinimalTrackModel {
     required this.albumArtists,
     required this.composer,
     required this.fileType,
+    required this.fileSignature,
     required this.sampleRate,
     required this.bitRate,
     required this.bitsPerRawSample,
@@ -79,6 +82,7 @@ class MinimalTrackModel {
           .toList(),
       composer: composer,
       fileType: fileType,
+      fileSignature: fileSignature,
       sampleRate: sampleRate,
       bitRate: bitRate,
       bitsPerRawSample: bitsPerRawSample,
@@ -111,6 +115,7 @@ class MinimalTrackModel {
           .toList(),
       composer: track.composer,
       fileType: track.fileType,
+      fileSignature: track.fileSignature,
       sampleRate: track.sampleRate,
       bitRate: track.bitRate,
       bitsPerRawSample: track.bitsPerRawSample,
@@ -143,6 +148,7 @@ class MinimalTrackModel {
           .toList(),
       composer: json['composer'],
       fileType: json['file_type'],
+      fileSignature: json['file_signature'] ?? "",
       sampleRate: (json['sample_rate'] as num).toInt(),
       bitRate:
           json['bit_rate'] != null ? (json['bit_rate'] as num).toInt() : null,
@@ -178,6 +184,7 @@ class MinimalTrackModel {
           .toList(),
       'composer': composer,
       'file_type': fileType,
+      'file_signature': fileSignature,
       'sample_rate': sampleRate,
       'bit_rate': bitRate,
       'bits_per_raw_sample': bitsPerRawSample,
