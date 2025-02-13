@@ -84,7 +84,7 @@
           src = gitignore.lib.gitignoreSource ./.;
           subPackages = ["cmd/api"];
           vendorHash = "sha256-YPVOIgBswQRnLJ1PfgtnQR8S3veWZ0IHX48v00c6gi4=";
-          CGO_ENABLED = 1;
+          env.CGO_ENABLED = 1;
 
           buildInputs = with pkgs; [
             pkg-config
