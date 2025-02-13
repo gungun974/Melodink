@@ -139,6 +139,7 @@
           version = "1.0.0";
 
           buildInputs = [
+            pkgs.copyDesktopItems
             pkgs.which
             pkgs.wrapGAppsHook
             ffmpeg.dev
@@ -174,10 +175,23 @@
             mv $out/app/* $out/melodink/
             mv $out/melodink $out/app/melodink
 
+            install -Dm644 $src/assets/melodink_icon.png -t $out/share/pixmaps
+
             makeWrapper $out/app/melodink/melodink-client/melodink_client $out/bin/melodink_client \
                 "''${gappsWrapperArgs[@]}" \
                 --prefix LD_LIBRARY_PATH : $out/app/lib:${pkgs.lib.makeLibraryPath [pkgs.sqlite pkgs.ffmpeg pkgs.pulseaudio]}
           '';
+
+          desktopItems = [
+            (pkgs.makeDesktopItem {
+              desktopName = "Melodink";
+              name = "Melodink";
+              exec = "melodink_client";
+              icon = "melodink_icon";
+              comment = "Melodink";
+              categories = ["Audio" "Player"];
+            })
+          ];
 
           autoPubspecLock = ./client/pubspec.lock;
 
