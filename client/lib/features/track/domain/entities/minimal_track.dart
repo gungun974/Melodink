@@ -29,6 +29,8 @@ class MinimalTrack extends Equatable {
 
   final String fileType;
 
+  final String fileSignature;
+
   final int sampleRate;
   final int? bitRate;
   final int? bitsPerRawSample;
@@ -54,6 +56,7 @@ class MinimalTrack extends Equatable {
     required this.albumArtists,
     required this.composer,
     required this.fileType,
+    required this.fileSignature,
     required this.sampleRate,
     required this.bitRate,
     required this.bitsPerRawSample,
@@ -77,6 +80,7 @@ class MinimalTrack extends Equatable {
     List<MinimalArtist>? albumArtists,
     String? composer,
     String? fileType,
+    String? fileSignature,
     int? sampleRate,
     int? bitRate,
     int? bitsPerRawSample,
@@ -99,6 +103,7 @@ class MinimalTrack extends Equatable {
       albumArtists: albumArtists ?? this.albumArtists,
       composer: composer ?? this.composer,
       fileType: fileType ?? this.fileType,
+      fileSignature: fileSignature ?? this.fileSignature,
       sampleRate: sampleRate ?? this.sampleRate,
       bitRate: bitRate ?? this.bitRate,
       bitsPerRawSample: bitsPerRawSample ?? this.bitsPerRawSample,
@@ -124,6 +129,7 @@ class MinimalTrack extends Equatable {
         albumArtists,
         composer,
         fileType,
+        fileSignature,
         sampleRate,
         bitRate,
         bitsPerRawSample,

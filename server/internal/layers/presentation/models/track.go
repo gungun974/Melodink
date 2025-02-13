@@ -195,6 +195,8 @@ type MinimalTrackViewModel struct {
 
 	FileType string `json:"file_type"`
 
+	FileSignature string `json:"file_signature"`
+
 	SampleRate       int  `json:"sample_rate"`
 	BitRate          *int `json:"bit_rate"`
 	BitsPerRawSample *int `json:"bits_per_raw_sample"`
@@ -240,6 +242,8 @@ func ConvertToMinimalTrackViewModel(
 		AlbumArtists: ConvertToMinimalArtistsViewModel(track.Metadata.AlbumArtists),
 
 		FileType: track.FileType,
+
+		FileSignature: track.FileSignature,
 
 		SampleRate:       track.SampleRate,
 		BitRate:          track.BitRate,

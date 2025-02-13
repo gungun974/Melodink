@@ -660,7 +660,7 @@ class AudioController extends BaseAudioHandler {
                   MelodinkTrackRequest(
                     id: track.id,
                     quality: currentAudioQuality,
-                    originalAudioHash: "TODO",
+                    originalAudioHash: track.fileSignature,
                     downloadedPath: "",
                   ),
             );
@@ -681,14 +681,14 @@ class AudioController extends BaseAudioHandler {
           request = MelodinkTrackRequest(
             id: track.id,
             quality: currentAudioQuality,
-            originalAudioHash: "TODO",
+            originalAudioHash: track.fileSignature,
             downloadedPath: "",
           );
         } else {
           request = MelodinkTrackRequest(
             id: track.id,
             quality: currentAudioQuality,
-            originalAudioHash: "TODO",
+            originalAudioHash: track.fileSignature,
             downloadedPath: downloadedTrack.getUrl(),
           );
         }
