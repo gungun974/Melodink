@@ -12,10 +12,28 @@
 #include <vector>
 
 #ifdef _WIN32
+#define NOMINMAX
 #include <direct.h>
 #include <windows.h>
 #define mkdir(path, mode) _mkdir(path)
 #define PATH_SEPARATOR "\\"
+
+std::wstring StringToWString(const std::string &str) {
+  int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, NULL, 0);
+  std::wstring wstr(size_needed, 0);
+  MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, &wstr[0], size_needed);
+  return wstr;
+}
+
+std::string WStringToString(const std::wstring &wstr) {
+  int size_needed =
+      WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
+  std::string str(size_needed - 1,
+                  0); // -1 pour retirer le caractère null final
+  WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &str[0], size_needed, NULL,
+                      NULL);
+  return str;
+}
 #else
 #include <dirent.h>
 #include <sys/types.h>
@@ -85,8 +103,9 @@ bool touch(const std::string &filePath) {
   struct stat fileInfo;
 
 #ifdef _WIN32
-  HANDLE hFile = CreateFile(filePath.c_str(), FILE_WRITE_ATTRIBUTES, 0, NULL,
-                            OPEN_EXISTING, 0, NULL);
+  HANDLE hFile =
+      CreateFile(StringToWString(filePath).c_str(), FILE_WRITE_ATTRIBUTES, 0,
+                 NULL, OPEN_EXISTING, 0, NULL);
   if (hFile == INVALID_HANDLE_VALUE) {
     return false;
   }
@@ -133,14 +152,15 @@ int64_t getDirectorySize(const std::string &path) {
 
 #ifdef _WIN32
   WIN32_FIND_DATA findFileData;
-  HANDLE hFind = FindFirstFile((path + "\\*").c_str(), &findFileData);
+  HANDLE hFind =
+      FindFirstFile(StringToWString(path + "\\*").c_str(), &findFileData);
 
   if (hFind == INVALID_HANDLE_VALUE) {
     return 0;
   }
 
   do {
-    std::string fileName = findFileData.cFileName;
+    std::string fileName = WStringToString(findFileData.cFileName);
     if (fileName == "." || fileName == "..")
       continue;
 
@@ -193,14 +213,15 @@ std::string findOldestFileByName(const std::string &directory,
 
 #ifdef _WIN32
   WIN32_FIND_DATA findFileData;
-  HANDLE hFind = FindFirstFile((directory + "\\*").c_str(), &findFileData);
+  HANDLE hFind =
+      FindFirstFile(StringToWString(directory + "\\*").c_str(), &findFileData);
 
   if (hFind == INVALID_HANDLE_VALUE) {
     return "";
   }
 
   do {
-    std::string fileName = findFileData.cFileName;
+    std::string fileName = WStringToString(findFileData.cFileName);
     if (fileName == "." || fileName == "..")
       continue;
 
@@ -290,14 +311,15 @@ bool removeDirectoryRecursive(const std::string &directoryPath) {
 #ifdef _WIN32
   std::string searchPath = directoryPath + "\\*";
   WIN32_FIND_DATA findFileData;
-  HANDLE hFind = FindFirstFile(searchPath.c_str(), &findFileData);
+  HANDLE hFind =
+      FindFirstFile(StringToWString(searchPath).c_str(), &findFileData);
 
   if (hFind == INVALID_HANDLE_VALUE) {
     return false;
   }
 
   do {
-    std::string fileName = findFileData.cFileName;
+    std::string fileName = WStringToString(findFileData.cFileName);
     if (fileName == "." || fileName == "..")
       continue;
 
@@ -305,7 +327,7 @@ bool removeDirectoryRecursive(const std::string &directoryPath) {
     if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
       removeDirectoryRecursive(fullPath);
     } else {
-      if (!DeleteFile(fullPath.c_str())) {
+      if (!DeleteFile(StringToWString(fullPath).c_str())) {
         FindClose(hFind);
         return false;
       }
@@ -313,7 +335,7 @@ bool removeDirectoryRecursive(const std::string &directoryPath) {
   } while (FindNextFile(hFind, &findFileData) != 0);
 
   FindClose(hFind);
-  return RemoveDirectory(directoryPath.c_str());
+  return RemoveDirectory(StringToWString(directoryPath).c_str());
 
 #else
   DIR *dir = opendir(directoryPath.c_str());
