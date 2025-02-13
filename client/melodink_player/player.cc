@@ -404,12 +404,12 @@ private:
 
   std::queue<MelodinkTrack *> track_auto_open_queue;
 
-  MelodinkTrack *LoadTrack(const char *url) {
-    MelodinkTrack *new_track = new MelodinkTrack;
+  MelodinkTrack *LoadTrack(const MelodinkTrackRequest request) {
+    MelodinkTrack *new_track =
+        new MelodinkTrack(request.serverURL, request.trackId, request.quality,
+                          request.originalAudioHash, request.downloadedPath);
 
     new_track->player_load_count += 1;
-
-    new_track->SetLoadedUrl(url);
 
     new_track->player_load_count += 1;
     track_auto_open_queue.push(new_track);
@@ -435,25 +435,16 @@ private:
       MelodinkTrack *track = track_auto_open_queue.front();
       track_auto_open_queue.pop();
 
-      const char *url = track->GetLoadedUrl();
-
-#ifdef MELODINK_PLAYER_LOG
-      fprintf(stderr, "OPEN %s\n", url);
-#endif
-
-      track->Open(url, auth_token.c_str());
+      track->Open(auth_token.c_str());
       track->player_load_count -= 1;
-#ifdef MELODINK_PLAYER_LOG
-      fprintf(stderr, "FINISH %s\n", url);
-#endif
     }
   }
 
-  MelodinkTrack *GetTrack(const char *url) {
+  MelodinkTrack *GetTrack(const MelodinkTrackRequest request) {
     {
       ReadLock r_lock(loaded_tracks_lock);
       for (size_t i = 0; i < loaded_tracks.size(); ++i) {
-        if (strcmp(url, loaded_tracks[i]->GetLoadedUrl()) == 0) {
+        if (*loaded_tracks[i] == request) {
           loaded_tracks[i]->player_load_count += 1;
           return loaded_tracks[i];
         }
@@ -462,10 +453,10 @@ private:
 
     WriteLock w_lock(loaded_tracks_lock);
 
-    return LoadTrack(url);
+    return LoadTrack(request);
   }
 
-  void UnloadTracks(std::vector<std::string> urls) {
+  void UnloadTracks(std::vector<MelodinkTrackRequest> requests) {
     WriteLock w_lock(loaded_tracks_lock);
     for (size_t i = loaded_tracks.size(); i > 0; --i) {
       size_t index = i - 1;
@@ -489,8 +480,8 @@ private:
 
       bool should_skip = false;
 
-      for (size_t j = 0; j < urls.size(); ++j) {
-        if (strcmp(track->GetLoadedUrl(), urls[j].c_str()) == 0) {
+      for (size_t j = 0; j < requests.size(); ++j) {
+        if (*track == requests[j]) {
           should_skip = true;
           break;
         }
@@ -583,10 +574,11 @@ private:
     HandleNextLoop();
   }
 
-  void SetAudioPrev(int current_url_index, std::vector<std::string> urls) {
-    if (urls.size() - 1 >= current_url_index - 1) {
+  void SetAudioPrev(int current_request_index,
+                    std::vector<MelodinkTrackRequest> requests) {
+    if (requests.size() - 1 >= current_request_index - 1) {
       MelodinkTrack *new_prev_track =
-          GetTrack(urls[current_url_index - 1].c_str());
+          GetTrack(requests[current_request_index - 1]);
       prev_track = new_prev_track;
 
       if (prev_track == current_track) {
@@ -623,11 +615,12 @@ private:
     return false;
   }
 
-  void SetAudioNext(int current_url_index, std::vector<std::string> urls) {
-    if (urls.size() <= current_url_index + 1) {
+  void SetAudioNext(int current_request_index,
+                    std::vector<MelodinkTrackRequest> requests) {
+    if (requests.size() <= current_request_index + 1) {
       if (loop_mode == MELODINK_LOOP_MODE_ALL) {
         next_track_index = 0;
-        MelodinkTrack *new_next_track = GetTrack(urls[0].c_str());
+        MelodinkTrack *new_next_track = GetTrack(requests[0]);
         next_track = new_next_track;
 
         if (HandleNextLoop()) {
@@ -651,7 +644,7 @@ private:
       }
     } else {
       MelodinkTrack *new_next_track =
-          GetTrack(urls[current_url_index + 1].c_str());
+          GetTrack(requests[current_request_index + 1]);
       next_track = new_next_track;
 
       if (HandleNextLoop()) {
@@ -796,21 +789,16 @@ public:
 
   std::mutex late_open_track_mutex;
 
-  void SetAudios(int new_current_track_index, int current_url_index,
-                 std::vector<const char *> raw_urls) {
-    std::vector<std::string> urls;
-    urls.reserve(raw_urls.size());
-    for (const auto &cstr : raw_urls) {
-      urls.emplace_back(cstr);
-    }
-
-    if (urls.size() == 0 || current_url_index >= urls.size()) {
+  void SetAudios(int new_current_track_index, int current_request_index,
+                 std::vector<MelodinkTrackRequest> requests) {
+    if (requests.size() == 0 || current_request_index >= requests.size()) {
       current_track = nullptr;
-      UnloadTracks(urls);
+      UnloadTracks(requests);
       return;
     }
 
-    const char *current_url = urls[current_url_index].c_str();
+    const MelodinkTrackRequest current_request =
+        requests[current_request_index];
 
     current_track_index = new_current_track_index;
     prev_track_index = current_track_index - 1;
@@ -818,7 +806,7 @@ public:
 
     send_event_audio_changed(current_track_index);
 
-    MelodinkTrack *new_current_track = GetTrack(current_url);
+    MelodinkTrack *new_current_track = GetTrack(current_request);
 
     if (!new_current_track->IsAudioOpened()) {
       std::unique_lock<std::mutex> lock(late_open_track_mutex);
@@ -831,15 +819,7 @@ public:
       new_current_track->player_load_count += 1;
 
       std::thread t([new_current_track, this]() {
-        const char *url = new_current_track->GetLoadedUrl();
-
-#ifdef MELODINK_PLAYER_LOG
-        fprintf(stderr, "OPEN late %s\n", url);
-#endif
-        new_current_track->Open(url, auth_token.c_str());
-#ifdef MELODINK_PLAYER_LOG
-        fprintf(stderr, "FINISH late %s\n", url);
-#endif
+        new_current_track->Open(auth_token.c_str());
         std::unique_lock<std::mutex> lock(late_open_track_mutex);
 
         if (target_current_track == new_current_track) {
@@ -863,20 +843,20 @@ public:
 
     new_current_track->player_load_count -= 1;
 
-    SetAudioPrev(current_url_index, urls);
+    SetAudioPrev(current_request_index, requests);
 
-    SetAudioNext(current_url_index, urls);
+    SetAudioNext(current_request_index, requests);
 
-    for (size_t j = 0; j < urls.size(); ++j) {
-      if (j == current_url_index) {
+    for (size_t j = 0; j < requests.size(); ++j) {
+      if (j == current_request_index) {
         continue;
       }
-      MelodinkTrack *track = GetTrack(urls[j].c_str());
+      MelodinkTrack *track = GetTrack(requests[j]);
       track->SetMaxPreloadCache(100 * 1024); // 100KiB
       track->player_load_count -= 1;
     }
 
-    UnloadTracks(urls);
+    UnloadTracks(requests);
   }
 
   int64_t GetCurrentTrackPos() { return current_track_index; }

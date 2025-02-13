@@ -54,16 +54,14 @@ extern "C" void mi_player_skip_to_next() {
 }
 
 extern "C" void mi_player_set_audios(int new_current_track_index,
-                                     int current_url_index, const char **urls) {
-  std::vector<const char *> vector_urls;
+                                     int current_request_index,
+                                     MelodinkTrackRequest *requests,
+                                     size_t request_count) {
+  std::vector<MelodinkTrackRequest> vector_requests(requests,
+                                                    requests + request_count);
 
-  for (const char **ptr = urls; *ptr != nullptr; ptr++) {
-    vector_urls.push_back(*ptr);
-  }
-
-  player->SetAudios(new_current_track_index, current_url_index, vector_urls);
-
-  return;
+  player->SetAudios(new_current_track_index, current_request_index,
+                    vector_requests);
 }
 
 extern "C" void mi_player_set_loop_mode(MelodinkLoopMode loop) {

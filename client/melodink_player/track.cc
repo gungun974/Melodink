@@ -21,6 +21,16 @@ extern "C" {
 #include "cache.cc"
 #include "fifo.cc"
 
+extern "C" {
+typedef struct MelodinkTrackRequest {
+  char *serverURL;
+  int64_t trackId;
+  int64_t quality;
+  char *originalAudioHash;
+  char *downloadedPath;
+} MelodinkTrackRequest;
+}
+
 typedef struct FrameData {
   int64_t pkt_pos;
   int pkt_size;
@@ -28,15 +38,15 @@ typedef struct FrameData {
 
 class MelodinkTrack {
 private:
-  bool endsWith(const std::string &str, const std::string &suffix) {
-    size_t pos = str.rfind(suffix);
-    return pos != std::string::npos && pos == str.size() - suffix.size();
-  }
+  std::string server_url;
+  int64_t track_id;
+  int64_t quality;
+  std::string original_audio_hash;
+  std::string downloaded_path;
 
   CacheAvio *cache_avio = nullptr;
   AVFormatContext *av_format_ctx = nullptr;
 
-  std::string loaded_url = "";
   std::string stored_auth_token = "";
   bool audio_opened = false;
   bool audio_retry = false;
@@ -80,8 +90,7 @@ private:
   int audio_sample_rate = 0;
   int audio_channel_count = 0;
 
-  int OpenFile(const char *filename, const char *auth_token,
-               int64_t streamOffset) {
+  int OpenFile(const char *auth_token, int64_t streamOffset) {
     int response;
 
     AVDictionary *options = NULL;
@@ -105,15 +114,9 @@ private:
 
     av_dict_set(&options, "rw_timeout", "45000000", 0);
 
-    char cleaned_filename[1024];
-
-    strcpy(cleaned_filename, filename);
-
-    char *unique_index_mark = strrchr(cleaned_filename, '?');
-
-    if (unique_index_mark != nullptr) {
-      *unique_index_mark = '\0';
-    }
+    char url[2048];
+    snprintf(url, sizeof(url), "%strack/%d/audio", server_url.c_str(),
+             track_id);
 
     cache_avio = new CacheAvio();
 
@@ -127,7 +130,9 @@ private:
       return -1;
     }
 
-    response = cache_avio->init(cleaned_filename, &options);
+    fprintf(stderr, "URL: %s\n", url);
+
+    response = cache_avio->init(url, &options);
     if (response < 0) {
       delete cache_avio;
       cache_avio = nullptr;
@@ -361,8 +366,8 @@ private:
              double(audio_sample_rate)) *
             1000;
 
-        int result = OpenFile(loaded_url.c_str(), stored_auth_token.c_str(),
-                              end_audio_time + time_offset);
+        int result =
+            OpenFile(stored_auth_token.c_str(), end_audio_time + time_offset);
         if (result != 0) {
           std::this_thread::sleep_for(std::chrono::seconds(1));
           continue;
@@ -370,7 +375,7 @@ private:
 
         result = InitAudio(false);
         if (result != 0) {
-          fprintf(stderr, "Failed to reopen file %s\n", loaded_url.c_str());
+          fprintf(stderr, "Failed to reopen file %d\n", track_id);
           CloseFile();
           std::this_thread::sleep_for(std::chrono::seconds(1));
           continue;
@@ -527,8 +532,7 @@ private:
               CloseFile();
               CloseAudio(false);
 
-              int result =
-                  OpenFile(loaded_url.c_str(), stored_auth_token.c_str(), 0);
+              int result = OpenFile(stored_auth_token.c_str(), 0);
               if (result != 0) {
                 return;
               }
@@ -820,18 +824,23 @@ private:
   }
 
 public:
-  MelodinkTrack() {}
+  MelodinkTrack(char *serverURL, int64_t trackId, int64_t quality,
+                char *originalAudioHash, char *downloadedPath) {
+    server_url = serverURL;
+    track_id = trackId;
+    quality = quality;
+    original_audio_hash = originalAudioHash;
+    downloaded_path = downloadedPath;
+  }
 
   ~MelodinkTrack() {
     is_track_will_be_destroy = true;
     Close();
   }
 
-  void SetLoadedUrl(const char *filename) { loaded_url = filename; }
-
   void SetMaxPreloadCache(int64_t max_size) { max_preload_cache = max_size; }
 
-  int Open(const char *filename, const char *auth_token) {
+  int Open(const char *auth_token) {
     std::unique_lock<std::mutex> lock(open_mutex);
 
     if (audio_opened) {
@@ -840,10 +849,9 @@ public:
 
     int result;
 
-    loaded_url = filename;
     stored_auth_token = auth_token;
 
-    result = OpenFile(filename, auth_token, 0);
+    result = OpenFile(auth_token, 0);
     if (result != 0) {
       return result;
     }
@@ -886,7 +894,7 @@ public:
     std::unique_lock<std::mutex> lock2(open_mutex);
 
     if (!audio_opened) {
-      fprintf(stderr, "ERROR SEEK %s\n", loaded_url.c_str());
+      fprintf(stderr, "ERROR SEEK %d\n", track_id);
       return -1;
     }
 
@@ -1079,8 +1087,6 @@ public:
     return audio_time + time_offset;
   }
 
-  const char *GetLoadedUrl() { return loaded_url.c_str(); }
-
   // av_err2str returns a temporary array. This doesn't work in gcc.
   // This function can be used as a replacement for av_err2str.
   static const char *GetError(int errnum) {
@@ -1091,4 +1097,20 @@ public:
 
   // This is only for `player.cc`
   std::atomic<int> player_load_count{0};
+
+  bool operator==(const MelodinkTrackRequest &request) const {
+    if (track_id != request.trackId) {
+      return false;
+    }
+    if (quality != request.quality) {
+      return false;
+    }
+    if (original_audio_hash != request.originalAudioHash) {
+      return false;
+    }
+    if (downloaded_path != request.downloadedPath) {
+      return false;
+    }
+    return server_url == request.serverURL;
+  }
 };
