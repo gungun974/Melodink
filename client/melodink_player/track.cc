@@ -139,17 +139,22 @@ private:
     snprintf(cacheKey, sizeof(cacheKey), "%" PRIi64 "-%" PRIi64 "-%s", track_id,
              quality, original_audio_hash.c_str());
 
-    response = cache_avio->init(cache_path.c_str(), cacheKey, url, &options);
-    if (response < 0) {
-      delete cache_avio;
-      cache_avio = nullptr;
-      return response;
+    if (downloaded_path.empty()) {
+      response = cache_avio->init(cache_path.c_str(), cacheKey, url, &options);
+      if (response < 0) {
+        delete cache_avio;
+        cache_avio = nullptr;
+        return response;
+      }
+
+      av_format_ctx->pb = cache_avio->avio_ctx;
+      av_format_ctx->flags |= AVFMT_FLAG_CUSTOM_IO;
+
+      response = avformat_open_input(&av_format_ctx, NULL, NULL, NULL);
+    } else {
+      response = avformat_open_input(&av_format_ctx, downloaded_path.c_str(),
+                                     NULL, &options);
     }
-
-    av_format_ctx->pb = cache_avio->avio_ctx;
-    av_format_ctx->flags |= AVFMT_FLAG_CUSTOM_IO;
-
-    response = avformat_open_input(&av_format_ctx, NULL, NULL, NULL);
 
     if (response < 0) {
       fprintf(stderr, "avformat_open_input response: %s\n", GetError(response));

@@ -49,11 +49,12 @@ final class MelodinkTrackRequest {
   final String originalAudioHash;
   final String downloadedPath;
 
-  MelodinkTrackRequest(
-      {required this.id,
-      required this.quality,
-      required this.originalAudioHash,
-      required this.downloadedPath});
+  MelodinkTrackRequest({
+    required this.id,
+    required this.quality,
+    required this.originalAudioHash,
+    required this.downloadedPath,
+  });
 }
 
 final class NativeMelodinkTrackRequest extends ffi.Struct {
