@@ -108,7 +108,7 @@
           preBuild = ''
             cd server
             make prebuild
-            cp -r ../vendor ./
+            ln -s ../vendor ./
           '';
 
           postInstall = ''
