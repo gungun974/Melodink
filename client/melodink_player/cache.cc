@@ -11,6 +11,7 @@ extern "C" {
 #include <mutex>
 #include <string>
 #include <thread>
+#include <unordered_set>
 
 #include <cstdio>
 
@@ -19,6 +20,14 @@ extern "C" {
 #define BLOCK_SIZE 4096
 #define INDEX_FILE "cache_index.bin"
 #define DATA_FILE "cache_data.bin"
+
+#define CACHE_MAX_SIZE_DIRECTORY                                               \
+  1 * 1024 * 1024 * 1024 // 1 GiB max of audio stored
+
+std::mutex CacheAvio_clean_cache_mutex;
+
+std::mutex CacheAvio_opened_paths_mutex;
+std::unordered_set<std::string> CacheAvio_opened_paths = {};
 
 class CacheAvio {
 private:
@@ -179,6 +188,8 @@ private:
     has_been_open_http = false;
   }
 
+  std::string cacheDirectory = "";
+
 public:
   AVIOContext *source_avio_ctx = nullptr;
   AVIOContext *avio_ctx = nullptr;
@@ -201,7 +212,7 @@ public:
 
     av_dict_copy(&options, *newOptions, 0);
 
-    std::string cacheDirectory = join(cachePath, sanitizeForPath(cacheKey));
+    cacheDirectory = join(cachePath, sanitizeForPath(cacheKey));
 
     createDirectoryRecursive(cacheDirectory);
 
@@ -219,7 +230,15 @@ public:
     if (!index_file)
       return -1;
 
-    // Charge l'index en mémoire
+    touch(join(cacheDirectory, INDEX_FILE));
+
+    CacheAvio_opened_paths_mutex.lock();
+    CacheAvio_opened_paths.insert(join(cacheDirectory, INDEX_FILE));
+    CacheAvio_opened_paths_mutex.unlock();
+
+    CacheAvio::CheckAndCleanOldCaches(cachePath,
+                                      join(cacheDirectory, INDEX_FILE));
+
     fseek(index_file, 0, SEEK_END);
     index_size = ftell(index_file);
     rewind(index_file);
@@ -279,6 +298,37 @@ public:
     fclose(index_file);
     free(index_map);
 
+    CacheAvio_opened_paths_mutex.lock();
+    CacheAvio_opened_paths.erase(join(cacheDirectory, INDEX_FILE));
+    CacheAvio_opened_paths_mutex.unlock();
+
     has_been_open = false;
+  }
+
+  static void CheckAndCleanOldCaches(const char *cachePath,
+                                     const std::string protectedCacheIndex) {
+    std::unique_lock<std::mutex> lock(CacheAvio_clean_cache_mutex);
+
+    int64_t folderSize = getDirectorySize(cachePath);
+
+    CacheAvio_opened_paths_mutex.lock();
+
+    while (folderSize >= CACHE_MAX_SIZE_DIRECTORY) {
+      std::string oldestPath = findOldestFileByName(cachePath, INDEX_FILE);
+
+      if (CacheAvio_opened_paths.find(oldestPath) !=
+          CacheAvio_opened_paths.end()) {
+        CacheAvio_opened_paths_mutex.unlock();
+        return;
+      }
+
+      std::string directoryToDelete = getParentPath(oldestPath);
+
+      removeDirectoryRecursive(directoryToDelete);
+
+      folderSize = getDirectorySize(cachePath);
+    }
+
+    CacheAvio_opened_paths_mutex.unlock();
   }
 };
