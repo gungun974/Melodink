@@ -53,22 +53,26 @@ private:
   FILE *index_file;
 
   std::vector<uint8_t> index_map;
-  size_t index_size;
-  size_t current_offset;
+  int64_t index_size = 0;
+  int64_t current_offset = 0;
 
-  bool IsBlockCached(size_t block_id) {
-    size_t byte_index = block_id / 8;
+  bool IsBlockCached(int64_t block_id) {
+    int64_t byte_index = block_id / 8;
     if (byte_index >= index_size)
       return false;
     return (index_map[byte_index] >> (block_id % 8)) & 1;
   }
 
-  void MarkBlockAsCached(size_t block_id) {
-    size_t byte_index = block_id / 8;
-    size_t bit_index = block_id % 8;
+  void MarkBlockAsCached(int64_t block_id) {
+    if (block_id < 0) {
+      return;
+    }
+
+    int64_t byte_index = block_id / 8;
+    int64_t bit_index = block_id % 8;
 
     if (byte_index >= index_size) {
-      index_map.resize(byte_index + 1);
+      index_map.resize(byte_index + 1, 0);
       index_size = index_map.size();
     }
 
@@ -79,7 +83,7 @@ private:
     fflush(index_file);
   }
 
-  int DownloadBlock(size_t block_id) {
+  int DownloadBlock(int64_t block_id) {
     if (IsBlockCached(block_id)) {
       return 1;
     }
@@ -91,7 +95,7 @@ private:
 
     uint8_t buffer[BLOCK_SIZE] = {0};
 
-    size_t offset = block_id * BLOCK_SIZE;
+    int64_t offset = block_id * BLOCK_SIZE;
     avio_seek(source_avio_ctx, offset, SEEK_SET);
 
     int bytes_read = avio_read(source_avio_ctx, buffer, BLOCK_SIZE);
@@ -117,13 +121,15 @@ private:
   static int CustomReadPacket(void *opaque, uint8_t *buf, int buf_size) {
     CacheAvio *cacheAvio = reinterpret_cast<CacheAvio *>(opaque);
 
-    size_t start_block = cacheAvio->current_offset / BLOCK_SIZE;
-    size_t end_block = (cacheAvio->current_offset + buf_size - 1) / BLOCK_SIZE;
+    int64_t start_block = cacheAvio->current_offset / BLOCK_SIZE;
+    int64_t end_block = (cacheAvio->current_offset + buf_size - 1) / BLOCK_SIZE;
 
-    for (size_t block_id = start_block; block_id <= end_block; block_id++) {
-      int result = cacheAvio->DownloadBlock(block_id);
-      if (result <= 0) {
-        return 0;
+    for (int64_t block_id = start_block; block_id <= end_block; block_id++) {
+      if (block_id >= 0) {
+        int result = cacheAvio->DownloadBlock(block_id);
+        if (result <= 0) {
+          return 0;
+        }
       }
     }
 
@@ -141,7 +147,7 @@ private:
   static int64_t CustomSeek(void *opaque, int64_t offset, int whence) {
     CacheAvio *cacheAvio = reinterpret_cast<CacheAvio *>(opaque);
 
-    size_t new_offset;
+    int64_t new_offset;
 
     if (whence == SEEK_SET) {
       new_offset = offset;
@@ -248,7 +254,7 @@ public:
       if (response <= 0) {
         return -1;
       }
-      index_size -= fread(&fileTotalSize, sizeof(int64_t), 1, index_file);
+      index_size -= sizeof(int64_t);
     } else {
       response = OpenHttp();
       if (response != 0) {
