@@ -7,6 +7,7 @@ import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/app_toggle_buttons.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/player/presentation/pages/history_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_page.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_queue_controls.dart';
@@ -26,7 +27,9 @@ class QueueAndHistoryPage extends HookConsumerWidget {
     final currentPlayerBarPosition =
         ref.watch(currentPlayerBarPositionProvider);
 
-    final isInQueuePage = useState(true);
+    final currentTrack = ref.watch(currentTrackStreamProvider).valueOrNull;
+
+    final isInQueuePage = useState(currentTrack != null);
 
     return AppScreenTypeLayoutBuilder(builder: (context, size) {
       return Stack(
@@ -83,84 +86,88 @@ class QueueAndHistoryPage extends HookConsumerWidget {
                     ],
                   )
                 : null,
-            body: StreamBuilder(
-              stream: audioController.currentTrack.stream,
-              builder: (context, snapshot) {
-                final currentTrack = snapshot.data;
-                if (currentTrack == null) {
-                  return Container();
-                }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (size == AppScreenTypeLayout.desktop &&
-                        currentPlayerBarPosition !=
-                            AppSettingPlayerBarPosition.side)
-                      Container(
-                        constraints: const BoxConstraints(maxWidth: 1200 + 48),
-                        padding: const EdgeInsets.only(
-                            left: 24.0, right: 24.0, top: 24.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                isInQueuePage.value
-                                    ? t.general.queue
-                                    : t.general.history,
-                                style: const TextStyle(
-                                  fontSize: 48,
-                                  letterSpacing: 48 * 0.03,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (size == AppScreenTypeLayout.desktop &&
+                    currentPlayerBarPosition !=
+                        AppSettingPlayerBarPosition.side)
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 1200 + 48),
+                    padding: const EdgeInsets.only(
+                        left: 24.0, right: 24.0, top: 24.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            isInQueuePage.value
+                                ? t.general.queue
+                                : t.general.history,
+                            style: const TextStyle(
+                              fontSize: 48,
+                              letterSpacing: 48 * 0.03,
+                              fontWeight: FontWeight.w600,
                             ),
-                            const SizedBox(width: 16),
-                            AppToggleButtons(
-                              options: [
-                                AppToggleButtonsOption(
-                                  text: t.general.queue,
-                                  icon: AdwaitaIcons.clock,
-                                ),
-                                AppToggleButtonsOption(
-                                  text: t.general.history,
-                                  icon:
-                                      "assets/icons/history-undo-symbolic.svg",
-                                ),
-                              ],
-                              isSelected: [
-                                isInQueuePage.value,
-                                !isInQueuePage.value
-                              ],
-                              onPressed: (index) {
-                                if (index == 0) {
-                                  isInQueuePage.value = true;
-                                  return;
-                                }
-                                isInQueuePage.value = false;
-                              },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        AppToggleButtons(
+                          options: [
+                            AppToggleButtonsOption(
+                              text: t.general.queue,
+                              icon: AdwaitaIcons.clock,
+                            ),
+                            AppToggleButtonsOption(
+                              text: t.general.history,
+                              icon: "assets/icons/history-undo-symbolic.svg",
                             ),
                           ],
+                          isSelected: [
+                            isInQueuePage.value,
+                            !isInQueuePage.value
+                          ],
+                          onPressed: (index) {
+                            if (index == 0) {
+                              isInQueuePage.value = true;
+                              return;
+                            }
+                            isInQueuePage.value = false;
+                          },
                         ),
-                      ),
-                    if (isInQueuePage.value)
-                      Expanded(
-                        child: QueuePage(
-                          audioController: audioController,
-                          size: size,
-                        ),
-                      ),
-                    if (!isInQueuePage.value)
-                      const Expanded(
-                        child: HistoryPage(),
-                      ),
-                    const SizedBox(height: 12),
-                    AppScreenTypeLayoutBuilders(
-                      mobile: (_) => const PlayerQueueControls(),
-                    )
-                  ],
-                );
-              },
+                      ],
+                    ),
+                  ),
+                if (isInQueuePage.value)
+                  Expanded(
+                    child: Builder(builder: (context) {
+                      if (currentTrack == null) {
+                        return Center(
+                          child: Text(
+                            t.general.queueIsEmpty,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              letterSpacing: 24 * 0.03,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      }
+
+                      return QueuePage(
+                        audioController: audioController,
+                        size: size,
+                      );
+                    }),
+                  ),
+                if (!isInQueuePage.value)
+                  const Expanded(
+                    child: HistoryPage(),
+                  ),
+                const SizedBox(height: 12),
+                AppScreenTypeLayoutBuilders(
+                  mobile: (_) => const PlayerQueueControls(),
+                )
+              ],
             ),
           ),
         ],

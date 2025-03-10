@@ -57,6 +57,7 @@ general:
 
   nowPlaying: "En cours de lecture"
   nextInQueue: "Suivant dans la file d'attente"
+  queueIsEmpty: "La file d'attente est vide"
 
   playingFromAllTracks: "Lecture depuis tous les morceaux"
   playingFromHistory: "Lecture depuis l'historique"

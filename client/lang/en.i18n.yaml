@@ -57,6 +57,7 @@ general:
 
   nowPlaying: "Now playing"
   nextInQueue: "Next in Queue"
+  queueIsEmpty: "Queue is empty"
 
   playingFromAllTracks: "Playing from all Tracks"
   playingFromHistory: "Playing from History"
