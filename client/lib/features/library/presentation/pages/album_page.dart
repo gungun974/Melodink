@@ -92,6 +92,7 @@ class AlbumPage extends HookConsumerWidget {
                             imageUrl: album.getCompressedCoverUrl(
                               TrackCompressedCoverQuality.high,
                             ),
+                            year: album.getYear(),
                             description: "",
                             tracks: tracks,
                             artists: album.albumArtists,
@@ -125,6 +126,7 @@ class AlbumPage extends HookConsumerWidget {
                             imageUrl: album.getCompressedCoverUrl(
                               TrackCompressedCoverQuality.high,
                             ),
+                            year: album.getYear(),
                             tracks: tracks,
                             artists: album.albumArtists,
                             playCallback: () async {

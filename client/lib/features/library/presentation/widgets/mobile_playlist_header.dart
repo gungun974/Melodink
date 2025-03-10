@@ -18,6 +18,8 @@ class MobilePlaylistHeader extends ConsumerWidget {
   final String type;
   final String imageUrl;
 
+  final String year;
+
   final List<MinimalTrack> tracks;
 
   final List<MinimalArtist> artists;
@@ -36,6 +38,7 @@ class MobilePlaylistHeader extends ConsumerWidget {
     required this.name,
     required this.type,
     required this.imageUrl,
+    required this.year,
     required this.tracks,
     required this.artists,
     required this.playCallback,
@@ -107,6 +110,7 @@ class MobilePlaylistHeader extends ConsumerWidget {
                     text: [
                       if (artists.isNotEmpty) "",
                       t.general.trackNb(n: tracks.length),
+                      if (year.isNotEmpty) year,
                       durationToHuman(
                         tracks.fold(
                           Duration.zero,

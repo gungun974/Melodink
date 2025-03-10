@@ -18,6 +18,7 @@ class DesktopPlaylistHeader extends ConsumerWidget {
   final String type;
   final String imageUrl;
 
+  final String year;
   final String description;
 
   final List<MinimalTrack> tracks;
@@ -38,6 +39,7 @@ class DesktopPlaylistHeader extends ConsumerWidget {
     required this.name,
     required this.type,
     required this.imageUrl,
+    required this.year,
     required this.description,
     required this.tracks,
     required this.artists,
@@ -93,6 +95,7 @@ class DesktopPlaylistHeader extends ConsumerWidget {
                 Text(
                   [
                     t.general.trackNb(n: tracks.length),
+                    if (year.isNotEmpty) year,
                     durationToHuman(
                       tracks.fold(
                         Duration.zero,

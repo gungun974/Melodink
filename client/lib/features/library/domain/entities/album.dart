@@ -111,4 +111,46 @@ class Album extends Equatable {
     }
     return Uri.parse("file://$url");
   }
+
+  String getYear() {
+    final years = <int>{};
+
+    for (var i = 0; i < tracks.length; i++) {
+      years.add(tracks[i].year);
+    }
+
+    final yearsList = years.toList()..sort();
+    final buffer = StringBuffer();
+
+    int? start;
+    int? end;
+
+    for (var i = 0; i < yearsList.length; i++) {
+      if (start == null) {
+        start = yearsList[i];
+        end = start;
+      } else if (yearsList[i] == end! + 1) {
+        end = yearsList[i];
+      } else {
+        if (start == end) {
+          buffer.write('$start');
+        } else {
+          buffer.write('$start-$end');
+        }
+        buffer.write(', ');
+        start = yearsList[i];
+        end = start;
+      }
+    }
+
+    if (start != null) {
+      if (start == end) {
+        buffer.write('$start');
+      } else {
+        buffer.write('$start-$end');
+      }
+    }
+
+    return buffer.toString();
+  }
 }

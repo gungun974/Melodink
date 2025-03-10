@@ -176,6 +176,7 @@ class PlaylistPage extends HookConsumerWidget {
                                 imageUrl: playlist.getCompressedCoverUrl(
                                   TrackCompressedCoverQuality.high,
                                 ),
+                                year: "",
                                 description: playlist.description,
                                 tracks: tracks,
                                 artists: const [],
@@ -212,6 +213,7 @@ class PlaylistPage extends HookConsumerWidget {
                                 imageUrl: playlist.getCompressedCoverUrl(
                                   TrackCompressedCoverQuality.high,
                                 ),
+                                year: "",
                                 tracks: tracks,
                                 artists: const [],
                                 playCallback: () async {
