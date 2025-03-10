@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/helpers/fuzzy_search.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
@@ -91,36 +92,22 @@ Future<List<Album>> allAlbumsSorted(Ref ref) async {
 Future<List<Album>> allSearchAlbums(Ref ref) async {
   final allAlbums = await ref.watch(allAlbumsSortedProvider.future);
 
-  final keepAlphanumeric = RegExp(r'[^a-zA-Z0-9]');
-
-  final allAlbumsSearchInput = ref
-      .watch(allAlbumsSearchInputProvider)
-      .toLowerCase()
-      .trim()
-      .replaceAll(keepAlphanumeric, "");
+  final allAlbumsSearchInput = ref.watch(allAlbumsSearchInputProvider).trim();
 
   if (allAlbumsSearchInput.isEmpty) {
     return allAlbums;
   }
 
   return allAlbums.where((album) {
-    if (album.name
-        .toLowerCase()
-        .replaceAll(keepAlphanumeric, "")
-        .contains(allAlbumsSearchInput)) {
-      return true;
-    }
+    final buffer = StringBuffer();
+
+    buffer.write(album.name);
 
     for (final artist in album.albumArtists) {
-      if (artist.name
-          .toLowerCase()
-          .replaceAll(keepAlphanumeric, "")
-          .contains(allAlbumsSearchInput)) {
-        return true;
-      }
+      buffer.write(artist.name);
     }
 
-    return false;
+    return compareFuzzySearch(allAlbumsSearchInput, buffer.toString());
   }).toList();
 }
 

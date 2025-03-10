@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:melodink_client/core/helpers/fuzzy_search.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
@@ -150,52 +151,28 @@ final allTracksSearchInputProvider =
 Future<List<MinimalTrack>> allSearchTracks(Ref ref) async {
   final allTracks = await ref.watch(allSortedTracksProvider.future);
 
-  final keepAlphanumeric = RegExp(r'[^a-zA-Z0-9]');
-
-  final allTracksSearchInput = ref
-      .watch(allTracksSearchInputProvider)
-      .toLowerCase()
-      .trim()
-      .replaceAll(keepAlphanumeric, "");
+  final allTracksSearchInput = ref.watch(allTracksSearchInputProvider).trim();
 
   if (allTracksSearchInput.isEmpty) {
     return allTracks;
   }
 
   return allTracks.where((track) {
-    if (track.title
-        .toLowerCase()
-        .replaceAll(keepAlphanumeric, "")
-        .contains(allTracksSearchInput)) {
-      return true;
-    }
+    final buffer = StringBuffer();
 
-    if (track.album
-        .toLowerCase()
-        .replaceAll(keepAlphanumeric, "")
-        .contains(allTracksSearchInput)) {
-      return true;
-    }
+    buffer.write(track.title);
+
+    buffer.write(track.album);
 
     for (final artist in track.albumArtists) {
-      if (artist.name
-          .toLowerCase()
-          .replaceAll(keepAlphanumeric, "")
-          .contains(allTracksSearchInput)) {
-        return true;
-      }
+      buffer.write(artist.name);
     }
 
     for (final artist in track.artists) {
-      if (artist.name
-          .toLowerCase()
-          .replaceAll(keepAlphanumeric, "")
-          .contains(allTracksSearchInput)) {
-        return true;
-      }
+      buffer.write(artist.name);
     }
 
-    return false;
+    return compareFuzzySearch(allTracksSearchInput, buffer.toString());
   }).toList();
 }
 

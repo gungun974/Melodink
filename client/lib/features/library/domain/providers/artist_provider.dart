@@ -1,4 +1,5 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/helpers/fuzzy_search.dart';
 import 'package:melodink_client/features/library/data/repository/artist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -47,23 +48,14 @@ Future<List<Artist>> allArtistsSorted(Ref ref) async {
 Future<List<Artist>> allSearchArtists(Ref ref) async {
   final allArtists = await ref.watch(allArtistsSortedProvider.future);
 
-  final keepAlphanumeric = RegExp(r'[^a-zA-Z0-9]');
-
-  final allArtistsSearchInput = ref
-      .watch(allArtistsSearchInputProvider)
-      .toLowerCase()
-      .trim()
-      .replaceAll(keepAlphanumeric, "");
+  final allArtistsSearchInput = ref.watch(allArtistsSearchInputProvider).trim();
 
   if (allArtistsSearchInput.isEmpty) {
     return allArtists;
   }
 
   return allArtists.where((artist) {
-    return artist.name
-        .toLowerCase()
-        .replaceAll(keepAlphanumeric, "")
-        .contains(allArtistsSearchInput);
+    return compareFuzzySearch(allArtistsSearchInput, artist.name);
   }).toList();
 }
 
