@@ -380,20 +380,6 @@ class SettingsPage extends ConsumerWidget {
                         title: t.general.tracking,
                         children: [
                           SettingToggleOption(
-                            text: "${t.settings.enableHistoryTracking} :",
-                            value: settings.enableHistoryTracking,
-                            onToggle: (value) {
-                              ref
-                                  .read(appSettingsNotifierProvider.notifier)
-                                  .setSettings(
-                                    settings.copyWith(
-                                      enableHistoryTracking: value,
-                                    ),
-                                  );
-                            },
-                          ),
-                          const Divider(height: 24),
-                          SettingToggleOption(
                             text:
                                 "${t.settings.shareAllHistoryTrackingToServer} :",
                             value: settings.shareAllHistoryTrackingToServer,
