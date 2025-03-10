@@ -137,6 +137,29 @@ class MultiTracksContextMenu extends ConsumerWidget {
               );
             },
           ),
+          MenuItemButton(
+            leadingIcon: const AdwaitaIcon(
+              AdwaitaIcons.media_playlist_shuffle,
+              size: 20,
+            ),
+            child: Text(t.actions.randomAddToQueue),
+            onPressed: () {
+              menuController.close();
+
+              final List<MinimalTrack> newTracks = List.from(tracks);
+
+              newTracks.shuffle();
+
+              audioController.addTracksToQueue(newTracks);
+
+              AppNotificationManager.of(context).notify(
+                context,
+                message: t.notifications.haveBeenAddedToQueue.message(
+                  n: tracks.length,
+                ),
+              );
+            },
+          ),
           if (customActionsBuilder != null)
             ...customActionsBuilder!(context, menuController, tracks),
         ],

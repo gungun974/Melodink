@@ -45,33 +45,6 @@ class AlbumContextMenu extends ConsumerWidget {
           MenuAnchor(
             clipBehavior: Clip.antiAlias,
             menuChildren: [
-              MenuItemButton(
-                leadingIcon: const AdwaitaIcon(
-                  AdwaitaIcons.playlist,
-                  size: 20,
-                ),
-                child: Text(t.actions.addToQueue),
-                onPressed: () async {
-                  menuController.close();
-
-                  final tracks = await ref.read(
-                    albumSortedTracksProvider(album.id).future,
-                  );
-
-                  audioController.addTracksToQueue(tracks);
-
-                  if (!context.mounted) {
-                    return;
-                  }
-
-                  AppNotificationManager.of(context).notify(
-                    context,
-                    message: t.notifications.haveBeenAddedToQueue.message(
-                      n: tracks.length,
-                    ),
-                  );
-                },
-              ),
               SubmenuButton(
                 leadingIcon: const AdwaitaIcon(
                   AdwaitaIcons.playlist2,
@@ -163,6 +136,62 @@ class AlbumContextMenu extends ConsumerWidget {
                   },
                 ],
                 child: Text(t.actions.addToPlaylist),
+              ),
+              MenuItemButton(
+                leadingIcon: const AdwaitaIcon(
+                  AdwaitaIcons.playlist,
+                  size: 20,
+                ),
+                child: Text(t.actions.addToQueue),
+                onPressed: () async {
+                  menuController.close();
+
+                  final tracks = await ref.read(
+                    albumSortedTracksProvider(album.id).future,
+                  );
+
+                  audioController.addTracksToQueue(tracks);
+
+                  if (!context.mounted) {
+                    return;
+                  }
+
+                  AppNotificationManager.of(context).notify(
+                    context,
+                    message: t.notifications.haveBeenAddedToQueue.message(
+                      n: tracks.length,
+                    ),
+                  );
+                },
+              ),
+              MenuItemButton(
+                leadingIcon: const AdwaitaIcon(
+                  AdwaitaIcons.media_playlist_shuffle,
+                  size: 20,
+                ),
+                child: Text(t.actions.randomAddToQueue),
+                onPressed: () async {
+                  menuController.close();
+
+                  final tracks = await ref.read(
+                    albumSortedTracksProvider(album.id).future,
+                  );
+
+                  tracks.shuffle();
+
+                  audioController.addTracksToQueue(tracks);
+
+                  if (!context.mounted) {
+                    return;
+                  }
+
+                  AppNotificationManager.of(context).notify(
+                    context,
+                    message: t.notifications.haveBeenAddedToQueue.message(
+                      n: tracks.length,
+                    ),
+                  );
+                },
               ),
               const Divider(height: 8),
               MenuItemButton(

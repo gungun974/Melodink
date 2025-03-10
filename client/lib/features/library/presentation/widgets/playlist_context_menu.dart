@@ -73,6 +73,35 @@ class PlaylistContextMenu extends ConsumerWidget {
                   );
                 },
               ),
+              MenuItemButton(
+                leadingIcon: const AdwaitaIcon(
+                  AdwaitaIcons.media_playlist_shuffle,
+                  size: 20,
+                ),
+                child: Text(t.actions.randomAddToQueue),
+                onPressed: () async {
+                  menuController.close();
+
+                  final tracks = await ref.read(
+                    playlistSortedTracksProvider(playlist.id).future,
+                  );
+
+                  tracks.shuffle();
+
+                  audioController.addTracksToQueue(tracks);
+
+                  if (!context.mounted) {
+                    return;
+                  }
+
+                  AppNotificationManager.of(context).notify(
+                    context,
+                    message: t.notifications.haveBeenAddedToQueue.message(
+                      n: tracks.length,
+                    ),
+                  );
+                },
+              ),
               const Divider(height: 8),
               MenuItemButton(
                 leadingIcon: const Padding(

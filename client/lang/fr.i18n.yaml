@@ -173,6 +173,7 @@ actions:
   addFileOrFiles: "Ajouter un ou des fichiers"
 
   addToQueue: "Ajouter à la file d'attente"
+  randomAddToQueue: "Ajouter à la file d'attente aléatoirement"
   clearQueue: "Vider la fille d'attente"
   addToPlaylist: "Ajouter à la playlist"
   removeFromPlaylist: "Retirer de cette playlist"

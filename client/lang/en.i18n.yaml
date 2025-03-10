@@ -175,6 +175,7 @@ actions:
   addFileOrFiles: "Add file(s)"
 
   addToQueue: "Add to queue"
+  randomAddToQueue: "Add to queue randomly"
   clearQueue: "Clear queue"
   addToPlaylist: "Add to playlist"
   removeFromPlaylist: "Remove from this playlist"
