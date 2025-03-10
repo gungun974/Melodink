@@ -198,15 +198,15 @@ class TrackList extends HookConsumerWidget {
 
       if (currentTrackIndex == -1) return null;
 
-      Future.delayed(const Duration(milliseconds: 1)).then(
-        (_) {
-          listController.jumpToItem(
-            index: currentTrackIndex,
-            scrollController: scrollController!,
-            alignment: 0.4,
-          );
-        },
-      );
+      selectMultiple(currentTrackIndex);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        listController.jumpToItem(
+          index: currentTrackIndex,
+          scrollController: scrollController!,
+          alignment: 0.4,
+        );
+      });
 
       return null;
     }, []);
