@@ -62,6 +62,12 @@ class AlbumLinkText extends StatelessWidget {
                     GoRouter.of(context).pop();
                   }
 
+                  print(GoRouter.of(context));
+
+                  if (GoRouter.of(context).location == "/album/$albumId") {
+                    return;
+                  }
+
                   GoRouter.of(context).push("/album/$albumId", extra: {
                     "openWithScrollOnSpecificTrackId":
                         openWithScrollOnSpecificTrackId,

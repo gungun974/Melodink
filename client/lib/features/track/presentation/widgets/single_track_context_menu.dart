@@ -163,6 +163,10 @@ class SingleTrackContextMenu extends ConsumerWidget {
                 GoRouter.of(context).pop();
               }
 
+              if (GoRouter.of(context).location == "/album/${track.albumId}") {
+                return;
+              }
+
               GoRouter.of(context).push("/album/${track.albumId}", extra: {
                 "openWithScrollOnSpecificTrackId": track.id,
               });
