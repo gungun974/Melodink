@@ -189,86 +189,103 @@ class DesktopPlayerPage extends HookConsumerWidget {
                                       track: currentTrack,
                                       menuController:
                                           trackContextMenuController,
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Expanded(
-                                            child: ConstrainedBox(
-                                              constraints: const BoxConstraints(
-                                                maxWidth: 600,
-                                              ),
-                                              child: Align(
-                                                alignment:
-                                                    Alignment.bottomCenter,
-                                                child: AspectRatio(
-                                                  aspectRatio: 1.0,
-                                                  child: image,
+                                      child: GestureDetector(
+                                        onSecondaryTapDown: isTouchDevice(
+                                                context)
+                                            ? null
+                                            : (TapDownDetails details) {
+                                                trackContextMenuController.open(
+                                                  position:
+                                                      details.localPosition +
+                                                          const Offset(5, 5),
+                                                );
+                                              },
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: ConstrainedBox(
+                                                constraints:
+                                                    const BoxConstraints(
+                                                  maxWidth: 600,
+                                                ),
+                                                child: Align(
+                                                  alignment:
+                                                      Alignment.bottomCenter,
+                                                  child: AspectRatio(
+                                                    aspectRatio: 1.0,
+                                                    child: image,
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 24),
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.end,
-                                            children: [
-                                              Expanded(
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  children: [
-                                                    AlbumLinkText(
-                                                      text: currentTrack.title,
-                                                      albumId:
-                                                          currentTrack.albumId,
-                                                      style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                        fontSize: 20,
-                                                        letterSpacing:
-                                                            20 * 0.03,
+                                            const SizedBox(height: 24),
+                                            Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                Expanded(
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    children: [
+                                                      AlbumLinkText(
+                                                        text:
+                                                            currentTrack.title,
+                                                        albumId: currentTrack
+                                                            .albumId,
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 20,
+                                                          letterSpacing:
+                                                              20 * 0.03,
+                                                        ),
+                                                        openWithScrollOnSpecificTrackId:
+                                                            currentTrack.id,
                                                       ),
-                                                      openWithScrollOnSpecificTrackId:
-                                                          currentTrack.id,
-                                                    ),
-                                                    const SizedBox(height: 6),
-                                                    ArtistsLinksText(
-                                                      artists:
-                                                          currentTrack.artists,
-                                                      maxLines: 1,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: TextStyle(
-                                                        fontSize: 18,
-                                                        letterSpacing:
-                                                            18 * 0.03,
-                                                        color: Colors.grey[350],
+                                                      const SizedBox(height: 6),
+                                                      ArtistsLinksText(
+                                                        artists: currentTrack
+                                                            .artists,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: TextStyle(
+                                                          fontSize: 18,
+                                                          letterSpacing:
+                                                              18 * 0.03,
+                                                          color:
+                                                              Colors.grey[350],
+                                                        ),
                                                       ),
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    AlbumLinkText(
-                                                      text: currentTrack.album,
-                                                      albumId:
-                                                          currentTrack.albumId,
-                                                      style: TextStyle(
-                                                        fontSize: 16,
-                                                        letterSpacing:
-                                                            16 * 0.03,
-                                                        fontWeight:
-                                                            FontWeight.w300,
-                                                        color: Colors.grey[350],
+                                                      const SizedBox(height: 4),
+                                                      AlbumLinkText(
+                                                        text:
+                                                            currentTrack.album,
+                                                        albumId: currentTrack
+                                                            .albumId,
+                                                        style: TextStyle(
+                                                          fontSize: 16,
+                                                          letterSpacing:
+                                                              16 * 0.03,
+                                                          fontWeight:
+                                                              FontWeight.w300,
+                                                          color:
+                                                              Colors.grey[350],
+                                                        ),
                                                       ),
-                                                    ),
-                                                  ],
+                                                    ],
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 16),
-                                        ],
+                                              ],
+                                            ),
+                                            const SizedBox(height: 16),
+                                          ],
+                                        ),
                                       ),
                                     );
                                   },
