@@ -770,8 +770,9 @@ private:
               // Keep track of, when the first sample starts
               if (audio_seeked == false) {
                 audio_time = CalculateAudioPts(av_audio_frame);
-                audio_frames_consumed =
-                    size_t(audio_time / 1000 * audio_sample_rate);
+                audio_frames_consumed = static_cast<size_t>(
+                    (static_cast<double>(audio_time) / 1000.0) *
+                    audio_sample_rate);
               }
 
               audio_seeked = true;
@@ -901,8 +902,6 @@ public:
 
   bool IsAudioRetry() { return audio_retry; }
 
-  int64_t time_offset = 0;
-
   int Seek(int64_t new_time) {
     std::unique_lock<std::mutex> lock(seek_mutex);
     std::unique_lock<std::mutex> lock2(open_mutex);
@@ -987,13 +986,12 @@ public:
         audio_frames_consumed >= audio_frames_consumed_max) {
       audio_frames_consumed %= audio_frames_consumed_max;
       audio_frames_consumed_max = 0;
-      time_offset = 0;
 
       has_loop_into_next = infinite_next_loop;
     }
 
-    audio_time =
-        (double(audio_frames_consumed) / double(audio_sample_rate)) * 1000;
+    audio_time = static_cast<int64_t>(
+        (double(audio_frames_consumed) / double(audio_sample_rate)) * 1000.0);
 
     return samples_read;
   }
@@ -1098,7 +1096,7 @@ public:
       return 0;
     }
 
-    return audio_time + time_offset;
+    return audio_time;
   }
 
   // av_err2str returns a temporary array. This doesn't work in gcc.
