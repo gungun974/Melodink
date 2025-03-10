@@ -26,6 +26,7 @@ class DesktopPlaylistHeader extends ConsumerWidget {
   final List<MinimalArtist> artists;
 
   final VoidCallback playCallback;
+  final bool displayPauseButton;
 
   final VoidCallback downloadCallback;
 
@@ -44,6 +45,7 @@ class DesktopPlaylistHeader extends ConsumerWidget {
     required this.tracks,
     required this.artists,
     required this.playCallback,
+    required this.displayPauseButton,
     required this.downloadCallback,
     required this.downloaded,
     this.contextMenuKey,
@@ -132,10 +134,12 @@ class DesktopPlaylistHeader extends ConsumerWidget {
                           color: const Color(0xFFC47ED0),
                           borderRadius: BorderRadius.circular(100.0),
                         ),
-                        child: const Center(
+                        child: Center(
                           child: AdwaitaIcon(
                             size: 32,
-                            AdwaitaIcons.media_playback_start,
+                            displayPauseButton
+                                ? AdwaitaIcons.media_playback_pause
+                                : AdwaitaIcons.media_playback_start,
                           ),
                         ),
                       ),

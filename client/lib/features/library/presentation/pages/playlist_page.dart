@@ -168,82 +168,122 @@ class PlaylistPage extends HookConsumerWidget {
                         top: padding,
                         bottom: separator,
                       ),
-                      sliver: SliverToBoxAdapter(
-                        child: size == AppScreenTypeLayout.desktop
-                            ? DesktopPlaylistHeader(
-                                name: playlist.name,
-                                type: t.general.playlist,
-                                imageUrl: playlist.getCompressedCoverUrl(
-                                  TrackCompressedCoverQuality.high,
-                                ),
-                                year: "",
-                                description: playlist.description,
-                                tracks: tracks,
-                                artists: const [],
-                                playCallback: () async {
-                                  await audioController.loadTracks(
-                                    tracks,
-                                    source:
-                                        "${t.general.playlist} \"${playlist.name}\"",
-                                  );
-                                },
-                                downloadCallback: () async {
-                                  final playlistDownloadNotifier = ref.read(
-                                    playlistDownloadNotifierProvider(
-                                            playlist.id)
-                                        .notifier,
-                                  );
+                      sliver: StreamBuilder(
+                          stream: audioController.playbackState,
+                          builder: (context, snapshot) {
+                            final isPlaying = snapshot.data?.playing ?? false;
 
-                                  if (!playlistDownload.downloaded) {
-                                    await playlistDownloadNotifier.download(
-                                      shouldCheckDownload: true,
-                                    );
-                                  } else {
-                                    await playlistDownloadNotifier
-                                        .deleteDownloaded();
-                                  }
-                                },
-                                downloaded: playlistDownload.downloaded,
-                                contextMenuKey: playlistContextMenuKey,
-                                menuController: playlistContextMenuController,
-                              )
-                            : MobilePlaylistHeader(
-                                name: playlist.name,
-                                type: t.general.playlist,
-                                imageUrl: playlist.getCompressedCoverUrl(
-                                  TrackCompressedCoverQuality.high,
-                                ),
-                                year: "",
-                                tracks: tracks,
-                                artists: const [],
-                                playCallback: () async {
-                                  await audioController.loadTracks(
-                                    tracks,
-                                    source:
-                                        "${t.general.playlist} \"${playlist.name}\"",
-                                  );
-                                },
-                                downloadCallback: () async {
-                                  final playlistDownloadNotifier = ref.read(
-                                    playlistDownloadNotifierProvider(
-                                            playlist.id)
-                                        .notifier,
-                                  );
+                            final source =
+                                "${t.general.playlist} \"${playlist.name}\"";
 
-                                  if (!playlistDownload.downloaded) {
-                                    await playlistDownloadNotifier.download(
-                                      shouldCheckDownload: true,
-                                    );
-                                  } else {
-                                    await playlistDownloadNotifier
-                                        .deleteDownloaded();
-                                  }
-                                },
-                                downloaded: playlistDownload.downloaded,
-                                contextMenuKey: playlistContextMenuKey,
-                                menuController: playlistContextMenuController,
-                              ),
-                      ),
+                            final isSameSource =
+                                audioController.playerTracksFrom.value ==
+                                    source;
+                            return SliverToBoxAdapter(
+                              child: size == AppScreenTypeLayout.desktop
+                                  ? DesktopPlaylistHeader(
+                                      name: playlist.name,
+                                      type: t.general.playlist,
+                                      imageUrl: playlist.getCompressedCoverUrl(
+                                        TrackCompressedCoverQuality.high,
+                                      ),
+                                      year: "",
+                                      description: playlist.description,
+                                      tracks: tracks,
+                                      artists: const [],
+                                      playCallback: () async {
+                                        if (!isSameSource) {
+                                          await audioController.loadTracks(
+                                            tracks,
+                                            source: source,
+                                          );
+                                          return;
+                                        }
+
+                                        if (isPlaying) {
+                                          await audioController.pause();
+                                          return;
+                                        }
+
+                                        await audioController.play();
+                                      },
+                                      displayPauseButton:
+                                          isSameSource && isPlaying,
+                                      downloadCallback: () async {
+                                        final playlistDownloadNotifier =
+                                            ref.read(
+                                          playlistDownloadNotifierProvider(
+                                                  playlist.id)
+                                              .notifier,
+                                        );
+
+                                        if (!playlistDownload.downloaded) {
+                                          await playlistDownloadNotifier
+                                              .download(
+                                            shouldCheckDownload: true,
+                                          );
+                                        } else {
+                                          await playlistDownloadNotifier
+                                              .deleteDownloaded();
+                                        }
+                                      },
+                                      downloaded: playlistDownload.downloaded,
+                                      contextMenuKey: playlistContextMenuKey,
+                                      menuController:
+                                          playlistContextMenuController,
+                                    )
+                                  : MobilePlaylistHeader(
+                                      name: playlist.name,
+                                      type: t.general.playlist,
+                                      imageUrl: playlist.getCompressedCoverUrl(
+                                        TrackCompressedCoverQuality.high,
+                                      ),
+                                      year: "",
+                                      tracks: tracks,
+                                      artists: const [],
+                                      playCallback: () async {
+                                        if (!isSameSource) {
+                                          await audioController.loadTracks(
+                                            tracks,
+                                            source: source,
+                                          );
+                                          return;
+                                        }
+
+                                        if (isPlaying) {
+                                          await audioController.pause();
+                                          return;
+                                        }
+
+                                        await audioController.play();
+                                      },
+                                      displayPauseButton:
+                                          isSameSource && isPlaying,
+                                      downloadCallback: () async {
+                                        final playlistDownloadNotifier =
+                                            ref.read(
+                                          playlistDownloadNotifierProvider(
+                                                  playlist.id)
+                                              .notifier,
+                                        );
+
+                                        if (!playlistDownload.downloaded) {
+                                          await playlistDownloadNotifier
+                                              .download(
+                                            shouldCheckDownload: true,
+                                          );
+                                        } else {
+                                          await playlistDownloadNotifier
+                                              .deleteDownloaded();
+                                        }
+                                      },
+                                      downloaded: playlistDownload.downloaded,
+                                      contextMenuKey: playlistContextMenuKey,
+                                      menuController:
+                                          playlistContextMenuController,
+                                    ),
+                            );
+                          }),
                     ),
                     SliverContainer(
                       maxWidth: maxWidth,

@@ -84,76 +84,111 @@ class AlbumPage extends HookConsumerWidget {
                     top: padding,
                     bottom: separator,
                   ),
-                  sliver: SliverToBoxAdapter(
-                    child: size == AppScreenTypeLayout.desktop
-                        ? DesktopPlaylistHeader(
-                            name: album.name,
-                            type: t.general.album,
-                            imageUrl: album.getCompressedCoverUrl(
-                              TrackCompressedCoverQuality.high,
-                            ),
-                            year: album.getYear(),
-                            description: "",
-                            tracks: tracks,
-                            artists: album.albumArtists,
-                            playCallback: () async {
-                              await audioController.loadTracks(
-                                tracks,
-                                source: "${t.general.album} \"${album.name}\"",
-                              );
-                            },
-                            downloadCallback: () async {
-                              final albumDownloadNotifier = ref.read(
-                                albumDownloadNotifierProvider(album.id)
-                                    .notifier,
-                              );
+                  sliver: StreamBuilder(
+                      stream: audioController.playbackState,
+                      builder: (context, snapshot) {
+                        final isPlaying = snapshot.data?.playing ?? false;
 
-                              if (!albumDownload.downloaded) {
-                                await albumDownloadNotifier.download(
-                                  shouldCheckDownload: true,
-                                );
-                              } else {
-                                await albumDownloadNotifier.deleteDownloaded();
-                              }
-                            },
-                            downloaded: albumDownload.downloaded,
-                            contextMenuKey: albumContextMenuKey,
-                            menuController: albumContextMenuController,
-                          )
-                        : MobilePlaylistHeader(
-                            name: album.name,
-                            type: t.general.album,
-                            imageUrl: album.getCompressedCoverUrl(
-                              TrackCompressedCoverQuality.high,
-                            ),
-                            year: album.getYear(),
-                            tracks: tracks,
-                            artists: album.albumArtists,
-                            playCallback: () async {
-                              await audioController.loadTracks(
-                                tracks,
-                                source: "${t.general.album} \"${album.name}\"",
-                              );
-                            },
-                            downloadCallback: () async {
-                              final albumDownloadNotifier = ref.read(
-                                albumDownloadNotifierProvider(album.id)
-                                    .notifier,
-                              );
+                        final source = "${t.general.album} \"${album.name}\"";
 
-                              if (!albumDownload.downloaded) {
-                                await albumDownloadNotifier.download(
-                                  shouldCheckDownload: true,
-                                );
-                              } else {
-                                await albumDownloadNotifier.deleteDownloaded();
-                              }
-                            },
-                            downloaded: albumDownload.downloaded,
-                            contextMenuKey: albumContextMenuKey,
-                            menuController: albumContextMenuController,
-                          ),
-                  ),
+                        final isSameSource =
+                            audioController.playerTracksFrom.value == source;
+
+                        return SliverToBoxAdapter(
+                          child: size == AppScreenTypeLayout.desktop
+                              ? DesktopPlaylistHeader(
+                                  name: album.name,
+                                  type: t.general.album,
+                                  imageUrl: album.getCompressedCoverUrl(
+                                    TrackCompressedCoverQuality.high,
+                                  ),
+                                  year: album.getYear(),
+                                  description: "",
+                                  tracks: tracks,
+                                  artists: album.albumArtists,
+                                  playCallback: () async {
+                                    if (!isSameSource) {
+                                      await audioController.loadTracks(
+                                        tracks,
+                                        source: source,
+                                      );
+                                      return;
+                                    }
+
+                                    if (isPlaying) {
+                                      await audioController.pause();
+                                      return;
+                                    }
+
+                                    await audioController.play();
+                                  },
+                                  displayPauseButton: isSameSource && isPlaying,
+                                  downloadCallback: () async {
+                                    final albumDownloadNotifier = ref.read(
+                                      albumDownloadNotifierProvider(album.id)
+                                          .notifier,
+                                    );
+
+                                    if (!albumDownload.downloaded) {
+                                      await albumDownloadNotifier.download(
+                                        shouldCheckDownload: true,
+                                      );
+                                    } else {
+                                      await albumDownloadNotifier
+                                          .deleteDownloaded();
+                                    }
+                                  },
+                                  downloaded: albumDownload.downloaded,
+                                  contextMenuKey: albumContextMenuKey,
+                                  menuController: albumContextMenuController,
+                                )
+                              : MobilePlaylistHeader(
+                                  name: album.name,
+                                  type: t.general.album,
+                                  imageUrl: album.getCompressedCoverUrl(
+                                    TrackCompressedCoverQuality.high,
+                                  ),
+                                  year: album.getYear(),
+                                  tracks: tracks,
+                                  artists: album.albumArtists,
+                                  playCallback: () async {
+                                    if (!isSameSource) {
+                                      await audioController.loadTracks(
+                                        tracks,
+                                        source: source,
+                                      );
+                                      return;
+                                    }
+
+                                    if (isPlaying) {
+                                      await audioController.pause();
+                                      return;
+                                    }
+
+                                    await audioController.play();
+                                  },
+                                  displayPauseButton: isSameSource && isPlaying,
+                                  downloadCallback: () async {
+                                    final albumDownloadNotifier = ref.read(
+                                      albumDownloadNotifierProvider(album.id)
+                                          .notifier,
+                                    );
+
+                                    if (!albumDownload.downloaded) {
+                                      await albumDownloadNotifier.download(
+                                        shouldCheckDownload: true,
+                                      );
+                                    } else {
+                                      await albumDownloadNotifier
+                                          .deleteDownloaded();
+                                    }
+                                  },
+                                  downloaded: albumDownload.downloaded,
+                                  contextMenuKey: albumContextMenuKey,
+                                  menuController: albumContextMenuController,
+                                ),
+                        );
+                      }),
                 ),
                 SliverContainer(
                   maxWidth: maxWidth,
