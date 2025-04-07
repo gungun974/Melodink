@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
 
@@ -13,6 +14,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:melodink_client/core/helpers/split_hash_to_path.dart';
+import 'package:melodink_client/core/network/network_info.dart';
 
 String createUrlHash(String url) {
   final bytes = utf8.encode(url);
@@ -179,7 +181,7 @@ class AppImageCacheProvider extends ImageProvider<AppImageCacheProvider> {
       '${objectRuntimeType(this, 'AppImageCacheProvider')}("$url", scale: $scale)';
 }
 
-class AuthCachedNetworkImage extends StatelessWidget {
+class AuthCachedNetworkImage extends ConsumerWidget {
   final String imageUrl;
 
   final double? width;
@@ -213,13 +215,23 @@ class AuthCachedNetworkImage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     Uri? uri = Uri.tryParse(imageUrl);
 
     ImageProvider imageProvider;
 
+    final isServerReachable = ref.read(isServerReachableProvider);
+
     if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
       imageProvider = AppImageCacheProvider(uri);
+
+      if (!isServerReachable) {
+        return SizedBox(
+          height: height,
+          width: width,
+          child: errorWidget?.call(context, uri.toString(), Error()),
+        );
+      }
     } else {
       imageProvider = FileImage(File(imageUrl));
     }

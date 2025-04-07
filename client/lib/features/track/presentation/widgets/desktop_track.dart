@@ -174,11 +174,11 @@ class DesktopTrack extends HookConsumerWidget {
 
     final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
 
-    final downloadedTrack = ref
-        .watch(
-          isTrackDownloadedProvider(track.id),
-        )
-        .valueOrNull;
+    final downloadedTrackAsync = ref.watch(
+      isTrackDownloadedProvider(track.id),
+    );
+
+    final downloadedTrack = downloadedTrackAsync.valueOrNull;
 
     final trackContextMenuController = useMemoized(() => MenuController());
 
@@ -340,7 +340,8 @@ class DesktopTrack extends HookConsumerWidget {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  if (showImage)
+                                  if (showImage &&
+                                      downloadedTrackAsync.hasValue)
                                     AuthCachedNetworkImage(
                                       imageUrl: downloadedTrack
                                               ?.getCoverUrl() ??
