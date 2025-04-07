@@ -672,7 +672,10 @@ class AudioController extends BaseAudioHandler {
         DownloadTrack? downloadedTrack;
 
         if (getDownloadedTrackByTrackId != null) {
-          downloadedTrack = await getDownloadedTrackByTrackId(track.id);
+          downloadedTrack = await getDownloadedTrackByTrackId(
+            track.id,
+            shouldVerifyIfFileExist: true,
+          );
         }
 
         late MelodinkTrackRequest request;

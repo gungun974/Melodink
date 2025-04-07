@@ -33,7 +33,7 @@ class DownloadTrackRepository {
     );
   }
 
-  Future<DownloadTrack?> getDownloadedTrackByTrackId(int trackId) async {
+  Future<DownloadTrack?> getDownloadedTrackByTrackId(int trackId, {bool shouldVerifyIfFileExist = false}) async {
     final db = await DatabaseService.getDatabase();
 
     try {
@@ -54,10 +54,12 @@ class DownloadTrackRepository {
 
       final audioFile = File(downloadTrack.audioFile);
 
-      if (!(await audioFile.exists())) {
-        await deleteTrack(downloadTrack.trackId);
+      if (shouldVerifyIfFileExist) {
+        if (!(await audioFile.exists())) {
+          await deleteTrack(downloadTrack.trackId);
 
-        return null;
+          return null;
+        }
       }
 
       return downloadTrack;
