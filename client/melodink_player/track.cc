@@ -1109,6 +1109,7 @@ public:
 
   // This is only for `player.cc`
   std::atomic<int> player_load_count{0};
+  std::atomic<int> have_try_auto_open{0};
 
   bool operator==(const MelodinkTrackRequest &request) const {
     if (track_id != request.trackId) {

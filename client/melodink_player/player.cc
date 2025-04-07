@@ -411,7 +411,7 @@ private:
 
     new_track->player_load_count += 1;
 
-    new_track->player_load_count += 1;
+    new_track->have_try_auto_open = 1;
     track_auto_open_queue.push(new_track);
     track_auto_open_conditional.notify_one();
 
@@ -436,7 +436,7 @@ private:
       track_auto_open_queue.pop();
 
       track->Open(auth_token.c_str());
-      track->player_load_count -= 1;
+      track->have_try_auto_open = 0;
     }
   }
 
@@ -463,6 +463,10 @@ private:
       MelodinkTrack *track = loaded_tracks[index];
 
       if (track->player_load_count != 0) {
+        continue;
+      }
+
+      if (track->have_try_auto_open != 0) {
         continue;
       }
 
