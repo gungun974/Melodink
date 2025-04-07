@@ -10,6 +10,7 @@ import 'package:melodink_client/features/library/domain/providers/playlist_conte
 import 'package:melodink_client/features/library/presentation/modals/create_playlist_modal.dart';
 import 'package:melodink_client/features/library/presentation/modals/edit_album_modal.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class AlbumContextMenu extends ConsumerWidget {
@@ -173,9 +174,9 @@ class AlbumContextMenu extends ConsumerWidget {
                 onPressed: () async {
                   menuController.close();
 
-                  final tracks = await ref.read(
+                  final List<MinimalTrack> tracks = List.from(await ref.read(
                     albumSortedTracksProvider(album.id).future,
-                  );
+                  ));
 
                   tracks.shuffle();
 
