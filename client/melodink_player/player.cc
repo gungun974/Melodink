@@ -556,9 +556,6 @@ private:
 
         SetPlayerState(MELODINK_PROCESSING_STATE_ERROR);
       } else {
-        bool is_stoped =
-            ma_device_get_state(&audio_device) == ma_device_state_stopped;
-
         ma_device_uninit(&audio_device);
 
         SetPlayerState(MELODINK_PROCESSING_STATE_BUFFERING);
@@ -570,9 +567,27 @@ private:
 
       reinit_miniaudio_mutex.unlock();
     } else {
+      reinit_miniaudio_mutex.lock();
       SetPlayerState(MELODINK_PROCESSING_STATE_BUFFERING);
 
       current_track = new_current_track;
+
+      ma_device_state device_state = ma_device_get_state(&audio_device);
+
+      if (is_paused) {
+        if (device_state == ma_device_state_started ||
+            device_state == ma_device_state_stopped) {
+          ma_device_stop(&audio_device);
+        }
+      } else {
+
+        if (device_state == ma_device_state_started ||
+            device_state == ma_device_state_stopped) {
+          ma_device_start(&audio_device);
+        }
+      }
+
+      reinit_miniaudio_mutex.unlock();
     }
 
     HandleNextLoop();
