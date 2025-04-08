@@ -27,7 +27,9 @@ class DesktopArtistHeader extends StatelessWidget {
                   "assets/melodink_track_cover_not_found.png",
                 );
               },
+              width: 256,
               height: 256,
+              gaplessPlayback: true,
             ),
             const SizedBox(width: 16),
             Expanded(

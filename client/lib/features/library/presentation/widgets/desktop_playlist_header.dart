@@ -72,6 +72,8 @@ class DesktopPlaylistHeader extends ConsumerWidget {
               );
             },
             width: 256,
+            height: 256,
+            gaplessPlayback: true,
           ),
           const SizedBox(width: 16),
           Expanded(

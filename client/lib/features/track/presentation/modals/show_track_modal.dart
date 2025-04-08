@@ -64,20 +64,21 @@ class ShowTrackModal extends HookConsumerWidget {
                         padding: const EdgeInsets.all(24.0),
                         child: Row(
                           children: [
-                            SizedBox(
+                            AuthCachedNetworkImage(
+                              fit: BoxFit.contain,
+                              alignment: Alignment.center,
+                              imageUrl: track.getOriginalCoverUrl(),
+                              placeholder: (context, url) => Image.asset(
+                                "assets/melodink_track_cover_not_found.png",
+                              ),
+                              errorWidget: (context, url, error) {
+                                return Image.asset(
+                                  "assets/melodink_track_cover_not_found.png",
+                                );
+                              },
                               width: 256,
                               height: 256,
-                              child: AuthCachedNetworkImage(
-                                imageUrl: track.getOriginalCoverUrl(),
-                                placeholder: (context, url) => Image.asset(
-                                  "assets/melodink_track_cover_not_found.png",
-                                ),
-                                errorWidget: (context, url, error) {
-                                  return Image.asset(
-                                    "assets/melodink_track_cover_not_found.png",
-                                  );
-                                },
-                              ),
+                              gaplessPlayback: true,
                             ),
                             const SizedBox(width: 24),
                             Expanded(
