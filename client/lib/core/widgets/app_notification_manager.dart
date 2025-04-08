@@ -9,12 +9,12 @@ enum AppNotificationType {
   danger,
 }
 
-class AppNotificationManager extends StatefulWidget {
-  final Widget child;
+final GlobalKey<AppNotificationManagerState> appNotificationManagerKey =
+    GlobalKey<AppNotificationManagerState>();
 
+class AppNotificationManager extends StatefulWidget {
   const AppNotificationManager({
     super.key,
-    required this.child,
   });
 
   static AppNotificationManagerState of(BuildContext context) {
@@ -24,6 +24,9 @@ class AppNotificationManager extends StatefulWidget {
         context.state is AppNotificationManagerState) {
       appNotificationManager = context.state as AppNotificationManagerState;
     }
+
+    appNotificationManager =
+        appNotificationManager ?? appNotificationManagerKey.currentState;
 
     appNotificationManager = appNotificationManager ??
         context.findAncestorStateOfType<AppNotificationManagerState>();
@@ -66,33 +69,29 @@ class AppNotificationManagerState extends State<AppNotificationManager> {
   Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.topCenter,
-      children: [
-        widget.child,
-        ..._notifications.map((notificaiton) {
-          return SafeArea(
-            child: AnimatedSlide(
-              key: notificaiton.key,
-              offset: notificaiton.show
-                  ? const Offset(0, 0)
-                  : Offset(
-                      0, MediaQuery.paddingOf(context).top == 0 ? -1 : -1.5),
-              curve: const Cubic(0, .9, 0, 1),
-              duration: const Duration(milliseconds: 670),
-              child: Directionality(
-                textDirection: TextDirection.ltr,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 16.0),
-                  child: _AppNotificationWidget(
-                    title: notificaiton.title,
-                    type: notificaiton.type,
-                    message: notificaiton.message,
-                  ),
+      children: _notifications.map((notification) {
+        return SafeArea(
+          child: AnimatedSlide(
+            key: notification.key,
+            offset: notification.show
+                ? const Offset(0, 0)
+                : Offset(0, MediaQuery.paddingOf(context).top == 0 ? -1 : -1.5),
+            curve: const Cubic(0, .9, 0, 1),
+            duration: const Duration(milliseconds: 670),
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: _AppNotificationWidget(
+                  title: notification.title,
+                  type: notification.type,
+                  message: notification.message,
                 ),
               ),
             ),
-          );
-        })
-      ],
+          ),
+        );
+      }).toList(),
     );
   }
 

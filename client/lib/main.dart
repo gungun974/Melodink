@@ -111,29 +111,38 @@ class MyApp extends StatelessWidget {
                   audioController.play();
                 }),
               },
-              child: AppNotificationManager(
-                child: MaterialApp.router(
-                  title: 'Melodink Client',
-                  locale: TranslationProvider.of(context).flutterLocale,
-                  supportedLocales: AppLocaleUtils.supportedLocales,
-                  localizationsDelegates: GlobalMaterialLocalizations.delegates,
-                  debugShowCheckedModeBanner: false,
-                  theme: ThemeData(
-                    useMaterial3: false,
-                    brightness: Brightness.dark,
-                    appBarTheme:
-                        const AppBarTheme(backgroundColor: Colors.black),
-                    primaryColor: Colors.black,
-                    iconTheme:
-                        const IconThemeData().copyWith(color: Colors.white),
-                    colorScheme: ColorScheme.fromSeed(
-                      seedColor: const Color.fromRGBO(196, 126, 208, 1),
+              child: Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  MaterialApp.router(
+                    title: 'Melodink Client',
+                    locale: TranslationProvider.of(context).flutterLocale,
+                    supportedLocales: AppLocaleUtils.supportedLocales,
+                    localizationsDelegates:
+                        GlobalMaterialLocalizations.delegates,
+                    debugShowCheckedModeBanner: false,
+                    theme: ThemeData(
+                      useMaterial3: false,
                       brightness: Brightness.dark,
+                      appBarTheme:
+                          const AppBarTheme(backgroundColor: Colors.black),
+                      primaryColor: Colors.black,
+                      iconTheme:
+                          const IconThemeData().copyWith(color: Colors.white),
+                      colorScheme: ColorScheme.fromSeed(
+                        seedColor: const Color.fromRGBO(196, 126, 208, 1),
+                        brightness: Brightness.dark,
+                      ),
+                      fontFamily: "Roboto",
                     ),
-                    fontFamily: "Roboto",
+                    routerConfig: appRouter,
                   ),
-                  routerConfig: appRouter,
-                ),
+                  RepaintBoundary(
+                    child: AppNotificationManager(
+                      key: appNotificationManagerKey,
+                    ),
+                  ),
+                ],
               ),
             );
           },
