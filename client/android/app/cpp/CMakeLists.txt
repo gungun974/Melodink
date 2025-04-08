@@ -15,7 +15,7 @@ add_library(
 )
 
 target_compile_definitions(miniaudio
-  PRIVATE MA_NO_RUNTIME_LINKING MA_NO_DECODING MA_NO_ENCODING
+  PRIVATE MA_NO_DECODING MA_NO_ENCODING
 )
 
 target_compile_features(melodink_player PUBLIC cxx_std_17)
