@@ -130,7 +130,9 @@ final appRouterProvider = Provider((ref) {
                       children: [
                         if (currentPlayerBarPosition ==
                             AppSettingPlayerBarPosition.top)
-                          const DesktopPlayerBar(),
+                          RepaintBoundary(
+                            child: const DesktopPlayerBar(),
+                          ),
                         Expanded(
                           child: Stack(
                             children: [
@@ -144,10 +146,14 @@ final appRouterProvider = Provider((ref) {
                         ),
                         if (currentPlayerBarPosition ==
                             AppSettingPlayerBarPosition.bottom)
-                          const DesktopPlayerBar(),
+                          RepaintBoundary(
+                            child: const DesktopPlayerBar(),
+                          ),
                         if (currentPlayerBarPosition ==
                             AppSettingPlayerBarPosition.center)
-                          const LargeDesktopPlayerBar(),
+                          RepaintBoundary(
+                            child: const LargeDesktopPlayerBar(),
+                          ),
                       ],
                     ),
                   );

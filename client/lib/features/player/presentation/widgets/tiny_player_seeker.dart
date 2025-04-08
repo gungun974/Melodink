@@ -33,12 +33,14 @@ class TinyPlayerSeeker extends ConsumerWidget {
       duration = trackDuration;
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(3),
-      child: SizedBox(
-        height: 3,
-        child: LinearProgressIndicator(
-          value: position.inMilliseconds / duration.inMilliseconds,
+    return RepaintBoundary(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(3),
+        child: SizedBox(
+          height: 3,
+          child: LinearProgressIndicator(
+            value: position.inMilliseconds / duration.inMilliseconds,
+          ),
         ),
       ),
     );

@@ -88,78 +88,82 @@ class LargePlayerSeeker extends HookConsumerWidget {
     );
 
     if (displayDurationsInBottom) {
-      return Column(
-        children: [
-          Row(
-            children: [
-              Expanded(child: progressBar),
-            ],
-          ),
-          SizedBox(height: large ? 8.0 : 4.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                durationToTime(position),
-                style: const TextStyle(
-                  fontSize: 12,
-                  letterSpacing: 12 * 0.03,
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  ref
-                      .read(showTrackRemainingDurationProvider.notifier)
-                      .toggle();
-                },
-                child: Text(
-                  durationToTime(
-                      showRemainingDuration ? remainingDuration : duration),
+      return RepaintBoundary(
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: progressBar),
+              ],
+            ),
+            SizedBox(height: large ? 8.0 : 4.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  durationToTime(position),
                   style: const TextStyle(
                     fontSize: 12,
                     letterSpacing: 12 * 0.03,
                     fontWeight: FontWeight.w300,
                   ),
                 ),
-              ),
-            ],
-          )
-        ],
+                GestureDetector(
+                  onTap: () {
+                    ref
+                        .read(showTrackRemainingDurationProvider.notifier)
+                        .toggle();
+                  },
+                  child: Text(
+                    durationToTime(
+                        showRemainingDuration ? remainingDuration : duration),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      letterSpacing: 12 * 0.03,
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          ],
+        ),
       );
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          durationToTime(position),
-          style: const TextStyle(
-            fontSize: 12,
-            letterSpacing: 12 * 0.03,
-            fontWeight: FontWeight.w300,
-          ),
-        ),
-        const SizedBox(width: 12.0),
-        Expanded(
-          child: progressBar,
-        ),
-        const SizedBox(width: 12.0),
-        GestureDetector(
-          onTap: () {
-            ref.read(showTrackRemainingDurationProvider.notifier).toggle();
-          },
-          child: Text(
-            durationToTime(
-                showRemainingDuration ? remainingDuration : duration),
+    return RepaintBoundary(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            durationToTime(position),
             style: const TextStyle(
               fontSize: 12,
               letterSpacing: 12 * 0.03,
               fontWeight: FontWeight.w300,
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 12.0),
+          Expanded(
+            child: progressBar,
+          ),
+          const SizedBox(width: 12.0),
+          GestureDetector(
+            onTap: () {
+              ref.read(showTrackRemainingDurationProvider.notifier).toggle();
+            },
+            child: Text(
+              durationToTime(
+                  showRemainingDuration ? remainingDuration : duration),
+              style: const TextStyle(
+                fontSize: 12,
+                letterSpacing: 12 * 0.03,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
