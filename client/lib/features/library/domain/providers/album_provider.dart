@@ -300,7 +300,6 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
         .then((downloaded) {
       state = state.copyWith(downloaded: downloaded);
 
-      print(downloaded);
       if (downloaded) {
         download(shouldCheckDownload: shouldCheckDownload);
       }
