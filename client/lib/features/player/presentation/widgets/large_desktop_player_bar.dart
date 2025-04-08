@@ -148,6 +148,7 @@ class DesktopCurrentTrack2 extends ConsumerWidget {
                               "assets/melodink_track_cover_not_found.png",
                             );
                           },
+                          gaplessPlayback: true,
                         ),
                       ),
                     ),

@@ -192,6 +192,8 @@ class AuthCachedNetworkImage extends ConsumerWidget {
 
   final AlignmentGeometry? alignment;
 
+  final bool gaplessPlayback;
+
   final Widget Function(
     BuildContext context,
     String url,
@@ -212,6 +214,7 @@ class AuthCachedNetworkImage extends ConsumerWidget {
     this.alignment,
     this.placeholder,
     this.errorWidget,
+    this.gaplessPlayback = false,
   });
 
   @override
@@ -253,7 +256,7 @@ class AuthCachedNetworkImage extends ConsumerWidget {
               );
             }
           : null,
-      gaplessPlayback: true,
+      gaplessPlayback: gaplessPlayback,
       filterQuality: FilterQuality.high,
     );
   }

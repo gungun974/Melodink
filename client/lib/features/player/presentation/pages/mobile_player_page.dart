@@ -285,6 +285,7 @@ class _MobilePlayerInfo extends StatelessWidget {
                 "assets/melodink_track_cover_not_found.png",
               );
             },
+            gaplessPlayback: true,
           ),
         );
 

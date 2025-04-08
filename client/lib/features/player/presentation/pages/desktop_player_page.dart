@@ -181,6 +181,7 @@ class DesktopPlayerPage extends HookConsumerWidget {
                                             "assets/melodink_track_cover_not_found.png",
                                           );
                                         },
+                                        gaplessPlayback: true,
                                       ),
                                     );
 

@@ -89,6 +89,7 @@ class MobileCurrentTrackInfo extends ConsumerWidget {
                                         height: 40,
                                       );
                                     },
+                                    gaplessPlayback: true,
                                   ),
                                 ),
                                 const SizedBox(width: 10),
