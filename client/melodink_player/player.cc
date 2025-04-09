@@ -16,6 +16,10 @@
 #include <thread>
 #include <vector>
 
+#ifdef MELODINK_PULSEAUDIO
+#include "pulseaudio.cc"
+#endif
+
 #include "sendevent.h"
 #include "track.cc"
 
@@ -382,6 +386,15 @@ private:
         MA_SUCCESS) {
       return -1;
     }
+
+#ifdef MELODINK_PULSEAUDIO
+    if (audio_device.pContext != nullptr &&
+        audio_device.pContext->backend == ma_backend_pulseaudio) {
+      // This tiny hack is for never called the loop in parallel
+      audio_device.pContext->pulse.pa_mainloop_iterate =
+          (ma_proc)mi_pa_mainloop_iterate;
+    }
+#endif
 
     if (start_audio) {
       if (ma_device_start(&audio_device) != MA_SUCCESS) {
@@ -924,8 +937,30 @@ public:
       clamped_volume = 1.0f;
 
     audio_volume = clamped_volume;
+
+#ifndef MELODINK_PULSEAUDIO
     ma_device_set_master_volume(&audio_device, clamped_volume);
+#else
+    if (audio_device.pContext != nullptr &&
+        audio_device.pContext->backend == ma_backend_pulseaudio) {
+      reinit_miniaudio_mutex.lock();
+      mi_set_volume__pulse(&audio_device, clamped_volume);
+      reinit_miniaudio_mutex.unlock();
+    } else {
+      ma_device_set_master_volume(&audio_device, clamped_volume);
+    }
+#endif
   }
 
-  double GetVolume() { return audio_volume; }
+  double GetVolume() {
+#ifdef MELODINK_PULSEAUDIO
+    if (audio_device.pContext != nullptr &&
+        audio_device.pContext->backend == ma_backend_pulseaudio) {
+      reinit_miniaudio_mutex.lock();
+      audio_volume = mi_get_volume__pulse(&audio_device);
+      reinit_miniaudio_mutex.unlock();
+    }
+#endif
+    return audio_volume;
+  }
 };
