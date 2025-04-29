@@ -70,10 +70,6 @@ target_compile_options(miniaudio PRIVATE -w)
 
 add_library(melodink_player SHARED ../melodink_player/melodink_player.cpp ../melodink_player/sendevent.cc)
 
-target_compile_definitions(melodink_player
-  PRIVATE MELODINK_PULSEAUDIO
-)
-
 target_link_libraries(melodink_player PRIVATE miniaudio)
 
 # Define the application target. To change its name, change BINARY_NAME above,
