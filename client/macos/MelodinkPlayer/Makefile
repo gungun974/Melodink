@@ -1,9 +1,11 @@
-all: download_and_check install
+all: download_and_check build install
 
 install:
-	rm -rf Src
-	cp -r ../../melodink_player Src
-	mv Src/miniaudio.c Src/miniaudio.mm
+	mkdir -p ./Frameworks
+	cp -r ../../melodink_player/zig-out/macos/* ./Frameworks/
+
+build:
+	cd ../../melodink_player && zig build -Dtarget=aarch64-macos -Doptimize=ReleaseFast
 
 download_and_check:
 	bash ./download.sh

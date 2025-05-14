@@ -19,6 +19,10 @@
     android-nixpkgs = {
       url = "github:tadfisher/android-nixpkgs?rev=5a052c62cdb51b210bc0717177d5bd014cba3df1";
     };
+
+    zig-overlay.url = "github:mitchellh/zig-overlay";
+    # Keep in sync with zigVersion below.
+    zls-overlay.url = "github:nihklas/zls/0.14.0";
   };
 
   outputs = {
@@ -28,6 +32,8 @@
     gitignore,
     flake-utils,
     android-nixpkgs,
+    zig-overlay,
+    zls-overlay,
     ...
   }:
     flake-utils.lib.eachDefaultSystem (system: let
@@ -36,7 +42,17 @@
         config = {
           allowUnfree = true;
         };
+        overlays = [
+          (final: prev: {
+            zigpkgs = zig-overlay.packages.${prev.system};
+          })
+        ];
       };
+
+      zig = pkgs.zigpkgs."0.14.0";
+      zls = zls-overlay.packages.${system}.zls.overrideAttrs (old: {
+        nativeBuildInputs = [zig];
+      });
 
       flutter-pkgs = import flutter-nixpkgs {
         inherit system;
@@ -240,6 +256,9 @@
 
           pkgs.zenity
           pkgs.cmake
+
+          zig
+          zls
         ];
       };
     });

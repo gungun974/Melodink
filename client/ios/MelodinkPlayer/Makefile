@@ -1,12 +1,11 @@
-all: download_and_check install
+all: build install
 
 install:
-	rm -rf Src
-	cp -r ../../melodink_player Src
-	mv Src/miniaudio.c Src/miniaudio.mm
+	mkdir -p ./Frameworks
+	cp -r ../../melodink_player/zig-out/ios/* ./Frameworks/
 
-download_and_check:
-	bash ./download.sh
+build:
+	cd ../../melodink_player && zig build -Dtarget=aarch64-ios -Doptimize=ReleaseFast
 
 .PHONY: clean
 clean:

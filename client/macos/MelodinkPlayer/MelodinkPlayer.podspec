@@ -9,8 +9,9 @@ Pod::Spec.new do |s|
   s.authors      = { 'Gungun974' => 'xfelix974@gmail.com' }
   s.source       = { :path => '.' }
 
-  s.platform     = :osx, '10.9'
-  s.source_files = 'Src/**/{melodink_player.cpp,miniaudio.mm,sendevent.cc}'
+  s.platform     = :osx, '10.13'
+  s.public_header_files = 'Src/**/*.h}'
+  s.source_files = 'Src/**/*'
 
   s.vendored_frameworks = [
     'Frameworks/Avcodec.xcframework',
@@ -23,18 +24,8 @@ Pod::Spec.new do |s|
     'Frameworks/Mbedx509.xcframework',
     'Frameworks/Swresample.xcframework',
     'Frameworks/Swscale.xcframework',
-    'Frameworks/Xml2.xcframework'
-  ]
-
-  s.compiler_flags = [
-    '-DMA_NO_RUNTIME_LINKING',
-    '-DMA_NO_DECODING',
-    '-DMA_NO_ENCODING',
-
-    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avcodec.xcframework/macos-arm64_x86_64/Avcodec.framework/Headers',
-    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avutil.xcframework/macos-arm64_x86_64/Avutil.framework/Headers',
-    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avformat.xcframework/macos-arm64_x86_64/Avformat.framework/Headers',
-    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Swresample.xcframework/macos-arm64_x86_64/Swresample.framework/Headers',
+    'Frameworks/Xml2.xcframework',
+    'Frameworks/MelodinkPlayer.xcframework'
   ]
 
   s.libraries = ['bz2', 'xml2', 'iconv', 'z', 'c++']
