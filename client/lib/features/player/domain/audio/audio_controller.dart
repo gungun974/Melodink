@@ -195,12 +195,12 @@ class AudioController extends BaseAudioHandler {
         AudioProcessingState.completed) {
       await skipToQueueItem(0);
 
-      player.seek(0);
+      await player.seek(0);
     } else if (playbackState.valueOrNull?.processingState ==
         AudioProcessingState.error) {
       await skipToQueueItem(_previousTracks.length - 1);
 
-      player.seek(0);
+      await player.seek(0);
     }
 
     player.play();
@@ -236,7 +236,7 @@ class AudioController extends BaseAudioHandler {
       return;
     }
 
-    player.seek(position.inMilliseconds);
+    await player.seek(position.inMilliseconds);
 
     player.play();
 
@@ -250,11 +250,11 @@ class AudioController extends BaseAudioHandler {
     }
 
     if (_previousTracks.length == 1) {
-      player.seek(0);
+      await player.seek(0);
     } else if (playbackState.value.position.inMilliseconds > 5000) {
-      player.seek(0);
+      await player.seek(0);
     } else {
-      player.skipToPrevious();
+      await player.skipToPrevious();
     }
 
     player.play();
@@ -266,7 +266,7 @@ class AudioController extends BaseAudioHandler {
       return;
     }
 
-    player.skipToNext();
+    await player.skipToNext();
 
     player.play();
   }
@@ -609,6 +609,22 @@ class AudioController extends BaseAudioHandler {
 
   DateTime _lastUpdatePlayerTracks = DateTime.fromMillisecondsSinceEpoch(0);
 
+  updatePlayerQuality() async {
+    // AudioQuality
+    final config = await SettingsRepository().getSettings();
+
+    final connectivityResult = await (Connectivity().checkConnectivity());
+
+    AppSettingAudioQuality currentAudioQuality = config.cellularAudioQuality;
+
+    if (connectivityResult.contains(ConnectivityResult.ethernet) ||
+        connectivityResult.contains(ConnectivityResult.wifi)) {
+      currentAudioQuality = config.wifiAudioQuality;
+    }
+
+    player.setQuality(currentAudioQuality);
+  }
+
   Future<void> _updatePlayerTracks() async {
     await playerTracksMutex.protect(() async {
       if (DateTime.now().difference(_lastUpdatePlayerTracks).inMilliseconds <
@@ -621,17 +637,7 @@ class AudioController extends BaseAudioHandler {
         AppApi().generateCookieHeader(),
       );
 
-      // AudioQuality
-      final config = await SettingsRepository().getSettings();
-
-      final connectivityResult = await (Connectivity().checkConnectivity());
-
-      AppSettingAudioQuality currentAudioQuality = config.cellularAudioQuality;
-
-      if (connectivityResult.contains(ConnectivityResult.ethernet) ||
-          connectivityResult.contains(ConnectivityResult.wifi)) {
-        currentAudioQuality = config.wifiAudioQuality;
-      }
+      await updatePlayerQuality();
 
       final getDownloadedTrackByTrackId =
           downloadTrackRepository?.getDownloadedTrackByTrackId;
@@ -659,7 +665,6 @@ class AudioController extends BaseAudioHandler {
               _lastCurrentTrackRequest ??
                   MelodinkTrackRequest(
                     id: track.id,
-                    quality: currentAudioQuality,
                     originalAudioHash: track.fileSignature,
                     downloadedPath: "",
                   ),
@@ -683,14 +688,12 @@ class AudioController extends BaseAudioHandler {
         if (downloadedTrack == null) {
           request = MelodinkTrackRequest(
             id: track.id,
-            quality: currentAudioQuality,
             originalAudioHash: track.fileSignature,
             downloadedPath: "",
           );
         } else {
           request = MelodinkTrackRequest(
             id: track.id,
-            quality: currentAudioQuality,
             originalAudioHash: track.fileSignature,
             downloadedPath: downloadedTrack.getUrl(),
           );
