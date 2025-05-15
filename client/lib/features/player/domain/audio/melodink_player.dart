@@ -179,11 +179,11 @@ class MelodinkPlayer {
             'mi_player_get_current_track_pos')
         .asFunction();
     _getCurrentPosition = lib
-        .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
+        .lookup<ffi.NativeFunction<ffi.Double Function()>>(
             'mi_player_get_current_position')
         .asFunction();
     _getCurrentBufferedPosition = lib
-        .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
+        .lookup<ffi.NativeFunction<ffi.Double Function()>>(
             'mi_player_get_current_buffered_position')
         .asFunction();
     _getCurrentPlayerState = lib
@@ -261,8 +261,8 @@ class MelodinkPlayer {
 
   late final int Function() _getCurrentPlaying;
   late final int Function() _getCurrentTrackPos;
-  late final int Function() _getCurrentPosition;
-  late final int Function() _getCurrentBufferedPosition;
+  late final double Function() _getCurrentPosition;
+  late final double Function() _getCurrentBufferedPosition;
   late final int Function() _getCurrentPlayerState;
   late final int Function() _getCurrentLoopMode;
 
@@ -271,13 +271,13 @@ class MelodinkPlayer {
 
   void play() => _play();
   void pause() => _pause();
-  Future<void> seek(int positionMs) async => compute((positionMs) {
-        final void Function(int) seek = getLibrary()
-            .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+  Future<void> seek(double position) async => compute((position) {
+        final void Function(double) seek = getLibrary()
+            .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>(
                 'mi_player_seek')
             .asFunction();
-        seek(positionMs);
-      }, positionMs);
+        seek(position);
+      }, position);
 
   Future<void> skipToPrevious() async => compute((_) {
         final void Function() skipToPrevious = getLibrary()
@@ -360,8 +360,8 @@ class MelodinkPlayer {
 
   bool getCurrentPlaying() => _getCurrentPlaying() != 0;
   int getCurrentTrackPos() => _getCurrentTrackPos();
-  int getCurrentPosition() => _getCurrentPosition();
-  int getCurrentBufferedPosition() => _getCurrentBufferedPosition();
+  double getCurrentPosition() => _getCurrentPosition();
+  double getCurrentBufferedPosition() => _getCurrentBufferedPosition();
 
   MelodinkProcessingState getCurrentPlayerState() {
     return MelodinkProcessingState.values[_getCurrentPlayerState()];

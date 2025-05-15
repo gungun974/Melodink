@@ -236,7 +236,7 @@ class AudioController extends BaseAudioHandler {
       return;
     }
 
-    await player.seek(position.inMilliseconds);
+    await player.seek(position.inMicroseconds / 1000000);
 
     player.play();
 
@@ -655,7 +655,7 @@ class AudioController extends BaseAudioHandler {
           continue;
         }
 
-        if (index > _previousTracks.length + 3) {
+        if (index > _previousTracks.length + 10) {
           continue;
         }
 
@@ -763,8 +763,8 @@ class AudioController extends BaseAudioHandler {
 
     final playerPlaying = player.getCurrentPlaying();
     final playerState = player.getCurrentPlayerState();
-    final playerPositionMs = player.getCurrentPosition();
-    final playerBufferedPositionMs = player.getCurrentBufferedPosition();
+    final playerPosition = player.getCurrentPosition();
+    final playerBufferedPosition = player.getCurrentBufferedPosition();
     final playerLoop = player.getCurrentLoopMode();
 
     final newState = playbackState.value.copyWith(
@@ -789,8 +789,10 @@ class AudioController extends BaseAudioHandler {
           playerState == MelodinkProcessingState.idle || _previousTracks.isEmpty
               ? false
               : playerPlaying,
-      updatePosition: Duration(milliseconds: playerPositionMs),
-      bufferedPosition: Duration(milliseconds: playerBufferedPositionMs),
+      updatePosition:
+          Duration(microseconds: (playerPosition * 1000000).round()),
+      bufferedPosition:
+          Duration(microseconds: (playerBufferedPosition * 1000000).round()),
       speed: 1.0,
       repeatMode: const {
         MelodinkLoopMode.none: AudioServiceRepeatMode.none,
