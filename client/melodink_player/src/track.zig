@@ -53,6 +53,8 @@ pub const Track = struct {
     cache_path: ?[]const u8,
     cache_avio: *CacheAVIO,
 
+    open_close_mutex: std.Thread.Mutex = std.Thread.Mutex{},
+
     allocator: std.mem.Allocator,
 
     audio_fifo: Fifo = Fifo{},
@@ -194,6 +196,9 @@ pub const Track = struct {
     }
 
     pub fn openAndWait(self: *Self) !void {
+        self.open_close_mutex.lock();
+        defer self.open_close_mutex.unlock();
+
         defer self.open_thread = null;
         if (self.status != TrackStatus.idle) {
             return;
@@ -785,6 +790,8 @@ pub const Track = struct {
     }
 
     pub fn close(self: *Self) void {
+        self.open_close_mutex.lock();
+        defer self.open_close_mutex.unlock();
         if (self.status == TrackStatus.idle) {
             return;
         }

@@ -43,7 +43,7 @@ const TrackManager = struct {
     };
 
     const TrackArrayList = std.ArrayList(IndexedTrack);
-    const TrackAutoHashMap = std.AutoHashMap(u64, Track);
+    const TrackAutoHashMap = std.AutoHashMap(u64, *Track);
 
     const CacheAVIO = @import("cache.zig");
 
@@ -86,13 +86,18 @@ const TrackManager = struct {
         var iterator = self.manage_loaded_tracks.iterator();
 
         while (iterator.next()) |track| {
-            track.value_ptr.free();
+            track.value_ptr.*.free();
         }
 
         self.manage_tracks_order.deinit();
         self.manage_loaded_tracks.deinit();
 
         self.protected_opened_cache_paths.deinit();
+    }
+
+    fn freeTrack(self: *Self, track: *Track) !void {
+        track.*.free();
+        self.allocator.destroy(track);
     }
 
     pub fn loads(self: *Self, play_request_index: usize, requests: []const MelodinkTrackRequest, quality: TrackQuality, server_auth: []const u8) !void {
@@ -107,14 +112,14 @@ const TrackManager = struct {
         while (iterator.next()) |track| {
             var keep = false;
             for (requests) |request| {
-                if (track.value_ptr.id == request.id) {
+                if (track.value_ptr.*.id == request.id) {
                     keep = true;
                     break;
                 }
             }
 
             if (!keep) {
-                try tracksToRemove.append(track.value_ptr.id);
+                try tracksToRemove.append(track.value_ptr.*.id);
             }
         }
 
@@ -125,14 +130,20 @@ const TrackManager = struct {
                 self.setCurrentIndexedTrack(null);
             }
 
-            trackToRemove.?.*.free();
+            const thread = try Thread.spawn(.{}, TrackManager.freeTrack, .{ self, trackToRemove.?.* });
+            thread.detach();
             _ = self.manage_loaded_tracks.remove(id);
         }
 
         // load new tracks
         for (requests) |request| {
             if (!self.manage_loaded_tracks.contains(request.id)) {
-                try self.manage_loaded_tracks.put(request.id, try Track.new(self.allocator, request.id, quality, request.server_url, request.downloaded_path, request.original_audio_hash, request.cache_path, server_auth, &self.protected_opened_cache_paths));
+                const new_track = try self.allocator.create(Track);
+                errdefer self.allocator.destroy(new_track);
+
+                new_track.* = try Track.new(self.allocator, request.id, quality, request.server_url, request.downloaded_path, request.original_audio_hash, request.cache_path, server_auth, &self.protected_opened_cache_paths);
+
+                try self.manage_loaded_tracks.put(request.id, new_track);
             }
         }
 
@@ -141,7 +152,7 @@ const TrackManager = struct {
         for (0.., requests) |i, request| {
             self.manage_tracks_order.items[i] = .{
                 .index = i,
-                .track = self.manage_loaded_tracks.getPtr(request.id).?,
+                .track = self.manage_loaded_tracks.getPtr(request.id).?.*,
 
                 .tracks_order = &self.manage_tracks_order,
             };
@@ -160,12 +171,12 @@ const TrackManager = struct {
         var iterator2 = self.manage_loaded_tracks.iterator();
 
         while (iterator2.next()) |track| {
-            if (requests.len > 0 and track.value_ptr.id == self.getCurrentIndexedTrack().?.track.id) {
+            if (requests.len > 0 and track.value_ptr.*.id == self.getCurrentIndexedTrack().?.track.id) {
                 continue;
             }
 
-            if (track.value_ptr.getCurrentPlaybackTime() != 0) {
-                track.value_ptr.need_reset = true;
+            if (track.value_ptr.*.getCurrentPlaybackTime() != 0) {
+                track.value_ptr.*.need_reset = true;
             }
         }
     }
@@ -176,7 +187,7 @@ const TrackManager = struct {
         var iterator = self.manage_loaded_tracks.iterator();
 
         while (iterator.next()) |entry| {
-            const track = entry.value_ptr;
+            const track = entry.value_ptr.*;
 
             if (track.quality == quality) {
                 continue;
@@ -220,7 +231,8 @@ pub const Player = struct {
 
     tracks_mutex: Thread.Mutex = Thread.Mutex{},
 
-    quality: TrackQuality,
+    target_quality: TrackQuality,
+    current_quality: TrackQuality,
 
     track_manager: *TrackManager,
 
@@ -271,7 +283,8 @@ pub const Player = struct {
 
             .track_manager = track_manager,
 
-            .quality = TrackQuality.lossless,
+            .target_quality = TrackQuality.lossless,
+            .current_quality = TrackQuality.lossless,
 
             .ma_device_config = c.ma_device_config_init(c.ma_device_type_playback),
         };
@@ -424,12 +437,17 @@ pub const Player = struct {
 
         self.current_virtual_index = virtual_index;
 
-        try self.track_manager.loads(play_request_index, requests, self.quality, &self.server_auth);
+        try self.track_manager.loads(play_request_index, requests, self.target_quality, &self.server_auth);
     }
 
     pub fn process(self: *Self) !void {
         self.tracks_mutex.lock();
         defer self.tracks_mutex.unlock();
+
+        if (self.current_quality != self.target_quality) {
+            try self.track_manager.swapTracksQuality(self.target_quality, false);
+            self.current_quality = self.target_quality;
+        }
 
         const current_track = self.track_manager.getCurrentIndexedTrack();
 
@@ -679,12 +697,7 @@ pub const Player = struct {
     }
 
     pub fn setQuality(self: *Self, quality: TrackQuality) !void {
-        self.tracks_mutex.lock();
-        defer self.tracks_mutex.unlock();
-
-        self.quality = quality;
-
-        try self.track_manager.swapTracksQuality(quality, false);
+        self.target_quality = quality;
     }
 
     pub fn setAuthToken(self: *Self, auth_token: []const u8) !void {

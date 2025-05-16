@@ -80,7 +80,7 @@ class MelodinkPlayer {
         'melodink_player.dll',
       ],
       'linux': [
-        '/home/gungun974/lab/perso/MelodinkZigPlayer/zig-out/lib/libmelodink_player.so',
+        '/home/gungun974/lab/perso/Melodink/client/melodink_player/zig-out/lib/libmelodink_player.so',
       ],
       'macos': [
         'MelodinkPlayer.framework/MelodinkPlayer',
@@ -311,9 +311,10 @@ class MelodinkPlayer {
     try {
       for (var i = 0; i < requests.length; i++) {
         requestsPointers[i].serverURL = serverURLPointer;
-        requestsPointers[i].cachePath = ffi.nullptr;
+        requestsPointers[i].cachePath = cachePathPointer;
         requestsPointers[i].trackId = requests[i].id;
-        requestsPointers[i].originalAudioHash = ffi.nullptr;
+        requestsPointers[i].originalAudioHash =
+            requests[i].originalAudioHash.toNativeUtf8().cast<ffi.Char>();
 
         if (requests[i].downloadedPath.isNotEmpty) {
           requestsPointers[i].downloadedPath =
