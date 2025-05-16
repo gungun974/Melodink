@@ -400,7 +400,6 @@ pub const Player = struct {
         self.track_manager.setCurrentIndexedTrack(previous_track);
 
         self.current_virtual_index -= 1;
-        // self.sendEventAudioChanged(self.current_virtual_index);
     }
 
     fn next(self: *Self, should_reset_old: bool) void {
@@ -448,6 +447,9 @@ pub const Player = struct {
             try self.track_manager.swapTracksQuality(self.target_quality, false);
             self.current_quality = self.target_quality;
         }
+
+        self.tracks_mutex.unlock();
+        self.tracks_mutex.lock();
 
         const current_track = self.track_manager.getCurrentIndexedTrack();
 
@@ -701,9 +703,6 @@ pub const Player = struct {
     }
 
     pub fn setAuthToken(self: *Self, auth_token: []const u8) !void {
-        self.tracks_mutex.lock();
-        defer self.tracks_mutex.unlock();
-
         if (auth_token.len >= 512) {
             return error.AcessTokenIsTooBig;
         }
