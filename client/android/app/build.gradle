@@ -61,13 +61,6 @@ android {
         }
     }
 
-    externalNativeBuild {
-      cmake {
-        path file('cpp/CMakeLists.txt')
-        version '3.30.5'
-      }
-    }
-
     dependencies {
         def mediaVersion = "1.4.1"
 

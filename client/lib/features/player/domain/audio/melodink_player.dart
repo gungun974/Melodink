@@ -311,10 +311,9 @@ class MelodinkPlayer {
     try {
       for (var i = 0; i < requests.length; i++) {
         requestsPointers[i].serverURL = serverURLPointer;
-        requestsPointers[i].cachePath = cachePathPointer;
+        requestsPointers[i].cachePath = ffi.nullptr;
         requestsPointers[i].trackId = requests[i].id;
-        requestsPointers[i].originalAudioHash =
-            requests[i].originalAudioHash.toNativeUtf8().cast<ffi.Char>();
+        requestsPointers[i].originalAudioHash = ffi.nullptr;
 
         if (requests[i].downloadedPath.isNotEmpty) {
           requestsPointers[i].downloadedPath =
