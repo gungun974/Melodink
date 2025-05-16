@@ -104,6 +104,12 @@ pub fn build(b: *std.Build) void {
         lib.addSystemIncludePath(.{ .cwd_relative = androidGluePath });
     }
 
+    if (b.lazyDependency("xcode_frameworks", .{})) |dep| {
+        lib.addSystemFrameworkPath(dep.path("Frameworks"));
+        lib.addSystemIncludePath(dep.path("include"));
+        lib.addLibraryPath(dep.path("lib"));
+    }
+
     b.installArtifact(lib);
 
     // Check
