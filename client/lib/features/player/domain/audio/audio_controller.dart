@@ -738,24 +738,17 @@ class AudioController extends BaseAudioHandler {
     audioChangedDebouncer.run(() async {
       await _updatePlaylistTracks(
         pos,
-        updatePlayerTracks: pos != _previousTracks.length - 1,
+        updatePlayerTracks: true,
       );
     });
   }
 
   void updateState(MelodinkProcessingState state) {
-    audioChangedDebouncer.run(() async {
-      if (_previousTracks.isEmpty) {
-        return;
-      }
+    if (_previousTracks.isEmpty) {
+      return;
+    }
 
-      final pos = player.getCurrentTrackPos();
-
-      await _updatePlaylistTracks(
-        pos,
-        updatePlayerTracks: pos != _previousTracks.length - 1,
-      );
-    });
+    _updatePlaybackState();
   }
 
   Future<void> _updatePlaybackState({shouldDoubleCheck = true}) async {

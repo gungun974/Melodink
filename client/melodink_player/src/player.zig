@@ -381,6 +381,7 @@ pub const Player = struct {
     fn previous(self: *Self, should_reset_old: bool) void {
         self.tracks_mutex.lock();
         defer self.tracks_mutex.unlock();
+        defer self.sendEventAudioChanged(self.current_virtual_index);
 
         const current_track = self.track_manager.getCurrentIndexedTrack();
 
@@ -399,12 +400,13 @@ pub const Player = struct {
         self.track_manager.setCurrentIndexedTrack(previous_track);
 
         self.current_virtual_index -= 1;
-        self.sendEventAudioChanged(self.current_virtual_index);
+        // self.sendEventAudioChanged(self.current_virtual_index);
     }
 
     fn next(self: *Self, should_reset_old: bool) void {
         self.tracks_mutex.lock();
         defer self.tracks_mutex.unlock();
+        defer self.sendEventAudioChanged(self.current_virtual_index);
 
         const current_track = self.track_manager.getCurrentIndexedTrack();
 
@@ -424,10 +426,8 @@ pub const Player = struct {
 
         if (current_track.?.next() == null) {
             self.current_virtual_index = 0;
-            self.sendEventAudioChanged(self.current_virtual_index);
         } else {
             self.current_virtual_index += 1;
-            self.sendEventAudioChanged(self.current_virtual_index);
         }
     }
 
