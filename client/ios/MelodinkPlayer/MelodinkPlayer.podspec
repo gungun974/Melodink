@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  system("make")
+  # system("make")
 
   s.name         = 'MelodinkPlayer'
   s.version      = '1.0.0'
@@ -10,7 +10,6 @@ Pod::Spec.new do |s|
   s.source       = { :path => '.' }
 
   s.platform     = :ios, '12.0'
-  s.source_files = 'Src/**/{melodink_player.cpp,miniaudio.mm,sendevent.cc}'
 
   s.vendored_frameworks = [
     'Frameworks/Avcodec.xcframework',
@@ -26,15 +25,14 @@ Pod::Spec.new do |s|
     'Frameworks/Xml2.xcframework'
   ]
 
+  s.static_framework = true
+  s.vendored_libraries = 'libmelodink_player.a'
+
+
   s.compiler_flags = [
     '-DMA_NO_RUNTIME_LINKING',
     '-DMA_NO_DECODING',
     '-DMA_NO_ENCODING',
-
-    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avcodec.xcframework/ios-arm64/Avcodec.framework/Headers',
-    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avutil.xcframework/ios-arm64/Avutil.framework/Headers',
-    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Avformat.xcframework/ios-arm64/Avformat.framework/Headers',
-    '-I$(PODS_ROOT)/../MelodinkPlayer/Frameworks/Swresample.xcframework/ios-arm64/Swresample.framework/Headers',
   ]
   
   s.libraries = ['bz2', 'xml2', 'iconv', 'z', 'c++']
@@ -68,7 +66,7 @@ Pod::Spec.new do |s|
     'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
   }
 
-  s.static_framework = false
+  #s.static_framework = false
 
   s.swift_version = '5.0'
 end

@@ -7,7 +7,13 @@
 
     .minimum_zig_version = "0.14.0",
 
-    .dependencies = .{},
+    .dependencies = .{
+        .xcode_frameworks = .{
+            .url = "git+https://github.com/hexops/xcode-frameworks#9a45f3ac977fd25dff77e58c6de1870b6808c4a7",
+            .hash = "N-V-__8AABHMqAWYuRdIlflwi8gksPnlUMQBiSxAqQAAZFms",
+            .lazy = true,
+        },
+    },
 
     .paths = .{
         "build.zig",
