@@ -29,6 +29,10 @@ pub fn build(b: *std.Build) void {
         .root_module = lib_mod,
     });
 
+    
+    lib.bundle_compiler_rt = true;
+    lib.bundle_ubsan_rt = true;
+
     if (target.result.abi.isAndroid()) {
         lib.addIncludePath(.{ .cwd_relative = "/home/gungun974/lab/perso/Melodink/client/build/app/ffmpeg/prefix/arm64-v8a/include" });
         lib.addLibraryPath(.{ .cwd_relative = "/home/gungun974/lab/perso/Melodink/client/build/app/ffmpeg/prefix/arm64-v8a/usr/local/lib" });

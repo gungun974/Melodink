@@ -10,6 +10,8 @@ Pod::Spec.new do |s|
   s.source       = { :path => '.' }
 
   s.platform     = :ios, '12.0'
+  s.public_header_files = 'Src/**/*.h}'
+  s.source_files = 'Src/**/*'
 
   s.vendored_frameworks = [
     'Frameworks/Avcodec.xcframework',
@@ -25,7 +27,6 @@ Pod::Spec.new do |s|
     'Frameworks/Xml2.xcframework'
   ]
 
-  s.static_framework = true
   s.vendored_libraries = 'libmelodink_player.a'
 
 
@@ -66,7 +67,7 @@ Pod::Spec.new do |s|
     'CLANG_CXX_LANGUAGE_STANDARD' => 'c++17',
   }
 
-  #s.static_framework = false
+  s.static_framework = false
 
   s.swift_version = '5.0'
 end
