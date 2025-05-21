@@ -44,6 +44,13 @@ fn buildForMacOS(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
         b.resolveTargetQuery(.{
             .cpu_arch = .aarch64,
             .os_tag = .macos,
+            .os_version_min = .{
+                .semver = .{
+                    .major = 10,
+                    .minor = 13,
+                    .patch = 0,
+                },
+            },
         }),
         optimize,
         .static,
@@ -51,10 +58,19 @@ fn buildForMacOS(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
 
     const x86_64 = try buildLibrary(
         b,
-        b.resolveTargetQuery(.{
-            .cpu_arch = .x86_64,
-            .os_tag = .macos,
-        }),
+        b.resolveTargetQuery(
+            .{
+                .cpu_arch = .x86_64,
+                .os_tag = .macos,
+                .os_version_min = .{
+                    .semver = .{
+                        .major = 10,
+                        .minor = 13,
+                        .patch = 0,
+                    },
+                },
+            },
+        ),
         optimize,
         .static,
     );
@@ -78,14 +94,6 @@ fn buildForMacOS(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
         .install_dir = .prefix,
         .install_subdir = "macos/MelodinkPlayer.xcframework",
     });
-
-    const ffmpeg = b.lazyDependency("ffmpeg_macos", .{}) orelse return;
-
-    b.installDirectory(.{
-        .source_dir = ffmpeg.path("."),
-        .install_dir = .prefix,
-        .install_subdir = "macos",
-    });
 }
 
 fn buildForIOS(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
@@ -95,6 +103,13 @@ fn buildForIOS(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
             .cpu_arch = .aarch64,
             .os_tag = .ios,
             .abi = null,
+            .os_version_min = .{
+                .semver = .{
+                    .major = 12,
+                    .minor = 0,
+                    .patch = 0,
+                },
+            },
         }),
         optimize,
         .static,
@@ -106,6 +121,13 @@ fn buildForIOS(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
             .cpu_arch = .aarch64,
             .os_tag = .ios,
             .abi = .simulator,
+            .os_version_min = .{
+                .semver = .{
+                    .major = 12,
+                    .minor = 0,
+                    .patch = 0,
+                },
+            },
 
             // We force the Apple CPU model because the simulator
             // doesn't support the generic CPU model as of Zig 0.14 due

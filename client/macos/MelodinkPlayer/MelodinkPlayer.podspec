@@ -9,7 +9,7 @@ Pod::Spec.new do |s|
   s.authors      = { 'Gungun974' => 'xfelix974@gmail.com' }
   s.source       = { :path => '.' }
 
-  s.platform     = :osx, '10.9'
+  s.platform     = :osx, '10.13'
   s.public_header_files = 'Src/**/*.h}'
   s.source_files = 'Src/**/*'
 
