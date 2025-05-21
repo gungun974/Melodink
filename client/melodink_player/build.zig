@@ -14,7 +14,15 @@ pub fn build(b: *std.Build) void {
     // Build
     const optimize = b.standardOptimizeOption(.{});
 
-    const ios = buildLibrary(
+    buildForIOS(b, optimize) catch unreachable;
+
+    // Check if the target is IOS, if yes the special IOS BUILD
+    // Repeat for Android and MacOS
+    // After build normally a shared lib
+}
+
+fn buildForIOS(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
+    const ios = try buildLibrary(
         b,
         b.resolveTargetQuery(.{
             .cpu_arch = .aarch64,
@@ -22,9 +30,10 @@ pub fn build(b: *std.Build) void {
             .abi = null,
         }),
         optimize,
-    ) catch unreachable;
+        .static,
+    );
 
-    const ios_sim = buildLibrary(
+    const ios_sim = try buildLibrary(
         b,
         b.resolveTargetQuery(.{
             .cpu_arch = .aarch64,
@@ -39,7 +48,8 @@ pub fn build(b: *std.Build) void {
             .cpu_model = .{ .explicit = &std.Target.aarch64.cpu.apple_a17 },
         }),
         optimize,
-    ) catch unreachable;
+        .static,
+    );
 
     const xcframework = buildXCFramework(b, &.{
         .{
@@ -90,7 +100,7 @@ fn buildXCFramework(b: *std.Build, libraries: []const Library) std.Build.LazyPat
     return ret;
 }
 
-fn buildLibrary(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step.Compile {
+fn buildLibrary(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, linkage: std.builtin.LinkMode) !*std.Build.Step.Compile {
     const lib_mod = b.createModule(.{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
@@ -98,7 +108,7 @@ fn buildLibrary(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.b
     });
 
     const lib = b.addLibrary(.{
-        .linkage = .static,
+        .linkage = linkage,
         .name = "melodink_player",
         .root_module = lib_mod,
     });
