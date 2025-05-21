@@ -193,5 +193,18 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
             "-fwrapv",
         } });
     }
-    step.addIncludePath(b.path("src/miniaudio"));
+
+    const miniaudio_path = prepareMiniaudio(b);
+    step.addIncludePath(miniaudio_path.dirname());
+}
+
+fn prepareMiniaudio(b: *std.Build) std.Build.LazyPath {
+    const tool_run = b.addSystemCommand(&.{"patch"});
+    tool_run.addFileArg(b.path("src/miniaudio/miniaudio.h"));
+
+    tool_run.addArg("-o");
+    const ret = tool_run.addOutputFileArg("miniaudio.h");
+    tool_run.addFileArg(b.path("src/miniaudio/zig_18247.patch"));
+    b.getInstallStep().dependOn(&tool_run.step);
+    return ret;
 }
