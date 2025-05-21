@@ -3,25 +3,69 @@ const builtin = @import("builtin");
 
 const auto_detect = @import("build/auto-detect.zig");
 
+const XCFrameworkStep = @import("build/XCFrameworkStep.zig");
 
 const ANDROID_TARGET_API_VERSION = "32";
-const ANDROID_MIN_API_VERSION = "32";
+const ANDROID_MIN_API_VERSION = "21";
 const ANDROID_BUILD_TOOLS_VERSION = "34.0.0";
-const ANDROID_NDK_VERSION = "26.1.10909125";
-
+const ANDROID_NDK_VERSION = "23.1.7779620";
 
 pub fn build(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{});
-
+    // Build
     const optimize = b.standardOptimizeOption(.{});
 
+    const ios = buildLibrary(
+        b,
+        b.resolveTargetQuery(.{
+            .cpu_arch = .aarch64,
+            .os_tag = .ios,
+            .abi = null,
+        }),
+        optimize,
+    ) catch unreachable;
+
+    const ios_sim = buildLibrary(
+        b,
+        b.resolveTargetQuery(.{
+            .cpu_arch = .aarch64,
+            .os_tag = .ios,
+            .abi = .simulator,
+
+            // We force the Apple CPU model because the simulator
+            // doesn't support the generic CPU model as of Zig 0.14 due
+            // to missing "altnzcv" instructions, which is false. This
+            // surely can't be right but we can fix this if/when we get
+            // back to running simulator builds.
+            .cpu_model = .{ .explicit = &std.Target.aarch64.cpu.apple_a17 },
+        }),
+        optimize,
+    ) catch unreachable;
+
+    const xcframework = XCFrameworkStep.create(b, .{
+        .name = "MelodinkPlayer",
+        .out_path = "ios/MelodinkPlayer.xcframework",
+        .libraries = &.{
+            .{
+                .library = ios.getEmittedBin(),
+                .headers = b.path("include"),
+            },
+            .{
+                .library = ios_sim.getEmittedBin(),
+                .headers = b.path("include"),
+            },
+        },
+    });
+
+    //b.installArtifact(xcframework.step);
+    b.default_step.dependOn(xcframework.step);
+}
+
+fn buildLibrary(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step.Compile {
     const lib_mod = b.createModule(.{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
     });
-
-    // Build
 
     const lib = b.addLibrary(.{
         .linkage = .static,
@@ -29,149 +73,19 @@ pub fn build(b: *std.Build) void {
         .root_module = lib_mod,
     });
 
-    
-    lib.bundle_compiler_rt = true;
-    lib.bundle_ubsan_rt = true;
+    try addSystemCompilePaths(b, target, lib);
 
-    if (target.result.abi.isAndroid()) {
-        lib.addIncludePath(.{ .cwd_relative = "/home/gungun974/lab/perso/Melodink/client/build/app/ffmpeg/prefix/arm64-v8a/include" });
-        lib.addLibraryPath(.{ .cwd_relative = "/home/gungun974/lab/perso/Melodink/client/build/app/ffmpeg/prefix/arm64-v8a/usr/local/lib" });
+    try addLibraries(b, target, lib);
 
-        lib.linkSystemLibrary2("avcodec", .{
-            .use_pkg_config = .no,
-        });
-        lib.linkSystemLibrary2("avformat", .{
-            .use_pkg_config = .no,
-        });
-        lib.linkSystemLibrary2("avutil", .{
-            .use_pkg_config = .no,
-        });
-        lib.linkSystemLibrary2("swresample", .{
-            .use_pkg_config = .no,
-        });
-    } else {
-        //lib.linkSystemLibrary("avcodec");
-        //lib.linkSystemLibrary("avformat");
-        //lib.linkSystemLibrary("avutil");
-        //lib.linkSystemLibrary("swresample");
-
-        lib.addFrameworkPath(b.path("../ios/MelodinkPlayer/Frameworks/Avcodec.xcframework/ios-arm64"));
-        lib.addFrameworkPath(b.path("../ios/MelodinkPlayer/Frameworks/Avformat.xcframework/ios-arm64"));
-        lib.addFrameworkPath(b.path("../ios/MelodinkPlayer/Frameworks/Avutil.xcframework/ios-arm64"));
-        lib.addFrameworkPath(b.path("../ios/MelodinkPlayer/Frameworks/Swresample.xcframework/ios-arm64"));
-
-        lib.addIncludePath(b.path("../ios/MelodinkPlayer/Frameworks/Avcodec.xcframework/ios-arm64/Avcodec.framework/Headers"));
-        lib.addIncludePath(b.path("../ios/MelodinkPlayer/Frameworks/Avformat.xcframework/ios-arm64/Avformat.framework/Headers"));
-        lib.addIncludePath(b.path("../ios/MelodinkPlayer/Frameworks/Avutil.xcframework/ios-arm64/Avutil.framework/Headers"));
-        lib.addIncludePath(b.path("../ios/MelodinkPlayer/Frameworks/Swresample.xcframework/ios-arm64/Swresample.framework/Headers"));
-
-    lib.linkFramework("Avcodec");
-    lib.linkFramework("Avformat");
-    lib.linkFramework("Avutil");
-    lib.linkFramework("Swresample");
-    }
-
-    lib.addCSourceFile(.{ .file = b.addWriteFiles().addCopyFile(b.path("src/miniaudio/miniaudio.c"), "miniaudio.m"), .flags = &.{
-        "-DMA_NO_DECODING",
-        "-DMA_NO_ENCODING",
-        "-DMA_NO_RUNTIME_LINKING",
-        "-fwrapv",
-    } });
-    lib.addIncludePath(b.path("src/miniaudio"));
-
-    lib.linkFramework("CoreFoundation");
-    lib.linkFramework("AVFoundation");
-    lib.linkFramework("AudioToolbox");
-
-            lib.linker_allow_shlib_undefined = true;
-
-
-             addCompilePaths(b, target, lib) catch unreachable;
-
-
-    if (target.result.abi.isAndroid()) {
-        //these are the only tag options per https://developer.android.com/ndk/guides/other_build_systems
-        const hostTuple = switch (builtin.target.os.tag) {
-            .linux => "linux-x86_64",
-            .windows => "windows-x86_64",
-            .macos => "darwin-x86_64",
-            else => @panic("unsupported host OS"),
-        };
-
-        const androidTriple = switch (target.result.cpu.arch) {
-            .x86 => "i686-linux-android",
-            .x86_64 => "x86_64-linux-android",
-            .arm => "arm-linux-androideabi",
-            .aarch64 => "aarch64-linux-android",
-            .riscv64 => "riscv64-linux-android",
-            else => error.InvalidAndroidTarget,
-        } catch @panic("invalid android target!");
-
-        const androidNdkPathString: []const u8 = "/nix/store/x04mvdyhkisg70a6i5jhbaqns9ya3a1q-android-sdk-env/share/android-sdk/ndk/23.1.7779620";
-        if (androidNdkPathString.len < 1) @panic("no ndk path provided and ANDROID_NDK_HOME is not set");
-        // const androidApiLevel: []const u8 = options.android_api_version;
-        const androidApiLevel: []const u8 = "21";
-
-        const androidSysroot = std.fs.path.join(b.allocator, &.{ androidNdkPathString, "/toolchains/llvm/prebuilt/", hostTuple, "/sysroot" }) catch unreachable;
-        const androidLibPath = std.fs.path.join(b.allocator, &.{ androidSysroot, "/usr/lib/", androidTriple }) catch unreachable;
-        const androidApiSpecificPath = std.fs.path.join(b.allocator, &.{ androidLibPath, androidApiLevel }) catch unreachable;
-        const androidIncludePath = std.fs.path.join(b.allocator, &.{ androidSysroot, "/usr/include" }) catch unreachable;
-        const androidArchIncludePath = std.fs.path.join(b.allocator, &.{ androidIncludePath, androidTriple }) catch unreachable;
-        const androidAsmPath = std.fs.path.join(b.allocator, &.{ androidIncludePath, "/asm-generic" }) catch unreachable;
-        const androidGluePath = std.fs.path.join(b.allocator, &.{ androidNdkPathString, "/sources/android/native_app_glue/" }) catch unreachable;
-
-        var libcData = std.ArrayList(u8).init(b.allocator);
-        const writer = libcData.writer();
-        (std.zig.LibCInstallation{
-            .include_dir = androidIncludePath,
-            .sys_include_dir = androidIncludePath,
-            .crt_dir = androidApiSpecificPath,
-        }).render(writer) catch unreachable;
-
-        const libcFile = b.addWriteFiles().add("android-libc.txt", libcData.toOwnedSlice() catch unreachable);
-
-        lib.setLibCFile(libcFile);
-
-        lib.root_module.addLibraryPath(.{ .cwd_relative = androidApiSpecificPath });
-        lib.addSystemIncludePath(.{ .cwd_relative = androidIncludePath });
-        lib.addSystemIncludePath(.{ .cwd_relative = androidArchIncludePath });
-        lib.addSystemIncludePath(.{ .cwd_relative = androidAsmPath });
-        lib.addSystemIncludePath(.{ .cwd_relative = androidGluePath });
-    }
-
-    b.installArtifact(lib);
-
-    // Check
-
-    const lib_check = b.addExecutable(.{
-        .name = "MelodinkZigPlayer",
-        .root_module = lib_mod,
-    });
-
-    // lib_check.linkLibC();
-    lib_check.addIncludePath(b.path("src/miniaudio"));
-
-    // Test
-
-    const exe_unit_tests = b.addTest(.{
-        .root_module = lib_mod,
-    });
-
-    const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
-
-    const check = b.step("check", "Check if MelodinkZigPlayer compiles");
-    check.dependOn(&lib_check.step);
-
-    const test_step = b.step("test", "Run unit tests");
-    test_step.dependOn(&run_exe_unit_tests.step);
+    return lib;
 }
 
-fn addCompilePaths(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) !void {
+fn addSystemCompilePaths(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) !void {
     if (target.result.os.tag == .ios) {
         const sysroot = std.zig.system.darwin.getSdk(b.allocator, target.result) orelse b.sysroot;
-        step.addLibraryPath(.{ .cwd_relative = b.pathJoin(&.{ sysroot orelse "", "/usr/lib" }) }); //(.{ .cwd_relative = "/usr/lib" });
-        step.addIncludePath(.{ .cwd_relative = b.pathJoin(&.{ sysroot orelse "", "/usr/include" }) }); //(.{ .cwd_relative = "/usr/include" });
-        step.addFrameworkPath(.{ .cwd_relative = b.pathJoin(&.{ sysroot orelse "", "/System/Library/Frameworks" }) }); //(.{ .cwd_relative = "/System/Library/Frameworks" });
+        step.addLibraryPath(.{ .cwd_relative = b.pathJoin(&.{ sysroot orelse "", "/usr/lib" }) });
+        step.addIncludePath(.{ .cwd_relative = b.pathJoin(&.{ sysroot orelse "", "/usr/include" }) });
+        step.addFrameworkPath(.{ .cwd_relative = b.pathJoin(&.{ sysroot orelse "", "/System/Library/Frameworks" }) });
     } else if (target.result.abi.isAndroid()) {
         const target_dir_name = switch (target.result.cpu.arch) {
             .aarch64 => "aarch64-linux-android",
@@ -194,4 +108,88 @@ fn addCompilePaths(b: *std.Build, target: std.Build.ResolvedTarget, step: anytyp
 
         step.addLibraryPath(.{ .cwd_relative = android_sdk.android_ndk_lib_host_arch_android });
     }
+}
+
+fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) !void {
+    if (target.result.os.tag == .ios) {
+        step.bundle_compiler_rt = true;
+        step.bundle_ubsan_rt = true;
+        step.linker_allow_shlib_undefined = true;
+    }
+
+    // FFmpeg
+
+    if (target.result.os.tag == .ios) {
+        const target_dir_name = switch (target.result.abi) {
+            .simulator => "ios-arm64_x86_64-simulator",
+            else => "ios-arm64",
+        };
+
+        step.addFrameworkPath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avcodec.xcframework/{s}", .{target_dir_name})));
+        step.addFrameworkPath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avformat.xcframework/{s}", .{target_dir_name})));
+        step.addFrameworkPath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avutil.xcframework/{s}", .{target_dir_name})));
+        step.addFrameworkPath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Swresample.xcframework/{s}", .{target_dir_name})));
+
+        step.addIncludePath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avcodec.xcframework/{s}/Avcodec.framework/Headers", .{target_dir_name})));
+        step.addIncludePath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avformat.xcframework/{s}/Avformat.framework/Headers", .{target_dir_name})));
+        step.addIncludePath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avutil.xcframework/{s}/Avutil.framework/Headers", .{target_dir_name})));
+        step.addIncludePath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Swresample.xcframework/{s}/Swresample.framework/Headers", .{target_dir_name})));
+
+        step.linkFramework("Avcodec");
+        step.linkFramework("Avformat");
+        step.linkFramework("Avutil");
+        step.linkFramework("Swresample");
+    } else if (target.result.abi.isAndroid()) {
+        const target_dir_name = switch (target.result.cpu.arch) {
+            .aarch64 => "arm64-v8a",
+            .armeb => "armeabi-v7a",
+            .x86_64 => "x86_64",
+            .x86 => "x86",
+            else => @panic("unsupported arch for android build"),
+        };
+
+        step.addIncludePath(b.path(b.fmt("/home/gungun974/lab/perso/Melodink/client/build/app/ffmpeg/prefix/{s}/include", .{target_dir_name})));
+        step.addLibraryPath(b.path(b.fmt("/home/gungun974/lab/perso/Melodink/client/build/app/ffmpeg/prefix/{s}/usr/local/lib", .{target_dir_name})));
+
+        step.linkSystemLibrary2("avcodec", .{
+            .use_pkg_config = .no,
+        });
+        step.linkSystemLibrary2("avformat", .{
+            .use_pkg_config = .no,
+        });
+        step.linkSystemLibrary2("avutil", .{
+            .use_pkg_config = .no,
+        });
+        step.linkSystemLibrary2("swresample", .{
+            .use_pkg_config = .no,
+        });
+    } else {
+        step.linkSystemLibrary("avcodec");
+        step.linkSystemLibrary("avformat");
+        step.linkSystemLibrary("avutil");
+        step.linkSystemLibrary("swresample");
+    }
+
+    // Miniaudio
+
+    if (target.result.os.tag == .ios) {
+        step.linkFramework("CoreFoundation");
+        step.linkFramework("AVFoundation");
+        step.linkFramework("AudioToolbox");
+
+        step.addCSourceFile(.{ .file = b.addWriteFiles().addCopyFile(b.path("src/miniaudio/miniaudio.c"), "miniaudio.m"), .flags = &.{
+            "-DMA_NO_DECODING",
+            "-DMA_NO_ENCODING",
+            "-DMA_NO_RUNTIME_LINKING",
+            "-fwrapv",
+        } });
+    } else {
+        step.addCSourceFile(.{ .file = b.path("src/miniaudio/miniaudio.c"), .flags = &.{
+            "-DMA_NO_DECODING",
+            "-DMA_NO_ENCODING",
+            "-DMA_NO_RUNTIME_LINKING",
+            "-fwrapv",
+        } });
+    }
+    step.addIncludePath(b.path("src/miniaudio"));
 }

@@ -1,5 +1,5 @@
 Pod::Spec.new do |s|
-  # system("make")
+  system("make")
 
   s.name         = 'MelodinkPlayer'
   s.version      = '1.0.0'
@@ -24,18 +24,10 @@ Pod::Spec.new do |s|
     'Frameworks/Mbedx509.xcframework',
     'Frameworks/Swresample.xcframework',
     'Frameworks/Swscale.xcframework',
-    'Frameworks/Xml2.xcframework'
+    'Frameworks/Xml2.xcframework',
+    'Frameworks/MelodinkPlayer.xcframework'
   ]
 
-  s.vendored_libraries = 'libmelodink_player.a'
-
-
-  s.compiler_flags = [
-    '-DMA_NO_RUNTIME_LINKING',
-    '-DMA_NO_DECODING',
-    '-DMA_NO_ENCODING',
-  ]
-  
   s.libraries = ['bz2', 'xml2', 'iconv', 'z', 'c++']
 
   s.frameworks = [

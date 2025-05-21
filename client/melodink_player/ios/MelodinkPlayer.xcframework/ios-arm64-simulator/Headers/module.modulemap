@@ -1,0 +1,4 @@
+module MelodinkPlayer {
+    umbrella header "melodink_player.h"
+    export *
+}
