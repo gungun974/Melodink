@@ -352,7 +352,6 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
         step.addCSourceFile(.{ .file = b.path("src/miniaudio/miniaudio.c"), .flags = &.{
             "-DMA_NO_DECODING",
             "-DMA_NO_ENCODING",
-            "-DMA_NO_RUNTIME_LINKING",
             "-fwrapv",
         } });
     }
