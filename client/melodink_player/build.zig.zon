@@ -13,6 +13,11 @@
             .hash = "N-V-__8AAMioJQJPsTJkHS5srthHxLC16RaGgAdTIyziK_Bi",
             .lazy = true,
         },
+        .ffmpeg_macos = .{
+            .url = "https://github.com/gungun974/melodink-ffmpeg-darwin-build/releases/download/v7.0.2-1/ffmpeg-xcframeworks_v7.0.2-1_macos-universal-video-default.tar.gz",
+            .hash = "N-V-__8AAAF7XwFQf2BoBVQVkTp-NCEFilDqIrtbU9g4WFAg",
+            .lazy = true,
+        },
     },
 
     .paths = .{

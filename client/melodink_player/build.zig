@@ -12,13 +12,80 @@ const ANDROID_NDK_VERSION = "23.1.7779620";
 
 pub fn build(b: *std.Build) void {
     // Build
+    const target = b.standardTargetOptions(.{});
+
     const optimize = b.standardOptimizeOption(.{});
 
-    buildForIOS(b, optimize) catch unreachable;
+    if (target.result.os.tag == .ios) {
+        buildForIOS(b, optimize) catch unreachable;
+        return;
+    }
 
-    // Check if the target is IOS, if yes the special IOS BUILD
-    // Repeat for Android and MacOS
-    // After build normally a shared lib
+    if (target.result.os.tag == .macos) {
+        buildForMacOS(b, optimize) catch unreachable;
+        return;
+    }
+
+    const lib = try buildLibrary(
+        b,
+        target,
+        optimize,
+        .static,
+    );
+
+    lib.linkLibC();
+
+    b.installArtifact(lib);
+}
+
+fn buildForMacOS(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
+    const aarch64 = try buildLibrary(
+        b,
+        b.resolveTargetQuery(.{
+            .cpu_arch = .aarch64,
+            .os_tag = .macos,
+        }),
+        optimize,
+        .static,
+    );
+
+    const x86_64 = try buildLibrary(
+        b,
+        b.resolveTargetQuery(.{
+            .cpu_arch = .x86_64,
+            .os_tag = .macos,
+        }),
+        optimize,
+        .static,
+    );
+
+    const universal = buildLipo(
+        b,
+        aarch64.getEmittedBin(),
+        x86_64.getEmittedBin(),
+        "libmelodink_player.a",
+    );
+
+    const xcframework = buildXCFramework(b, &.{
+        .{
+            .library = universal,
+            .headers = b.path("include"),
+        },
+    }, "MelodinkPlayer.xcframework");
+
+    b.installDirectory(.{
+        .source_dir = xcframework,
+        .install_dir = .prefix,
+        .install_subdir = "macos/MelodinkPlayer.xcframework",
+    });
+
+    const ffmpeg = b.lazyDependency("ffmpeg_macos", .{}) orelse return;
+
+    b.installDirectory(.{
+        .source_dir = ffmpeg.path("."),
+        .install_dir = .prefix,
+        .install_subdir = "macos",
+    });
 }
 
 fn buildForIOS(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
@@ -60,7 +127,7 @@ fn buildForIOS(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
             .library = ios_sim.getEmittedBin(),
             .headers = b.path("include"),
         },
-    });
+    }, "MelodinkPlayer.xcframework");
 
     b.installDirectory(.{
         .source_dir = xcframework,
@@ -83,7 +150,7 @@ const Library = struct {
     headers: std.Build.LazyPath,
 };
 
-fn buildXCFramework(b: *std.Build, libraries: []const Library) std.Build.LazyPath {
+fn buildXCFramework(b: *std.Build, libraries: []const Library, name: []const u8) std.Build.LazyPath {
     const tool_run = b.addSystemCommand(&.{ "xcodebuild", "-create-xcframework" });
 
     for (libraries) |lib| {
@@ -95,7 +162,24 @@ fn buildXCFramework(b: *std.Build, libraries: []const Library) std.Build.LazyPat
 
     tool_run.addArg("-output");
 
-    const ret = tool_run.addOutputDirectoryArg("MelodinkPlayer.xcframework");
+    const ret = tool_run.addOutputDirectoryArg(name);
+    b.getInstallStep().dependOn(&tool_run.step);
+    return ret;
+}
+
+fn buildLipo(
+    b: *std.Build,
+    input_a: std.Build.LazyPath,
+    input_b: std.Build.LazyPath,
+    name: []const u8,
+) std.Build.LazyPath {
+    const tool_run = b.addSystemCommand(&.{ "lipo", "-create", "-output" });
+
+    const ret = tool_run.addOutputFileArg(name);
+
+    tool_run.addFileArg(input_a);
+    tool_run.addFileArg(input_b);
+
     b.getInstallStep().dependOn(&tool_run.step);
     return ret;
 }
@@ -121,7 +205,7 @@ fn buildLibrary(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.b
 }
 
 fn addSystemCompilePaths(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) !void {
-    if (target.result.os.tag == .ios) {
+    if (target.result.os.tag == .ios or target.result.os.tag == .macos) {
         const sysroot = std.zig.system.darwin.getSdk(b.allocator, target.result) orelse b.sysroot;
         step.addLibraryPath(.{ .cwd_relative = b.pathJoin(&.{ sysroot orelse "", "/usr/lib" }) });
         step.addIncludePath(.{ .cwd_relative = b.pathJoin(&.{ sysroot orelse "", "/usr/include" }) });
@@ -181,6 +265,23 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
         step.linkFramework("Avformat");
         step.linkFramework("Avutil");
         step.linkFramework("Swresample");
+    } else if (target.result.os.tag == .macos) {
+        const ffmpeg = b.lazyDependency("ffmpeg_macos", .{}) orelse return;
+
+        step.addFrameworkPath(ffmpeg.path("Avcodec.xcframework/macos-arm64_x86_64"));
+        step.addFrameworkPath(ffmpeg.path("Avformat.xcframework/macos-arm64_x86_64"));
+        step.addFrameworkPath(ffmpeg.path("Avutil.xcframework/macos-arm64_x86_64"));
+        step.addFrameworkPath(ffmpeg.path("Swresample.xcframework/macos-arm64_x86_64"));
+
+        step.addIncludePath(ffmpeg.path("Avcodec.xcframework/macos-arm64_x86_64/Avcodec.framework/Headers"));
+        step.addIncludePath(ffmpeg.path("Avformat.xcframework/macos-arm64_x86_64/Avformat.framework/Headers"));
+        step.addIncludePath(ffmpeg.path("Avutil.xcframework/macos-arm64_x86_64/Avutil.framework/Headers"));
+        step.addIncludePath(ffmpeg.path("Swresample.xcframework/macos-arm64_x86_64/Swresample.framework/Headers"));
+
+        step.linkFramework("Avcodec");
+        step.linkFramework("Avformat");
+        step.linkFramework("Avutil");
+        step.linkFramework("Swresample");
     } else if (target.result.abi.isAndroid()) {
         const target_dir_name = switch (target.result.cpu.arch) {
             .aarch64 => "arm64-v8a",
@@ -214,7 +315,7 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
 
     // Miniaudio
 
-    if (target.result.os.tag == .ios) {
+    if (target.result.os.tag == .ios or target.result.os.tag == .macos) {
         step.linkFramework("CoreFoundation");
         step.linkFramework("AVFoundation");
         step.linkFramework("AudioToolbox");
