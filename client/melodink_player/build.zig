@@ -41,23 +41,53 @@ pub fn build(b: *std.Build) void {
         optimize,
     ) catch unreachable;
 
-    const xcframework = XCFrameworkStep.create(b, .{
-        .name = "MelodinkPlayer",
-        .out_path = "ios/MelodinkPlayer.xcframework",
-        .libraries = &.{
-            .{
-                .library = ios.getEmittedBin(),
-                .headers = b.path("include"),
-            },
-            .{
-                .library = ios_sim.getEmittedBin(),
-                .headers = b.path("include"),
-            },
+    const xcframework = buildXCFramework(b, &.{
+        .{
+            .library = ios.getEmittedBin(),
+            .headers = b.path("include"),
+        },
+        .{
+            .library = ios_sim.getEmittedBin(),
+            .headers = b.path("include"),
         },
     });
 
-    //b.installArtifact(xcframework.step);
-    b.default_step.dependOn(xcframework.step);
+    b.installDirectory(.{
+        .source_dir = xcframework,
+        .install_dir = .prefix,
+        .install_subdir = "ios/MelodinkPlayer.xcframework",
+    });
+
+    const ffmpeg = b.lazyDependency("ffmpeg_ios", .{}) orelse return;
+
+    b.installDirectory(.{
+        .source_dir = ffmpeg.path("."),
+        .install_dir = .prefix,
+        .install_subdir = "ios",
+    });
+}
+
+const Library = struct {
+    library: std.Build.LazyPath,
+
+    headers: std.Build.LazyPath,
+};
+
+fn buildXCFramework(b: *std.Build, libraries: []const Library) std.Build.LazyPath {
+    const tool_run = b.addSystemCommand(&.{ "xcodebuild", "-create-xcframework" });
+
+    for (libraries) |lib| {
+        tool_run.addArg("-library");
+        tool_run.addFileArg(lib.library);
+        tool_run.addArg("-headers");
+        tool_run.addDirectoryArg(lib.headers);
+    }
+
+    tool_run.addArg("-output");
+
+    const ret = tool_run.addOutputDirectoryArg("MelodinkPlayer.xcframework");
+    b.getInstallStep().dependOn(&tool_run.step);
+    return ret;
 }
 
 fn buildLibrary(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !*std.Build.Step.Compile {
