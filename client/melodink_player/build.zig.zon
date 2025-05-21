@@ -8,9 +8,9 @@
     .minimum_zig_version = "0.14.0",
 
     .dependencies = .{
-        .xcode_frameworks = .{
-            .url = "git+https://github.com/hexops/xcode-frameworks#9a45f3ac977fd25dff77e58c6de1870b6808c4a7",
-            .hash = "N-V-__8AABHMqAWYuRdIlflwi8gksPnlUMQBiSxAqQAAZFms",
+        .ffmpeg_ios = .{
+            .url = "https://github.com/gungun974/melodink-ffmpeg-darwin-build/releases/download/v7.0.2-1/ffmpeg-xcframeworks_v7.0.2-1_ios-universal-video-default.tar.gz",
+            .hash = "N-V-__8AAMioJQJPsTJkHS5srthHxLC16RaGgAdTIyziK_Bi",
             .lazy = true,
         },
     },

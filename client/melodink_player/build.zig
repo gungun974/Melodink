@@ -125,15 +125,17 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
             else => "ios-arm64",
         };
 
-        step.addFrameworkPath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avcodec.xcframework/{s}", .{target_dir_name})));
-        step.addFrameworkPath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avformat.xcframework/{s}", .{target_dir_name})));
-        step.addFrameworkPath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avutil.xcframework/{s}", .{target_dir_name})));
-        step.addFrameworkPath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Swresample.xcframework/{s}", .{target_dir_name})));
+        const ffmpeg = b.lazyDependency("ffmpeg_ios", .{}) orelse return;
 
-        step.addIncludePath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avcodec.xcframework/{s}/Avcodec.framework/Headers", .{target_dir_name})));
-        step.addIncludePath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avformat.xcframework/{s}/Avformat.framework/Headers", .{target_dir_name})));
-        step.addIncludePath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Avutil.xcframework/{s}/Avutil.framework/Headers", .{target_dir_name})));
-        step.addIncludePath(b.path(b.fmt("../ios/MelodinkPlayer/Frameworks/Swresample.xcframework/{s}/Swresample.framework/Headers", .{target_dir_name})));
+        step.addFrameworkPath(ffmpeg.path(b.fmt("Avcodec.xcframework/{s}", .{target_dir_name})));
+        step.addFrameworkPath(ffmpeg.path(b.fmt("Avformat.xcframework/{s}", .{target_dir_name})));
+        step.addFrameworkPath(ffmpeg.path(b.fmt("Avutil.xcframework/{s}", .{target_dir_name})));
+        step.addFrameworkPath(ffmpeg.path(b.fmt("Swresample.xcframework/{s}", .{target_dir_name})));
+
+        step.addIncludePath(ffmpeg.path(b.fmt("Avcodec.xcframework/{s}/Avcodec.framework/Headers", .{target_dir_name})));
+        step.addIncludePath(ffmpeg.path(b.fmt("Avformat.xcframework/{s}/Avformat.framework/Headers", .{target_dir_name})));
+        step.addIncludePath(ffmpeg.path(b.fmt("Avutil.xcframework/{s}/Avutil.framework/Headers", .{target_dir_name})));
+        step.addIncludePath(ffmpeg.path(b.fmt("Swresample.xcframework/{s}/Swresample.framework/Headers", .{target_dir_name})));
 
         step.linkFramework("Avcodec");
         step.linkFramework("Avformat");
