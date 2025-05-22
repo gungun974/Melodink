@@ -6,6 +6,8 @@ const Fifo = @import("fifo.zig");
 
 const CacheAVIO = @import("cache.zig");
 
+const ENABLE_CACHE = true;
+
 pub const TrackStatus = enum(u8) {
     /// There hasn't been any resource loaded yet.
     idle,
@@ -254,7 +256,7 @@ pub const Track = struct {
 
             std.log.debug("open url: {s}", .{url});
 
-            if (self.original_audio_hash != null and self.cache_path != null) {
+            if (ENABLE_CACHE and self.original_audio_hash != null and self.cache_path != null) {
                 const cache_key = try std.fmt.allocPrint(self.allocator, "{}-{}-{s}", .{ self.id, self.quality, self.original_audio_hash.? });
                 defer self.allocator.free(cache_key);
 
