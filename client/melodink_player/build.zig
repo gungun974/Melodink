@@ -39,6 +39,27 @@ pub fn build(b: *std.Build) void {
     lib.linkLibC();
 
     b.installArtifact(lib);
+
+    const lib_check = b.addExecutable(.{
+        .name = "MelodinkZigPlayer",
+        .root_module = lib.root_module,
+    });
+
+    lib_check.addIncludePath(b.path("src/miniaudio"));
+
+    // Test
+
+    const exe_unit_tests = b.addTest(.{
+        .root_module = lib.root_module,
+    });
+
+    const run_exe_unit_tests = b.addRunArtifact(exe_unit_tests);
+
+    const check = b.step("check", "Check if MelodinkZigPlayer compiles");
+    check.dependOn(&lib_check.step);
+
+    const test_step = b.step("test", "Run unit tests");
+    test_step.dependOn(&run_exe_unit_tests.step);
 }
 
 fn buildForAndroid(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {

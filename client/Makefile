@@ -38,9 +38,14 @@ build-windows: deps prebuild
 build-linux: deps prebuild
 	flutter build linux --release
 
+debug-build-melodink-player:
+	cd ./melodink_player && zig build
+	cp melodink_player/zig-out/lib/libmelodink_player.so build/linux/x64/release/bundle/lib/libmelodink_player.so
+	build/linux/x64/release/bundle/melodink_client
+
 migrate-create: 
 	@echo -n "Name for migration to create : "
 	@read name; \
 	migrate create -ext sql -dir ./lib/core/database/migrations -tz UTC $$name
 
-.PHONY: deps prebuild watch-code-generation dev build-android build-android-appbundle build-ios build-macos build-windows build-linux migrate-create
+.PHONY: deps prebuild watch-code-generation dev build-android build-android-appbundle build-ios build-macos build-windows build-linux migrate-create build/linux/x64/release/bundle/melodink_client
