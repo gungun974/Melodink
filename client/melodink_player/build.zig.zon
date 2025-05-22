@@ -38,6 +38,11 @@
             .hash = "N-V-__8AAIHakgFASykx4lexFZQChFGwWwQ5rDBL5XrOCezh",
             .lazy = true,
         },
+        .ffmpeg_win32 = .{
+            .url = "https://github.com/gungun974/melodink-ffmpeg-win32-build/releases/download/latest/ffmpeg-n7.1-latest-win64-lgpl-shared-7.1.zip",
+            .hash = "N-V-__8AAJ8bbwgQf_QTYTYX75tN42xYTQQ1fdJ652O03odP",
+            .lazy = true,
+        },
     },
 
     .paths = .{
