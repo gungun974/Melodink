@@ -791,7 +791,7 @@ test "verify setAudios" {
         },
     });
 
-    const track1Ref = track_manager.manage_loaded_tracks.getPtr(1);
+    const track1Ref = track_manager.manage_loaded_tracks.get(1);
 
     try t.expectEqual(1, track_manager.manage_loaded_tracks.count());
     try t.expectEqual(1, track1Ref.?.id);
@@ -813,12 +813,12 @@ test "verify setAudios" {
         },
     });
 
-    const track2Ref = track_manager.manage_loaded_tracks.getPtr(2);
+    const track2Ref = track_manager.manage_loaded_tracks.get(2);
 
     try t.expectEqual(2, track_manager.manage_loaded_tracks.count());
 
     // Keep the same track ref
-    try t.expectEqual(track1Ref, track_manager.manage_loaded_tracks.getPtr(1));
+    try t.expectEqual(track1Ref, track_manager.manage_loaded_tracks.get(1));
 
     try t.expectEqual(1, track1Ref.?.id);
     try t.expectEqual(track1Ref, track_manager.manage_tracks_order.items[0].track);
@@ -845,8 +845,8 @@ test "verify setAudios" {
     try t.expectEqual(2, track_manager.manage_loaded_tracks.count());
 
     // Keep the same track ref
-    try t.expectEqual(track1Ref, track_manager.manage_loaded_tracks.getPtr(1));
-    try t.expectEqual(track2Ref, track_manager.manage_loaded_tracks.getPtr(2));
+    try t.expectEqual(track1Ref, track_manager.manage_loaded_tracks.get(1));
+    try t.expectEqual(track2Ref, track_manager.manage_loaded_tracks.get(2));
 
     try t.expectEqual(1, track1Ref.?.id);
     try t.expectEqual(track1Ref, track_manager.manage_tracks_order.items[0].track);
@@ -878,10 +878,10 @@ test "verify setAudios" {
         },
     });
 
-    const track86Ref = track_manager.manage_loaded_tracks.getPtr(86);
-    const track32Ref = track_manager.manage_loaded_tracks.getPtr(32);
-    const track42Ref = track_manager.manage_loaded_tracks.getPtr(42);
-    const track8Ref = track_manager.manage_loaded_tracks.getPtr(8);
+    const track86Ref = track_manager.manage_loaded_tracks.get(86);
+    const track32Ref = track_manager.manage_loaded_tracks.get(32);
+    const track42Ref = track_manager.manage_loaded_tracks.get(42);
+    const track8Ref = track_manager.manage_loaded_tracks.get(8);
 
     try t.expectEqual(4, track_manager.manage_loaded_tracks.count());
 
