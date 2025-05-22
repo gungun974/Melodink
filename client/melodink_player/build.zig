@@ -482,6 +482,24 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
         step.linkSystemLibrary2("swresample", .{
             .use_pkg_config = .no,
         });
+    } else if (target.result.os.tag == .windows) {
+        const ffmpeg = b.lazyDependency("ffmpeg_win32", .{}) orelse return;
+
+        step.addIncludePath(ffmpeg.path("include"));
+        step.addLibraryPath(ffmpeg.path("lib"));
+
+        step.linkSystemLibrary2("avcodec", .{
+            .use_pkg_config = .no,
+        });
+        step.linkSystemLibrary2("avformat", .{
+            .use_pkg_config = .no,
+        });
+        step.linkSystemLibrary2("avutil", .{
+            .use_pkg_config = .no,
+        });
+        step.linkSystemLibrary2("swresample", .{
+            .use_pkg_config = .no,
+        });
     } else {
         step.linkSystemLibrary("avcodec");
         step.linkSystemLibrary("avformat");
@@ -524,6 +542,17 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
 }
 
 fn prepareMiniaudio(b: *std.Build) std.Build.LazyPath {
+    if (builtin.os.tag == .windows) {
+        const tool_run = b.addSystemCommand(&.{"C:/Program Files/Git/usr/bin/patch"});
+        tool_run.addFileArg(b.path("src/miniaudio/miniaudio.h"));
+
+        tool_run.addArg("-o");
+        const ret = tool_run.addOutputFileArg("miniaudio.h");
+        tool_run.addFileArg(b.path("src/miniaudio/zig_18247.patch"));
+        b.getInstallStep().dependOn(&tool_run.step);
+        return ret;
+    }
+
     const tool_run = b.addSystemCommand(&.{"patch"});
     tool_run.addFileArg(b.path("src/miniaudio/miniaudio.h"));
 
