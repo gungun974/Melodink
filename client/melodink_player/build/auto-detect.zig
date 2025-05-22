@@ -21,6 +21,7 @@ pub const AndroidSDKConfig = struct {
 
     android_sdk_root: []const u8 = "",
     android_ndk_root: []const u8 = "",
+    android_ndk_sysroot: []const u8 = "",
     java_home: []const u8 = "",
 
     keytool_path: []const u8 = "",
@@ -171,7 +172,9 @@ pub fn findAndroidSDKConfig(b: *Builder, target: *const std.Target, versions: To
 
     const target_dir_name = switch (target.cpu.arch) {
         .aarch64 => "aarch64-linux-android",
+        .arm => "arm-linux-androideabi",
         .x86_64 => "x86_64-linux-android",
+        .x86 => "i686-linux-android",
         else => @panic("unsupported arch for android build"),
     };
     const keytool_path = b.pathJoin(&.{ config.java_home, "bin", "keytool" ++ if (builtin.os.tag == .windows) ".exe" else "" });
@@ -188,6 +191,7 @@ pub fn findAndroidSDKConfig(b: *Builder, target: *const std.Target, versions: To
     config.keytool_path = keytool_path;
     config.java_exe_path = java_exe_path;
     config.android_ndk_root = ndk_root;
+    config.android_ndk_sysroot = ndk_sysroot;
     config.android_ndk_include = ndk_include;
     config.android_ndk_include_android = ndk_include_android;
     config.android_ndk_include_host = ndk_include_host;

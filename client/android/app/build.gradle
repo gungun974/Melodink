@@ -1,8 +1,3 @@
-import java.nio.file.Files
-import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
-import java.security.MessageDigest
-
 plugins {
     id "com.android.application"
     id "kotlin-android"
@@ -61,98 +56,25 @@ android {
         }
     }
 
-    dependencies {
-        def mediaVersion = "1.4.1"
-
-        implementation "androidx.media3:media3-exoplayer:$mediaVersion"
-        implementation "androidx.media3:media3-exoplayer-dash:$mediaVersion"
-        implementation "androidx.media3:media3-exoplayer-hls:$mediaVersion"
-        implementation "androidx.media3:media3-exoplayer-smoothstreaming:$mediaVersion"
-    
-        implementation fileTree(dir: "$buildDir/output", include: "*.jar")
-    }
+    dependencies {}
 }
 
 flutter {
     source = "../.."
 }
 
-task downloadDependencies(type: Exec)  {
-    
-        def outputDir = file("$buildDir/output")
-        if (outputDir.exists()) {
-            outputDir.deleteDir()
-        }
-        outputDir.mkdirs()
-
-        def unzipDir = file("$buildDir/ffmpeg")
-        if (unzipDir.exists()) {
-            unzipDir.deleteDir()
-        }
-        unzipDir.mkdirs()
-
-        // Download all *.jar dependencies & verify their MD5 checksums.
-        def filesToDownload = [
-            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-3/default-arm64-v8a.jar", "md5": "2328a7f3601c87008fd49145b4992b5f", "destination": file("$buildDir/v7.1-3/default-arm64-v8a.jar")],
-            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-3/default-armeabi-v7a.jar", "md5": "e97d953d426b79387139bd1b49b74ae7", "destination": file("$buildDir/v7.1-3/default-armeabi-v7a.jar")],
-            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-3/default-x86_64.jar", "md5": "30c3b9f9b42f2d2062a1cae57963d560", "destination": file("$buildDir/v7.1-3/default-x86_64.jar")],
-            ["url": "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-3/default-x86.jar", "md5": "7f247f63aecffab3ae48af1d7ec7ee37", "destination": file("$buildDir/v7.1-3/default-x86.jar")]
-        ]
-
-        filesToDownload.each { fileInfo ->
-            def destFile = fileInfo.destination
-
-            if (destFile.exists()) {
-                def calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
-
-                if (calculatedMD5 != fileInfo.md5) {
-                    destFile.delete()
-                    println "MD5 mismatch. File deleted: ${destFile}"
-                }
-
-            }
-
-            if (!destFile.exists()) {
-                destFile.parentFile.mkdirs()
-                println "Downloading file from: ${fileInfo.url}"
-                destFile.withOutputStream { os ->
-                    os << new URL(fileInfo.url).openStream()
-                }
-                def calculatedMD5 = MessageDigest.getInstance("MD5").digest(Files.readAllBytes(destFile.toPath())).encodeHex().toString()
-                if (calculatedMD5 != fileInfo.md5) {
-                    throw new GradleException("MD5 verification failed for ${destFile}")
-                }
-               
-            }
-
-            copy {
-                from destFile
-                into outputDir
-            }
-
-            // Unzip the JAR file
-            unzip(destFile, unzipDir)
-        }
-    
-}
-
-// Helper method to unzip a file
-def unzip(File zipFile, File destinationDir) {
-    ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(zipFile))
-    ZipEntry entry
-
-    while ((entry = zipInputStream.nextEntry) != null) {
-        File outFile = new File(destinationDir, entry.name)
-        if (entry.isDirectory()) {
-            outFile.mkdirs()
-        } else {
-            outFile.parentFile.mkdirs()
-            outFile.withOutputStream { os ->
-                os << zipInputStream
-            }
-        }
+task buildMelodinkPlayer(type: Exec) {
+    workingDir = new File(projectDir, "../../melodink_player")
+    commandLine 'zig', 'build', '-Dtarget=arm-linux-android', '-Doptimize=ReleaseFast'
+    ignoreExitValue = false
+    doFirst {
+        println "Running: zig build -Dtarget=arm-linux-android -Doptimize=ReleaseFast"
     }
-    zipInputStream.close()
 }
 
-assemble.dependsOn(downloadDependencies)
+tasks.configureEach { task ->
+    if (task.name == "assembleDebug" || task.name == "assembleRelease") {
+        task.dependsOn(buildMelodinkPlayer)
+    }
+}
+

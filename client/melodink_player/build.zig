@@ -3,9 +3,7 @@ const builtin = @import("builtin");
 
 const auto_detect = @import("build/auto-detect.zig");
 
-const XCFrameworkStep = @import("build/XCFrameworkStep.zig");
-
-const ANDROID_TARGET_API_VERSION = "32";
+const ANDROID_TARGET_API_VERSION = "21";
 const ANDROID_MIN_API_VERSION = "21";
 const ANDROID_BUILD_TOOLS_VERSION = "34.0.0";
 const ANDROID_NDK_VERSION = "23.1.7779620";
@@ -26,16 +24,132 @@ pub fn build(b: *std.Build) void {
         return;
     }
 
+    if (target.result.abi.isAndroid()) {
+        buildForAndroid(b, optimize) catch unreachable;
+        return;
+    }
+
     const lib = try buildLibrary(
         b,
         target,
         optimize,
-        .static,
+        .dynamic,
     );
 
     lib.linkLibC();
 
     b.installArtifact(lib);
+}
+
+fn buildForAndroid(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
+    const aarch64 = try buildLibrary(
+        b,
+        b.resolveTargetQuery(.{
+            .cpu_arch = .aarch64,
+            .os_tag = .linux,
+            .abi = .android,
+        }),
+        optimize,
+        .dynamic,
+    );
+
+    aarch64.linkLibC();
+
+    installAndroid(b, .aarch64, aarch64);
+
+    const arm = try buildLibrary(
+        b,
+        b.resolveTargetQuery(
+            .{
+                .cpu_arch = .arm,
+                .os_tag = .linux,
+                .abi = .android,
+            },
+        ),
+        optimize,
+        .dynamic,
+    );
+
+    arm.linkLibC();
+
+    installAndroid(b, .arm, arm);
+
+    const x86_64 = try buildLibrary(
+        b,
+        b.resolveTargetQuery(
+            .{
+                .cpu_arch = .x86_64,
+                .os_tag = .linux,
+                .abi = .android,
+            },
+        ),
+        optimize,
+        .dynamic,
+    );
+
+    x86_64.linkLibC();
+
+    installAndroid(b, .x86_64, x86_64);
+
+    const x86 = try buildLibrary(
+        b,
+        b.resolveTargetQuery(
+            .{
+                .cpu_arch = .x86,
+                .os_tag = .linux,
+                .abi = .android,
+            },
+        ),
+        optimize,
+        .dynamic,
+    );
+
+    x86.linkLibC();
+
+    installAndroid(b, .x86, x86);
+}
+
+pub const AndroidArch = enum {
+    aarch64,
+    arm,
+    x86_64,
+    x86,
+};
+
+fn installAndroid(b: *std.Build, arch: AndroidArch, step: anytype) void {
+    const target_dir_name = switch (arch) {
+        .aarch64 => "arm64-v8a",
+        .arm => "armeabi-v7a",
+        .x86_64 => "x86_64",
+        .x86 => "x86",
+    };
+
+    const dependency_dir_name = switch (arch) {
+        .aarch64 => "arm64",
+        .arm => "armeabi",
+        .x86_64 => "x86_64",
+        .x86 => "x86",
+    };
+
+    const android_dir = b.fmt("{s}/android/{s}", .{ b.install_path, target_dir_name });
+
+    const mkdir_output = b.addSystemCommand(&[_][]const u8{
+        "mkdir", "-p", android_dir,
+    });
+
+    const install = b.addInstallArtifact(step, .{ .dest_sub_path = b.fmt("../android/{s}/libmelodink_player.so", .{target_dir_name}) });
+
+    install.step.dependOn(&mkdir_output.step);
+
+    b.getInstallStep().dependOn(&install.step);
+
+    const ffmpeg = b.lazyDependency(b.fmt("ffmpeg_android_{s}", .{dependency_dir_name}), .{}) orelse return;
+
+    b.installDirectory(.{
+        .source_dir = ffmpeg.path(b.fmt("{s}/usr/local/lib", .{target_dir_name})),
+        .install_dir = .prefix,
+        .install_subdir = b.fmt("android/{s}", .{target_dir_name}),
+    });
 }
 
 fn buildForMacOS(b: *std.Build, optimize: std.builtin.OptimizeMode) !void {
@@ -211,6 +325,7 @@ fn buildLibrary(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.b
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
+        .strip = optimize == .ReleaseSmall,
     });
 
     const lib = b.addLibrary(.{
@@ -222,6 +337,23 @@ fn buildLibrary(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.b
     try addSystemCompilePaths(b, target, lib);
 
     try addLibraries(b, target, lib);
+
+    // TODO(jae): 2024-09-19 - Copy-pasted from https://github.com/ikskuh/ZigAndroidTemplate/blob/master/Sdk.zig
+    // Remove when https://github.com/ziglang/zig/issues/7935 is resolved.
+    if (lib.root_module.resolved_target) |target2| {
+        if (target2.result.cpu.arch == .x86) {
+            const use_link_z_notext_workaround: bool = if (lib.bundle_compiler_rt) |bcr| bcr else false;
+            if (use_link_z_notext_workaround) {
+                // NOTE(jae): 2024-09-22
+                // This workaround can prevent your libmain.so from loading. At least in my testing with running Android 10 (Q, API Level 29)
+                //
+                // This is due to:
+                // "Text Relocations Enforced for API Level 23"
+                // See: https://android.googlesource.com/platform/bionic/+/refs/tags/ndk-r14/android-changes-for-ndk-developers.md
+                lib.link_z_notext = true;
+            }
+        }
+    }
 
     return lib;
 }
@@ -235,7 +367,9 @@ fn addSystemCompilePaths(b: *std.Build, target: std.Build.ResolvedTarget, step: 
     } else if (target.result.abi.isAndroid()) {
         const target_dir_name = switch (target.result.cpu.arch) {
             .aarch64 => "aarch64-linux-android",
+            .arm => "arm-linux-androideabi",
             .x86_64 => "x86_64-linux-android",
+            .x86 => "i686-linux-android",
             else => @panic("unsupported arch for android build"),
         };
         _ = target_dir_name;
@@ -245,6 +379,18 @@ fn addSystemCompilePaths(b: *std.Build, target: std.Build.ResolvedTarget, step: 
             .build_tools_version = ANDROID_BUILD_TOOLS_VERSION,
             .ndk_version = ANDROID_NDK_VERSION,
         });
+
+        var libcData = std.ArrayList(u8).init(b.allocator);
+        const writer = libcData.writer();
+        (std.zig.LibCInstallation{
+            .include_dir = android_sdk.android_ndk_include,
+            .sys_include_dir = android_sdk.android_ndk_sysroot,
+            .crt_dir = android_sdk.android_ndk_lib_host_arch_android,
+        }).render(writer) catch unreachable;
+
+        const libcFile = b.addWriteFiles().add("android-libc.txt", libcData.toOwnedSlice() catch unreachable);
+
+        step.setLibCFile(libcFile);
 
         step.addIncludePath(.{ .cwd_relative = android_sdk.android_ndk_include });
         step.addIncludePath(.{ .cwd_relative = android_sdk.android_ndk_include_android });
@@ -257,11 +403,9 @@ fn addSystemCompilePaths(b: *std.Build, target: std.Build.ResolvedTarget, step: 
 }
 
 fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) !void {
-    if (target.result.os.tag == .ios) {
-        step.bundle_compiler_rt = true;
-        step.bundle_ubsan_rt = true;
-        step.linker_allow_shlib_undefined = true;
-    }
+    step.bundle_compiler_rt = true;
+    step.bundle_ubsan_rt = true;
+    step.linker_allow_shlib_undefined = true;
 
     // FFmpeg
 
@@ -307,14 +451,24 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
     } else if (target.result.abi.isAndroid()) {
         const target_dir_name = switch (target.result.cpu.arch) {
             .aarch64 => "arm64-v8a",
-            .armeb => "armeabi-v7a",
+            .arm => "armeabi-v7a",
             .x86_64 => "x86_64",
             .x86 => "x86",
             else => @panic("unsupported arch for android build"),
         };
 
-        step.addIncludePath(b.path(b.fmt("/home/gungun974/lab/perso/Melodink/client/build/app/ffmpeg/prefix/{s}/include", .{target_dir_name})));
-        step.addLibraryPath(b.path(b.fmt("/home/gungun974/lab/perso/Melodink/client/build/app/ffmpeg/prefix/{s}/usr/local/lib", .{target_dir_name})));
+        const dependency_dir_name = switch (target.result.cpu.arch) {
+            .aarch64 => "arm64",
+            .arm => "armeabi",
+            .x86_64 => "x86_64",
+            .x86 => "x86",
+            else => @panic("unsupported arch for android build"),
+        };
+
+        const ffmpeg = b.lazyDependency(b.fmt("ffmpeg_android_{s}", .{dependency_dir_name}), .{}) orelse return;
+
+        step.addIncludePath(ffmpeg.path(b.fmt("{s}/include", .{target_dir_name})));
+        step.addLibraryPath(ffmpeg.path(b.fmt("{s}/usr/local/lib", .{target_dir_name})));
 
         step.linkSystemLibrary2("avcodec", .{
             .use_pkg_config = .no,
@@ -347,6 +501,15 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
             "-DMA_NO_ENCODING",
             "-DMA_NO_RUNTIME_LINKING",
             "-fwrapv",
+        } });
+    } else if (target.result.abi.isAndroid() and target.result.cpu.arch == .x86) {
+        step.addCSourceFile(.{ .file = b.path("src/miniaudio/miniaudio.c"), .flags = &.{ "-DMA_NO_DECODING", "-DMA_NO_ENCODING", "-fwrapv", "-fPIC" } });
+    } else if (target.result.abi.isAndroid() and target.result.cpu.arch == .arm) {
+        step.addCSourceFile(.{ .file = b.path("src/miniaudio/miniaudio.c"), .flags = &.{
+            "-DMA_NO_DECODING",
+            "-DMA_NO_ENCODING",
+            "-fwrapv",
+            "-mfloat-abi=softfp",
         } });
     } else {
         step.addCSourceFile(.{ .file = b.path("src/miniaudio/miniaudio.c"), .flags = &.{

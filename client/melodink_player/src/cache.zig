@@ -29,7 +29,7 @@ avio_ctx: *c.AVIOContext = undefined,
 
 index_map: std.ArrayList(u8),
 
-index_size: u64 = 0,
+index_size: usize = 0,
 current_offset: u64 = 0,
 
 file_total_size: u64 = 0,
@@ -149,7 +149,7 @@ pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, url: [:0
     try Self.checkAndCleanOldCaches(self.allocator, cache_path, self.protected_opened_cache_paths);
 
     try self.index_file.seekFromEnd(0);
-    self.index_size = try self.index_file.getPos();
+    self.index_size = @intCast(try self.index_file.getPos());
     try self.index_file.seekTo(0);
 
     if (self.index_size >= 8) {
@@ -231,7 +231,7 @@ fn isBlockCached(self: *Self, block_id: u64) bool {
     if (byte_index >= self.index_size)
         return false;
 
-    return (self.index_map.items[byte_index] >> @intCast(block_id % 8)) & 1 == 1;
+    return (self.index_map.items[@intCast(byte_index)] >> @intCast(block_id % 8)) & 1 == 1;
 }
 
 fn markBlockAsCached(self: *Self, block_id: u64) !void {
@@ -244,12 +244,12 @@ fn markBlockAsCached(self: *Self, block_id: u64) !void {
 
     if (byte_index >= self.index_size) {
         const old_len = self.index_map.items.len;
-        try self.index_map.resize(byte_index + 1);
+        try self.index_map.resize(@intCast(byte_index + 1));
         @memset(self.index_map.items[old_len..], 0);
         self.index_size = self.index_map.items.len;
     }
 
-    self.index_map.items[byte_index] |= switch (bit_index) {
+    self.index_map.items[@intCast(byte_index)] |= switch (bit_index) {
         0 => 1 << 0,
         1 => 1 << 1,
         2 => 1 << 2,
@@ -265,7 +265,7 @@ fn markBlockAsCached(self: *Self, block_id: u64) !void {
 
     try self.index_file.seekTo(byte_index + @sizeOf(u64));
 
-    _ = try self.index_file.write(&.{self.index_map.items[byte_index]});
+    _ = try self.index_file.write(&.{self.index_map.items[@intCast(byte_index)]});
 }
 
 fn downloadBlock(self: *Self, block_id: u64) !void {
