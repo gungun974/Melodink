@@ -161,6 +161,7 @@
             ffmpeg.dev
             pkgs.pulseaudio.dev
             pkgs.zenity
+            zig
           ];
 
           nativeBuildInputs = buildInputs;
