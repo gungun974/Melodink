@@ -148,16 +148,6 @@ class MelodinkPlayer {
     _pause = lib
         .lookup<ffi.NativeFunction<ffi.Void Function()>>('mi_player_pause')
         .asFunction();
-    _setAudios = lib
-        .lookup<
-            ffi.NativeFunction<
-                ffi.Void Function(
-                  ffi.Size,
-                  ffi.Size,
-                  ffi.Pointer<NativeMelodinkTrackRequest>,
-                  ffi.Size,
-                )>>('mi_player_set_audios')
-        .asFunction();
     _setLoopMode = lib
         .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Uint8)>>(
             'mi_player_set_loop_mode')
@@ -248,13 +238,6 @@ class MelodinkPlayer {
   late final void Function() _play;
   late final void Function() _pause;
 
-  late final void Function(
-    int,
-    int,
-    ffi.Pointer<NativeMelodinkTrackRequest>,
-    int,
-  ) _setAudios;
-
   late final void Function(int) _setLoopMode;
   late final void Function(int) _setQuality;
   late final void Function(ffi.Pointer<ffi.Utf8>) _setAuthToken;
@@ -294,13 +277,13 @@ class MelodinkPlayer {
         skipToNext();
       }, null);
 
-  void setAudios(
+  Future<void> setAudios(
     String serverURL,
     String cachePath,
     int newCurrentTrackIndex,
     int currentRequestIndex,
     List<MelodinkTrackRequest> requests,
-  ) {
+  ) async {
     final requestsPointers =
         ffi.calloc<NativeMelodinkTrackRequest>(requests.length);
 
@@ -324,8 +307,35 @@ class MelodinkPlayer {
         }
       }
 
-      _setAudios(newCurrentTrackIndex, currentRequestIndex, requestsPointers,
-          requests.length);
+      await compute((data) {
+        final void Function(
+          int,
+          int,
+          ffi.Pointer<NativeMelodinkTrackRequest>,
+          int,
+        ) setAudios = getLibrary()
+            .lookup<
+                ffi.NativeFunction<
+                    ffi.Void Function(
+                      ffi.Size,
+                      ffi.Size,
+                      ffi.Pointer<NativeMelodinkTrackRequest>,
+                      ffi.Size,
+                    )>>('mi_player_set_audios')
+            .asFunction();
+
+        setAudios(
+          data["newCurrentTrackIndex"]!,
+          data["currentRequestIndex"]!,
+          ffi.Pointer.fromAddress(data["requestsPointers"]!),
+          data["len"]!,
+        );
+      }, {
+        'newCurrentTrackIndex': newCurrentTrackIndex,
+        'currentRequestIndex': currentRequestIndex,
+        'requestsPointers': requestsPointers.address,
+        'len': requests.length,
+      });
     } finally {
       for (var i = 0; i < requests.length; i++) {
         ffi.calloc.free(requestsPointers[i].originalAudioHash);

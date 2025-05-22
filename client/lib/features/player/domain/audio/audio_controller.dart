@@ -709,7 +709,7 @@ class AudioController extends BaseAudioHandler {
       }
 
       if (requests.isNotEmpty) {
-        player.setAudios(
+        await player.setAudios(
           AppApi().getServerUrl(),
           join((await getMelodinkInstanceCacheDirectory()).path, "audioCache"),
           _previousTracks.length - 1,
