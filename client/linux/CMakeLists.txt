@@ -56,13 +56,31 @@ pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 
-add_custom_target(
-    build_melodink_player ALL
-    COMMAND ${CMAKE_COMMAND} -E echo "Building melodink_player with Zig..."
-    COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR}/../melodink_player zig build -Doptimize=ReleaseFast
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Running Zig build for melodink_player"
+set(MELODINK_DIR "${CMAKE_SOURCE_DIR}/../melodink_player")
+set(MELODINK_LIB "${MELODINK_DIR}/zig-out/lib/libmelodink_player.so")
+
+find_program(ZIG_EXECUTABLE zig)
+
+if(NOT ZIG_EXECUTABLE)
+  message(FATAL_ERROR "Zig is required but was not found. Please install Zig and make sure it is in your PATH.")
+endif()
+
+add_custom_command(
+    OUTPUT ${MELODINK_LIB}
+    COMMAND ${CMAKE_COMMAND} -E echo "Building Zig lib..."
+    COMMAND ${CMAKE_COMMAND} -E chdir ${MELODINK_DIR} zig build -Doptimize=ReleaseFast
+    DEPENDS ${MELODINK_DIR}/build.zig
+    COMMENT "Building libmelodink_player.so with Zig"
 )
+
+add_custom_target(build_melodink_player ALL DEPENDS ${MELODINK_LIB})
+
+add_library(melodink_player SHARED IMPORTED GLOBAL)
+set_target_properties(melodink_player PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/../melodink_player/zig-out/lib/libmelodink_player.so"
+)
+
+add_dependencies(melodink_player build_melodink_player)
 
 # Define the application target. To change its name, change BINARY_NAME above,
 # not the value here, or `flutter run` will no longer work.
@@ -228,7 +246,7 @@ add_custom_target("MIMALLOC_TARGET" ALL DEPENDS ${MIMALLOC_LIB})
 
 # ------------------------------------------------------------------------------
 
-target_link_libraries(${BINARY_NAME} PRIVATE avformat avcodec avutil swresample dl pthread m pulse "${CMAKE_CURRENT_SOURCE_DIR}/../melodink_player/zig-out/lib/libmelodink_player.so")
+target_link_libraries(${BINARY_NAME} PRIVATE avformat avcodec avutil swresample dl pthread m pulse melodink_player)
 
 # ----
 
