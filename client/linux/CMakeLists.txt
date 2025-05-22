@@ -56,6 +56,13 @@ pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 
+add_custom_target(
+    build_melodink_player ALL
+    COMMAND ${CMAKE_COMMAND} -E echo "Building melodink_player with Zig..."
+    COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_SOURCE_DIR}/../melodink_player zig build -Doptimize=ReleaseFast
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Running Zig build for melodink_player"
+)
 
 # Define the application target. To change its name, change BINARY_NAME above,
 # not the value here, or `flutter run` will no longer work.
@@ -119,11 +126,8 @@ install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
-# install(TARGETS melodink_player
-#     RUNTIME DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime 
-#     LIBRARY DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime
-#     ARCHIVE DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime
-# )
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../melodink_player/zig-out/lib/libmelodink_player.so" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime)
 
 foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
   install(FILES "${bundled_library}"
@@ -224,7 +228,7 @@ add_custom_target("MIMALLOC_TARGET" ALL DEPENDS ${MIMALLOC_LIB})
 
 # ------------------------------------------------------------------------------
 
-target_link_libraries(${BINARY_NAME} PRIVATE avformat avcodec avutil swresample dl pthread m pulse)
+target_link_libraries(${BINARY_NAME} PRIVATE avformat avcodec avutil swresample dl pthread m pulse "${CMAKE_CURRENT_SOURCE_DIR}/../melodink_player/zig-out/lib/libmelodink_player.so")
 
 # ----
 

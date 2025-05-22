@@ -80,7 +80,7 @@ class MelodinkPlayer {
         'melodink_player.dll',
       ],
       'linux': [
-        '/home/gungun974/lab/perso/Melodink/client/melodink_player/zig-out/lib/libmelodink_player.so',
+        'libmelodink_player.so',
       ],
       'macos': [
         'MelodinkPlayer.framework/MelodinkPlayer',
