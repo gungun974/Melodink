@@ -6,7 +6,7 @@ const PlayerMod = @import("player.zig");
 const Player = PlayerMod.Player;
 
 var player: ?Player = null;
-// var gpa: std.heap.DebugAllocator(.{}) = undefined;
+var gpa: std.heap.DebugAllocator(.{}) = undefined;
 var allocator: std.mem.Allocator = undefined;
 
 pub export fn mi_player_init() void {
@@ -14,13 +14,15 @@ pub export fn mi_player_init() void {
         return;
     }
 
-    // gpa = std.heap.DebugAllocator(.{}).init;
+    c.av_log_set_level(c.AV_LOG_QUIET);
 
-    allocator = std.heap.c_allocator;
+    gpa = std.heap.DebugAllocator(.{}).init;
+
+    allocator = gpa.allocator();
 
     player = Player.new(allocator) catch |err| {
         std.log.warn("Failed to init MelodinkPlayer : {}", .{err});
-        // _ = gpa.deinit();
+        _ = gpa.deinit();
         return;
     };
 
@@ -36,7 +38,7 @@ pub export fn mi_player_free() void {
         return;
     }
 
-    // defer _ = gpa.deinit();
+    defer _ = gpa.deinit();
 
     player.?.free();
 

@@ -302,6 +302,7 @@ pub const Player = struct {
             self.process() catch |err| {
                 std.log.err("Error in the internal processing thread {}", .{err});
             };
+            std.time.sleep(std.time.ns_per_ms);
         }
     }
 
