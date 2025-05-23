@@ -7,6 +7,7 @@ const Fifo = @import("fifo.zig");
 const CacheAVIO = @import("cache.zig");
 
 const ENABLE_CACHE = true;
+const ENABLE_TRACK_OPEN_INFO = false;
 
 pub const TrackStatus = enum(u8) {
     /// There hasn't been any resource loaded yet.
@@ -297,8 +298,6 @@ pub const Track = struct {
             return error.CouldNotFindStreamInfo;
         }
 
-        // InitAudio
-
         self.audio_stream_index =
             @intCast(c.av_find_best_stream(self.av_format_ctx, c.AVMEDIA_TYPE_AUDIO, -1, -1, null, 0));
 
@@ -384,8 +383,6 @@ pub const Track = struct {
         self.audio_channel_count = @intCast(av_audio_codec_params.*.ch_layout.nb_channels);
         self.audio_sample_rate = @intCast(av_audio_codec_params.*.sample_rate);
 
-        // if (reopen_fifo) {
-        // Reset values if audio was previously opened
         self.audio_frames_consumed = 0;
         self.audio_time = 0;
         self.audio_frames_consumed_max = 0;
@@ -408,53 +405,59 @@ pub const Track = struct {
         errdefer c.av_frame_free(&self.resampled_audio_frame);
 
         self.status = TrackStatus.buffering;
+
+        if (ENABLE_TRACK_OPEN_INFO) {
+            self.logInfo();
+        }
     }
 
-    // pub fn debug() void {
-    // const audio_stream = av_format_ctx.*.streams[audio_stream_index];
-    // const frame_size =
-    //     av_format_ctx.*.streams[audio_stream_index].*.codecpar.*.frame_size;
-    // const sample_rate =
-    //     av_format_ctx.*.streams[audio_stream_index].*.codecpar.*.sample_rate;
-    // const channels = av_format_ctx.*.streams[audio_stream_index].*.codecpar.*.ch_layout.nb_channels;
-    // const time_base_num = audio_stream.*.time_base.num;
-    // const time_base_den = audio_stream.*.time_base.den;
-    // const pkt_time_base_num = av_audio_codec_ctx.*.pkt_timebase.num;
-    // const pkt_time_base_den = av_audio_codec_ctx.*.pkt_timebase.den;
-    // const ctx_sample_rate = av_audio_codec_ctx.*.sample_rate;
-    //
-    // const duration_origin = av_format_ctx.*.duration;
-    // const duration = @divTrunc(duration_origin, c.AV_TIME_BASE);
-    // const duration_h = @divTrunc(duration, 3600);
-    // const duration_min = @divTrunc(@rem(duration, 3600), 60);
-    // const duration_sec = @rem(duration, 60);
-    //
-    // std.debug.print("", .{});
-    // std.debug.print("----------------------\n", .{});
-    // std.debug.print("Audio info\n", .{});
-    //
-    // std.debug.print("Codec: {s}\n", .{av_audio_codec.*.long_name});
-    // std.debug.print("Frame size: {}\n", .{frame_size});
-    // if (true) {
-    //     std.debug.print("Original format type: {s}\n", .{c.av_get_sample_fmt_name(av_format_ctx.*.streams[audio_stream_index].*.codecpar.*.format)});
-    // }
-    // std.debug.print("Output format type: {s}\n", .{c.av_get_sample_fmt_name(audio_format)});
-    // std.debug.print("Duration_origin: {}\n", .{duration_origin});
-    // std.debug.print("Duration: {}:{}:{} h:min:sec\n", .{ duration_h, duration_min, duration_sec });
-    // std.debug.print("Sample rate: {}\n", .{sample_rate});
-    // std.debug.print("Channels: {}\n", .{channels});
-    // std.debug.print("Time base num: {}\n", .{time_base_num});
-    // std.debug.print("Time base den: {}\n", .{time_base_den});
-    // std.debug.print("Packet time base num: {}\n", .{pkt_time_base_num});
-    // std.debug.print("Packet time base den: {}\n", .{pkt_time_base_den});
-    // std.debug.print("Ctx sample rate: {}\n", .{ctx_sample_rate});
-    // std.debug.print("block_align: {}\n", .{av_format_ctx.*.streams[audio_stream_index].*.codecpar.*.block_align});
-    // std.debug.print("initial_padding: {}\n", .{av_format_ctx.*.streams[audio_stream_index].*.codecpar.*.initial_padding});
-    // std.debug.print("trailing_padding: {}\n", .{av_format_ctx.*.streams[audio_stream_index].*.codecpar.*.trailing_padding});
-    // std.debug.print("seek_preroll: {}\n", .{av_format_ctx.*.streams[audio_stream_index].*.codecpar.*.seek_preroll});
-    // std.debug.print("----------------------\n", .{});
-    //
-    // }
+    pub fn logInfo(self: *Self) void {
+        if (self.getStatus() == .idle or
+            self.getStatus() == .loading)
+        {
+            return;
+        }
+
+        const audio_stream = self.av_format_ctx.?.streams[self.audio_stream_index];
+        const frame_size =
+            self.av_format_ctx.?.streams[self.audio_stream_index].*.codecpar.*.frame_size;
+        const sample_rate =
+            self.av_format_ctx.?.streams[self.audio_stream_index].*.codecpar.*.sample_rate;
+        const channels = self.av_format_ctx.?.streams[self.audio_stream_index].*.codecpar.*.ch_layout.nb_channels;
+        const time_base_num = audio_stream.*.time_base.num;
+        const time_base_den = audio_stream.*.time_base.den;
+        const pkt_time_base_num = self.av_audio_codec_ctx.?.pkt_timebase.num;
+        const pkt_time_base_den = self.av_audio_codec_ctx.?.pkt_timebase.den;
+        const ctx_sample_rate = self.av_audio_codec_ctx.?.sample_rate;
+
+        const duration_origin = self.av_format_ctx.?.duration;
+        const duration = @divTrunc(duration_origin, c.AV_TIME_BASE);
+        const duration_h = @divTrunc(duration, 3600);
+        const duration_min = @divTrunc(@rem(duration, 3600), 60);
+        const duration_sec = @rem(duration, 60);
+
+        std.log.info("----------------------", .{});
+        std.log.info("Audio info", .{});
+
+        std.log.info("Codec: {s}", .{self.av_audio_codec_ctx.?.codec.*.long_name});
+        std.log.info("Frame size: {}", .{frame_size});
+        std.log.info("Original format type: {s}", .{c.av_get_sample_fmt_name(self.av_format_ctx.?.streams[self.audio_stream_index].*.codecpar.*.format)});
+        std.log.info("Output format type: {s}", .{c.av_get_sample_fmt_name(self.audio_format)});
+        std.log.info("Duration_origin: {}", .{duration_origin});
+        std.log.info("Duration: {}:{}:{} h:min:sec", .{ duration_h, duration_min, duration_sec });
+        std.log.info("Sample rate: {}", .{sample_rate});
+        std.log.info("Channels: {}", .{channels});
+        std.log.info("Time base num: {}", .{time_base_num});
+        std.log.info("Time base den: {}", .{time_base_den});
+        std.log.info("Packet time base num: {}", .{pkt_time_base_num});
+        std.log.info("Packet time base den: {}", .{pkt_time_base_den});
+        std.log.info("Ctx sample rate: {}", .{ctx_sample_rate});
+        std.log.info("block_align: {}", .{self.av_format_ctx.?.streams[self.audio_stream_index].*.codecpar.*.block_align});
+        std.log.info("initial_padding: {}", .{self.av_format_ctx.?.streams[self.audio_stream_index].*.codecpar.*.initial_padding});
+        std.log.info("trailing_padding: {}", .{self.av_format_ctx.?.streams[self.audio_stream_index].*.codecpar.*.trailing_padding});
+        std.log.info("seek_preroll: {}", .{self.av_format_ctx.?.streams[self.audio_stream_index].*.codecpar.*.seek_preroll});
+        std.log.info("----------------------", .{});
+    }
 
     pub fn process(self: *Self) !void {
         if (self.getStatus() == .idle or
