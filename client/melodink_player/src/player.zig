@@ -181,7 +181,7 @@ const TrackManager = struct {
         }
     }
 
-    pub fn swapTracksQuality(self: *Self, quality: TrackQuality, perform_hot_swap: bool) !void {
+    pub fn swapTracksQuality(self: *Self, quality: TrackQuality, perform_hot_swap: bool, pool: *std.Thread.Pool) !void {
         const current_track = self.getCurrentIndexedTrack();
 
         var iterator = self.manage_loaded_tracks.iterator();
@@ -200,7 +200,7 @@ const TrackManager = struct {
                 const current_position = track.getCurrentPlaybackTime();
                 track.close();
                 track.quality = quality;
-                try track.open();
+                try track.open(pool);
                 track.seekWhenReady(current_position, true);
             } else {
                 track.close();
@@ -255,6 +255,8 @@ pub const Player = struct {
 
     last_sendend_event_update_state: ?TrackStatus = null,
 
+    pool_threads: *std.Thread.Pool = undefined,
+
     fn sendEventAudioChanged(self: *Self, value: u64) void {
         if (self.send_event_audio_changed == null) {
             return;
@@ -278,6 +280,10 @@ pub const Player = struct {
 
         track_manager.* = TrackManager.init(allocator);
 
+        const pool = try allocator.create(std.Thread.Pool);
+
+        try pool.init(std.Thread.Pool.Options{ .allocator = allocator, .n_jobs = 8 });
+
         return .{
             .allocator = allocator,
 
@@ -287,6 +293,8 @@ pub const Player = struct {
             .current_quality = TrackQuality.lossless,
 
             .ma_device_config = c.ma_device_config_init(c.ma_device_type_playback),
+
+            .pool_threads = pool,
         };
     }
 
@@ -325,6 +333,10 @@ pub const Player = struct {
         self.track_manager.deinit();
 
         self.allocator.destroy(self.track_manager);
+
+        self.pool_threads.deinit();
+
+        self.allocator.destroy(self.pool_threads);
     }
 
     pub fn play(self: *Self) !void {
@@ -445,7 +457,7 @@ pub const Player = struct {
         defer self.tracks_mutex.unlock();
 
         if (self.current_quality != self.target_quality) {
-            try self.track_manager.swapTracksQuality(self.target_quality, false);
+            try self.track_manager.swapTracksQuality(self.target_quality, false, self.pool_threads);
             self.current_quality = self.target_quality;
         }
 
@@ -461,7 +473,7 @@ pub const Player = struct {
         current_track.?.track.setLoop(self.loop_mode == .one or (current_track.?.next() != null and current_track.?.next().?.track == current_track.?.track));
 
         if (current_track.?.track.getStatus() == .idle) {
-            try current_track.?.track.open();
+            try current_track.?.track.open(self.pool_threads);
         }
 
         if (current_track.?.track.getStatus() != .idle and
@@ -476,7 +488,7 @@ pub const Player = struct {
         var track_to_load = current_track.?;
 
         while (true) {
-            try openAndProcessTrack(track_to_load.track);
+            try self.openAndProcessTrack(track_to_load.track);
 
             if (!Player.isTrackBufferedEnough(track_to_load.track, 4)) {
                 return;
@@ -488,7 +500,7 @@ pub const Player = struct {
                 if (previous_track != null and
                     !Player.isTrackBufferedEnough(previous_track.?.track, 4))
                 {
-                    try openAndProcessTrack(previous_track.?.track);
+                    try self.openAndProcessTrack(previous_track.?.track);
                 }
             }
 
@@ -499,7 +511,7 @@ pub const Player = struct {
             }
 
             if (!Player.isTrackBufferedEnough(next_track.?.track, 4)) {
-                try openAndProcessTrack(next_track.?.track);
+                try self.openAndProcessTrack(next_track.?.track);
                 return;
             }
 
@@ -521,9 +533,9 @@ pub const Player = struct {
         return ready_to_read > wanted or track.haveReachEnd();
     }
 
-    fn openAndProcessTrack(track: *Track) !void {
+    fn openAndProcessTrack(self: *Self, track: *Track) !void {
         if (track.getStatus() == .idle) {
-            try track.open();
+            try track.open(self.pool_threads);
         }
         try track.process();
     }

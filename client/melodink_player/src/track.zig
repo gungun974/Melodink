@@ -92,7 +92,7 @@ pub const Track = struct {
 
     debug_test_alloc: (if (@import("builtin").mode == .Debug) *u8 else void) = undefined,
 
-    open_thread: ?std.Thread = null,
+    open_thread: bool = false,
     queue_seek: ?QueueSeek = null,
 
     const FrameData = extern struct {
@@ -180,8 +180,8 @@ pub const Track = struct {
         self.allocator.destroy(self.cache_avio);
     }
 
-    pub fn open(self: *Self) !void {
-        if (self.open_thread != null) {
+    pub fn open(self: *Self, pool: *std.Thread.Pool) !void {
+        if (self.open_thread) {
             return;
         }
 
@@ -189,7 +189,9 @@ pub const Track = struct {
             return;
         }
 
-        self.open_thread = try std.Thread.spawn(.{}, openThreadHandler, .{self});
+        self.open_thread = true;
+        defer self.open_thread = false;
+        try pool.spawn(openThreadHandler, .{self});
     }
 
     fn openThreadHandler(self: *Self) void {
@@ -202,7 +204,7 @@ pub const Track = struct {
         self.open_close_mutex.lock();
         defer self.open_close_mutex.unlock();
 
-        defer self.open_thread = null;
+        defer self.open_thread = false;
         if (self.status != TrackStatus.idle) {
             return;
         }
