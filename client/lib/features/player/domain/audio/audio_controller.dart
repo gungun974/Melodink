@@ -651,7 +651,7 @@ class AudioController extends BaseAudioHandler {
         ..._queueTracks,
         ..._nextTracks,
       ].indexed) {
-        if (index != 0 && index <= _previousTracks.length - 3) {
+        if (index != 0 && index <= _previousTracks.length - 8) {
           continue;
         }
 
