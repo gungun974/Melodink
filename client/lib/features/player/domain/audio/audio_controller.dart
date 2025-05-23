@@ -25,51 +25,21 @@ import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 late final AudioController _audioController;
+final AudioSessionHandler _audioSessionHandler = AudioSessionHandler();
 
 Future<AudioController> initAudioService() async {
-  final session = await AudioSession.instance;
-  await session.configure(AudioSessionConfiguration.music());
-
   _audioController = await AudioService.init(
     builder: () => AudioController(),
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'fr.gungun974.melodink.audio',
+      androidNotificationOngoing: false,
+      androidStopForegroundOnPause: false,
       androidNotificationChannelName: 'Melodink Audio Service',
-      androidNotificationOngoing: true,
-      androidStopForegroundOnPause: true,
+      androidNotificationChannelId: 'fr.gungun974.melodink.audio',
+      androidNotificationChannelDescription: 'Melodink Media Controls',
     ),
   );
 
-  double currentVolumeBeforeDuck = 1.0;
-
-  session.interruptionEventStream.listen((event) async {
-    if (event.begin) {
-      switch (event.type) {
-        case AudioInterruptionType.duck:
-          currentVolumeBeforeDuck = _audioController.getVolume();
-          _audioController.setVolume(0.5);
-          break;
-        case AudioInterruptionType.pause:
-        case AudioInterruptionType.unknown:
-          {
-            await _audioController.pause();
-            break;
-          }
-      }
-    } else {
-      switch (event.type) {
-        case AudioInterruptionType.duck:
-          _audioController.setVolume(currentVolumeBeforeDuck);
-          break;
-        default:
-          break;
-      }
-    }
-  });
-
-  session.becomingNoisyEventStream.listen((_) {
-    _audioController.pause();
-  });
+  await _audioSessionHandler.initSession();
 
   await _audioController.restoreLastState();
 
@@ -220,14 +190,8 @@ class AudioController extends BaseAudioHandler {
   }
 
   @override
-  Future<void> stop() async {
-    if (_isPlayerTracksEmpty()) {
-      return;
-    }
-
-    player.pause();
-
-    await _updatePlaybackState();
+  Future<void> onTaskRemoved() async {
+    await pause();
   }
 
   @override
@@ -760,6 +724,8 @@ class AudioController extends BaseAudioHandler {
     final playerBufferedPosition = player.getCurrentBufferedPosition();
     final playerLoop = player.getCurrentLoopMode();
 
+    _audioSessionHandler.setActive(playerPlaying);
+
     final newState = playbackState.value.copyWith(
       controls: [
         MediaControl.skipToPrevious,
@@ -911,3 +877,58 @@ final audioControllerProvider = Provider((ref) {
 
   return _audioController;
 });
+
+class AudioSessionHandler {
+  late AudioSession session;
+  bool _playInterrupted = false;
+
+  setActive(bool active) {
+    session.setActive(active);
+  }
+
+  AudioSessionHandler() {
+    initSession();
+  }
+
+  Future<void> initSession() async {
+    session = await AudioSession.instance;
+    session.configure(const AudioSessionConfiguration.music());
+
+    session.interruptionEventStream.listen((event) {
+      if (event.begin) {
+        if (!_audioController.playbackState.value.playing) return;
+        switch (event.type) {
+          case AudioInterruptionType.duck:
+            _audioController.setVolume(_audioController.getVolume() * 0.5);
+            break;
+          case AudioInterruptionType.pause:
+            _audioController.pause();
+            _playInterrupted = true;
+            break;
+          case AudioInterruptionType.unknown:
+            _audioController.pause();
+            _playInterrupted = true;
+            break;
+        }
+      } else {
+        switch (event.type) {
+          case AudioInterruptionType.duck:
+            _audioController.setVolume(_audioController.getVolume() * 2);
+            break;
+          case AudioInterruptionType.pause:
+            if (_playInterrupted) _audioController.play();
+            break;
+          case AudioInterruptionType.unknown:
+            break;
+        }
+        _playInterrupted = false;
+      }
+    });
+
+    session.becomingNoisyEventStream.listen((_) {
+      if (_audioController.playbackState.value.playing) {
+        _audioController.pause();
+      }
+    });
+  }
+}
