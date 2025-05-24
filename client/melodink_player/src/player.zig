@@ -230,6 +230,7 @@ pub const Player = struct {
     internal_process_thread: ?Thread = null,
 
     tracks_mutex: Thread.Mutex = Thread.Mutex{},
+    ma_device_mutex: Thread.Mutex = Thread.Mutex{},
 
     target_quality: TrackQuality,
     current_quality: TrackQuality,
@@ -244,7 +245,7 @@ pub const Player = struct {
 
     server_auth: [512:0]u8 = [_:0]u8{0} ** 512,
 
-    ma_device: c.ma_device = undefined,
+    ma_device: *c.ma_device = undefined,
     ma_device_config: c.ma_device_config,
     has_init_ma_device: bool = false,
 
@@ -292,6 +293,7 @@ pub const Player = struct {
             .target_quality = TrackQuality.lossless,
             .current_quality = TrackQuality.lossless,
 
+            .ma_device = try allocator.create(c.ma_device),
             .ma_device_config = c.ma_device_config_init(c.ma_device_type_playback),
 
             .pool_threads = pool,
@@ -326,7 +328,7 @@ pub const Player = struct {
         self.stopInternalThread();
 
         if (self.has_init_ma_device) {
-            c.ma_device_uninit(&self.ma_device);
+            c.ma_device_uninit(self.ma_device);
             self.has_init_ma_device = false;
         }
 
@@ -337,6 +339,8 @@ pub const Player = struct {
         self.pool_threads.deinit();
 
         self.allocator.destroy(self.pool_threads);
+
+        self.allocator.destroy(self.ma_device);
     }
 
     pub fn play(self: *Self) !void {
@@ -346,7 +350,10 @@ pub const Player = struct {
             return;
         }
 
-        if (c.ma_device_start(&self.ma_device) != c.MA_SUCCESS) {
+        self.ma_device_mutex.lock();
+        defer self.ma_device_mutex.unlock();
+
+        if (c.ma_device_start(self.ma_device) != c.MA_SUCCESS) {
             return error.CantStartMiniaudio;
         }
     }
@@ -358,7 +365,10 @@ pub const Player = struct {
             return;
         }
 
-        if (c.ma_device_stop(&self.ma_device) != c.MA_SUCCESS) {
+        self.ma_device_mutex.lock();
+        defer self.ma_device_mutex.unlock();
+
+        if (c.ma_device_stop(self.ma_device) != c.MA_SUCCESS) {
             return error.CantStopMiniaudio;
         }
     }
@@ -372,13 +382,17 @@ pub const Player = struct {
         if (current_track == null) {
             return;
         }
-        if (self.has_init_ma_device and c.ma_device_stop(&self.ma_device) != c.MA_SUCCESS) {
+
+        self.ma_device_mutex.lock();
+        defer self.ma_device_mutex.unlock();
+
+        if (self.has_init_ma_device and c.ma_device_stop(self.ma_device) != c.MA_SUCCESS) {
             return error.CantStopMiniaudio;
         }
 
         current_track.?.track.seekWhenReady(new_time, true);
 
-        if (!self.paused and self.has_init_ma_device and c.ma_device_start(&self.ma_device) != c.MA_SUCCESS) {
+        if (!self.paused and self.has_init_ma_device and c.ma_device_start(self.ma_device) != c.MA_SUCCESS) {
             return error.CantStartMiniaudio;
         }
     }
@@ -487,7 +501,7 @@ pub const Player = struct {
 
         var track_to_load = current_track.?;
 
-        while (true) {
+        for (0..50) |_| {
             try self.openAndProcessTrack(track_to_load.track);
 
             if (!Player.isTrackBufferedEnough(track_to_load.track, 4)) {
@@ -547,6 +561,9 @@ pub const Player = struct {
             return;
         }
 
+        self.ma_device_mutex.lock();
+        defer self.ma_device_mutex.unlock();
+
         const track = current_track.?.track;
 
         self.ma_device_config.playback.format = switch (track.getAudioOutputFormat()) {
@@ -570,11 +587,11 @@ pub const Player = struct {
         self.ma_device_config.dataCallback = &Self.playAudio;
 
         if (self.has_init_ma_device) {
-            c.ma_device_uninit(&self.ma_device);
+            c.ma_device_uninit(self.ma_device);
             self.has_init_ma_device = false;
         }
 
-        if (c.ma_device_init(null, &self.ma_device_config, &self.ma_device) !=
+        if (c.ma_device_init(null, &self.ma_device_config, self.ma_device) !=
             c.MA_SUCCESS)
         {
             return error.CantInitMiniaudio;
@@ -583,10 +600,12 @@ pub const Player = struct {
         self.has_init_ma_device = true;
 
         if (!self.paused) {
+            self.ma_device_mutex.unlock();
             try self.play();
+            self.ma_device_mutex.lock();
         }
 
-        _ = c.ma_device_set_master_volume(&self.ma_device, @floatCast(self.audio_volume));
+        _ = c.ma_device_set_master_volume(self.ma_device, @floatCast(self.audio_volume));
     }
 
     fn isTrackMatchDevice(self: *Self, track: *Track) bool {
@@ -774,8 +793,11 @@ pub const Player = struct {
             clamped_volume = 1.0;
         }
 
+        self.ma_device_mutex.lock();
+        defer self.ma_device_mutex.unlock();
+
         self.audio_volume = clamped_volume;
-        _ = c.ma_device_set_master_volume(&self.ma_device, @floatCast(self.audio_volume));
+        _ = c.ma_device_set_master_volume(self.ma_device, @floatCast(self.audio_volume));
     }
 
     pub fn getVolume(self: *Self) f64 {

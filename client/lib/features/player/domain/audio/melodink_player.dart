@@ -5,6 +5,7 @@ import 'dart:isolate';
 import 'package:ffi/ffi.dart' as ffi;
 import 'package:flutter/foundation.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
+import 'package:mutex/mutex.dart';
 
 enum MelodinkProcessingState {
   /// There hasn't been any resource loaded yet.
@@ -252,30 +253,33 @@ class MelodinkPlayer {
   late final double Function() _getVolume;
   late final void Function(double) _setVolume;
 
+  final actionMutex = Mutex();
+
   void play() => _play();
   void pause() => _pause();
-  Future<void> seek(double position) async => compute((position) {
-        final void Function(double) seek = getLibrary()
-            .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>(
-                'mi_player_seek')
-            .asFunction();
-        seek(position);
-      }, position);
+  Future<void> seek(double position) async =>
+      actionMutex.protect(() => compute((position) {
+            final void Function(double) seek = getLibrary()
+                .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>(
+                    'mi_player_seek')
+                .asFunction();
+            seek(position);
+          }, position));
 
-  Future<void> skipToPrevious() async => compute((_) {
+  Future<void> skipToPrevious() async => actionMutex.protect(() => compute((_) {
         final void Function() skipToPrevious = getLibrary()
             .lookup<ffi.NativeFunction<ffi.Void Function()>>(
                 'mi_player_skip_to_previous')
             .asFunction();
         skipToPrevious();
-      }, null);
-  Future<void> skipToNext() async => compute((_) {
+      }, null));
+  Future<void> skipToNext() async => actionMutex.protect(() => compute((_) {
         final void Function() skipToNext = getLibrary()
             .lookup<ffi.NativeFunction<ffi.Void Function()>>(
                 'mi_player_skip_to_next')
             .asFunction();
         skipToNext();
-      }, null);
+      }, null));
 
   Future<void> setAudios(
     String serverURL,
@@ -284,69 +288,73 @@ class MelodinkPlayer {
     int currentRequestIndex,
     List<MelodinkTrackRequest> requests,
   ) async {
-    final requestsPointers =
-        ffi.calloc<NativeMelodinkTrackRequest>(requests.length);
+    await actionMutex.protect(
+      () async {
+        final requestsPointers =
+            ffi.calloc<NativeMelodinkTrackRequest>(requests.length);
 
-    final serverURLPointer = serverURL.toNativeUtf8().cast<ffi.Char>();
+        final serverURLPointer = serverURL.toNativeUtf8().cast<ffi.Char>();
 
-    final cachePathPointer = cachePath.toNativeUtf8().cast<ffi.Char>();
+        final cachePathPointer = cachePath.toNativeUtf8().cast<ffi.Char>();
 
-    try {
-      for (var i = 0; i < requests.length; i++) {
-        requestsPointers[i].serverURL = serverURLPointer;
-        requestsPointers[i].cachePath = cachePathPointer;
-        requestsPointers[i].trackId = requests[i].id;
-        requestsPointers[i].originalAudioHash =
-            requests[i].originalAudioHash.toNativeUtf8().cast<ffi.Char>();
+        try {
+          for (var i = 0; i < requests.length; i++) {
+            requestsPointers[i].serverURL = serverURLPointer;
+            requestsPointers[i].cachePath = cachePathPointer;
+            requestsPointers[i].trackId = requests[i].id;
+            requestsPointers[i].originalAudioHash =
+                requests[i].originalAudioHash.toNativeUtf8().cast<ffi.Char>();
 
-        if (requests[i].downloadedPath.isNotEmpty) {
-          requestsPointers[i].downloadedPath =
-              requests[i].downloadedPath.toNativeUtf8().cast<ffi.Char>();
-        } else {
-          requestsPointers[i].downloadedPath = ffi.nullptr;
+            if (requests[i].downloadedPath.isNotEmpty) {
+              requestsPointers[i].downloadedPath =
+                  requests[i].downloadedPath.toNativeUtf8().cast<ffi.Char>();
+            } else {
+              requestsPointers[i].downloadedPath = ffi.nullptr;
+            }
+          }
+
+          await compute((data) {
+            final void Function(
+              int,
+              int,
+              ffi.Pointer<NativeMelodinkTrackRequest>,
+              int,
+            ) setAudios = getLibrary()
+                .lookup<
+                    ffi.NativeFunction<
+                        ffi.Void Function(
+                          ffi.Size,
+                          ffi.Size,
+                          ffi.Pointer<NativeMelodinkTrackRequest>,
+                          ffi.Size,
+                        )>>('mi_player_set_audios')
+                .asFunction();
+
+            setAudios(
+              data["newCurrentTrackIndex"]!,
+              data["currentRequestIndex"]!,
+              ffi.Pointer.fromAddress(data["requestsPointers"]!),
+              data["len"]!,
+            );
+          }, {
+            'newCurrentTrackIndex': newCurrentTrackIndex,
+            'currentRequestIndex': currentRequestIndex,
+            'requestsPointers': requestsPointers.address,
+            'len': requests.length,
+          });
+        } finally {
+          for (var i = 0; i < requests.length; i++) {
+            ffi.calloc.free(requestsPointers[i].originalAudioHash);
+            if (requests[i].downloadedPath.isNotEmpty) {
+              ffi.calloc.free(requestsPointers[i].downloadedPath);
+            }
+          }
+          ffi.calloc.free(cachePathPointer);
+          ffi.calloc.free(serverURLPointer);
+          ffi.calloc.free(requestsPointers);
         }
-      }
-
-      await compute((data) {
-        final void Function(
-          int,
-          int,
-          ffi.Pointer<NativeMelodinkTrackRequest>,
-          int,
-        ) setAudios = getLibrary()
-            .lookup<
-                ffi.NativeFunction<
-                    ffi.Void Function(
-                      ffi.Size,
-                      ffi.Size,
-                      ffi.Pointer<NativeMelodinkTrackRequest>,
-                      ffi.Size,
-                    )>>('mi_player_set_audios')
-            .asFunction();
-
-        setAudios(
-          data["newCurrentTrackIndex"]!,
-          data["currentRequestIndex"]!,
-          ffi.Pointer.fromAddress(data["requestsPointers"]!),
-          data["len"]!,
-        );
-      }, {
-        'newCurrentTrackIndex': newCurrentTrackIndex,
-        'currentRequestIndex': currentRequestIndex,
-        'requestsPointers': requestsPointers.address,
-        'len': requests.length,
-      });
-    } finally {
-      for (var i = 0; i < requests.length; i++) {
-        ffi.calloc.free(requestsPointers[i].originalAudioHash);
-        if (requests[i].downloadedPath.isNotEmpty) {
-          ffi.calloc.free(requestsPointers[i].downloadedPath);
-        }
-      }
-      ffi.calloc.free(cachePathPointer);
-      ffi.calloc.free(serverURLPointer);
-      ffi.calloc.free(requestsPointers);
-    }
+      },
+    );
   }
 
   void setLoopMode(MelodinkLoopMode loopMode) {

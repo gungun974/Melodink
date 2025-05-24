@@ -589,99 +589,107 @@ class AudioController extends BaseAudioHandler {
     player.setQuality(currentAudioQuality);
   }
 
+  final setAudioDebouncer = Debouncer(milliseconds: 100);
+
   Future<void> _updatePlayerTracks() async {
-    await playerTracksMutex.protect(() async {
-      if (DateTime.now().difference(_lastUpdatePlayerTracks).inMilliseconds <
-          10) {
-        await Future.delayed(const Duration(milliseconds: 10));
-      }
-      _lastUpdatePlayerTracks = DateTime.now();
-
-      player.setAuthToken(
-        AppApi().generateCookieHeader(),
-      );
-
-      await updatePlayerQuality();
-
-      final getDownloadedTrackByTrackId =
-          downloadTrackRepository?.getDownloadedTrackByTrackId;
-
-      final List<MelodinkTrackRequest> requests = [];
-
-      int currentRequestIndex = 0;
-
-      for (final (index, track) in [
-        ..._previousTracks,
-        ..._queueTracks,
-        ..._nextTracks,
-      ].indexed) {
-        if (index != 0 && index <= _previousTracks.length - 8) {
-          continue;
+    final completer = Completer();
+    setAudioDebouncer.run(() async {
+      await playerTracksMutex.protect(() async {
+        if (DateTime.now().difference(_lastUpdatePlayerTracks).inMilliseconds <
+            10) {
+          await Future.delayed(const Duration(milliseconds: 10));
         }
+        _lastUpdatePlayerTracks = DateTime.now();
 
-        if (index > _previousTracks.length + 10) {
-          continue;
-        }
+        player.setAuthToken(
+          AppApi().generateCookieHeader(),
+        );
 
-        if (index == _previousTracks.length - 1) {
-          if (_lastCurrentTrackId == track.id) {
-            requests.add(
-              _lastCurrentTrackRequest ??
-                  MelodinkTrackRequest(
-                    id: track.id,
-                    originalAudioHash: track.fileSignature,
-                    downloadedPath: "",
-                  ),
-            );
-            currentRequestIndex = requests.length - 1;
+        await updatePlayerQuality();
+
+        final getDownloadedTrackByTrackId =
+            downloadTrackRepository?.getDownloadedTrackByTrackId;
+
+        final List<MelodinkTrackRequest> requests = [];
+
+        int currentRequestIndex = 0;
+
+        for (final (index, track) in [
+          ..._previousTracks,
+          ..._queueTracks,
+          ..._nextTracks,
+        ].indexed) {
+          if (index != 0 && index <= _previousTracks.length - 8) {
             continue;
+          }
+
+          if (index > _previousTracks.length + 10) {
+            continue;
+          }
+
+          if (index == _previousTracks.length - 1) {
+            if (_lastCurrentTrackId == track.id) {
+              requests.add(
+                _lastCurrentTrackRequest ??
+                    MelodinkTrackRequest(
+                      id: track.id,
+                      originalAudioHash: track.fileSignature,
+                      downloadedPath: "",
+                    ),
+              );
+              currentRequestIndex = requests.length - 1;
+              continue;
+            }
+          }
+
+          DownloadTrack? downloadedTrack;
+
+          if (getDownloadedTrackByTrackId != null) {
+            downloadedTrack = await getDownloadedTrackByTrackId(
+              track.id,
+              shouldVerifyIfFileExist: true,
+            );
+          }
+
+          late MelodinkTrackRequest request;
+
+          if (downloadedTrack == null) {
+            request = MelodinkTrackRequest(
+              id: track.id,
+              originalAudioHash: track.fileSignature,
+              downloadedPath: "",
+            );
+          } else {
+            request = MelodinkTrackRequest(
+              id: track.id,
+              originalAudioHash: track.fileSignature,
+              downloadedPath: downloadedTrack.getUrl(),
+            );
+          }
+
+          requests.add(request);
+
+          if (index == _previousTracks.length - 1) {
+            _lastCurrentTrackId = track.id;
+            _lastCurrentTrackRequest = request;
+            currentRequestIndex = requests.length - 1;
           }
         }
 
-        DownloadTrack? downloadedTrack;
-
-        if (getDownloadedTrackByTrackId != null) {
-          downloadedTrack = await getDownloadedTrackByTrackId(
-            track.id,
-            shouldVerifyIfFileExist: true,
+        if (requests.isNotEmpty) {
+          await player.setAudios(
+            AppApi().getServerUrl(),
+            join(
+                (await getMelodinkInstanceCacheDirectory()).path, "audioCache"),
+            _previousTracks.length - 1,
+            currentRequestIndex,
+            requests,
           );
         }
-
-        late MelodinkTrackRequest request;
-
-        if (downloadedTrack == null) {
-          request = MelodinkTrackRequest(
-            id: track.id,
-            originalAudioHash: track.fileSignature,
-            downloadedPath: "",
-          );
-        } else {
-          request = MelodinkTrackRequest(
-            id: track.id,
-            originalAudioHash: track.fileSignature,
-            downloadedPath: downloadedTrack.getUrl(),
-          );
-        }
-
-        requests.add(request);
-
-        if (index == _previousTracks.length - 1) {
-          _lastCurrentTrackId = track.id;
-          _lastCurrentTrackRequest = request;
-          currentRequestIndex = requests.length - 1;
-        }
-      }
-
-      if (requests.isNotEmpty) {
-        await player.setAudios(
-          AppApi().getServerUrl(),
-          join((await getMelodinkInstanceCacheDirectory()).path, "audioCache"),
-          _previousTracks.length - 1,
-          currentRequestIndex,
-          requests,
-        );
-      }
+      });
+      completer.complete();
     });
+    return completer.future;
   }
 
   Future<void> reloadPlayerTracks() async {
