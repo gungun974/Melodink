@@ -492,12 +492,13 @@ fn findOldestFileByName(allocator: std.mem.Allocator, directory: []const u8, sea
         const subpath = fs.path.join(al, &.{ directory, entry.name }) catch continue;
 
         if (entry.kind == .file) {
+            const time = try getFieMtime(subpath);
+
             const file = try fs.openFileAbsolute(subpath, .{});
             defer file.close();
-            const stat = try file.stat();
 
-            if (std.mem.eql(u8, entry.name, search_file_name) and stat.mtime < oldest_time) {
-                oldest_time = stat.mtime;
+            if (std.mem.eql(u8, entry.name, search_file_name) and time < oldest_time) {
+                oldest_time = time;
                 if (oldest_file != null) {
                     allocator.free(oldest_file.?);
                 }
@@ -508,12 +509,14 @@ fn findOldestFileByName(allocator: std.mem.Allocator, directory: []const u8, sea
             if (result == null) {
                 continue;
             }
+
+            const time = try getFieMtime(subpath);
+
             const file = try fs.openFileAbsolute(result.?, .{});
             defer file.close();
-            const stat = try file.stat();
 
-            if (stat.mtime < oldest_time) {
-                oldest_time = stat.mtime;
+            if (time < oldest_time) {
+                oldest_time = time;
                 if (oldest_file != null) {
                     allocator.free(oldest_file.?);
                 }
@@ -530,8 +533,27 @@ fn findOldestFileByName(allocator: std.mem.Allocator, directory: []const u8, sea
 fn getFileSize(path: []const u8) !u64 {
     const file = try fs.openFileAbsolute(path, .{});
     defer file.close();
+
+    if (builtin.abi.isAndroid()) {
+        const st = try std.posix.fstat(file.handle);
+        return std.fs.File.Stat.fromPosix(st).size;
+    }
+
     const stat = try file.stat();
     return stat.size;
+}
+
+fn getFieMtime(path: []const u8) !i128 {
+    const file = try fs.openFileAbsolute(path, .{});
+    defer file.close();
+
+    if (builtin.abi.isAndroid()) {
+        const st = try std.posix.fstat(file.handle);
+        return std.fs.File.Stat.fromPosix(st).mtime;
+    }
+
+    const stat = try file.stat();
+    return stat.mtime;
 }
 
 fn getDirectorySize(allocator: std.mem.Allocator, path: []const u8) !u64 {
