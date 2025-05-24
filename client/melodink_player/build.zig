@@ -503,6 +503,10 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
         step.linkSystemLibrary2("swresample", .{
             .use_pkg_config = .no,
         });
+
+        step.linkSystemLibrary("OpenSLES");
+
+        step.linkSystemLibrary("android");
     } else if (target.result.os.tag == .windows) {
         const ffmpeg = b.lazyDependency("ffmpeg_win32", .{}) orelse return;
 
