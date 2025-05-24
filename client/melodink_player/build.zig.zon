@@ -43,6 +43,10 @@
             .hash = "N-V-__8AAJ8bbwgQf_QTYTYX75tN42xYTQQ1fdJ652O03odP",
             .lazy = true,
         },
+        .ffmpeg_zig = .{
+            .url = "https://github.com/allyourcodebase/ffmpeg/archive/9e9ca0c9358eebb920985c6c2501b60239165038.tar.gz",
+            .hash = "ffmpeg-7.0.1-6-zT7QAyF8CASSBroV4hbEPVXAJPYdW19jqhNtNsbvM9jR",
+        },
     },
 
     .paths = .{

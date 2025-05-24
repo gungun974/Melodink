@@ -4,9 +4,7 @@ const c = @import("c.zig");
 
 const Fifo = @import("fifo.zig");
 
-const CacheAVIO = @import("cache.zig");
-
-const ENABLE_CACHE = true;
+const ENABLE_CACHE = false;
 const ENABLE_TRACK_OPEN_INFO = false;
 
 pub const TrackStatus = enum(u8) {
@@ -54,7 +52,6 @@ pub const Track = struct {
 
     original_audio_hash: ?[]const u8,
     cache_path: ?[]const u8,
-    cache_avio: *CacheAVIO,
 
     open_close_mutex: std.Thread.Mutex = std.Thread.Mutex{},
 
@@ -100,7 +97,7 @@ pub const Track = struct {
         pkt_size: usize,
     };
 
-    pub fn new(allocator: std.mem.Allocator, id: u64, quality: TrackQuality, server_url: []const u8, downloaded_path: ?[]const u8, original_audio_hash: ?[]const u8, cache_path: ?[]const u8, server_auth: []const u8, protected_opened_cache_paths: *CacheAVIO.ProtectedOpenedPathsList) !Self {
+    pub fn new(allocator: std.mem.Allocator, id: u64, quality: TrackQuality, server_url: []const u8, downloaded_path: ?[]const u8, original_audio_hash: ?[]const u8, cache_path: ?[]const u8, server_auth: []const u8) !Self {
         const internal_server_url = try allocator.alloc(u8, server_url.len);
         errdefer allocator.free(internal_server_url);
 
@@ -130,14 +127,6 @@ pub const Track = struct {
         }
         errdefer if (cache_path != null) allocator.free(internal_cache_path.?);
 
-        const cache_avio = try allocator.create(CacheAVIO);
-
-        cache_avio.* = .{
-            .allocator = allocator,
-            .index_map = std.ArrayList(u8).init(allocator),
-            .protected_opened_cache_paths = protected_opened_cache_paths,
-        };
-
         return .{
             .allocator = allocator,
 
@@ -151,7 +140,6 @@ pub const Track = struct {
 
             .server_auth = server_auth,
 
-            .cache_avio = cache_avio,
             .cached_packet_fifo = AVPacketFifo.init(allocator),
         };
     }
@@ -167,8 +155,6 @@ pub const Track = struct {
             self.allocator.free(self.downloaded_path.?);
         }
 
-        self.cache_avio.index_map.deinit();
-
         if (self.original_audio_hash != null) {
             self.allocator.free(self.original_audio_hash.?);
         }
@@ -176,8 +162,6 @@ pub const Track = struct {
         if (self.cache_path != null) {
             self.allocator.free(self.cache_path.?);
         }
-
-        self.allocator.destroy(self.cache_avio);
     }
 
     pub fn open(self: *Self, pool: *std.Thread.Pool) !void {
@@ -259,19 +243,7 @@ pub const Track = struct {
 
             std.log.debug("open url: {s}", .{url});
 
-            if (ENABLE_CACHE and self.original_audio_hash != null and self.cache_path != null) {
-                const cache_key = try std.fmt.allocPrint(self.allocator, "{}-{}-{s}", .{ self.id, self.quality, self.original_audio_hash.? });
-                defer self.allocator.free(cache_key);
-
-                try self.cache_avio.init(self.cache_path.?, cache_key, url, &open_options);
-
-                self.av_format_ctx.?.pb = self.cache_avio.avio_ctx;
-                self.av_format_ctx.?.flags |= c.AVFMT_FLAG_CUSTOM_IO;
-
-                response = c.avformat_open_input(&self.av_format_ctx, null, null, null);
-            } else {
-                response = c.avformat_open_input(&self.av_format_ctx, url.ptr, null, &open_options);
-            }
+            response = c.avformat_open_input(&self.av_format_ctx, url.ptr, null, &open_options);
         } else {
             const path = try std.fmt.allocPrintZ(self.allocator, "{s}", .{self.downloaded_path.?});
             defer self.allocator.free(path);
@@ -280,10 +252,6 @@ pub const Track = struct {
 
             response = c.avformat_open_input(&self.av_format_ctx, path.ptr, null, &open_options);
         }
-
-        errdefer if (self.downloaded_path == null and self.original_audio_hash != null and self.cache_path != null) {
-            self.cache_avio.deinit();
-        };
 
         if (response < 0) {
             std.log.err("avformat_open_input response: {s}", .{self.getAVError(response)});
@@ -818,8 +786,6 @@ pub const Track = struct {
         c.swr_free(&self.swr_audio_resampler);
         c.avcodec_free_context(&self.av_audio_codec_ctx);
         c.avformat_close_input(&self.av_format_ctx);
-
-        self.cache_avio.deinit();
 
         c.avformat_free_context(self.av_format_ctx);
 

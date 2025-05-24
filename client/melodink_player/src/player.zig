@@ -56,8 +56,6 @@ const TrackManager = struct {
 
     current_track_index: ?usize = 0,
 
-    protected_opened_cache_paths: CacheAVIO.ProtectedOpenedPathsList,
-
     pub fn getCurrentIndexedTrack(self: *const Self) ?IndexedTrack {
         if (self.current_track_index == null or self.current_track_index.? >= self.manage_tracks_order.items.len) {
             return null;
@@ -77,8 +75,6 @@ const TrackManager = struct {
 
             .manage_tracks_order = TrackArrayList.init(allocator),
             .manage_loaded_tracks = TrackAutoHashMap.init(allocator),
-
-            .protected_opened_cache_paths = CacheAVIO.ProtectedOpenedPathsList.init(allocator),
         };
     }
 
@@ -91,8 +87,6 @@ const TrackManager = struct {
 
         self.manage_tracks_order.deinit();
         self.manage_loaded_tracks.deinit();
-
-        self.protected_opened_cache_paths.deinit();
     }
 
     fn freeTrack(self: *Self, track: *Track) !void {
@@ -141,7 +135,7 @@ const TrackManager = struct {
                 const new_track = try self.allocator.create(Track);
                 errdefer self.allocator.destroy(new_track);
 
-                new_track.* = try Track.new(self.allocator, request.id, quality, request.server_url, request.downloaded_path, request.original_audio_hash, request.cache_path, server_auth, &self.protected_opened_cache_paths);
+                new_track.* = try Track.new(self.allocator, request.id, quality, request.server_url, request.downloaded_path, request.original_audio_hash, request.cache_path, server_auth);
 
                 try self.manage_loaded_tracks.put(request.id, new_track);
             }

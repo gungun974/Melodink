@@ -14,6 +14,8 @@ pub fn build(b: *std.Build) void {
 
     const optimize = b.standardOptimizeOption(.{});
 
+    const is_wasm = target.result.cpu.arch == .wasm32;
+
     if (target.result.os.tag == .ios) {
         buildForIOS(b, optimize) catch unreachable;
         return;
@@ -26,6 +28,105 @@ pub fn build(b: *std.Build) void {
 
     if (target.result.abi.isAndroid()) {
         buildForAndroid(b, optimize) catch unreachable;
+        return;
+    }
+
+    if (is_wasm) {
+        const wasm_target = b.resolveTargetQuery(.{
+            .cpu_arch = .wasm32,
+            .cpu_model = .{ .explicit = &std.Target.wasm.cpu.mvp },
+            .cpu_features_add = std.Target.wasm.featureSet(&.{
+                .atomics,
+                .bulk_memory,
+            }),
+            .os_tag = .emscripten,
+        });
+
+        if (b.sysroot == null) {
+            @panic("Pass '--sysroot \"[path to emsdk installation]/upstream/emscripten\"'");
+        }
+
+        const lib = try buildLibrary(
+            b,
+            wasm_target,
+            optimize,
+            .static,
+        );
+
+        lib.shared_memory = false;
+        lib.root_module.single_threaded = false;
+
+        lib.linkLibC();
+
+        const sysroot_include = b.pathJoin(&.{ b.sysroot.?, "cache", "sysroot", "include" });
+        var dir = std.fs.openDirAbsolute(sysroot_include, std.fs.Dir.OpenDirOptions{ .access_sub_paths = true, .no_follow = true }) catch @panic("No emscripten cache. Generate it!");
+        dir.close();
+
+        lib.addIncludePath(.{ .cwd_relative = sysroot_include });
+
+        // b.installArtifact(lib);
+
+        const emcc_exe = switch (builtin.os.tag) {
+            .windows => "emcc.bat",
+            else => "emcc",
+        };
+
+        const emcc_exe_path = b.pathJoin(&.{ b.sysroot.?, emcc_exe });
+        const emcc_command = b.addSystemCommand(&[_][]const u8{emcc_exe_path});
+        emcc_command.addArgs(&[_][]const u8{
+            "-o",
+            "zig-out/web/index.js",
+            "-sFULL-ES3=1",
+            "-sUSE_GLFW=3",
+            "-O3",
+
+            "-sEXPORTED_FUNCTIONS=['_mi_player_init']",
+            "-sEXPORTED_RUNTIME_METHODS=ccall,cwrap",
+
+            // "-sAUDIO_WORKLET=1",
+            // "-sWASM_WORKERS=1",
+
+            "-sASYNCIFY",
+            // TODO currently deactivated because it seems as if it doesn't work with local hosting debug workflow
+            // "-pthread",
+            // "-sPTHREAD_POOL_SIZE=4",
+
+            "-sINITIAL_MEMORY=167772160",
+            //"-sEXPORTED_FUNCTIONS=_main,__builtin_return_address",
+
+            // USE_OFFSET_CONVERTER required for @returnAddress used in
+            // std.mem.Allocator interface
+            "-sUSE_OFFSET_CONVERTER",
+            // "--shell-file",
+            // b.path("src/shell.html").getPath(b),
+        });
+
+        const link_items: []const *std.Build.Step.Compile = &.{
+            lib,
+        };
+        for (link_items) |item| {
+            emcc_command.addFileArg(item.getEmittedBin());
+            emcc_command.step.dependOn(&item.step);
+        }
+
+        // emcc_command.addArg("/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/umd/ffmpeg-core.wasm");
+        // emcc_command.addArg("/tmp/ffmpeg.js/build/build/ffmpeg-mp4/libavformat/libavformat.a");
+        // emcc_command.addArg("/tmp/ffmpeg.js/build/build/ffmpeg-mp4/libavutil/libavutil.a");
+        // emcc_command.addArg("/tmp/ffmpeg.js/build/build/ffmpeg-mp4/libswresample/libswresample.a");
+
+        emcc_command.addFileArg(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libavcodec/libavcodec.a" });
+        emcc_command.addFileArg(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libavformat/libavformat.a" });
+        emcc_command.addFileArg(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libavutil/libavutil.a" });
+        emcc_command.addFileArg(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libswresample/libswresample.a" });
+
+        // step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libavcodec/libavcodec.a" });
+        // step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libavformat/libavformat.a" });
+        // step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libavutil/libavutil.a" });
+        // step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libswresample/libswresample.a" });
+
+        const install = emcc_command;
+        b.default_step.dependOn(&install.step);
+
         return;
     }
 
@@ -526,10 +627,30 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
             .use_pkg_config = .no,
         });
     } else {
-        step.linkSystemLibrary("avcodec");
-        step.linkSystemLibrary("avformat");
-        step.linkSystemLibrary("avutil");
-        step.linkSystemLibrary("swresample");
+        const ffmpeg = b.lazyDependency("ffmpeg_win32", .{}) orelse return;
+
+        step.addIncludePath(ffmpeg.path("include"));
+        // step.addLibraryPath(.{ .cwd_relative = "/home/gungun974/Downloads/Music/rust-ffmpeg-wasi-0.1.13/wasm-libs" });
+        // step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/Music/ffmpeg-6.0-wasm32-wasi-v0.0.1/lib/libavcodec.a" });
+        // step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/Music/ffmpeg-6.0-wasm32-wasi-v0.0.1/lib/libavformat.a" });
+        // step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/Music/ffmpeg-6.0-wasm32-wasi-v0.0.1/lib/libavutil.a" });
+        // step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/Music/ffmpeg-6.0-wasm32-wasi-v0.0.1/lib/libswresample.a" });
+
+        step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libavcodec/libavcodec.a" });
+        step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libavformat/libavformat.a" });
+        step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libavutil/libavutil.a" });
+        step.addObjectFile(.{ .cwd_relative = "/home/gungun974/Downloads/ffmpeg.wasm/packages/core-mt/dist/src/libswresample/libswresample.a" });
+
+        // step.addObjectFile(.{ .cwd_relative = "/tmp/ffmpeg.js/build/build/ffmpeg-mp4/ffmpeg.bc" });
+
+        // step.linkSystemLibrary2("swresample", .{
+        //     .use_pkg_config = .no,
+        // });
+
+        // step.linkSystemLibrary("avcodec");
+        // step.linkSystemLibrary("avformat");
+        // step.linkSystemLibrary("avutil");
+        // step.linkSystemLibrary("swresample");
     }
 
     // Miniaudio
