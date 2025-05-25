@@ -48,4 +48,13 @@ migrate-create:
 	@read name; \
 	migrate create -ext sql -dir ./lib/core/database/migrations -tz UTC $$name
 
-.PHONY: deps prebuild watch-code-generation dev build-android build-android-appbundle build-ios build-macos build-windows build-linux migrate-create build/linux/x64/release/bundle/melodink_client
+clean:
+	flutter clean
+ifeq ($(UNAME_S),Darwin)
+	cd ios/MelodinkPlayer; make clean
+	cd macos/MelodinkPlayer; make clean
+endif
+	rm -rf ./melodink_player/zig-out
+	rm -rf ./melodink_player/.zig-cache
+
+.PHONY: deps prebuild watch-code-generation dev build-android build-android-appbundle build-ios build-macos build-windows build-linux migrate-create debug-build-melodink-player clean
