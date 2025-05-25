@@ -49,7 +49,7 @@
         ];
       };
 
-      zig = pkgs.zigpkgs."0.14.0";
+      zig = pkgs.zigpkgs."0.14.1";
       zls = zls-overlay.packages.${system}.zls.overrideAttrs (old: {
         nativeBuildInputs = [zig];
       });

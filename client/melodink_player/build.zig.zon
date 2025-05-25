@@ -5,7 +5,7 @@
 
     .fingerprint = 0x27c8197b771674,
 
-    .minimum_zig_version = "0.14.0",
+    .minimum_zig_version = "0.14.1",
 
     .dependencies = .{
         .ffmpeg_ios = .{
