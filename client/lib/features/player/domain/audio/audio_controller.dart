@@ -601,10 +601,6 @@ class AudioController extends BaseAudioHandler {
         }
         _lastUpdatePlayerTracks = DateTime.now();
 
-        player.setAuthToken(
-          AppApi().generateCookieHeader(),
-        );
-
         await updatePlayerQuality();
 
         final getDownloadedTrackByTrackId =
@@ -684,6 +680,7 @@ class AudioController extends BaseAudioHandler {
             _previousTracks.length - 1,
             currentRequestIndex,
             requests,
+            AppApi().generateCookieHeader(),
           );
         }
       });

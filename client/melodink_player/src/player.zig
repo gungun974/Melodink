@@ -243,8 +243,6 @@ pub const Player = struct {
 
     loop_mode: LoopMode = .none,
 
-    server_auth: [512:0]u8 = [_:0]u8{0} ** 512,
-
     ma_device: *c.ma_device = undefined,
     ma_device_config: c.ma_device_config,
     has_init_ma_device: bool = false,
@@ -457,13 +455,13 @@ pub const Player = struct {
         }
     }
 
-    pub fn setAudios(self: *Self, virtual_index: usize, play_request_index: usize, requests: []const MelodinkTrackRequest) !void {
+    pub fn setAudios(self: *Self, virtual_index: usize, play_request_index: usize, requests: []const MelodinkTrackRequest, server_auth: []const u8) !void {
         self.tracks_mutex.lock();
         defer self.tracks_mutex.unlock();
 
         self.current_virtual_index = virtual_index;
 
-        try self.track_manager.loads(play_request_index, requests, self.target_quality, &self.server_auth);
+        try self.track_manager.loads(play_request_index, requests, self.target_quality, server_auth);
     }
 
     pub fn process(self: *Self) !void {
@@ -732,13 +730,6 @@ pub const Player = struct {
 
     pub fn setQuality(self: *Self, quality: TrackQuality) !void {
         self.target_quality = quality;
-    }
-
-    pub fn setAuthToken(self: *Self, auth_token: []const u8) !void {
-        if (auth_token.len >= 512) {
-            return error.AcessTokenIsTooBig;
-        }
-        std.mem.copyBackwards(u8, &self.server_auth, auth_token);
     }
 
     pub fn getCurrentVirtualTrack(self: *Self) u64 {

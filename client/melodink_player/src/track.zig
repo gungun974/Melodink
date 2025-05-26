@@ -106,6 +106,11 @@ pub const Track = struct {
 
         std.mem.copyBackwards(u8, internal_server_url, server_url);
 
+        const internal_server_auth = try allocator.alloc(u8, server_auth.len);
+        errdefer allocator.free(internal_server_auth);
+
+        std.mem.copyBackwards(u8, internal_server_auth, server_auth);
+
         var internal_downloaded_path: ?[]u8 = null;
 
         if (downloaded_path != null) {
@@ -149,7 +154,7 @@ pub const Track = struct {
             .original_audio_hash = internal_original_audio_hash,
             .cache_path = internal_cache_path,
 
-            .server_auth = server_auth,
+            .server_auth = internal_server_auth,
 
             .cache_avio = cache_avio,
             .cached_packet_fifo = AVPacketFifo.init(allocator),
@@ -162,6 +167,7 @@ pub const Track = struct {
         self.cached_packet_fifo.deinit();
 
         self.allocator.free(self.server_url);
+        self.allocator.free(self.server_auth);
 
         if (self.downloaded_path != null) {
             self.allocator.free(self.downloaded_path.?);

@@ -87,13 +87,13 @@ pub const ExternalMelodinkTrackRequest = extern struct {
     downloadedPath: [*c]const u8,
 };
 
-pub export fn mi_player_set_audios(virtual_index: usize, play_request_index: usize, requests: [*c]const ExternalMelodinkTrackRequest, request_count: usize) void {
-    loadCMelodinkRequest(virtual_index, play_request_index, requests, request_count) catch |err| {
+pub export fn mi_player_set_audios(virtual_index: usize, play_request_index: usize, requests: [*c]const ExternalMelodinkTrackRequest, request_count: usize, server_auth: [*c]const u8) void {
+    loadCMelodinkRequest(virtual_index, play_request_index, requests, request_count, server_auth) catch |err| {
         std.log.warn("Unable to set audios : {}", .{err});
     };
 }
 
-pub fn loadCMelodinkRequest(virtual_index: usize, play_request_index: usize, requests: [*c]const ExternalMelodinkTrackRequest, request_count: usize) !void {
+pub fn loadCMelodinkRequest(virtual_index: usize, play_request_index: usize, requests: [*c]const ExternalMelodinkTrackRequest, request_count: usize, server_auth: [*c]const u8) !void {
     const melodink_requests = try allocator.alloc(PlayerMod.MelodinkTrackRequest, request_count);
     defer allocator.free(melodink_requests);
 
@@ -109,7 +109,7 @@ pub fn loadCMelodinkRequest(virtual_index: usize, play_request_index: usize, req
         };
     }
 
-    try player.?.setAudios(virtual_index, play_request_index, melodink_requests);
+    try player.?.setAudios(virtual_index, play_request_index, melodink_requests, server_auth[0..std.mem.len(server_auth)]);
 }
 
 pub export fn mi_player_set_loop_mode(loop: u8) void {
@@ -119,12 +119,6 @@ pub export fn mi_player_set_loop_mode(loop: u8) void {
 pub export fn mi_player_set_quality(quality: u8) void {
     player.?.setQuality(@enumFromInt(quality)) catch |err| {
         std.log.warn("Unable to change quality : {}", .{err});
-    };
-}
-
-pub export fn mi_player_set_auth_token(auth_token: [*c]const u8) void {
-    player.?.setAuthToken(auth_token[0..std.mem.len(auth_token)]) catch |err| {
-        std.log.warn("Unable to set auth token : {}", .{err});
     };
 }
 

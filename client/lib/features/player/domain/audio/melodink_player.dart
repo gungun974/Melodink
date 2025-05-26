@@ -157,10 +157,6 @@ class MelodinkPlayer {
         .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Uint8)>>(
             'mi_player_set_quality')
         .asFunction();
-    _setAuthToken = lib
-        .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Utf8>)>>(
-            'mi_player_set_auth_token')
-        .asFunction();
     _getCurrentPlaying = lib
         .lookup<ffi.NativeFunction<ffi.Uint8 Function()>>(
             'mi_player_get_current_playing')
@@ -241,7 +237,6 @@ class MelodinkPlayer {
 
   late final void Function(int) _setLoopMode;
   late final void Function(int) _setQuality;
-  late final void Function(ffi.Pointer<ffi.Utf8>) _setAuthToken;
 
   late final int Function() _getCurrentPlaying;
   late final int Function() _getCurrentTrackPos;
@@ -287,6 +282,7 @@ class MelodinkPlayer {
     int newCurrentTrackIndex,
     int currentRequestIndex,
     List<MelodinkTrackRequest> requests,
+    String serverAuth,
   ) async {
     await actionMutex.protect(
       () async {
@@ -294,6 +290,8 @@ class MelodinkPlayer {
             ffi.calloc<NativeMelodinkTrackRequest>(requests.length);
 
         final serverURLPointer = serverURL.toNativeUtf8().cast<ffi.Char>();
+
+        final serverAuthPointer = serverAuth.toNativeUtf8().cast<ffi.Char>();
 
         final cachePathPointer = cachePath.toNativeUtf8().cast<ffi.Char>();
 
@@ -319,6 +317,7 @@ class MelodinkPlayer {
               int,
               ffi.Pointer<NativeMelodinkTrackRequest>,
               int,
+              ffi.Pointer<ffi.Utf8>,
             ) setAudios = getLibrary()
                 .lookup<
                     ffi.NativeFunction<
@@ -327,6 +326,7 @@ class MelodinkPlayer {
                           ffi.Size,
                           ffi.Pointer<NativeMelodinkTrackRequest>,
                           ffi.Size,
+                          ffi.Pointer<ffi.Utf8>,
                         )>>('mi_player_set_audios')
                 .asFunction();
 
@@ -335,12 +335,14 @@ class MelodinkPlayer {
               data["currentRequestIndex"]!,
               ffi.Pointer.fromAddress(data["requestsPointers"]!),
               data["len"]!,
+              ffi.Pointer.fromAddress(data["serverAuth"]!),
             );
           }, {
             'newCurrentTrackIndex': newCurrentTrackIndex,
             'currentRequestIndex': currentRequestIndex,
             'requestsPointers': requestsPointers.address,
             'len': requests.length,
+            'serverAuth': serverAuthPointer.address,
           });
         } finally {
           for (var i = 0; i < requests.length; i++) {
@@ -351,6 +353,7 @@ class MelodinkPlayer {
           }
           ffi.calloc.free(cachePathPointer);
           ffi.calloc.free(serverURLPointer);
+          ffi.calloc.free(serverAuthPointer);
           ffi.calloc.free(requestsPointers);
         }
       },
@@ -368,12 +371,6 @@ class MelodinkPlayer {
       AppSettingAudioQuality.high => 2,
       AppSettingAudioQuality.lossless => 3,
     });
-  }
-
-  void setAuthToken(String authToken) {
-    final tokenPtr = authToken.toNativeUtf8();
-    _setAuthToken(tokenPtr);
-    ffi.calloc.free(tokenPtr);
   }
 
   bool getCurrentPlaying() => _getCurrentPlaying() != 0;
