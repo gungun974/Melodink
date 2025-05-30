@@ -247,6 +247,7 @@ pub const Player = struct {
 
     loop_mode: LoopMode = .none,
 
+    ma_context: *c.ma_context = undefined,
     ma_device: *c.ma_device = undefined,
     ma_device_config: c.ma_device_config,
     has_init_ma_device: bool = false,
@@ -287,6 +288,18 @@ pub const Player = struct {
 
         try pool.init(std.Thread.Pool.Options{ .allocator = allocator, .n_jobs = 8 });
 
+        const ma_context = try allocator.create(c.ma_context);
+
+        var context_config = c.ma_context_config_init();
+
+        context_config.coreaudio.noAudioSessionActivate = c.MA_FALSE;
+        context_config.coreaudio.noAudioSessionDeactivate = c.MA_FALSE;
+        context_config.coreaudio.sessionCategory = c.ma_ios_session_category_playback;
+
+        if (c.ma_context_init(null, 0, &context_config, ma_context) != c.MA_SUCCESS) {
+            return error.CantInitMiniaudioContext;
+        }
+
         return .{
             .allocator = allocator,
 
@@ -295,6 +308,7 @@ pub const Player = struct {
             .target_quality = TrackQuality.lossless,
             .current_quality = TrackQuality.lossless,
 
+            .ma_context = ma_context,
             .ma_device = try allocator.create(c.ma_device),
             .ma_device_config = c.ma_device_config_init(c.ma_device_type_playback),
 
@@ -343,6 +357,10 @@ pub const Player = struct {
         self.allocator.destroy(self.pool_threads);
 
         self.allocator.destroy(self.ma_device);
+
+        _ = c.ma_context_uninit(self.ma_context);
+
+        self.allocator.destroy(self.ma_context);
     }
 
     pub fn play(self: *Self) !void {
@@ -595,7 +613,7 @@ pub const Player = struct {
             self.has_init_ma_device = false;
         }
 
-        if (c.ma_device_init(null, &self.ma_device_config, self.ma_device) !=
+        if (c.ma_device_init(self.ma_context, &self.ma_device_config, self.ma_device) !=
             c.MA_SUCCESS)
         {
             return error.CantInitMiniaudio;

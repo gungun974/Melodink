@@ -889,6 +889,10 @@ class AudioSessionHandler {
   bool _playInterrupted = false;
 
   setActive(bool active) {
+    // Miniaudio handle IOS
+    if (Platform.isIOS) {
+      return;
+    }
     session.setActive(active);
   }
 
