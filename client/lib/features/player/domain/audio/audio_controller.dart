@@ -598,104 +598,96 @@ class AudioController extends BaseAudioHandler {
     player.setQuality(currentAudioQuality);
   }
 
-  final setAudioDebouncer = Debouncer(milliseconds: 100);
-
   Future<void> _updatePlayerTracks() async {
-    final completer = Completer();
-    setAudioDebouncer.run(() async {
-      await playerTracksMutex.protect(() async {
-        if (DateTime.now().difference(_lastUpdatePlayerTracks).inMilliseconds <
-            10) {
-          await Future.delayed(const Duration(milliseconds: 10));
+    return await playerTracksMutex.protect(() async {
+      if (DateTime.now().difference(_lastUpdatePlayerTracks).inMilliseconds <
+          10) {
+        await Future.delayed(const Duration(milliseconds: 10));
+      }
+      _lastUpdatePlayerTracks = DateTime.now();
+
+      await updatePlayerQuality();
+
+      final getDownloadedTrackByTrackId =
+          downloadTrackRepository?.getDownloadedTrackByTrackId;
+
+      final List<MelodinkTrackRequest> requests = [];
+
+      int currentRequestIndex = 0;
+
+      for (final (index, track) in [
+        ..._previousTracks,
+        ..._queueTracks,
+        ..._nextTracks,
+      ].indexed) {
+        if (index != 0 && index <= _previousTracks.length - 8) {
+          continue;
         }
-        _lastUpdatePlayerTracks = DateTime.now();
 
-        await updatePlayerQuality();
+        if (index > _previousTracks.length + 10) {
+          continue;
+        }
 
-        final getDownloadedTrackByTrackId =
-            downloadTrackRepository?.getDownloadedTrackByTrackId;
-
-        final List<MelodinkTrackRequest> requests = [];
-
-        int currentRequestIndex = 0;
-
-        for (final (index, track) in [
-          ..._previousTracks,
-          ..._queueTracks,
-          ..._nextTracks,
-        ].indexed) {
-          if (index != 0 && index <= _previousTracks.length - 8) {
-            continue;
-          }
-
-          if (index > _previousTracks.length + 10) {
-            continue;
-          }
-
-          if (index == _previousTracks.length - 1) {
-            if (_lastCurrentTrackId == track.id) {
-              requests.add(
-                _lastCurrentTrackRequest ??
-                    MelodinkTrackRequest(
-                      id: track.id,
-                      originalAudioHash: track.fileSignature,
-                      downloadedPath: "",
-                    ),
-              );
-              currentRequestIndex = requests.length - 1;
-              continue;
-            }
-          }
-
-          DownloadTrack? downloadedTrack;
-
-          if (getDownloadedTrackByTrackId != null) {
-            downloadedTrack = await getDownloadedTrackByTrackId(
-              track.id,
-              shouldVerifyIfFileExist: true,
+        if (index == _previousTracks.length - 1) {
+          if (_lastCurrentTrackId == track.id) {
+            requests.add(
+              _lastCurrentTrackRequest ??
+                  MelodinkTrackRequest(
+                    id: track.id,
+                    originalAudioHash: track.fileSignature,
+                    downloadedPath: "",
+                  ),
             );
-          }
-
-          late MelodinkTrackRequest request;
-
-          if (downloadedTrack == null) {
-            request = MelodinkTrackRequest(
-              id: track.id,
-              originalAudioHash: track.fileSignature,
-              downloadedPath: "",
-            );
-          } else {
-            request = MelodinkTrackRequest(
-              id: track.id,
-              originalAudioHash: track.fileSignature,
-              downloadedPath: downloadedTrack.getUrl(),
-            );
-          }
-
-          requests.add(request);
-
-          if (index == _previousTracks.length - 1) {
-            _lastCurrentTrackId = track.id;
-            _lastCurrentTrackRequest = request;
             currentRequestIndex = requests.length - 1;
+            continue;
           }
         }
 
-        if (requests.isNotEmpty) {
-          await player.setAudios(
-            AppApi().getServerUrl(),
-            join(
-                (await getMelodinkInstanceCacheDirectory()).path, "audioCache"),
-            _previousTracks.length - 1,
-            currentRequestIndex,
-            requests,
-            AppApi().generateCookieHeader(),
+        DownloadTrack? downloadedTrack;
+
+        if (getDownloadedTrackByTrackId != null) {
+          downloadedTrack = await getDownloadedTrackByTrackId(
+            track.id,
+            shouldVerifyIfFileExist: true,
           );
         }
-      });
-      completer.complete();
+
+        late MelodinkTrackRequest request;
+
+        if (downloadedTrack == null) {
+          request = MelodinkTrackRequest(
+            id: track.id,
+            originalAudioHash: track.fileSignature,
+            downloadedPath: "",
+          );
+        } else {
+          request = MelodinkTrackRequest(
+            id: track.id,
+            originalAudioHash: track.fileSignature,
+            downloadedPath: downloadedTrack.getUrl(),
+          );
+        }
+
+        requests.add(request);
+
+        if (index == _previousTracks.length - 1) {
+          _lastCurrentTrackId = track.id;
+          _lastCurrentTrackRequest = request;
+          currentRequestIndex = requests.length - 1;
+        }
+      }
+
+      if (requests.isNotEmpty) {
+        await player.setAudios(
+          AppApi().getServerUrl(),
+          join((await getMelodinkInstanceCacheDirectory()).path, "audioCache"),
+          _previousTracks.length - 1,
+          currentRequestIndex,
+          requests,
+          AppApi().generateCookieHeader(),
+        );
+      }
     });
-    return completer.future;
   }
 
   Future<void> reloadPlayerTracks() async {
@@ -710,7 +702,7 @@ class AudioController extends BaseAudioHandler {
     await _updatePlaybackState();
   }
 
-  final audioChangedDebouncer = Debouncer(milliseconds: 50);
+  final audioChangedDebouncer = Debouncer(milliseconds: 5);
 
   void audioChanged(int pos) {
     audioChangedDebouncer.run(() async {

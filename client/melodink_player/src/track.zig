@@ -904,7 +904,7 @@ pub const Track = struct {
     }
 
     pub fn haveReachEnd(self: *Self) bool {
-        return self.status == .completed and self.audio_fifo.size() == 0;
+        return self.status == .completed and self.audio_fifo.size() == 0 and !self.need_reset;
     }
 
     fn calculateAudioPts(self: *Self, frame: *c.AVFrame) f64 {

@@ -163,6 +163,10 @@ const TrackManager = struct {
         // set current track
 
         if (requests.len > 0) {
+            if (self.getCurrentIndexedTrack() != null and self.getCurrentIndexedTrack().?.track.id != self.manage_tracks_order.items[play_request_index].track.id) {
+                self.getCurrentIndexedTrack().?.track.need_reset = true;
+            }
+
             self.setCurrentIndexedTrack(self.manage_tracks_order.items[play_request_index]);
         }
 
@@ -372,6 +376,9 @@ pub const Player = struct {
     }
 
     pub fn seek(self: *Self, new_time: f64) !void {
+        self.ma_device_mutex.lock();
+        defer self.ma_device_mutex.unlock();
+
         self.tracks_mutex.lock();
         defer self.tracks_mutex.unlock();
 
@@ -380,9 +387,6 @@ pub const Player = struct {
         if (current_track == null) {
             return;
         }
-
-        self.ma_device_mutex.lock();
-        defer self.ma_device_mutex.unlock();
 
         if (self.has_init_ma_device and c.ma_device_stop(self.ma_device) != c.MA_SUCCESS) {
             return error.CantStopMiniaudio;
@@ -448,7 +452,7 @@ pub const Player = struct {
 
         self.track_manager.setCurrentIndexedTrack(next_track);
 
-        if (current_track.?.next() == null) {
+        if (current_track.?.next() == null and self.loop_mode == .all) {
             self.current_virtual_index = 0;
         } else {
             self.current_virtual_index += 1;
@@ -499,7 +503,7 @@ pub const Player = struct {
 
         var track_to_load = current_track.?;
 
-        for (0..50) |_| {
+        for (0..10) |_| {
             try self.openAndProcessTrack(track_to_load.track);
 
             if (!Player.isTrackBufferedEnough(track_to_load.track, 4)) {
@@ -516,7 +520,7 @@ pub const Player = struct {
                 }
             }
 
-            const next_track = track_to_load.next();
+            const next_track = track_to_load.next() orelse if (self.loop_mode == .all) track_to_load.first() else null;
 
             if (next_track == null) {
                 return;
@@ -600,9 +604,11 @@ pub const Player = struct {
         self.has_init_ma_device = true;
 
         if (!self.paused) {
-            self.ma_device_mutex.unlock();
-            try self.play();
-            self.ma_device_mutex.lock();
+            self.tracks_mutex.unlock();
+            if (c.ma_device_start(self.ma_device) != c.MA_SUCCESS) {
+                return error.CantStartMiniaudio;
+            }
+            self.tracks_mutex.lock();
         }
 
         _ = c.ma_device_set_master_volume(self.ma_device, @floatCast(self.audio_volume));
@@ -674,7 +680,9 @@ pub const Player = struct {
             return;
         };
 
-        if ((current_track.next() != null and current_track.next().?.track == current_track.track) and haveLoopOnItself) {
+        const next_track = current_track.next() orelse if (self.loop_mode == .all) current_track.first() else null;
+
+        if ((next_track != null and next_track.?.track == current_track.track) and haveLoopOnItself) {
             self.track_manager.current_track_mutex.unlock();
             self.next(false);
             return;
@@ -701,7 +709,7 @@ pub const Player = struct {
             return;
         }
 
-        if (current_track.next() == null) {
+        if (next_track == null) {
             self.track_manager.current_track_mutex.unlock();
             return;
         }
