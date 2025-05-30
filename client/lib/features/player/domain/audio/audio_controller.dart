@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
@@ -187,6 +188,14 @@ class AudioController extends BaseAudioHandler {
     player.pause();
 
     await _updatePlaybackState();
+  }
+
+  @override
+  Future<void> stop() async {
+    if (Platform.isAndroid) {
+      return;
+    }
+    return pause();
   }
 
   @override

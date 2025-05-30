@@ -584,6 +584,8 @@ pub const Player = struct {
 
         self.ma_device_config.dataCallback = &Self.playAudio;
 
+        self.ma_device_config.notificationCallback = &Self.notificationAudio;
+
         if (self.has_init_ma_device) {
             c.ma_device_uninit(self.ma_device);
             self.has_init_ma_device = false;
@@ -711,6 +713,34 @@ pub const Player = struct {
         if (self.isTrackMatchDevice(self.track_manager.getCurrentIndexedTrack().?.track)) {
             self.readAudio(output, remaining_frame);
         }
+    }
+
+    fn notificationAudio(pNotification: ?*const anyopaque) callconv(.c) void {
+        const ma_device_notification: *const c.ma_device_notification = @ptrCast(@alignCast(pNotification));
+
+        if (ma_device_notification.type != c.ma_device_notification_type_interruption_began) {
+            return;
+        }
+
+        const self: *Self = @ptrCast(@alignCast(ma_device_notification.*.pDevice.*.pUserData));
+
+        self.pause() catch |err| {
+            std.log.warn("Unable to pause : {}", .{err});
+            return;
+        };
+
+        self.track_manager.current_track_mutex.lock();
+        defer self.track_manager.current_track_mutex.unlock();
+
+        const opt_current_track = self.*.track_manager.getCurrentIndexedTrack();
+
+        if (opt_current_track == null) {
+            return;
+        }
+
+        const current_track = opt_current_track.?;
+
+        self.sendEventUpdateState(current_track.track.getStatus(), true);
     }
 
     pub fn getIsPlaying(self: *Self) bool {
