@@ -54,6 +54,7 @@ general:
   confirmPassword: "Mot de passe de confirmation"
   connectToServer: "Se connecter au serveur"
   and: "et"
+  equalizer: "Égaliseur"
 
   nowPlaying: "En cours de lecture"
   nextInQueue: "Suivant dans la file d'attente"

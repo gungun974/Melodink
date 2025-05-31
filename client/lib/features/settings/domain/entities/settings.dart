@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:melodink_client/features/settings/domain/entities/equalizer.dart';
 
 enum AppSettingTheme {
   base,
@@ -45,6 +46,8 @@ class AppSettings extends Equatable {
   final bool enableHistoryTracking;
   final bool shareAllHistoryTrackingToServer;
 
+  final AppEqualizer equalizer;
+
   const AppSettings({
     required this.theme,
     required this.dynamicBackgroundColors,
@@ -58,6 +61,7 @@ class AppSettings extends Equatable {
     required this.autoScrollViewToCurrentTrack,
     required this.enableHistoryTracking,
     required this.shareAllHistoryTrackingToServer,
+    required this.equalizer,
   });
 
   AppSettings copyWith({
@@ -73,6 +77,7 @@ class AppSettings extends Equatable {
     bool? autoScrollViewToCurrentTrack,
     bool? enableHistoryTracking,
     bool? shareAllHistoryTrackingToServer,
+    AppEqualizer? equalizer,
   }) {
     return AppSettings(
       theme: theme ?? this.theme,
@@ -94,6 +99,7 @@ class AppSettings extends Equatable {
           enableHistoryTracking ?? this.enableHistoryTracking,
       shareAllHistoryTrackingToServer: shareAllHistoryTrackingToServer ??
           this.shareAllHistoryTrackingToServer,
+      equalizer: equalizer ?? this.equalizer,
     );
   }
 
@@ -111,5 +117,6 @@ class AppSettings extends Equatable {
         autoScrollViewToCurrentTrack,
         enableHistoryTracking,
         shareAllHistoryTrackingToServer,
+        equalizer,
       ];
 }

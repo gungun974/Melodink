@@ -112,6 +112,12 @@ pub fn loadCMelodinkRequest(virtual_index: usize, play_request_index: usize, req
     try player.?.setAudios(virtual_index, play_request_index, melodink_requests, server_auth[0..std.mem.len(server_auth)]);
 }
 
+pub export fn mi_player_set_equalizer(enable: bool, bands: usize, frequencies: [*c]const f64, gains: [*c]const f64) void {
+    player.?.setEqualizer(enable, frequencies[0..bands], gains[0..bands]) catch |err| {
+        std.log.warn("Unable to set equalizer : {}", .{err});
+    };
+}
+
 pub export fn mi_player_set_loop_mode(loop: u8) void {
     player.?.setLoopMode(@enumFromInt(loop));
 }

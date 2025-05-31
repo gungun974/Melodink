@@ -598,6 +598,12 @@ class AudioController extends BaseAudioHandler {
     player.setQuality(currentAudioQuality);
   }
 
+  updatePlayerEqualizer() async {
+    final config = await SettingsRepository().getSettings();
+
+    await player.setEqualizer(config.equalizer.enabled, config.equalizer.bands);
+  }
+
   Future<void> _updatePlayerTracks() async {
     return await playerTracksMutex.protect(() async {
       if (DateTime.now().difference(_lastUpdatePlayerTracks).inMilliseconds <
@@ -607,6 +613,7 @@ class AudioController extends BaseAudioHandler {
       _lastUpdatePlayerTracks = DateTime.now();
 
       await updatePlayerQuality();
+      await updatePlayerEqualizer();
 
       final getDownloadedTrackByTrackId =
           downloadTrackRepository?.getDownloadedTrackByTrackId;

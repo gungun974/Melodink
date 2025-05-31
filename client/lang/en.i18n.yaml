@@ -54,6 +54,7 @@ general:
   confirmPassword: "Confirm password"
   connectToServer: "Connect to server"
   and: "and"
+  equalizer: "Equalizer"
 
   nowPlaying: "Now playing"
   nextInQueue: "Next in Queue"

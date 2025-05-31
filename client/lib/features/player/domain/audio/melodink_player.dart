@@ -360,6 +360,61 @@ class MelodinkPlayer {
     );
   }
 
+  Future<void> setEqualizer(
+    bool enable,
+    Map<double, double> bands,
+  ) async {
+    await actionMutex.protect(
+      () async {
+        final frequenciesPointer = ffi.calloc<ffi.Double>(bands.length);
+
+        final gainsPointer = ffi.calloc<ffi.Double>(bands.length);
+
+        try {
+          final keys = bands.keys.toList()..sort();
+
+          for (int i = 0; i < keys.length; i++) {
+            frequenciesPointer[i] = keys[i];
+            gainsPointer[i] = bands[keys[i]]!;
+          }
+
+          await compute((data) {
+            final void Function(
+              bool,
+              int,
+              ffi.Pointer<ffi.Double>,
+              ffi.Pointer<ffi.Double>,
+            ) setEqualizer = getLibrary()
+                .lookup<
+                    ffi.NativeFunction<
+                        ffi.Void Function(
+                          ffi.Bool,
+                          ffi.Size,
+                          ffi.Pointer<ffi.Double>,
+                          ffi.Pointer<ffi.Double>,
+                        )>>('mi_player_set_equalizer')
+                .asFunction();
+
+            setEqualizer(
+              data["enable"] == 1,
+              data["len"]!,
+              ffi.Pointer.fromAddress(data["frequenciesPointer"]!),
+              ffi.Pointer.fromAddress(data["gainsPointer"]!),
+            );
+          }, {
+            'enable': enable ? 1 : 0,
+            'len': bands.length,
+            'frequenciesPointer': frequenciesPointer.address,
+            'gainsPointer': gainsPointer.address,
+          });
+        } finally {
+          ffi.calloc.free(frequenciesPointer);
+          ffi.calloc.free(gainsPointer);
+        }
+      },
+    );
+  }
+
   void setLoopMode(MelodinkLoopMode loopMode) {
     _setLoopMode(loopMode.index);
   }

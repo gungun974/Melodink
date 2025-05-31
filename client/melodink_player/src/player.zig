@@ -6,6 +6,8 @@ const c = @import("c.zig");
 
 const TrackMod = @import("track.zig");
 
+const Equalizer = @import("equalizer.zig");
+
 const Track = TrackMod.Track;
 const TrackQuality = TrackMod.TrackQuality;
 const TrackStatus = TrackMod.TrackStatus;
@@ -252,6 +254,8 @@ pub const Player = struct {
     ma_device_config: c.ma_device_config,
     has_init_ma_device: bool = false,
 
+    equalizer: *Equalizer = undefined,
+
     allocator: std.mem.Allocator,
 
     send_event_audio_changed: ?c.IntCallback = null,
@@ -281,14 +285,18 @@ pub const Player = struct {
 
     pub fn new(allocator: std.mem.Allocator) !Self {
         const track_manager = try allocator.create(TrackManager);
+        errdefer allocator.destroy(track_manager);
 
         track_manager.* = TrackManager.init(allocator);
 
         const pool = try allocator.create(std.Thread.Pool);
+        errdefer allocator.destroy(pool);
 
         try pool.init(std.Thread.Pool.Options{ .allocator = allocator, .n_jobs = 8 });
+        errdefer pool.deinit();
 
         const ma_context = try allocator.create(c.ma_context);
+        errdefer allocator.destroy(ma_context);
 
         var context_config = c.ma_context_config_init();
 
@@ -299,6 +307,13 @@ pub const Player = struct {
         if (c.ma_context_init(null, 0, &context_config, ma_context) != c.MA_SUCCESS) {
             return error.CantInitMiniaudioContext;
         }
+
+        const equalizer = try allocator.create(Equalizer);
+        errdefer allocator.destroy(equalizer);
+
+        equalizer.* = Equalizer{
+            .allocator = allocator,
+        };
 
         return .{
             .allocator = allocator,
@@ -311,6 +326,8 @@ pub const Player = struct {
             .ma_context = ma_context,
             .ma_device = try allocator.create(c.ma_device),
             .ma_device_config = c.ma_device_config_init(c.ma_device_type_playback),
+
+            .equalizer = equalizer,
 
             .pool_threads = pool,
         };
@@ -345,6 +362,7 @@ pub const Player = struct {
 
         if (self.has_init_ma_device) {
             c.ma_device_uninit(self.ma_device);
+            self.equalizer.deinit();
             self.has_init_ma_device = false;
         }
 
@@ -361,6 +379,10 @@ pub const Player = struct {
         _ = c.ma_context_uninit(self.ma_context);
 
         self.allocator.destroy(self.ma_context);
+
+        self.equalizer.free();
+
+        self.allocator.destroy(self.equalizer);
     }
 
     pub fn play(self: *Self) !void {
@@ -484,6 +506,27 @@ pub const Player = struct {
         self.current_virtual_index = virtual_index;
 
         try self.track_manager.loads(play_request_index, requests, self.target_quality, server_auth);
+    }
+
+    pub fn setEqualizer(self: *Self, enable: bool, frequencies: []const f64, gains: []const f64) !void {
+        self.tracks_mutex.lock();
+        defer self.tracks_mutex.unlock();
+
+        try self.equalizer.setSetting(enable, frequencies, gains);
+
+        const current_track = self.track_manager.getCurrentIndexedTrack();
+
+        if (current_track == null) {
+            return;
+        }
+
+        const track = current_track.?.track;
+
+        if (self.has_init_ma_device) {
+            self.equalizer.deinit();
+        }
+
+        try self.equalizer.init(track.getAudioChannelCount(), track.getAudioSampleRate());
     }
 
     pub fn process(self: *Self) !void {
@@ -610,8 +653,11 @@ pub const Player = struct {
 
         if (self.has_init_ma_device) {
             c.ma_device_uninit(self.ma_device);
+            self.equalizer.deinit();
             self.has_init_ma_device = false;
         }
+
+        try self.equalizer.init(track.getAudioChannelCount(), track.getAudioSampleRate());
 
         if (c.ma_device_init(self.ma_context, &self.ma_device_config, self.ma_device) !=
             c.MA_SUCCESS)
@@ -667,6 +713,25 @@ pub const Player = struct {
         }
 
         readAudio(self, output, @intCast(frame_count));
+
+        if (self.equalizer.enable) {
+            switch (self.ma_device.playback.format) {
+                c.ma_format_f32 => self.useEqualizer(@as([*]f32, @ptrCast(@alignCast(output))), frame_count),
+                c.ma_format_s16 => self.useEqualizer(@as([*]i16, @ptrCast(@alignCast(output))), frame_count),
+                c.ma_format_s24 => self.useEqualizer(@as([*]i24, @ptrCast(@alignCast(output))), frame_count),
+                c.ma_format_s32 => self.useEqualizer(@as([*]i32, @ptrCast(@alignCast(output))), frame_count),
+                c.ma_format_u8 => self.useEqualizer(@as([*]u8, @ptrCast(@alignCast(output))), frame_count),
+                else => {},
+            }
+        }
+    }
+
+    fn useEqualizer(self: *Self, out: anytype, frame_count: c.ma_uint32) void {
+        for (0..self.ma_device.playback.channels) |ch| {
+            for (0..frame_count) |i| {
+                out[i * self.ma_device.playback.channels + ch] = self.equalizer.process(out[i * self.ma_device.playback.channels + ch], ch);
+            }
+        }
     }
 
     fn readAudio(self: *Self, output: ?*anyopaque, frame_count: u64) void {
