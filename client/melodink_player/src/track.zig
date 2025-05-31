@@ -397,7 +397,6 @@ pub const Track = struct {
 
         try self.audio_fifo.init(self.audio_format, self.audio_channel_count, self.audio_sample_rate * 10);
         errdefer self.audio_fifo.free();
-        // }
 
         self.av_audio_frame = c.av_frame_alloc() orelse {
             std.log.err("Couldn't allocate resampled AVFrame", .{});
@@ -610,6 +609,14 @@ pub const Track = struct {
                         defer c.av_frame_unref(self.av_audio_frame);
                         response = c.swr_convert_frame(self.swr_audio_resampler, self.resampled_audio_frame, self.av_audio_frame);
                         if (response != 0) {
+                            if (response == c.AVERROR_INPUT_CHANGED and self.av_audio_frame.?.sample_rate == self.getAudioSampleRate() and self.av_audio_frame.?.format == self.getAudioOutputFormat()) {
+                                // Insert decoded audio samples without resampling (this may be a problem later but for now this fix the WAV file)
+                                const samples_written =
+                                    try self.audio_fifo.push(@ptrCast(&self.av_audio_frame.?.data), @intCast(self.av_audio_frame.?.nb_samples));
+                                total_written += @intCast(samples_written);
+                                continue;
+                            }
+
                             std.log.err("Couldn't resample the frame", .{});
                             return error.CouldNotResampleFrame;
                         }
