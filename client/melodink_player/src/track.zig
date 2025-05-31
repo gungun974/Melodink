@@ -679,25 +679,13 @@ pub const Track = struct {
         };
     }
 
-    pub fn seek(self: *Self, new_time: f64, reset_fifo: bool) !void {
+    fn seek(self: *Self, new_time: f64, reset_fifo: bool) !void {
         if (self.status == TrackStatus.idle or self.status == TrackStatus.loading) {
             return;
         }
 
         self.status = TrackStatus.loading;
         defer self.status = TrackStatus.buffering;
-
-        if (reset_fifo) {
-            while (true) {
-                var av_packet = self.cached_packet_fifo.readItem() orelse {
-                    break;
-                };
-                defer c.av_packet_free(&av_packet);
-                defer c.av_packet_unref(av_packet);
-            }
-
-            self.last_av_read_frame_response = 0;
-        }
 
         self.queue_seek = null;
 
@@ -713,6 +701,7 @@ pub const Track = struct {
             self.audio_fifo.drain(@intCast(sample_count));
 
             self.audio_frames_consumed += @intCast(sample_count);
+
             return;
         }
 
@@ -724,6 +713,16 @@ pub const Track = struct {
 
         if (response >= 0) {
             if (reset_fifo) {
+                while (true) {
+                    var av_packet = self.cached_packet_fifo.readItem() orelse {
+                        break;
+                    };
+                    defer c.av_packet_free(&av_packet);
+                    defer c.av_packet_unref(av_packet);
+                }
+
+                self.last_av_read_frame_response = 0;
+
                 self.audio_frames_consumed_max = 0;
                 self.audio_fifo.clear();
                 c.avcodec_flush_buffers(self.av_audio_codec_ctx);
