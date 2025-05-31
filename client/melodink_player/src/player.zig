@@ -97,7 +97,7 @@ const TrackManager = struct {
         self.protected_opened_cache_paths.deinit();
     }
 
-    fn freeTrack(self: *Self, track: *Track) !void {
+    fn freeTrack(self: *Self, track: *Track) void {
         track.*.free();
         self.allocator.destroy(track);
     }
@@ -132,8 +132,13 @@ const TrackManager = struct {
                 self.setCurrentIndexedTrack(null);
             }
 
-            const thread = try Thread.spawn(.{}, TrackManager.freeTrack, .{ self, trackToRemove.?.* });
-            thread.detach();
+            if (trackToRemove.?.*.open_thread or trackToRemove.?.*.status != TrackStatus.idle) {
+                const thread = try Thread.spawn(.{}, TrackManager.freeTrack, .{ self, trackToRemove.?.* });
+                thread.detach();
+            } else {
+                self.freeTrack(trackToRemove.?.*);
+            }
+
             _ = self.manage_loaded_tracks.remove(id);
         }
 
@@ -936,7 +941,7 @@ test "verify setAudios" {
             .id = 1,
             .server_url = server_url,
         },
-    });
+    }, "");
 
     const track1Ref = track_manager.manage_loaded_tracks.get(1);
 
@@ -958,7 +963,7 @@ test "verify setAudios" {
             .id = 2,
             .server_url = server_url,
         },
-    });
+    }, "");
 
     const track2Ref = track_manager.manage_loaded_tracks.get(2);
 
@@ -987,7 +992,7 @@ test "verify setAudios" {
             .id = 2,
             .server_url = server_url,
         },
-    });
+    }, "");
 
     try t.expectEqual(2, track_manager.manage_loaded_tracks.count());
 
@@ -1023,7 +1028,7 @@ test "verify setAudios" {
             .id = 8,
             .server_url = server_url,
         },
-    });
+    }, "");
 
     const track86Ref = track_manager.manage_loaded_tracks.get(86);
     const track32Ref = track_manager.manage_loaded_tracks.get(32);
@@ -1049,7 +1054,7 @@ test "verify setAudios" {
 
     ////! Clean the player;
 
-    try player.setAudios(0, 0, &[_]MelodinkTrackRequest{});
+    try player.setAudios(0, 0, &[_]MelodinkTrackRequest{}, "");
 
     try t.expectEqual(0, track_manager.manage_loaded_tracks.count());
 
