@@ -198,6 +198,7 @@ pub fn deinit(self: *Self) void {
     self.protected_opened_cache_paths.unprotectPath(self.cache_directory);
 
     self.allocator.free(self.cache_directory);
+    self.allocator.free(self.file_url);
 
     self.has_been_open = false;
 }
