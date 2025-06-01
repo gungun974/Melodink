@@ -14,6 +14,7 @@ func (u *TrackUsecase) GetTrackAudioWithTranscode(
 	ctx context.Context,
 	trackId int,
 	quality AudioTranscodeQuality,
+	fileSignature *string,
 ) (models.APIResponse, error) {
 	track, err := u.trackRepository.GetTrack(trackId)
 	if err != nil {
@@ -21,6 +22,10 @@ func (u *TrackUsecase) GetTrackAudioWithTranscode(
 			return nil, entities.NewNotFoundError("Track not found")
 		}
 		return nil, entities.NewInternalError(err)
+	}
+
+	if fileSignature != nil && *fileSignature != track.FileSignature {
+		return nil, entities.NewNotFoundError("Track file have changed")
 	}
 
 	err = u.TranscodeTrack(ctx, trackId, quality)

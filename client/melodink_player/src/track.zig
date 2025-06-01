@@ -225,7 +225,7 @@ pub const Track = struct {
 
         var open_options: ?*c.AVDictionary = null;
 
-        const headers = try std.fmt.allocPrintZ(self.allocator, "Cookie: {s}\r\nUser-Agent: Melodink-Player\r\n", .{self.server_auth});
+        const headers = try std.fmt.allocPrintZ(self.allocator, "Cookie: {s}\r\nUser-Agent: Melodink-Player\r\nMelodink-Signature: {s}\r\n", .{ self.server_auth, if (self.original_audio_hash == null) "" else self.original_audio_hash.? });
         defer self.allocator.free(headers);
 
         _ = c.av_dict_set(&open_options, "headers", headers.ptr, 0);

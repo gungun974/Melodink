@@ -102,6 +102,12 @@ const TrackManager = struct {
         self.allocator.destroy(track);
     }
 
+    fn compareStrings(a: ?[]const u8, b: ?[]const u8) bool {
+        if (a == null and b == null) return true;
+        if (a == null or b == null) return false;
+        return std.mem.eql(u8, a.?, b.?);
+    }
+
     pub fn loads(self: *Self, play_request_index: usize, requests: []const MelodinkTrackRequest, quality: TrackQuality, server_auth: []const u8) !void {
         if (self.current_track_index != null) {}
         try self.manage_tracks_order.resize(requests.len);
@@ -114,10 +120,20 @@ const TrackManager = struct {
         while (iterator.next()) |track| {
             var keep = false;
             for (requests) |request| {
-                if (track.value_ptr.*.id == request.id) {
-                    keep = true;
+                if (track.value_ptr.*.id != request.id) {
+                    continue;
+                }
+
+                if (!compareStrings(request.original_audio_hash, track.value_ptr.*.original_audio_hash)) {
                     break;
                 }
+
+                if (!compareStrings(request.downloaded_path, track.value_ptr.*.downloaded_path)) {
+                    break;
+                }
+
+                keep = true;
+                break;
             }
 
             if (!keep) {

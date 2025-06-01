@@ -33,7 +33,8 @@ class DownloadTrackRepository {
     );
   }
 
-  Future<DownloadTrack?> getDownloadedTrackByTrackId(int trackId, {bool shouldVerifyIfFileExist = false}) async {
+  Future<DownloadTrack?> getDownloadedTrackByTrackId(int trackId,
+      {bool shouldVerifyIfFileExist = false}) async {
     final db = await DatabaseService.getDatabase();
 
     try {
@@ -171,8 +172,11 @@ class DownloadTrackRepository {
 
       final downloadPath = "/download/${splitIdToPath(trackId)}";
 
-      final downloadAudioPath = "$downloadPath/audio";
+      final downloadAudioPath = "$downloadPath/audio-$signature";
       String? downloadImagePath = "$downloadPath/image-$coverSignature";
+
+      bool shouldDeleteOldAudio = false;
+      bool shouldDeleteOldCover = false;
 
       if (downloadTrack?.fileSignature != signature) {
         await AppApi().dio.download(
@@ -181,6 +185,8 @@ class DownloadTrackRepository {
                   "/track/$trackId/audio/low/transcode",
                 AppSettingAudioQuality.medium =>
                   "/track/$trackId/audio/medium/transcode",
+                AppSettingAudioQuality.high =>
+                  "/track/$trackId/audio/high/transcode",
                 _ => "/track/$trackId/audio",
               },
               "$applicationSupportDirectory/$downloadAudioPath",
@@ -192,6 +198,10 @@ class DownloadTrackRepository {
                     }
                   : null,
             );
+        if (downloadTrack!.audioFile !=
+            "$applicationSupportDirectory/$downloadAudioPath") {
+          shouldDeleteOldAudio = true;
+        }
       }
 
       if (downloadTrack?.coverSignature != coverSignature) {
@@ -214,9 +224,7 @@ class DownloadTrackRepository {
         }
 
         if (downloadTrack?.imageFile != null) {
-          try {
-            await File(downloadTrack!.imageFile!).delete();
-          } catch (_) {}
+          shouldDeleteOldCover = true;
         }
       }
 
@@ -232,8 +240,26 @@ class DownloadTrackRepository {
       }
 
       await db.rawUpdate(
-          "UPDATE track_download SET file_signature = ?, cover_signature = ?, image_file = ? WHERE track_id = ?",
-          [signature, coverSignature, downloadImagePath, trackId]);
+          "UPDATE track_download SET file_signature = ?, cover_signature = ?, audio_file = ?, image_file = ? WHERE track_id = ?",
+          [
+            signature,
+            coverSignature,
+            downloadAudioPath,
+            downloadImagePath,
+            trackId
+          ]);
+
+      if (shouldDeleteOldAudio) {
+        try {
+          await File(downloadTrack.audioFile).delete();
+        } catch (_) {}
+      }
+
+      if (shouldDeleteOldCover) {
+        try {
+          await File(downloadTrack.imageFile!).delete();
+        } catch (_) {}
+      }
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {

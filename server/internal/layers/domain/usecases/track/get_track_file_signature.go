@@ -21,7 +21,7 @@ func (u *TrackUsecase) GetTrackFileSignature(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return models.JsonAPIResponse{
-		Data: track.FileSignature,
+	return models.PlainAPIResponse{
+		Text: track.FileSignature,
 	}, nil
 }
