@@ -22,7 +22,6 @@ const BUFFER_SIZE = 4096;
 protected_opened_cache_paths: *ProtectedOpenedPathsList,
 allocator: std.mem.Allocator,
 has_been_open: bool = false,
-options: ?*c.AVDictionary = null,
 
 source_avio_ctx: [*c]c.AVIOContext = undefined,
 avio_ctx: *c.AVIOContext = undefined,
@@ -38,8 +37,6 @@ has_been_open_http: bool = false,
 
 data_file: fs.File = undefined,
 index_file: fs.File = undefined,
-
-file_url: [:0]const u8 = undefined,
 
 cache_directory: []const u8 = undefined,
 
@@ -94,17 +91,14 @@ pub const ProtectedOpenedPathsList = struct {
     }
 };
 
-pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, url: [:0]const u8, new_options: [*c]?*c.AVDictionary) !void {
+pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, source_avio_ctx: [*c]c.AVIOContext) !void {
     if (self.has_been_open) {
         return;
     }
 
     std.debug.assert(fs.path.isAbsolute(cache_path));
 
-    self.file_url = try std.fmt.allocPrintZ(self.allocator, "{s}", .{url});
-    errdefer self.allocator.free(self.file_url);
-
-    _ = c.av_dict_copy(&self.options, new_options.*, 0);
+    self.source_avio_ctx = source_avio_ctx;
 
     const sanitize_cache_key = try sanitizeForPath(self.allocator, cache_key);
     defer self.allocator.free(sanitize_cache_key);
@@ -156,8 +150,6 @@ pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, url: [:0
         _ = try self.index_file.readAll(std.mem.asBytes(&self.file_total_size));
         self.index_size -= @sizeOf(u64);
     } else {
-        try self.openHTTP();
-
         self.file_total_size = @intCast(c.avio_size(self.source_avio_ctx));
         _ = try self.index_file.write(std.mem.asBytes(&self.file_total_size));
     }
@@ -171,7 +163,6 @@ pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, url: [:0
 
     self.avio_ctx = c.avio_alloc_context(buffer, BUFFER_SIZE, 0, self, &Self.customReadPacket, null, &Self.customSeek) orelse {
         c.av_freep(@ptrCast(&buffer));
-        self.closeHTTP();
 
         std.log.err("Could not open custom AVIOContext\n", .{});
         return error.CouldNotOpenCustomAVIOContext;
@@ -188,7 +179,6 @@ pub fn deinit(self: *Self) void {
     var buffer = self.avio_ctx.*.buffer;
 
     c.avio_context_free(@ptrCast(&self.avio_ctx));
-    self.closeHTTP();
 
     c.av_freep(@ptrCast(&buffer));
 
@@ -198,33 +188,8 @@ pub fn deinit(self: *Self) void {
     self.protected_opened_cache_paths.unprotectPath(self.cache_directory);
 
     self.allocator.free(self.cache_directory);
-    self.allocator.free(self.file_url);
 
     self.has_been_open = false;
-}
-
-fn openHTTP(self: *Self) !void {
-    if (self.has_been_open_http) {
-        return;
-    }
-
-    var loptions: ?*c.AVDictionary = null;
-    _ = c.av_dict_copy(&loptions, self.options, 0);
-
-    const response = c.avio_open2(&self.source_avio_ctx, self.file_url, c.AVIO_FLAG_READ, null, &loptions);
-    if (response < 0) {
-        std.log.err("Could not open AVIOContext: {s}\n", .{self.getAVError(response)});
-        return error.CouldNotOpenAVIOContext;
-    }
-    self.has_been_open_http = true;
-}
-
-fn closeHTTP(self: *Self) void {
-    if (!self.has_been_open_http) {
-        return;
-    }
-    _ = c.avio_closep(&self.source_avio_ctx);
-    self.has_been_open_http = false;
 }
 
 fn isBlockCached(self: *Self, block_id: u64) bool {
@@ -273,8 +238,6 @@ fn downloadBlock(self: *Self, block_id: u64) !void {
     if (self.isBlockCached(block_id)) {
         return;
     }
-
-    try self.openHTTP();
 
     var buffer: [BLOCK_SIZE]u8 = [_]u8{0} ** BLOCK_SIZE;
     const offset = block_id * BLOCK_SIZE;

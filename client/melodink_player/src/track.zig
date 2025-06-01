@@ -5,6 +5,7 @@ const c = @import("c.zig");
 const Fifo = @import("fifo.zig");
 
 const CacheAVIO = @import("cache.zig");
+const HttpAVIO = @import("http.zig");
 
 const ENABLE_CACHE = true;
 const ENABLE_TRACK_OPEN_INFO = false;
@@ -53,6 +54,8 @@ pub const Track = struct {
     server_auth: []const u8,
 
     original_audio_hash: ?[]const u8,
+    http_avio: *HttpAVIO,
+
     cache_path: ?[]const u8,
     cache_avio: *CacheAVIO,
 
@@ -135,6 +138,12 @@ pub const Track = struct {
         }
         errdefer if (cache_path != null) allocator.free(internal_cache_path.?);
 
+        const http_avio = try allocator.create(HttpAVIO);
+
+        http_avio.* = .{
+            .allocator = allocator,
+        };
+
         const cache_avio = try allocator.create(CacheAVIO);
 
         cache_avio.* = .{
@@ -155,6 +164,8 @@ pub const Track = struct {
             .cache_path = internal_cache_path,
 
             .server_auth = internal_server_auth,
+
+            .http_avio = http_avio,
 
             .cache_avio = cache_avio,
             .cached_packet_fifo = AVPacketFifo.init(allocator),
@@ -184,6 +195,7 @@ pub const Track = struct {
         }
 
         self.allocator.destroy(self.cache_avio);
+        self.allocator.destroy(self.http_avio);
     }
 
     pub fn open(self: *Self, pool: *std.Thread.Pool) !void {
@@ -265,18 +277,23 @@ pub const Track = struct {
 
             std.log.debug("open url: {s}", .{url});
 
+            try self.http_avio.init(url, &open_options);
+
             if (ENABLE_CACHE and self.original_audio_hash != null and self.cache_path != null) {
                 const cache_key = try std.fmt.allocPrint(self.allocator, "{}-{}-{s}", .{ self.id, self.quality, self.original_audio_hash.? });
                 defer self.allocator.free(cache_key);
 
-                try self.cache_avio.init(self.cache_path.?, cache_key, url, &open_options);
+                try self.cache_avio.init(self.cache_path.?, cache_key, self.http_avio.avio_ctx);
 
                 self.av_format_ctx.?.pb = self.cache_avio.avio_ctx;
                 self.av_format_ctx.?.flags |= c.AVFMT_FLAG_CUSTOM_IO;
 
                 response = c.avformat_open_input(&self.av_format_ctx, null, null, null);
             } else {
-                response = c.avformat_open_input(&self.av_format_ctx, url.ptr, null, &open_options);
+                self.av_format_ctx.?.pb = self.http_avio.avio_ctx;
+                self.av_format_ctx.?.flags |= c.AVFMT_FLAG_CUSTOM_IO;
+
+                response = c.avformat_open_input(&self.av_format_ctx, null, null, null);
             }
         } else {
             const path = try std.fmt.allocPrintZ(self.allocator, "{s}", .{self.downloaded_path.?});
@@ -290,6 +307,7 @@ pub const Track = struct {
         errdefer if (self.downloaded_path == null and self.original_audio_hash != null and self.cache_path != null) {
             self.cache_avio.deinit();
         };
+        errdefer self.http_avio.deinit();
 
         if (response < 0) {
             std.log.err("avformat_open_input response: {s}", .{self.getAVError(response)});
@@ -832,6 +850,7 @@ pub const Track = struct {
         c.avformat_close_input(&self.av_format_ctx);
 
         self.cache_avio.deinit();
+        self.http_avio.deinit();
 
         c.avformat_free_context(self.av_format_ctx);
 
