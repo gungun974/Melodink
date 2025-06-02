@@ -73,7 +73,7 @@ pub fn init(self: *Self, channel_count: u64, sample_rate: u64) !void {
     try self.bands.resize(self.allocator, self.frequencies.items.len);
 
     for (0..self.bands.items.len) |i| {
-        self.bands.items[i].channels = try self.allocator.alloc(Channel, channel_count);
+        self.bands.items[i].channels = try self.allocator.alloc(Channel, @intCast(channel_count));
         errdefer self.allocator.free(self.bands.items[i].channels);
     }
 
