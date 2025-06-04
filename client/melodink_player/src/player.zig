@@ -202,9 +202,7 @@ const TrackManager = struct {
                 continue;
             }
 
-            if (track.value_ptr.*.getCurrentPlaybackTime() != 0) {
-                track.value_ptr.*.need_reset = true;
-            }
+            track.value_ptr.*.need_reset = true;
         }
     }
 

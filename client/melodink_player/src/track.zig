@@ -496,8 +496,10 @@ pub const Track = struct {
         }
 
         if (self.need_reset) {
-            self.need_reset = false;
-            try self.seek(0, true);
+            defer self.need_reset = false;
+            if (self.getCurrentPlaybackTime() != 0) {
+                try self.seek(0, true);
+            }
         }
 
         if (self.has_reach_end and self.cached_packet_fifo.count == 0) {
@@ -783,6 +785,10 @@ pub const Track = struct {
         }
 
         if (self.fast_forward_until_time != null) {
+            return .{ 0, haveLoopOnItself };
+        }
+
+        if (self.need_reset) {
             return .{ 0, haveLoopOnItself };
         }
 
