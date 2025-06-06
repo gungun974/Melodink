@@ -250,7 +250,7 @@ pub const Track = struct {
 
         _ = c.av_dict_set(&open_options, "reconnect_max_retries", "3", 0);
 
-        _ = c.av_dict_set(&open_options, "rw_timeout", "45000000", 0);
+        _ = c.av_dict_set(&open_options, "rw_timeout", std.fmt.comptimePrint("{}", .{100 * std.time.us_per_ms}), 0);
 
         self.av_format_ctx = c.avformat_alloc_context() orelse {
             std.log.err("Could not allocate AVFormatContext", .{});
@@ -286,12 +286,12 @@ pub const Track = struct {
                 try self.cache_avio.init(self.cache_path.?, cache_key, self.http_avio.avio_ctx);
 
                 self.av_format_ctx.?.pb = self.cache_avio.avio_ctx;
-                self.av_format_ctx.?.flags |= c.AVFMT_FLAG_CUSTOM_IO;
+                self.av_format_ctx.?.flags |= c.AVFMT_FLAG_CUSTOM_IO | c.AVFMT_FLAG_NONBLOCK | c.AVIO_FLAG_NONBLOCK;
 
                 response = c.avformat_open_input(&self.av_format_ctx, null, null, null);
             } else {
                 self.av_format_ctx.?.pb = self.http_avio.avio_ctx;
-                self.av_format_ctx.?.flags |= c.AVFMT_FLAG_CUSTOM_IO;
+                self.av_format_ctx.?.flags |= c.AVFMT_FLAG_CUSTOM_IO | c.AVFMT_FLAG_NONBLOCK | c.AVIO_FLAG_NONBLOCK;
 
                 response = c.avformat_open_input(&self.av_format_ctx, null, null, null);
             }
@@ -534,7 +534,6 @@ pub const Track = struct {
             // Try reading next packet
             errdefer c.av_packet_unref(new_av_packet);
             self.last_av_read_frame_response = c.av_read_frame(self.av_format_ctx, new_av_packet);
-            // std.debug.print("{}\n", .{self.last_av_read_frame_response});
 
             // Return if error or end of file was encountered
 
@@ -931,6 +930,11 @@ pub const Track = struct {
         if (self.status == .ready and self.audio_time == 0) {
             return .buffering;
         }
+
+        if (self.status == .ready and self.audio_fifo.size() <= 0) {
+            return .buffering;
+        }
+
         return self.status;
     }
 

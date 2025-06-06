@@ -782,6 +782,10 @@ pub const Player = struct {
             return;
         };
 
+        if (frame_read <= 0) {
+            self.sendEventUpdateState(current_track.track.getStatus(), false);
+        }
+
         const next_track = current_track.next() orelse if (self.loop_mode == .all) current_track.first() else null;
 
         if ((next_track != null and next_track.?.track == current_track.track) and haveLoopOnItself) {
@@ -794,7 +798,7 @@ pub const Player = struct {
             self.sendEventUpdateState(current_track.track.getStatus(), true);
         }
 
-        if (frame_read < 0 or self.loop_mode == .one) {
+        if (frame_read <= 0 or self.loop_mode == .one) {
             self.track_manager.current_track_mutex.unlock();
             return;
         }

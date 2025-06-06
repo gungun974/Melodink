@@ -67,7 +67,7 @@ fn openHTTP(self: *Self) !void {
     var loptions: ?*c.AVDictionary = null;
     _ = c.av_dict_copy(&loptions, self.options, 0);
 
-    const response = c.avio_open2(&self.source_avio_ctx, self.file_url, c.AVIO_FLAG_READ, null, &loptions);
+    const response = c.avio_open2(&self.source_avio_ctx, self.file_url, c.AVIO_FLAG_READ | c.AVIO_FLAG_NONBLOCK, null, &loptions);
     if (response < 0) {
         std.log.err("Could not open AVIOContext: {s}\n", .{self.getAVError(response)});
         return error.CouldNotOpenAVIOContext;
