@@ -46,6 +46,7 @@ pub const Track = struct {
     id: u64,
     quality: TrackQuality,
 
+    is_reopen: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
     status: TrackStatus = .idle,
 
     server_url: []const u8,
@@ -173,7 +174,7 @@ pub const Track = struct {
     }
 
     pub fn free(self: *Self) void {
-        self.close();
+        self.close(false);
 
         self.cached_packet_fifo.deinit();
 
@@ -208,17 +209,53 @@ pub const Track = struct {
         }
 
         self.open_thread = true;
-        defer self.open_thread = false;
+        errdefer self.open_thread = false;
         try pool.spawn(openThreadHandler, .{self});
     }
 
     fn openThreadHandler(self: *Self) void {
-        self.openAndWait() catch |err| {
+        self.openAndWait(false) catch |err| {
             std.log.warn("Failed to open track {}", .{err});
         };
     }
 
-    pub fn openAndWait(self: *Self) !void {
+    fn reopen(self: *Self) !void {
+        if (self.open_thread) {
+            return;
+        }
+
+        self.is_reopen.store(true, .seq_cst);
+        self.open_thread = true;
+        errdefer self.is_reopen.store(false, .seq_cst);
+        errdefer self.open_thread = false;
+        var thread = try std.Thread.spawn(.{}, reopenThreadHandler, .{self});
+        thread.detach();
+    }
+
+    fn reopenThreadHandler(self: *Self) void {
+        defer self.is_reopen.store(false, .seq_cst);
+
+        self.seekWhenReady(@as(f64, @floatFromInt(self.audio_frames_consumed + self.audio_fifo.size())) / @as(f64, @floatFromInt(self.audio_sample_rate)), false);
+
+        self.close(true);
+
+        while (true) {
+            self.openAndWait(true) catch |err| {
+                std.log.warn("Failed to reopen track {}", .{err});
+                continue;
+            };
+
+            if (self.status == TrackStatus.buffering) {
+                break;
+            }
+
+            std.time.sleep(std.time.ns_per_s);
+        }
+
+        self.last_av_read_frame_response = 0;
+    }
+
+    fn openAndWait(self: *Self, should_reopen: bool) !void {
         self.open_close_mutex.lock();
         defer self.open_close_mutex.unlock();
 
@@ -242,13 +279,7 @@ pub const Track = struct {
 
         _ = c.av_dict_set(&open_options, "headers", headers.ptr, 0);
 
-        _ = c.av_dict_set(&open_options, "reconnect", "1", 0);
-
-        _ = c.av_dict_set(&open_options, "reconnect_on_network_error", "1", 0);
-
-        _ = c.av_dict_set(&open_options, "reconnect_streamed", "1", 0);
-
-        _ = c.av_dict_set(&open_options, "reconnect_max_retries", "3", 0);
+        _ = c.av_dict_set(&open_options, "reconnect", "0", 0);
 
         _ = c.av_dict_set(&open_options, "rw_timeout", std.fmt.comptimePrint("{}", .{100 * std.time.us_per_ms}), 0);
 
@@ -409,12 +440,14 @@ pub const Track = struct {
         self.audio_channel_count = @intCast(av_audio_codec_params.*.ch_layout.nb_channels);
         self.audio_sample_rate = @intCast(av_audio_codec_params.*.sample_rate);
 
-        self.audio_frames_consumed = 0;
-        self.audio_time = 0;
-        self.audio_frames_consumed_max = 0;
+        if (!should_reopen) {
+            self.audio_frames_consumed = 0;
+            self.audio_time = 0;
+            self.audio_frames_consumed_max = 0;
 
-        try self.audio_fifo.init(self.audio_format, self.audio_channel_count, self.audio_sample_rate * 10);
-        errdefer self.audio_fifo.free();
+            try self.audio_fifo.init(self.audio_format, self.audio_channel_count, self.audio_sample_rate * 10);
+            errdefer self.audio_fifo.free();
+        }
 
         self.av_audio_frame = c.av_frame_alloc() orelse {
             std.log.err("Couldn't allocate resampled AVFrame", .{});
@@ -486,7 +519,7 @@ pub const Track = struct {
 
     pub fn process(self: *Self) !void {
         if (self.getStatus() == .idle or
-            self.getStatus() == .loading)
+            self.getStatus() == .loading or self.is_reopen.load(.seq_cst))
         {
             return;
         }
@@ -552,7 +585,15 @@ pub const Track = struct {
         }
 
         if (self.last_av_read_frame_response < 0 and self.cached_packet_fifo.count == 0) {
+            if (self.last_av_read_frame_response == c.AVERROR(c.ETIMEDOUT) or
+                self.last_av_read_frame_response == c.AVERROR(c.EIO))
+            {
+                try self.reopen();
+                return;
+            }
+
             defer self.last_av_read_frame_response = 0;
+
             self.has_reach_end = true;
 
             if (self.last_av_read_frame_response == c.AVERROR_EOF and
@@ -831,25 +872,30 @@ pub const Track = struct {
         return .{ samples_read, haveLoopOnItself };
     }
 
-    pub fn close(self: *Self) void {
+    pub fn close(self: *Self, should_reopen: bool) void {
         self.open_close_mutex.lock();
         defer self.open_close_mutex.unlock();
         if (self.status == TrackStatus.idle) {
             return;
         }
 
-        while (true) {
-            var av_packet = self.cached_packet_fifo.readItem() orelse {
-                break;
-            };
-            defer c.av_packet_free(&av_packet);
-            defer c.av_packet_unref(av_packet);
+        if (!should_reopen) {
+            while (true) {
+                var av_packet = self.cached_packet_fifo.readItem() orelse {
+                    break;
+                };
+                defer c.av_packet_free(&av_packet);
+                defer c.av_packet_unref(av_packet);
+            }
         }
 
         c.av_frame_free(&self.av_audio_frame);
         c.av_frame_free(&self.resampled_audio_frame);
 
-        self.audio_fifo.free();
+        if (!should_reopen) {
+            self.audio_fifo.free();
+        }
+
         c.swr_free(&self.swr_audio_resampler);
         c.avcodec_free_context(&self.av_audio_codec_ctx);
         c.avformat_close_input(&self.av_format_ctx);
@@ -865,9 +911,11 @@ pub const Track = struct {
             self.allocator.destroy(self.debug_test_alloc);
         }
 
-        self.audio_frames_consumed = 0;
-        self.audio_frames_consumed_max = 0;
-        self.audio_time = 0;
+        if (!should_reopen) {
+            self.audio_frames_consumed = 0;
+            self.audio_frames_consumed_max = 0;
+            self.audio_time = 0;
+        }
     }
 
     pub fn getAudioOutputFormat(self: *const Self) c.AVSampleFormat {
@@ -894,6 +942,11 @@ pub const Track = struct {
         if (self.fast_forward_until_time != null) {
             return self.fast_forward_until_time.?;
         }
+
+        if (self.queue_seek != null) {
+            return self.queue_seek.?.new_time;
+        }
+
         return self.audio_time;
     }
 
@@ -927,12 +980,16 @@ pub const Track = struct {
             return .ready;
         }
 
-        if (self.status == .ready and self.audio_time == 0) {
+        if ((self.is_reopen.load(.seq_cst) or self.status == .ready) and self.audio_time == 0) {
             return .buffering;
         }
 
-        if (self.status == .ready and self.audio_fifo.size() <= 0) {
+        if ((self.is_reopen.load(.seq_cst) or self.status == .ready) and self.audio_fifo.size() <= 0) {
             return .buffering;
+        }
+
+        if (self.is_reopen.load(.seq_cst) and self.audio_fifo.size() > 0) {
+            return .ready;
         }
 
         return self.status;

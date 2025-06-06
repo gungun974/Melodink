@@ -223,12 +223,12 @@ const TrackManager = struct {
                     return;
                 }
                 const current_position = track.getCurrentPlaybackTime();
-                track.close();
+                track.close(false);
                 track.quality = quality;
                 try track.open(pool);
                 track.seekWhenReady(current_position, true);
             } else {
-                track.close();
+                track.close(false);
                 track.quality = quality;
             }
         }
@@ -587,6 +587,10 @@ pub const Player = struct {
             try self.openAndProcessTrack(track_to_load.track);
 
             if (!Player.isTrackBufferedEnough(track_to_load.track, 4)) {
+                return;
+            }
+
+            if (true) {
                 return;
             }
 
