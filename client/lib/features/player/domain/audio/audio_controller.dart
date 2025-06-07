@@ -757,10 +757,7 @@ class AudioController extends BaseAudioHandler {
         MelodinkProcessingState.completed: AudioProcessingState.completed,
         MelodinkProcessingState.error: AudioProcessingState.error,
       }[playerState]!,
-      playing:
-          playerState == MelodinkProcessingState.idle || _previousTracks.isEmpty
-              ? false
-              : playerPlaying,
+      playing: _previousTracks.isEmpty ? false : playerPlaying,
       updatePosition:
           Duration(microseconds: (playerPosition * 1000000).round()),
       bufferedPosition:

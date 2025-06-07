@@ -154,6 +154,12 @@ pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, source_a
         _ = try self.index_file.write(std.mem.asBytes(&self.file_total_size));
     }
 
+    if (self.file_total_size == 0) {
+        try self.index_file.seekTo(0);
+        self.file_total_size = @intCast(c.avio_size(self.source_avio_ctx));
+        _ = try self.index_file.write(std.mem.asBytes(&self.file_total_size));
+    }
+
     try self.index_map.resize(self.index_size);
     const bytes_read = try self.index_file.readAll(self.index_map.items);
     @memset(self.index_map.items[bytes_read..], 0);
@@ -190,6 +196,15 @@ pub fn deinit(self: *Self) void {
     self.allocator.free(self.cache_directory);
 
     self.has_been_open = false;
+}
+
+pub fn resetAVIOError(self: *Self) void {
+    if (!self.has_been_open) {
+        return;
+    }
+
+    self.avio_ctx.@"error" = 0;
+    self.avio_ctx.eof_reached = 0;
 }
 
 fn isBlockCached(self: *Self, block_id: u64) bool {
@@ -250,6 +265,10 @@ fn downloadBlock(self: *Self, block_id: u64) !void {
         return;
     }
 
+    if (bytes_read == c.AVERROR(c.ETIMEDOUT)) {
+        return error.SourceTimeout;
+    }
+
     if (bytes_read <= 0) {
         return error.CouldNotReadSourceAVIO;
     }
@@ -271,6 +290,9 @@ fn customReadPacket(opaqued: ?*anyopaque, buf: [*c]u8, buf_size: c_int) callconv
     while (block_id <= end_block) : (block_id += 1) {
         if (block_id >= 0) {
             self.downloadBlock(block_id) catch |err| {
+                if (err == error.SourceTimeout) {
+                    return c.AVERROR(c.ETIMEDOUT);
+                }
                 std.log.warn("Could not read packet {}", .{err});
                 return 0;
             };
@@ -304,7 +326,7 @@ fn customSeek(opaqued: ?*anyopaque, offset: i64, whence: c_int) callconv(.c) i64
         new_offset = @intCast(offset);
     } else if (whence == c.SEEK_CUR) {
         new_offset = self.current_offset + @as(u64, @intCast(offset));
-    } else if (whence == c.SEEK_CUR) {
+    } else if (whence == c.SEEK_END) {
         new_offset = self.file_total_size - @as(u64, @intCast(offset));
     } else if (whence == c.AVSEEK_SIZE) {
         return @intCast(self.file_total_size);
@@ -313,7 +335,8 @@ fn customSeek(opaqued: ?*anyopaque, offset: i64, whence: c_int) callconv(.c) i64
     }
 
     self.current_offset = new_offset;
-    return 0;
+
+    return c.avio_seek(self.source_avio_ctx, 0, c.SEEK_CUR);
 }
 
 // av_err2str returns a temporary array. This doesn't work in gcc.

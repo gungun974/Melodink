@@ -9,18 +9,23 @@ const Self = @This();
 const BUFFER_SIZE = 4096;
 
 allocator: std.mem.Allocator,
-has_been_open: bool = false,
+has_been_open: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
 options: ?*c.AVDictionary = null,
 
+is_reopen: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
+
 file_url: [:0]const u8 = undefined,
+
+current_offset: i64 = 0,
+file_total_size: u64 = 0,
 
 source_avio_ctx: [*c]c.AVIOContext = undefined,
 avio_ctx: *c.AVIOContext = undefined,
 
-has_been_open_http: bool = false,
+has_been_open_http: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
 
 pub fn init(self: *Self, url: [:0]const u8, new_options: [*c]?*c.AVDictionary) !void {
-    if (self.has_been_open) {
+    if (self.has_been_open.load(.seq_cst)) {
         return;
     }
 
@@ -39,11 +44,13 @@ pub fn init(self: *Self, url: [:0]const u8, new_options: [*c]?*c.AVDictionary) !
         return error.CouldNotOpenCustomAVIOContext;
     };
 
-    self.has_been_open = true;
+    self.current_offset = 0;
+    self.has_been_open.store(true, .seq_cst);
+    self.is_reopen.store(false, .seq_cst);
 }
 
 pub fn deinit(self: *Self) void {
-    if (!self.has_been_open) {
+    if (!self.has_been_open.load(.seq_cst)) {
         return;
     }
 
@@ -56,11 +63,20 @@ pub fn deinit(self: *Self) void {
 
     self.allocator.free(self.file_url);
 
-    self.has_been_open = false;
+    self.has_been_open.store(false, .seq_cst);
+}
+
+pub fn resetAVIOError(self: *Self) void {
+    if (!self.has_been_open.load(.seq_cst)) {
+        return;
+    }
+
+    self.avio_ctx.@"error" = 0;
+    self.avio_ctx.eof_reached = 0;
 }
 
 fn openHTTP(self: *Self) !void {
-    if (self.has_been_open_http) {
+    if (self.has_been_open_http.load(.seq_cst)) {
         return;
     }
 
@@ -72,26 +88,81 @@ fn openHTTP(self: *Self) !void {
         std.log.err("Could not open AVIOContext: {s}\n", .{self.getAVError(response)});
         return error.CouldNotOpenAVIOContext;
     }
-    self.has_been_open_http = true;
+    self.file_total_size = @intCast(c.avio_size(self.source_avio_ctx));
+    self.has_been_open_http.store(true, .seq_cst);
 }
 
 fn closeHTTP(self: *Self) void {
-    if (!self.has_been_open_http) {
+    if (!self.has_been_open_http.load(.seq_cst)) {
         return;
     }
     _ = c.avio_closep(&self.source_avio_ctx);
-    self.has_been_open_http = false;
+    self.has_been_open_http.store(false, .seq_cst);
+}
+
+fn reopenHTTP(self: *Self) void {
+    defer self.is_reopen.store(false, .seq_cst);
+
+    self.closeHTTP();
+
+    while (true) {
+        self.openHTTP() catch |err| {
+            std.log.warn("Could not reopen HTTP {}", .{err});
+            std.time.sleep(std.time.ns_per_s);
+            continue;
+        };
+        break;
+    }
+}
+
+fn handleError(self: *Self, status: c_int) c_int {
+    if (status != c.AVERROR_EOF) {
+        if (self.is_reopen.load(.seq_cst)) {
+            return c.AVERROR(c.ETIMEDOUT);
+        }
+
+        self.is_reopen.store(true, .seq_cst);
+
+        var thread = std.Thread.spawn(.{}, reopenHTTP, .{self}) catch |err| {
+            std.log.warn("Failed to start reopenHTTP thread {}", .{err});
+
+            self.is_reopen.store(false, .seq_cst);
+
+            return status;
+        };
+        thread.detach();
+
+        return c.AVERROR(c.ETIMEDOUT);
+    }
+
+    return status;
 }
 
 fn customReadPacket(opaqued: ?*anyopaque, buf: [*c]u8, buf_size: c_int) callconv(.c) c_int {
     const self: *Self = @ptrCast(@alignCast(opaqued));
 
+    if (self.is_reopen.load(.seq_cst)) {
+        return c.AVERROR(c.ETIMEDOUT);
+    }
+
     self.openHTTP() catch |err| {
         std.log.warn("Could not open HTTP {}", .{err});
-        return 0;
+        return c.AVERROR(c.ETIMEDOUT);
     };
 
+    const seek = c.avio_seek(self.source_avio_ctx, self.current_offset, c.SEEK_SET);
+
+    if (seek < 0) {
+        return self.handleError(@intCast(seek));
+    }
+
     const bytes_read = c.avio_read(self.source_avio_ctx, buf, buf_size);
+
+    if (bytes_read < 0) {
+        return self.handleError(bytes_read);
+    }
+
+    self.current_offset += bytes_read;
 
     return bytes_read;
 }
@@ -99,12 +170,31 @@ fn customReadPacket(opaqued: ?*anyopaque, buf: [*c]u8, buf_size: c_int) callconv
 fn customSeek(opaqued: ?*anyopaque, offset: i64, whence: c_int) callconv(.c) i64 {
     const self: *Self = @ptrCast(@alignCast(opaqued));
 
+    if (self.is_reopen.load(.seq_cst)) {
+        return c.AVERROR(c.ETIMEDOUT);
+    }
+
     self.openHTTP() catch |err| {
         std.log.warn("Could not open HTTP {}", .{err});
-        return 0;
+        return c.AVERROR(c.ETIMEDOUT);
     };
 
-    return c.avio_seek(self.source_avio_ctx, offset, whence);
+    var new_offset: i64 = undefined;
+
+    if (whence == c.SEEK_SET) {
+        new_offset = @intCast(offset);
+    } else if (whence == c.SEEK_CUR) {
+        new_offset = self.current_offset + offset;
+    } else if (whence == c.SEEK_END) {
+        new_offset = @as(i64, @intCast(self.file_total_size)) - offset;
+    } else if (whence == c.AVSEEK_SIZE) {
+        return @intCast(self.file_total_size);
+    } else {
+        return -1;
+    }
+
+    self.current_offset = new_offset;
+    return 0;
 }
 
 // av_err2str returns a temporary array. This doesn't work in gcc.

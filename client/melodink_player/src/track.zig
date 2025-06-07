@@ -242,13 +242,7 @@ pub const Track = struct {
 
         _ = c.av_dict_set(&open_options, "headers", headers.ptr, 0);
 
-        _ = c.av_dict_set(&open_options, "reconnect", "1", 0);
-
-        _ = c.av_dict_set(&open_options, "reconnect_on_network_error", "1", 0);
-
-        _ = c.av_dict_set(&open_options, "reconnect_streamed", "1", 0);
-
-        _ = c.av_dict_set(&open_options, "reconnect_max_retries", "3", 0);
+        _ = c.av_dict_set(&open_options, "reconnect", "0", 0);
 
         _ = c.av_dict_set(&open_options, "rw_timeout", std.fmt.comptimePrint("{}", .{100 * std.time.us_per_ms}), 0);
 
@@ -553,6 +547,13 @@ pub const Track = struct {
 
         if (self.last_av_read_frame_response < 0 and self.cached_packet_fifo.count == 0) {
             defer self.last_av_read_frame_response = 0;
+
+            if (self.last_av_read_frame_response == c.AVERROR(c.ETIMEDOUT)) {
+                self.http_avio.resetAVIOError();
+                self.cache_avio.resetAVIOError();
+                return;
+            }
+
             self.has_reach_end = true;
 
             if (self.last_av_read_frame_response == c.AVERROR_EOF and
@@ -713,8 +714,6 @@ pub const Track = struct {
         self.status = TrackStatus.loading;
         defer self.status = TrackStatus.buffering;
 
-        self.queue_seek = null;
-
         self.has_reach_end = false;
 
         const current = self.getCurrentPlaybackTime();
@@ -728,6 +727,8 @@ pub const Track = struct {
 
             self.audio_frames_consumed += @intCast(sample_count);
 
+            self.queue_seek = null;
+
             return;
         }
 
@@ -737,7 +738,7 @@ pub const Track = struct {
         // little higher
         const response = c.av_seek_frame(self.av_format_ctx, -1, if (new_time == 0) 1953 else @intFromFloat(@as(f64, @floatFromInt(c.AV_TIME_BASE)) * new_time), c.AVSEEK_FLAG_BACKWARD);
 
-        if (response >= 0) {
+        if (response >= 0 or (response == -1 and self.http_avio.is_reopen.load(.seq_cst))) {
             if (reset_fifo) {
                 while (true) {
                     var av_packet = self.cached_packet_fifo.readItem() orelse {
@@ -758,8 +759,20 @@ pub const Track = struct {
             } else {
                 self.fast_forward_until_time = null;
             }
+
+            if (response == -1 and self.http_avio.is_reopen.load(.seq_cst)) {
+                self.fast_forward_until_time = null;
+                self.queue_seek = .{
+                    .new_time = new_time,
+                    .reset_fifo = reset_fifo,
+                };
+                return;
+            }
+
+            self.queue_seek = null;
         } else {
             self.fast_forward_until_time = null;
+            self.queue_seek = null;
             return error.CantSeek;
         }
     }
@@ -894,6 +907,13 @@ pub const Track = struct {
         if (self.fast_forward_until_time != null) {
             return self.fast_forward_until_time.?;
         }
+
+        const queue_seek = self.queue_seek;
+
+        if (queue_seek != null) {
+            return queue_seek.?.new_time;
+        }
+
         return self.audio_time;
     }
 
