@@ -150,13 +150,19 @@ pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, source_a
         _ = try self.index_file.readAll(std.mem.asBytes(&self.file_total_size));
         self.index_size -= @sizeOf(u64);
     } else {
-        self.file_total_size = @intCast(c.avio_size(self.source_avio_ctx));
-        _ = try self.index_file.write(std.mem.asBytes(&self.file_total_size));
+        self.file_total_size = 0;
     }
 
     if (self.file_total_size == 0) {
         try self.index_file.seekTo(0);
-        self.file_total_size = @intCast(c.avio_size(self.source_avio_ctx));
+
+        const file_size = c.avio_size(self.source_avio_ctx);
+
+        if (file_size < 0) {
+            return error.CantGetAVIOFileSize;
+        }
+
+        self.file_total_size = @intCast(file_size);
         _ = try self.index_file.write(std.mem.asBytes(&self.file_total_size));
     }
 
