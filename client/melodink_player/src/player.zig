@@ -798,17 +798,12 @@ pub const Player = struct {
             self.sendEventUpdateState(current_track.track.getStatus(), true);
         }
 
-        if (frame_read <= 0 or self.loop_mode == .one) {
+        if (frame_read < 0 or self.loop_mode == .one) {
             self.track_manager.current_track_mutex.unlock();
             return;
         }
 
         remaining_frame = frame_count - frame_read;
-
-        if (remaining_frame == 0) {
-            self.track_manager.current_track_mutex.unlock();
-            return;
-        }
 
         if (!current_track.track.haveReachEnd()) {
             self.track_manager.current_track_mutex.unlock();
@@ -823,6 +818,10 @@ pub const Player = struct {
         self.track_manager.current_track_mutex.unlock();
 
         self.next(true);
+
+        if (remaining_frame == 0) {
+            return;
+        }
 
         if (self.isTrackMatchDevice(self.track_manager.getCurrentIndexedTrack().?.track)) {
             self.readAudio(output, remaining_frame);
