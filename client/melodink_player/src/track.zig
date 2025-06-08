@@ -679,6 +679,10 @@ pub const Track = struct {
     }
 
     pub fn haveFinishToLoadEverything(self: *Self) bool {
+        if (self.need_reset) {
+            return false;
+        }
+
         if (self.status == .completed) {
             return true;
         }
