@@ -49,7 +49,7 @@ allocator: std.mem.Allocator,
 
 bands: std.ArrayListUnmanaged(Biquad) = std.ArrayListUnmanaged(Biquad){},
 
-enable: bool = undefined,
+enable: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
 frequencies: std.ArrayListUnmanaged(f64) = std.ArrayListUnmanaged(f64){},
 gains: std.ArrayListUnmanaged(f64) = std.ArrayListUnmanaged(f64){},
 
@@ -57,7 +57,7 @@ pub fn setSetting(self: *Self, enable: bool, frequencies: []const f64, gains: []
     self.mutex.lock();
     defer self.mutex.unlock();
 
-    self.enable = enable;
+    self.enable.store(enable, .release);
 
     try self.frequencies.resize(self.allocator, frequencies.len);
     @memcpy(self.frequencies.items, frequencies);

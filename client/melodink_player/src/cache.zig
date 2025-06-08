@@ -21,7 +21,7 @@ const BUFFER_SIZE = 4096;
 
 protected_opened_cache_paths: *ProtectedOpenedPathsList,
 allocator: std.mem.Allocator,
-has_been_open: bool = false,
+has_been_open: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
 
 source_avio_ctx: [*c]c.AVIOContext = undefined,
 avio_ctx: *c.AVIOContext = undefined,
@@ -32,8 +32,6 @@ index_size: usize = 0,
 current_offset: u64 = 0,
 
 file_total_size: u64 = 0,
-
-has_been_open_http: bool = false,
 
 data_file: fs.File = undefined,
 index_file: fs.File = undefined,
@@ -92,7 +90,7 @@ pub const ProtectedOpenedPathsList = struct {
 };
 
 pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, source_avio_ctx: [*c]c.AVIOContext) !void {
-    if (self.has_been_open) {
+    if (self.has_been_open.load(.seq_cst)) {
         return;
     }
 
@@ -180,11 +178,11 @@ pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, source_a
         return error.CouldNotOpenCustomAVIOContext;
     };
 
-    self.has_been_open = true;
+    self.has_been_open.store(true, .seq_cst);
 }
 
 pub fn deinit(self: *Self) void {
-    if (!self.has_been_open) {
+    if (!self.has_been_open.load(.seq_cst)) {
         return;
     }
 
@@ -201,11 +199,11 @@ pub fn deinit(self: *Self) void {
 
     self.allocator.free(self.cache_directory);
 
-    self.has_been_open = false;
+    self.has_been_open.store(true, .seq_cst);
 }
 
 pub fn evictCache(self: *Self) !void {
-    if (!self.has_been_open) {
+    if (!self.has_been_open.load(.seq_cst)) {
         return;
     }
 
@@ -218,7 +216,7 @@ pub fn evictCache(self: *Self) !void {
 }
 
 pub fn resetAVIOError(self: *Self) void {
-    if (!self.has_been_open) {
+    if (!self.has_been_open.load(.seq_cst)) {
         return;
     }
 

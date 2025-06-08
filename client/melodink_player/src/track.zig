@@ -95,7 +95,7 @@ pub const Track = struct {
 
     debug_test_alloc: (if (@import("builtin").mode == .Debug) *u8 else void) = undefined,
 
-    open_thread: bool = false,
+    open_thread: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
     queue_seek: ?QueueSeek = null,
 
     const FrameData = extern struct {
@@ -199,7 +199,7 @@ pub const Track = struct {
     }
 
     pub fn open(self: *Self, pool: *std.Thread.Pool) !void {
-        if (self.open_thread) {
+        if (self.open_thread.load(.seq_cst)) {
             return;
         }
 
@@ -207,12 +207,14 @@ pub const Track = struct {
             return;
         }
 
-        self.open_thread = true;
-        defer self.open_thread = false;
+        self.open_thread.store(true, .seq_cst);
+        errdefer self.open_thread.store(false, .seq_cst);
         try pool.spawn(openThreadHandler, .{self});
     }
 
     fn openThreadHandler(self: *Self) void {
+        defer self.open_thread.store(false, .seq_cst);
+
         self.openAndWait() catch |err| {
             std.log.warn("Failed to open track {}", .{err});
         };
@@ -222,7 +224,7 @@ pub const Track = struct {
         self.open_close_mutex.lock();
         defer self.open_close_mutex.unlock();
 
-        defer self.open_thread = false;
+        defer self.open_thread.store(false, .seq_cst);
         if (self.status != TrackStatus.idle) {
             return;
         }
@@ -484,6 +486,10 @@ pub const Track = struct {
         if (self.getStatus() == .idle or
             self.getStatus() == .loading)
         {
+            return;
+        }
+
+        if (self.open_thread.load(.seq_cst)) {
             return;
         }
 

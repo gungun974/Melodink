@@ -148,7 +148,7 @@ const TrackManager = struct {
                 self.setCurrentIndexedTrack(null);
             }
 
-            if (trackToRemove.?.*.open_thread or trackToRemove.?.*.status != TrackStatus.idle) {
+            if (trackToRemove.?.*.open_thread.load(.seq_cst) or trackToRemove.?.*.status != TrackStatus.idle) {
                 const thread = try Thread.spawn(.{}, TrackManager.freeTrack, .{ self, trackToRemove.?.* });
                 thread.detach();
             } else {
@@ -733,7 +733,7 @@ pub const Player = struct {
 
         readAudio(self, output, @intCast(frame_count));
 
-        if (self.equalizer.enable) {
+        if (self.equalizer.enable.load(.acquire)) {
             switch (self.ma_device.playback.format) {
                 c.ma_format_f32 => self.useEqualizer(@as([*]f32, @ptrCast(@alignCast(output))), frame_count),
                 c.ma_format_s16 => self.useEqualizer(@as([*]i16, @ptrCast(@alignCast(output))), frame_count),
