@@ -204,6 +204,19 @@ pub fn deinit(self: *Self) void {
     self.has_been_open = false;
 }
 
+pub fn evictCache(self: *Self) !void {
+    if (!self.has_been_open) {
+        return;
+    }
+
+    const cache_directory = try self.allocator.dupe(u8, self.cache_directory);
+    defer self.allocator.free(cache_directory);
+
+    self.deinit();
+
+    try deleteDirectoryRecursive(self.allocator, cache_directory);
+}
+
 pub fn resetAVIOError(self: *Self) void {
     if (!self.has_been_open) {
         return;
@@ -398,14 +411,6 @@ fn sanitizeForPath(allocator: std.mem.Allocator, text: []const u8) ![]u8 {
     }
 
     return sanitized;
-}
-
-pub fn evictCache(self: *Self) !void {
-    if (!self.has_been_open) {
-        return;
-    }
-
-    try deleteDirectoryRecursive(self.allocator, self.cache_directory);
 }
 
 fn checkAndCleanOldCaches(allocator: std.mem.Allocator, cache_path: []const u8, protected_opened_cache_paths: *ProtectedOpenedPathsList) !void {

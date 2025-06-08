@@ -305,6 +305,8 @@ pub const Track = struct {
 
         if (response < 0) {
             std.log.err("avformat_open_input response: {s}", .{self.getAVError(response)});
+
+            try self.cache_avio.evictCache();
         }
         if (response != 0) {
             std.log.err("Couldn't open file: most likely format isn't supported", .{});
@@ -554,7 +556,9 @@ pub const Track = struct {
                 return;
             }
 
-            self.has_reach_end = true;
+            if (self.last_av_read_frame_response == c.AVERROR_EOF) {
+                self.has_reach_end = true;
+            }
 
             if (self.last_av_read_frame_response == c.AVERROR_EOF and
                 self.infinite_loop)
@@ -594,6 +598,9 @@ pub const Track = struct {
                 if (response != c.AVERROR(c.EAGAIN)) {
                     std.log.warn("Failed to decode packet\n", .{});
                     c.av_packet_unref(av_packet);
+                    try self.cache_avio.evictCache();
+                    self.close();
+                    return error.ErrorWhileDecodingPacket;
                 }
             }
 
@@ -602,6 +609,8 @@ pub const Track = struct {
                 if (response < 0) {
                     if (response != c.AVERROR_EOF and response != c.AVERROR(c.EAGAIN)) {
                         std.log.err("Something went wrong when trying to receive decoded frame", .{});
+                        try self.cache_avio.evictCache();
+                        self.close();
                         return error.ErrorWhileDecodingFrame;
                     }
                     break;
