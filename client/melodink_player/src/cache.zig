@@ -199,7 +199,7 @@ pub fn deinit(self: *Self) void {
 
     self.allocator.free(self.cache_directory);
 
-    self.has_been_open.store(true, .seq_cst);
+    self.has_been_open.store(false, .seq_cst);
 }
 
 pub fn evictCache(self: *Self) !void {

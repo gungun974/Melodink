@@ -24,6 +24,8 @@ avio_ctx: *c.AVIOContext = undefined,
 
 has_been_open_http: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
 
+thread: ?std.Thread = null,
+
 pub fn init(self: *Self, url: [:0]const u8, new_options: [*c]?*c.AVDictionary) !void {
     if (self.has_been_open.load(.seq_cst)) {
         return;
@@ -62,6 +64,10 @@ pub fn deinit(self: *Self) void {
     c.av_freep(@ptrCast(&buffer));
 
     self.allocator.free(self.file_url);
+
+    if (self.thread != null) {
+        self.thread.?.join();
+    }
 
     self.has_been_open.store(false, .seq_cst);
 }
@@ -123,14 +129,18 @@ fn handleError(self: *Self, status: c_int) c_int {
 
         self.is_reopen.store(true, .seq_cst);
 
-        var thread = std.Thread.spawn(.{}, reopenHTTP, .{self}) catch |err| {
+        if (self.thread != null) {
+            self.thread.?.join();
+        }
+
+        self.thread = std.Thread.spawn(.{}, reopenHTTP, .{self}) catch |err| {
+            self.thread = null;
             std.log.warn("Failed to start reopenHTTP thread {}", .{err});
 
             self.is_reopen.store(false, .seq_cst);
 
             return status;
         };
-        thread.detach();
 
         return c.AVERROR(c.ETIMEDOUT);
     }
