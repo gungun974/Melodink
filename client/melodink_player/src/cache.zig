@@ -272,27 +272,36 @@ fn downloadBlock(self: *Self, block_id: u64) !void {
     }
 
     var buffer: [BLOCK_SIZE]u8 = [_]u8{0} ** BLOCK_SIZE;
-    const offset = block_id * BLOCK_SIZE;
+    var offset = block_id * BLOCK_SIZE;
     _ = c.avio_seek(self.source_avio_ctx, @intCast(offset), c.SEEK_SET);
 
-    const bytes_read = c.avio_read(self.source_avio_ctx, @ptrCast(&buffer), BLOCK_SIZE);
+    var wanted: c_int = BLOCK_SIZE;
 
-    if (bytes_read == c.AVERROR_EOF) {
-        try self.markBlockAsCached(block_id);
-        return;
+    while (wanted > 0) {
+        const bytes_read = c.avio_read(self.source_avio_ctx, @ptrCast(&buffer), wanted);
+
+        if (bytes_read == c.AVERROR_EOF) {
+            try self.markBlockAsCached(block_id);
+            return;
+        }
+
+        if (bytes_read == c.AVERROR(c.ETIMEDOUT)) {
+            return error.SourceTimeout;
+        }
+
+        if (bytes_read < 0) {
+            return error.CouldNotReadSourceAVIO;
+        }
+
+        if (bytes_read != 0) {
+            try self.data_file.seekTo(offset);
+
+            _ = try self.data_file.write(buffer[0..@intCast(bytes_read)]);
+        }
+
+        wanted -= bytes_read;
+        offset += @intCast(bytes_read);
     }
-
-    if (bytes_read == c.AVERROR(c.ETIMEDOUT)) {
-        return error.SourceTimeout;
-    }
-
-    if (bytes_read <= 0) {
-        return error.CouldNotReadSourceAVIO;
-    }
-
-    try self.data_file.seekTo(offset);
-
-    _ = try self.data_file.write(buffer[0..@intCast(bytes_read)]);
 
     try self.markBlockAsCached(block_id);
 }
