@@ -225,6 +225,10 @@ pub fn resetAVIOError(self: *Self) void {
 }
 
 fn isBlockCached(self: *Self, block_id: u64) bool {
+    if (block_id * BLOCK_SIZE >= self.file_total_size) {
+        return true;
+    }
+
     const byte_index = block_id / 8;
     if (byte_index >= self.index_size)
         return false;
@@ -234,6 +238,10 @@ fn isBlockCached(self: *Self, block_id: u64) bool {
 
 fn markBlockAsCached(self: *Self, block_id: u64) !void {
     if (block_id < 0) {
+        return;
+    }
+
+    if (block_id * BLOCK_SIZE >= self.file_total_size) {
         return;
     }
 
@@ -310,7 +318,7 @@ fn customReadPacket(opaqued: ?*anyopaque, buf: [*c]u8, buf_size: c_int) callconv
     const self: *Self = @ptrCast(@alignCast(opaqued));
 
     const start_block = @divTrunc(self.current_offset, BLOCK_SIZE);
-    const end_block = @divTrunc(self.current_offset + @as(u64, @intCast(buf_size)) - 1, BLOCK_SIZE);
+    const end_block = @divTrunc(self.current_offset + @as(u64, @intCast(buf_size)), BLOCK_SIZE) + 2;
 
     var block_id = start_block;
     while (block_id <= end_block) : (block_id += 1) {
