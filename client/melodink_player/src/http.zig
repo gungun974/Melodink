@@ -10,6 +10,7 @@ const BUFFER_SIZE = 4096;
 
 allocator: std.mem.Allocator,
 has_been_open: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
+should_deinit: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
 options: ?*c.AVDictionary = null,
 
 is_reopen: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
@@ -56,6 +57,14 @@ pub fn deinit(self: *Self) void {
         return;
     }
 
+    self.should_deinit.store(true, .seq_cst);
+
+    if (self.thread != null) {
+        self.thread.?.join();
+    }
+
+    self.should_deinit.store(false, .seq_cst);
+
     var buffer = self.avio_ctx.*.buffer;
 
     c.avio_context_free(@ptrCast(&self.avio_ctx));
@@ -64,10 +73,6 @@ pub fn deinit(self: *Self) void {
     c.av_freep(@ptrCast(&buffer));
 
     self.allocator.free(self.file_url);
-
-    if (self.thread != null) {
-        self.thread.?.join();
-    }
 
     self.has_been_open.store(false, .seq_cst);
 }
@@ -112,6 +117,10 @@ fn reopenHTTP(self: *Self) void {
     self.closeHTTP();
 
     while (true) {
+        if (self.should_deinit.load(.seq_cst)) {
+            return;
+        }
+
         self.openHTTP() catch |err| {
             std.log.warn("Could not reopen HTTP {}", .{err});
             std.time.sleep(std.time.ns_per_s);
