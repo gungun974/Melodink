@@ -198,7 +198,7 @@ class DownloadTrackRepository {
                     }
                   : null,
             );
-        if (downloadTrack!.audioFile !=
+        if (downloadTrack?.audioFile !=
             "$applicationSupportDirectory/$downloadAudioPath") {
           shouldDeleteOldAudio = true;
         }
