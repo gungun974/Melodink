@@ -405,31 +405,41 @@ pub const Player = struct {
     }
 
     pub fn play(self: *Self) !void {
+        self.ma_device_mutex.lock();
+        defer self.ma_device_mutex.unlock();
+
+        if (!self.paused) {
+            return;
+        }
+
         self.paused = false;
 
         if (!self.has_init_ma_device) {
             return;
         }
 
-        self.ma_device_mutex.lock();
-        defer self.ma_device_mutex.unlock();
-
         if (c.ma_device_start(self.ma_device) != c.MA_SUCCESS) {
+            self.paused = true;
             return error.CantStartMiniaudio;
         }
     }
 
     pub fn pause(self: *Self) !void {
+        self.ma_device_mutex.lock();
+        defer self.ma_device_mutex.unlock();
+
+        if (self.paused) {
+            return;
+        }
+
         self.paused = true;
 
         if (!self.has_init_ma_device) {
             return;
         }
 
-        self.ma_device_mutex.lock();
-        defer self.ma_device_mutex.unlock();
-
         if (c.ma_device_stop(self.ma_device) != c.MA_SUCCESS) {
+            self.paused = false;
             return error.CantStopMiniaudio;
         }
     }
