@@ -174,6 +174,11 @@
               url = "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz";
               hash = "sha256-Kxv/b3F/lyXHC/jXnkeG2hPeiicAWeS6C90mKue+Rus=";
             }} /build/source/build/linux/x64/release/mimalloc-2.1.2.tar.gz
+
+            ZIG_GLOBAL_CACHE_DIR=$(mktemp -d)
+            export ZIG_GLOBAL_CACHE_DIR
+
+            ln -s ${pkgs.callPackage ./client/melodink_player/deps.nix {}} $ZIG_GLOBAL_CACHE_DIR/p
           '';
 
           NIX = "true";
@@ -260,6 +265,7 @@
 
           zig
           zls
+          pkgs.zon2nix
         ];
       };
     });
