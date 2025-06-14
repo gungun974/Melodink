@@ -8,6 +8,10 @@
     .minimum_zig_version = "0.14.1",
 
     .dependencies = .{
+        .miniaudio = .{
+            .url = "https://github.com/mackron/miniaudio/archive/refs/tags/0.11.22.zip",
+            .hash = "N-V-__8AAIX6uQBMQoqkZK7Ws3HsCwSJf1Z_KLsW4CJx81k3",
+        },
         .ffmpeg_ios = .{
             .url = "https://github.com/gungun974/melodink-ffmpeg-darwin-build/releases/download/v7.0.2-1/ffmpeg-xcframeworks_v7.0.2-1_ios-universal-video-default.tar.gz",
             .hash = "N-V-__8AAMioJQJPsTJkHS5srthHxLC16RaGgAdTIyziK_Bi",

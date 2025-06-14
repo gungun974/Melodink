@@ -45,7 +45,7 @@ pub fn build(b: *std.Build) void {
         .root_module = lib.root_module,
     });
 
-    lib_check.addIncludePath(b.path("src/miniaudio"));
+    lib_check.addIncludePath(b.dependency("miniaudio", .{}).path("extras/miniaudio_split/miniaudio.h"));
 
     // Test
 
@@ -534,28 +534,30 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
 
     // Miniaudio
 
+    const miniaudio_c = b.dependency("miniaudio", .{}).path("extras/miniaudio_split/miniaudio.c");
+
     if (target.result.os.tag == .ios or target.result.os.tag == .macos) {
         step.linkFramework("CoreFoundation");
         step.linkFramework("AVFoundation");
         step.linkFramework("AudioToolbox");
 
-        step.addCSourceFile(.{ .file = b.addWriteFiles().addCopyFile(b.path("src/miniaudio/miniaudio.c"), "miniaudio.m"), .flags = &.{
+        step.addCSourceFile(.{ .file = b.addWriteFiles().addCopyFile(miniaudio_c, "miniaudio.m"), .flags = &.{
             "-DMA_NO_DECODING",
             "-DMA_NO_ENCODING",
             "-DMA_NO_RUNTIME_LINKING",
             "-fwrapv",
         } });
     } else if (target.result.abi.isAndroid() and target.result.cpu.arch == .x86) {
-        step.addCSourceFile(.{ .file = b.path("src/miniaudio/miniaudio.c"), .flags = &.{ "-DMA_NO_DECODING", "-DMA_NO_ENCODING", "-fwrapv", "-fPIC" } });
+        step.addCSourceFile(.{ .file = miniaudio_c, .flags = &.{ "-DMA_NO_DECODING", "-DMA_NO_ENCODING", "-fwrapv", "-fPIC" } });
     } else if (target.result.abi.isAndroid() and target.result.cpu.arch == .arm) {
-        step.addCSourceFile(.{ .file = b.path("src/miniaudio/miniaudio.c"), .flags = &.{
+        step.addCSourceFile(.{ .file = miniaudio_c, .flags = &.{
             "-DMA_NO_DECODING",
             "-DMA_NO_ENCODING",
             "-fwrapv",
             "-mfloat-abi=softfp",
         } });
     } else {
-        step.addCSourceFile(.{ .file = b.path("src/miniaudio/miniaudio.c"), .flags = &.{
+        step.addCSourceFile(.{ .file = miniaudio_c, .flags = &.{
             "-DMA_NO_DECODING",
             "-DMA_NO_ENCODING",
             "-fwrapv",
@@ -567,9 +569,11 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
 }
 
 fn prepareMiniaudio(b: *std.Build) std.Build.LazyPath {
+    const miniaudio_h = b.dependency("miniaudio", .{}).path("extras/miniaudio_split/miniaudio.h");
+
     if (builtin.os.tag == .windows) {
         const tool_run = b.addSystemCommand(&.{"C:/Program Files/Git/usr/bin/patch"});
-        tool_run.addFileArg(b.path("src/miniaudio/miniaudio.h"));
+        tool_run.addFileArg(b.path(miniaudio_h));
 
         tool_run.addArg("-o");
         const ret = tool_run.addOutputFileArg("miniaudio.h");
@@ -579,7 +583,7 @@ fn prepareMiniaudio(b: *std.Build) std.Build.LazyPath {
     }
 
     const tool_run = b.addSystemCommand(&.{"patch"});
-    tool_run.addFileArg(b.path("src/miniaudio/miniaudio.h"));
+    tool_run.addFileArg(miniaudio_h);
 
     tool_run.addArg("-o");
     const ret = tool_run.addOutputFileArg("miniaudio.h");
