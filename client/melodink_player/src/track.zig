@@ -798,6 +798,18 @@ pub const Track = struct {
 
     pub fn setLoop(self: *Self, enabled: bool) void {
         self.infinite_loop = enabled;
+
+        var sample_count_without_extra_loop: ?u64 = null;
+
+        if (!self.infinite_loop and self.audio_frames_consumed_max != 0) {
+            if (self.audio_frames_consumed >= self.audio_frames_consumed_max) {
+                sample_count_without_extra_loop = self.audio_frames_consumed_max - self.audio_frames_consumed;
+            }
+        }
+
+        if (sample_count_without_extra_loop != null) {
+            self.audio_fifo.clear();
+        }
     }
 
     pub fn getAudioFrame(self: *Self, output: [*c]?*anyopaque, sample_count: u64) !std.meta.Tuple(&.{ u64, bool }) {

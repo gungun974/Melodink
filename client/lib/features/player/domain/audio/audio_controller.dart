@@ -267,6 +267,10 @@ class AudioController extends BaseAudioHandler {
 
   @override
   Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    if (!(playbackState.valueOrNull?.playing ?? false)) {
+      pause();
+    }
+
     player.setLoopMode(const {
       AudioServiceRepeatMode.none: MelodinkLoopMode.none,
       AudioServiceRepeatMode.all: MelodinkLoopMode.all,
@@ -291,6 +295,10 @@ class AudioController extends BaseAudioHandler {
 
   @override
   Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
+    if (!(playbackState.valueOrNull?.playing ?? false)) {
+      pause();
+    }
+
     await playlistTracksMutex.protect(() async {
       await _doShuffle(shuffleMode);
     });
