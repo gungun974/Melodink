@@ -281,15 +281,27 @@ fn downloadBlock(self: *Self, block_id: u64) !void {
 
     var buffer: [BLOCK_SIZE]u8 = [_]u8{0} ** BLOCK_SIZE;
     var offset = block_id * BLOCK_SIZE;
-    _ = c.avio_seek(self.source_avio_ctx, @intCast(offset), c.SEEK_SET);
+    const seek_result = c.avio_seek(self.source_avio_ctx, @intCast(offset), c.SEEK_SET);
+
+    if (seek_result < 0) {
+        if (seek_result == c.AVERROR(c.ETIMEDOUT)) {
+            return error.SourceTimeout;
+        }
+        return error.CouldNotSeekSourceAVIO;
+    }
 
     var wanted: c_int = BLOCK_SIZE;
 
     while (wanted > 0) {
-        const bytes_read = c.avio_read(self.source_avio_ctx, @ptrCast(&buffer), wanted);
+        const bytes_read = c.avio_read_partial(self.source_avio_ctx, @ptrCast(&buffer), wanted);
 
         if (bytes_read == c.AVERROR_EOF) {
+            if (offset < self.file_total_size) {
+                return error.HTTPReturnATooEarlyEOF;
+            }
+
             try self.markBlockAsCached(block_id);
+
             return;
         }
 
@@ -318,7 +330,7 @@ fn customReadPacket(opaqued: ?*anyopaque, buf: [*c]u8, buf_size: c_int) callconv
     const self: *Self = @ptrCast(@alignCast(opaqued));
 
     const start_block = @divTrunc(self.current_offset, BLOCK_SIZE);
-    const end_block = @divTrunc(self.current_offset + @as(u64, @intCast(buf_size)), BLOCK_SIZE) + 2;
+    const end_block = @divTrunc(self.current_offset + @as(u64, @intCast(buf_size - 1)), BLOCK_SIZE);
 
     var block_id = start_block;
     while (block_id <= end_block) : (block_id += 1) {
@@ -328,19 +340,19 @@ fn customReadPacket(opaqued: ?*anyopaque, buf: [*c]u8, buf_size: c_int) callconv
                     return c.AVERROR(c.ETIMEDOUT);
                 }
                 std.log.warn("Could not read packet {}", .{err});
-                return 0;
+                return c.AVERROR(c.ETIMEDOUT);
             };
         }
     }
 
     self.data_file.seekTo(self.current_offset) catch |err| {
         std.log.warn("Could not read packet {}", .{err});
-        return 0;
+        return c.AVERROR(c.ETIMEDOUT);
     };
 
     const bytes_read = self.data_file.read(buf[0..@intCast(buf_size)]) catch |err| {
         std.log.warn("Could not read packet {}", .{err});
-        return 0;
+        return c.AVERROR(c.ETIMEDOUT);
     };
 
     if (bytes_read <= 0)
