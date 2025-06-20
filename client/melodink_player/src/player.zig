@@ -214,6 +214,10 @@ const TrackManager = struct {
         while (iterator.next()) |entry| {
             const track = entry.value_ptr.*;
 
+            if (track.downloaded_path != null) {
+                continue;
+            }
+
             if (track.quality == quality) {
                 continue;
             }
@@ -230,6 +234,7 @@ const TrackManager = struct {
             } else {
                 track.close();
                 track.quality = quality;
+                try track.open(pool);
             }
         }
     }
