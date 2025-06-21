@@ -61,6 +61,7 @@ pub fn deinit(self: *Self) void {
 
     if (self.thread != null) {
         self.thread.?.join();
+        self.thread = null;
     }
 
     self.should_deinit.store(false, .seq_cst);
@@ -140,6 +141,7 @@ fn handleError(self: *Self, status: c_int) c_int {
 
         if (self.thread != null) {
             self.thread.?.join();
+            self.thread = null;
         }
 
         self.thread = std.Thread.spawn(.{}, reopenHTTP, .{self}) catch |err| {
