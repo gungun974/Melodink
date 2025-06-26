@@ -639,10 +639,10 @@ pub const Player = struct {
 
         var track_to_load = current_track.?;
 
-        for (0..10) |_| {
+        for (0..20) |_| {
             try self.openAndProcessTrack(track_to_load.track);
 
-            if (!Player.isTrackBufferedEnough(track_to_load.track, 4)) {
+            if (!Player.isTrackBufferedEnough(track_to_load.track, 16)) {
                 return;
             }
 
@@ -650,7 +650,7 @@ pub const Player = struct {
                 const previous_track = current_track.?.previous();
 
                 if (previous_track != null and
-                    !Player.isTrackBufferedEnough(previous_track.?.track, 4))
+                    !Player.isTrackBufferedEnough(previous_track.?.track, 8))
                 {
                     try self.openAndProcessTrack(previous_track.?.track);
                 }
@@ -662,7 +662,7 @@ pub const Player = struct {
                 return;
             }
 
-            if (!Player.isTrackBufferedEnough(next_track.?.track, 4)) {
+            if (!Player.isTrackBufferedEnough(next_track.?.track, 8)) {
                 try self.openAndProcessTrack(next_track.?.track);
                 return;
             }

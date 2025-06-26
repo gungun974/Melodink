@@ -411,7 +411,7 @@ pub const Track = struct {
         self.audio_time = 0;
         self.audio_frames_consumed_max = 0;
 
-        try self.audio_fifo.init(self.audio_format, self.audio_channel_count, self.audio_sample_rate * 10);
+        try self.audio_fifo.init(self.audio_format, self.audio_channel_count, self.audio_sample_rate * 90);
         errdefer self.audio_fifo.free();
 
         self.av_audio_frame = c.av_frame_alloc() orelse {

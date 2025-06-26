@@ -657,7 +657,7 @@ class AudioController extends BaseAudioHandler {
           continue;
         }
 
-        if (index > _previousTracks.length + 10) {
+        if (index > _previousTracks.length + 15) {
           continue;
         }
 
