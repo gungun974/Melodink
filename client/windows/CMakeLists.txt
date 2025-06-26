@@ -110,6 +110,7 @@ install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
 
 set(FFMPEG_SRC "${CMAKE_BINARY_DIR}/ffmpeg")
 set(SQLITE_DLL "${CMAKE_BINARY_DIR}/sqlite3.dll")
+set(MELODINK_PLAYER_DLL "${CMAKE_SOURCE_DIR}/../melodink_player/zig-out/bin/melodink_player.dll")
 
 file(GLOB FFMPEG_SWSCALE_DLLS "${FFMPEG_SRC}/bin/swscale*.dll")
 file(GLOB FFMPEG_SWRESAMPLE_DLLS "${FFMPEG_SRC}/bin/swresample*.dll")
@@ -133,3 +134,5 @@ install(FILES ${FFMPEG_DLLS}
 
 
 install(FILES ${SQLITE_DLL} DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)
+
+install(FILES ${MELODINK_PLAYER_DLL} DESTINATION "${CMAKE_INSTALL_PREFIX}" COMPONENT Runtime)

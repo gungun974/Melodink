@@ -3,7 +3,9 @@ import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'dart:isolate';
 import 'package:ffi/ffi.dart' as ffi;
+import 'package:flutter/foundation.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
+import 'package:mutex/mutex.dart';
 
 enum MelodinkProcessingState {
   /// There hasn't been any resource loaded yet.
@@ -45,13 +47,11 @@ typedef Int64NativeSetCallbackFunction = ffi.Void Function(
 
 final class MelodinkTrackRequest {
   final int id;
-  final AppSettingAudioQuality quality;
   final String originalAudioHash;
   final String downloadedPath;
 
   MelodinkTrackRequest({
     required this.id,
-    required this.quality,
     required this.originalAudioHash,
     required this.downloadedPath,
   });
@@ -60,10 +60,8 @@ final class MelodinkTrackRequest {
 final class NativeMelodinkTrackRequest extends ffi.Struct {
   external ffi.Pointer<ffi.Char> serverURL;
   external ffi.Pointer<ffi.Char> cachePath;
-  @ffi.Int64()
+  @ffi.Uint64()
   external int trackId;
-  @ffi.Int64()
-  external int quality;
   external ffi.Pointer<ffi.Char> originalAudioHash;
   external ffi.Pointer<ffi.Char> downloadedPath;
 }
@@ -77,9 +75,7 @@ class MelodinkPlayer {
     return _instance;
   }
 
-  late final ffi.DynamicLibrary _lib;
-
-  init() {
+  static ffi.DynamicLibrary getLibrary() {
     final names = {
       'windows': [
         'melodink_player.dll',
@@ -101,8 +97,7 @@ class MelodinkPlayer {
       // Try to load the dynamic library from the system using [DynamicLibrary.open].
       for (final name in names) {
         try {
-          _initLibrary(ffi.DynamicLibrary.open(name));
-          return;
+          return ffi.DynamicLibrary.open(name);
         } catch (_) {}
       }
       // If the dynamic library is not loaded, throw an [Exception].
@@ -115,11 +110,11 @@ class MelodinkPlayer {
           'android': 'Cannot find libmelodink_player.so.',
         }[Platform.operatingSystem]!,
       );
-    } else {
-      throw Exception(
-        'Unsupported operating system: ${Platform.operatingSystem}',
-      );
     }
+
+    throw Exception(
+      'Unsupported operating system: ${Platform.operatingSystem}',
+    );
   }
 
   final _eventAudioChangedStreamController = StreamController<int>.broadcast();
@@ -134,86 +129,64 @@ class MelodinkPlayer {
 
   Stream get eventUpdateStateStream => _eventUpdateStateStreamController.stream;
 
-  void _initLibrary(ffi.DynamicLibrary lib) {
-    _lib = lib;
-    final void Function() init = _lib
+  void init() {
+    ffi.DynamicLibrary lib = getLibrary();
+    final void Function() init = lib
         .lookup<ffi.NativeFunction<ffi.Void Function()>>('mi_player_init')
         .asFunction();
 
-    final registerEventAudioChangedCallback = _lib.lookupFunction<
+    final registerEventAudioChangedCallback = lib.lookupFunction<
         Int64NativeSetCallbackFunction,
         Int64SetCallbackFunction>('mi_register_event_audio_changed_callback');
 
-    final registerEventUpdateStateCallback = _lib.lookupFunction<
+    final registerEventUpdateStateCallback = lib.lookupFunction<
         Int64NativeSetCallbackFunction,
         Int64SetCallbackFunction>('mi_register_event_update_state_callback');
 
-    _play = _lib
+    _play = lib
         .lookup<ffi.NativeFunction<ffi.Void Function()>>('mi_player_play')
         .asFunction();
-    _pause = _lib
+    _pause = lib
         .lookup<ffi.NativeFunction<ffi.Void Function()>>('mi_player_pause')
         .asFunction();
-    _seek = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
-            'mi_player_seek')
-        .asFunction();
-    _skipToPrevious = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function()>>(
-            'mi_player_skip_to_previous')
-        .asFunction();
-    _skipToNext = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function()>>(
-            'mi_player_skip_to_next')
-        .asFunction();
-    _setAudios = _lib
-        .lookup<
-            ffi.NativeFunction<
-                ffi.Void Function(
-                  ffi.Int64,
-                  ffi.Int64,
-                  ffi.Pointer<NativeMelodinkTrackRequest>,
-                  ffi.Size,
-                )>>('mi_player_set_audios')
-        .asFunction();
-    _setLoopMode = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int32)>>(
+    _setLoopMode = lib
+        .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Uint8)>>(
             'mi_player_set_loop_mode')
         .asFunction();
-    _setAuthToken = _lib
-        .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Utf8>)>>(
-            'mi_player_set_auth_token')
+    _setQuality = lib
+        .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Uint8)>>(
+            'mi_player_set_quality')
         .asFunction();
-    _getCurrentPlaying = _lib
+    _getCurrentPlaying = lib
         .lookup<ffi.NativeFunction<ffi.Uint8 Function()>>(
             'mi_player_get_current_playing')
         .asFunction();
-    _getCurrentTrackPos = _lib
-        .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
+    _getCurrentTrackPos = lib
+        .lookup<ffi.NativeFunction<ffi.Uint64 Function()>>(
             'mi_player_get_current_track_pos')
         .asFunction();
-    _getCurrentPosition = _lib
-        .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
+    _getCurrentPosition = lib
+        .lookup<ffi.NativeFunction<ffi.Double Function()>>(
             'mi_player_get_current_position')
         .asFunction();
-    _getCurrentBufferedPosition = _lib
-        .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
+    _getCurrentBufferedPosition = lib
+        .lookup<ffi.NativeFunction<ffi.Double Function()>>(
             'mi_player_get_current_buffered_position')
         .asFunction();
-    _getCurrentPlayerState = _lib
-        .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
+    _getCurrentPlayerState = lib
+        .lookup<ffi.NativeFunction<ffi.Uint8 Function()>>(
             'mi_player_get_current_player_state')
         .asFunction();
-    _getCurrentLoopMode = _lib
-        .lookup<ffi.NativeFunction<ffi.Int64 Function()>>(
+    _getCurrentLoopMode = lib
+        .lookup<ffi.NativeFunction<ffi.Uint8 Function()>>(
             'mi_player_get_current_loop_mode')
         .asFunction();
 
-    _setVolume = _lib
+    _setVolume = lib
         .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>(
             'mi_player_set_volume')
         .asFunction();
-    _getVolume = _lib
+    _getVolume = lib
         .lookup<ffi.NativeFunction<ffi.Double Function()>>(
             'mi_player_get_volume')
         .asFunction();
@@ -223,6 +196,8 @@ class MelodinkPlayer {
       onError: (error) => _eventAudioChangedStreamController.addError(error),
       onDone: () => _eventAudioChangedStreamController.close(),
     );
+
+    init();
 
     final eventAudioChangedSendPort = _eventAudioChangedReceivePort.sendPort;
 
@@ -255,100 +230,208 @@ class MelodinkPlayer {
 
     registerEventUpdateStateCallback(
         updateStateSendPortNativeCallback.nativeFunction);
-
-    init();
   }
 
   late final void Function() _play;
   late final void Function() _pause;
-  late final void Function(int) _seek;
-  late final void Function() _skipToPrevious;
-  late final void Function() _skipToNext;
-
-  late final void Function(
-    int,
-    int,
-    ffi.Pointer<NativeMelodinkTrackRequest>,
-    int,
-  ) _setAudios;
 
   late final void Function(int) _setLoopMode;
-  late final void Function(ffi.Pointer<ffi.Utf8>) _setAuthToken;
+  late final void Function(int) _setQuality;
 
   late final int Function() _getCurrentPlaying;
   late final int Function() _getCurrentTrackPos;
-  late final int Function() _getCurrentPosition;
-  late final int Function() _getCurrentBufferedPosition;
+  late final double Function() _getCurrentPosition;
+  late final double Function() _getCurrentBufferedPosition;
   late final int Function() _getCurrentPlayerState;
   late final int Function() _getCurrentLoopMode;
 
   late final double Function() _getVolume;
   late final void Function(double) _setVolume;
 
+  final actionMutex = Mutex();
+
   void play() => _play();
   void pause() => _pause();
-  void seek(int positionMs) => _seek(positionMs);
-  void skipToPrevious() => _skipToPrevious();
-  void skipToNext() => _skipToNext();
+  Future<void> seek(double position) async =>
+      actionMutex.protect(() => compute((position) {
+            final void Function(double) seek = getLibrary()
+                .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>(
+                    'mi_player_seek')
+                .asFunction();
+            seek(position);
+          }, position));
 
-  void setAudios(
+  Future<void> skipToPrevious() async => actionMutex.protect(() => compute((_) {
+        final void Function() skipToPrevious = getLibrary()
+            .lookup<ffi.NativeFunction<ffi.Void Function()>>(
+                'mi_player_skip_to_previous')
+            .asFunction();
+        skipToPrevious();
+      }, null));
+  Future<void> skipToNext() async => actionMutex.protect(() => compute((_) {
+        final void Function() skipToNext = getLibrary()
+            .lookup<ffi.NativeFunction<ffi.Void Function()>>(
+                'mi_player_skip_to_next')
+            .asFunction();
+        skipToNext();
+      }, null));
+
+  Future<void> setAudios(
     String serverURL,
     String cachePath,
     int newCurrentTrackIndex,
     int currentRequestIndex,
     List<MelodinkTrackRequest> requests,
-  ) {
-    final requestsPointers =
-        ffi.calloc<NativeMelodinkTrackRequest>(requests.length);
+    String serverAuth,
+  ) async {
+    await actionMutex.protect(
+      () async {
+        final requestsPointers =
+            ffi.calloc<NativeMelodinkTrackRequest>(requests.length);
 
-    final serverURLPointer = serverURL.toNativeUtf8().cast<ffi.Char>();
+        final serverURLPointer = serverURL.toNativeUtf8().cast<ffi.Char>();
 
-    final cachePathPointer = cachePath.toNativeUtf8().cast<ffi.Char>();
+        final serverAuthPointer = serverAuth.toNativeUtf8().cast<ffi.Char>();
 
-    try {
-      for (var i = 0; i < requests.length; i++) {
-        requestsPointers[i].serverURL = serverURLPointer;
-        requestsPointers[i].cachePath = cachePathPointer;
-        requestsPointers[i].trackId = requests[i].id;
-        requestsPointers[i].quality = switch (requests[i].quality) {
-          AppSettingAudioQuality.lossless => 0,
-          AppSettingAudioQuality.low => 1,
-          AppSettingAudioQuality.medium => 2,
-          AppSettingAudioQuality.high => 3,
-        };
-        requestsPointers[i].originalAudioHash =
-            requests[i].originalAudioHash.toNativeUtf8().cast<ffi.Char>();
-        requestsPointers[i].downloadedPath =
-            requests[i].downloadedPath.toNativeUtf8().cast<ffi.Char>();
-      }
+        final cachePathPointer = cachePath.toNativeUtf8().cast<ffi.Char>();
 
-      _setAudios(newCurrentTrackIndex, currentRequestIndex, requestsPointers,
-          requests.length);
-    } finally {
-      for (var i = 0; i < requests.length; i++) {
-        ffi.calloc.free(requestsPointers[i].originalAudioHash);
-        ffi.calloc.free(requestsPointers[i].downloadedPath);
-      }
-      ffi.calloc.free(cachePathPointer);
-      ffi.calloc.free(serverURLPointer);
-      ffi.calloc.free(requestsPointers);
-    }
+        try {
+          for (var i = 0; i < requests.length; i++) {
+            requestsPointers[i].serverURL = serverURLPointer;
+            requestsPointers[i].cachePath = cachePathPointer;
+            requestsPointers[i].trackId = requests[i].id;
+            requestsPointers[i].originalAudioHash =
+                requests[i].originalAudioHash.toNativeUtf8().cast<ffi.Char>();
+
+            if (requests[i].downloadedPath.isNotEmpty) {
+              requestsPointers[i].downloadedPath =
+                  requests[i].downloadedPath.toNativeUtf8().cast<ffi.Char>();
+            } else {
+              requestsPointers[i].downloadedPath = ffi.nullptr;
+            }
+          }
+
+          await compute((data) {
+            final void Function(
+              int,
+              int,
+              ffi.Pointer<NativeMelodinkTrackRequest>,
+              int,
+              ffi.Pointer<ffi.Utf8>,
+            ) setAudios = getLibrary()
+                .lookup<
+                    ffi.NativeFunction<
+                        ffi.Void Function(
+                          ffi.Size,
+                          ffi.Size,
+                          ffi.Pointer<NativeMelodinkTrackRequest>,
+                          ffi.Size,
+                          ffi.Pointer<ffi.Utf8>,
+                        )>>('mi_player_set_audios')
+                .asFunction();
+
+            setAudios(
+              data["newCurrentTrackIndex"]!,
+              data["currentRequestIndex"]!,
+              ffi.Pointer.fromAddress(data["requestsPointers"]!),
+              data["len"]!,
+              ffi.Pointer.fromAddress(data["serverAuth"]!),
+            );
+          }, {
+            'newCurrentTrackIndex': newCurrentTrackIndex,
+            'currentRequestIndex': currentRequestIndex,
+            'requestsPointers': requestsPointers.address,
+            'len': requests.length,
+            'serverAuth': serverAuthPointer.address,
+          });
+        } finally {
+          for (var i = 0; i < requests.length; i++) {
+            ffi.calloc.free(requestsPointers[i].originalAudioHash);
+            if (requests[i].downloadedPath.isNotEmpty) {
+              ffi.calloc.free(requestsPointers[i].downloadedPath);
+            }
+          }
+          ffi.calloc.free(cachePathPointer);
+          ffi.calloc.free(serverURLPointer);
+          ffi.calloc.free(serverAuthPointer);
+          ffi.calloc.free(requestsPointers);
+        }
+      },
+    );
+  }
+
+  Future<void> setEqualizer(
+    bool enable,
+    Map<double, double> bands,
+  ) async {
+    await actionMutex.protect(
+      () async {
+        final frequenciesPointer = ffi.calloc<ffi.Double>(bands.length);
+
+        final gainsPointer = ffi.calloc<ffi.Double>(bands.length);
+
+        try {
+          final keys = bands.keys.toList()..sort();
+
+          for (int i = 0; i < keys.length; i++) {
+            frequenciesPointer[i] = keys[i];
+            gainsPointer[i] = bands[keys[i]]!;
+          }
+
+          await compute((data) {
+            final void Function(
+              bool,
+              int,
+              ffi.Pointer<ffi.Double>,
+              ffi.Pointer<ffi.Double>,
+            ) setEqualizer = getLibrary()
+                .lookup<
+                    ffi.NativeFunction<
+                        ffi.Void Function(
+                          ffi.Bool,
+                          ffi.Size,
+                          ffi.Pointer<ffi.Double>,
+                          ffi.Pointer<ffi.Double>,
+                        )>>('mi_player_set_equalizer')
+                .asFunction();
+
+            setEqualizer(
+              data["enable"] == 1,
+              data["len"]!,
+              ffi.Pointer.fromAddress(data["frequenciesPointer"]!),
+              ffi.Pointer.fromAddress(data["gainsPointer"]!),
+            );
+          }, {
+            'enable': enable ? 1 : 0,
+            'len': bands.length,
+            'frequenciesPointer': frequenciesPointer.address,
+            'gainsPointer': gainsPointer.address,
+          });
+        } finally {
+          ffi.calloc.free(frequenciesPointer);
+          ffi.calloc.free(gainsPointer);
+        }
+      },
+    );
   }
 
   void setLoopMode(MelodinkLoopMode loopMode) {
     _setLoopMode(loopMode.index);
   }
 
-  void setAuthToken(String authToken) {
-    final tokenPtr = authToken.toNativeUtf8();
-    _setAuthToken(tokenPtr);
-    ffi.calloc.free(tokenPtr);
+  void setQuality(AppSettingAudioQuality quality) {
+    _setQuality(switch (quality) {
+      AppSettingAudioQuality.low => 0,
+      AppSettingAudioQuality.medium => 1,
+      AppSettingAudioQuality.high => 2,
+      AppSettingAudioQuality.lossless => 3,
+    });
   }
 
   bool getCurrentPlaying() => _getCurrentPlaying() != 0;
   int getCurrentTrackPos() => _getCurrentTrackPos();
-  int getCurrentPosition() => _getCurrentPosition();
-  int getCurrentBufferedPosition() => _getCurrentBufferedPosition();
+  double getCurrentPosition() => _getCurrentPosition();
+  double getCurrentBufferedPosition() => _getCurrentBufferedPosition();
 
   MelodinkProcessingState getCurrentPlayerState() {
     return MelodinkProcessingState.values[_getCurrentPlayerState()];

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
@@ -25,51 +26,21 @@ import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 late final AudioController _audioController;
+final AudioSessionHandler _audioSessionHandler = AudioSessionHandler();
 
 Future<AudioController> initAudioService() async {
-  final session = await AudioSession.instance;
-  await session.configure(AudioSessionConfiguration.music());
-
   _audioController = await AudioService.init(
     builder: () => AudioController(),
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'fr.gungun974.melodink.audio',
+      androidNotificationOngoing: false,
+      androidStopForegroundOnPause: false,
       androidNotificationChannelName: 'Melodink Audio Service',
-      androidNotificationOngoing: true,
-      androidStopForegroundOnPause: true,
+      androidNotificationChannelId: 'fr.gungun974.melodink.audio',
+      androidNotificationChannelDescription: 'Melodink Media Controls',
     ),
   );
 
-  double currentVolumeBeforeDuck = 1.0;
-
-  session.interruptionEventStream.listen((event) async {
-    if (event.begin) {
-      switch (event.type) {
-        case AudioInterruptionType.duck:
-          currentVolumeBeforeDuck = _audioController.getVolume();
-          _audioController.setVolume(0.5);
-          break;
-        case AudioInterruptionType.pause:
-        case AudioInterruptionType.unknown:
-          {
-            await _audioController.pause();
-            break;
-          }
-      }
-    } else {
-      switch (event.type) {
-        case AudioInterruptionType.duck:
-          _audioController.setVolume(currentVolumeBeforeDuck);
-          break;
-        default:
-          break;
-      }
-    }
-  });
-
-  session.becomingNoisyEventStream.listen((_) {
-    _audioController.pause();
-  });
+  await _audioSessionHandler.initSession();
 
   await _audioController.restoreLastState();
 
@@ -195,12 +166,12 @@ class AudioController extends BaseAudioHandler {
         AudioProcessingState.completed) {
       await skipToQueueItem(0);
 
-      player.seek(0);
+      await player.seek(0);
     } else if (playbackState.valueOrNull?.processingState ==
         AudioProcessingState.error) {
       await skipToQueueItem(_previousTracks.length - 1);
 
-      player.seek(0);
+      await player.seek(0);
     }
 
     player.play();
@@ -221,11 +192,19 @@ class AudioController extends BaseAudioHandler {
 
   @override
   Future<void> stop() async {
-    if (_isPlayerTracksEmpty()) {
+    if (Platform.isAndroid) {
       return;
     }
+    return pause();
+  }
 
-    player.pause();
+  bool shouldStop = false;
+
+  @override
+  Future<void> onTaskRemoved() async {
+    shouldStop = true;
+
+    await pause();
 
     await _updatePlaybackState();
   }
@@ -236,7 +215,7 @@ class AudioController extends BaseAudioHandler {
       return;
     }
 
-    player.seek(position.inMilliseconds);
+    await player.seek(position.inMicroseconds / 1000000);
 
     player.play();
 
@@ -250,11 +229,11 @@ class AudioController extends BaseAudioHandler {
     }
 
     if (_previousTracks.length == 1) {
-      player.seek(0);
+      await player.seek(0);
     } else if (playbackState.value.position.inMilliseconds > 5000) {
-      player.seek(0);
+      await player.seek(0);
     } else {
-      player.skipToPrevious();
+      await player.skipToPrevious();
     }
 
     player.play();
@@ -266,7 +245,7 @@ class AudioController extends BaseAudioHandler {
       return;
     }
 
-    player.skipToNext();
+    await player.skipToNext();
 
     player.play();
   }
@@ -294,6 +273,10 @@ class AudioController extends BaseAudioHandler {
 
   @override
   Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    if (!(playbackState.valueOrNull?.playing ?? false)) {
+      pause();
+    }
+
     player.setLoopMode(const {
       AudioServiceRepeatMode.none: MelodinkLoopMode.none,
       AudioServiceRepeatMode.all: MelodinkLoopMode.all,
@@ -318,6 +301,10 @@ class AudioController extends BaseAudioHandler {
 
   @override
   Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
+    if (!(playbackState.valueOrNull?.playing ?? false)) {
+      pause();
+    }
+
     await playlistTracksMutex.protect(() async {
       await _doShuffle(shuffleMode);
     });
@@ -410,6 +397,10 @@ class AudioController extends BaseAudioHandler {
 
   Future<void> addTrackToQueue(MinimalTrack track) async {
     await playlistTracksMutex.protect(() async {
+      if (!(playbackState.valueOrNull?.playing ?? false)) {
+        pause();
+      }
+
       _queueTracks.add(track);
 
       if (_previousTracks.isEmpty && _queueTracks.isNotEmpty) {
@@ -424,6 +415,10 @@ class AudioController extends BaseAudioHandler {
 
   Future<void> addTracksToQueue(List<MinimalTrack> tracks) async {
     await playlistTracksMutex.protect(() async {
+      if (!(playbackState.valueOrNull?.playing ?? false)) {
+        pause();
+      }
+
       _queueTracks.addAll(tracks);
 
       if (_previousTracks.isEmpty && _queueTracks.isNotEmpty) {
@@ -441,6 +436,10 @@ class AudioController extends BaseAudioHandler {
     List<MinimalTrack> nextTracks,
   ) async {
     await playlistTracksMutex.protect(() async {
+      if (!(playbackState.valueOrNull?.playing ?? false)) {
+        pause();
+      }
+
       _queueTracks.clear();
       _nextTracks.clear();
 
@@ -609,29 +608,38 @@ class AudioController extends BaseAudioHandler {
 
   DateTime _lastUpdatePlayerTracks = DateTime.fromMillisecondsSinceEpoch(0);
 
+  updatePlayerQuality() async {
+    // AudioQuality
+    final config = await SettingsRepository().getSettings();
+
+    final connectivityResult = await (Connectivity().checkConnectivity());
+
+    AppSettingAudioQuality currentAudioQuality = config.cellularAudioQuality;
+
+    if (connectivityResult.contains(ConnectivityResult.ethernet) ||
+        connectivityResult.contains(ConnectivityResult.wifi)) {
+      currentAudioQuality = config.wifiAudioQuality;
+    }
+
+    player.setQuality(currentAudioQuality);
+  }
+
+  updatePlayerEqualizer() async {
+    final config = await SettingsRepository().getSettings();
+
+    await player.setEqualizer(config.equalizer.enabled, config.equalizer.bands);
+  }
+
   Future<void> _updatePlayerTracks() async {
-    await playerTracksMutex.protect(() async {
+    return await playerTracksMutex.protect(() async {
       if (DateTime.now().difference(_lastUpdatePlayerTracks).inMilliseconds <
           10) {
         await Future.delayed(const Duration(milliseconds: 10));
       }
       _lastUpdatePlayerTracks = DateTime.now();
 
-      player.setAuthToken(
-        AppApi().generateCookieHeader(),
-      );
-
-      // AudioQuality
-      final config = await SettingsRepository().getSettings();
-
-      final connectivityResult = await (Connectivity().checkConnectivity());
-
-      AppSettingAudioQuality currentAudioQuality = config.cellularAudioQuality;
-
-      if (connectivityResult.contains(ConnectivityResult.ethernet) ||
-          connectivityResult.contains(ConnectivityResult.wifi)) {
-        currentAudioQuality = config.wifiAudioQuality;
-      }
+      await updatePlayerQuality();
+      await updatePlayerEqualizer();
 
       final getDownloadedTrackByTrackId =
           downloadTrackRepository?.getDownloadedTrackByTrackId;
@@ -645,11 +653,11 @@ class AudioController extends BaseAudioHandler {
         ..._queueTracks,
         ..._nextTracks,
       ].indexed) {
-        if (index != 0 && index <= _previousTracks.length - 3) {
+        if (index != 0 && index <= _previousTracks.length - 8) {
           continue;
         }
 
-        if (index > _previousTracks.length + 3) {
+        if (index > _previousTracks.length + 15) {
           continue;
         }
 
@@ -659,7 +667,6 @@ class AudioController extends BaseAudioHandler {
               _lastCurrentTrackRequest ??
                   MelodinkTrackRequest(
                     id: track.id,
-                    quality: currentAudioQuality,
                     originalAudioHash: track.fileSignature,
                     downloadedPath: "",
                   ),
@@ -683,14 +690,12 @@ class AudioController extends BaseAudioHandler {
         if (downloadedTrack == null) {
           request = MelodinkTrackRequest(
             id: track.id,
-            quality: currentAudioQuality,
             originalAudioHash: track.fileSignature,
             downloadedPath: "",
           );
         } else {
           request = MelodinkTrackRequest(
             id: track.id,
-            quality: currentAudioQuality,
             originalAudioHash: track.fileSignature,
             downloadedPath: downloadedTrack.getUrl(),
           );
@@ -706,12 +711,13 @@ class AudioController extends BaseAudioHandler {
       }
 
       if (requests.isNotEmpty) {
-        player.setAudios(
+        await player.setAudios(
           AppApi().getServerUrl(),
           join((await getMelodinkInstanceCacheDirectory()).path, "audioCache"),
           _previousTracks.length - 1,
           currentRequestIndex,
           requests,
+          AppApi().generateCookieHeader(),
         );
       }
     });
@@ -729,40 +735,62 @@ class AudioController extends BaseAudioHandler {
     await _updatePlaybackState();
   }
 
-  final audioChangedDebouncer = Debouncer(milliseconds: 50);
+  final audioChangedDebouncer = Debouncer(milliseconds: 5);
 
   void audioChanged(int pos) {
     audioChangedDebouncer.run(() async {
       await _updatePlaylistTracks(
         pos,
-        updatePlayerTracks: pos != _previousTracks.length - 1,
+        updatePlayerTracks: true,
       );
     });
   }
 
   void updateState(MelodinkProcessingState state) {
-    audioChangedDebouncer.run(() async {
-      if (_previousTracks.isEmpty) {
-        return;
-      }
+    if (_previousTracks.isEmpty) {
+      return;
+    }
 
-      final pos = player.getCurrentTrackPos();
-
-      await _updatePlaylistTracks(
-        pos,
-        updatePlayerTracks: pos != _previousTracks.length - 1,
-      );
-    });
+    _updatePlaybackState();
   }
 
   Future<void> _updatePlaybackState({shouldDoubleCheck = true}) async {
+    if (shouldStop) {
+      final newState = playbackState.value.copyWith(
+        controls: [
+          MediaControl.skipToPrevious,
+          MediaControl.skipToNext,
+        ],
+        systemActions: const {
+          MediaAction.seek,
+        },
+        androidCompactActionIndices: const [0, 1, 2],
+        processingState: AudioProcessingState.idle,
+        playing: false,
+        updatePosition: Duration.zero,
+        bufferedPosition: Duration.zero,
+        speed: 1.0,
+        repeatMode: AudioServiceRepeatMode.none,
+        queueIndex: _previousTracks.lastOrNull?.id,
+        shuffleMode: isShuffled
+            ? AudioServiceShuffleMode.all
+            : AudioServiceShuffleMode.none,
+      );
+
+      playbackState.add(newState);
+
+      return;
+    }
+
     _updateUiTrackLists();
 
     final playerPlaying = player.getCurrentPlaying();
     final playerState = player.getCurrentPlayerState();
-    final playerPositionMs = player.getCurrentPosition();
-    final playerBufferedPositionMs = player.getCurrentBufferedPosition();
+    final playerPosition = player.getCurrentPosition();
+    final playerBufferedPosition = player.getCurrentBufferedPosition();
     final playerLoop = player.getCurrentLoopMode();
+
+    _audioSessionHandler.setActive(playerPlaying);
 
     final newState = playbackState.value.copyWith(
       controls: [
@@ -782,12 +810,11 @@ class AudioController extends BaseAudioHandler {
         MelodinkProcessingState.completed: AudioProcessingState.completed,
         MelodinkProcessingState.error: AudioProcessingState.error,
       }[playerState]!,
-      playing:
-          playerState == MelodinkProcessingState.idle || _previousTracks.isEmpty
-              ? false
-              : playerPlaying,
-      updatePosition: Duration(milliseconds: playerPositionMs),
-      bufferedPosition: Duration(milliseconds: playerBufferedPositionMs),
+      playing: _previousTracks.isEmpty ? false : playerPlaying,
+      updatePosition:
+          Duration(microseconds: (playerPosition * 1000000).round()),
+      bufferedPosition:
+          Duration(microseconds: (playerBufferedPosition * 1000000).round()),
       speed: 1.0,
       repeatMode: const {
         MelodinkLoopMode.none: AudioServiceRepeatMode.none,
@@ -913,3 +940,62 @@ final audioControllerProvider = Provider((ref) {
 
   return _audioController;
 });
+
+class AudioSessionHandler {
+  late AudioSession session;
+  bool _playInterrupted = false;
+
+  setActive(bool active) {
+    // Miniaudio handle IOS
+    if (Platform.isIOS) {
+      return;
+    }
+    session.setActive(active);
+  }
+
+  AudioSessionHandler() {
+    initSession();
+  }
+
+  Future<void> initSession() async {
+    session = await AudioSession.instance;
+    session.configure(const AudioSessionConfiguration.music());
+
+    session.interruptionEventStream.listen((event) {
+      if (event.begin) {
+        if (!_audioController.playbackState.value.playing) return;
+        switch (event.type) {
+          case AudioInterruptionType.duck:
+            _audioController.setVolume(_audioController.getVolume() * 0.5);
+            break;
+          case AudioInterruptionType.pause:
+            _audioController.pause();
+            _playInterrupted = true;
+            break;
+          case AudioInterruptionType.unknown:
+            _audioController.pause();
+            _playInterrupted = true;
+            break;
+        }
+      } else {
+        switch (event.type) {
+          case AudioInterruptionType.duck:
+            _audioController.setVolume(_audioController.getVolume() * 2);
+            break;
+          case AudioInterruptionType.pause:
+            if (_playInterrupted) _audioController.play();
+            break;
+          case AudioInterruptionType.unknown:
+            break;
+        }
+        _playInterrupted = false;
+      }
+    });
+
+    session.becomingNoisyEventStream.listen((_) {
+      if (_audioController.playbackState.value.playing) {
+        _audioController.pause();
+      }
+    });
+  }
+}

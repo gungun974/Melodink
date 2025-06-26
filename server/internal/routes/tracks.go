@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/gungun974/Melodink/server/internal"
+	"github.com/gungun974/Melodink/server/internal/helpers"
 )
 
 func TrackRouter(c internal.Container) http.Handler {
@@ -117,7 +118,15 @@ func TrackRouter(c internal.Container) http.Handler {
 	router.Get("/{id}/audio", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 
-		response, err := c.TrackController.GetTrackAudio(r.Context(), id)
+		rawFileSignature := r.Header.Get("Melodink-Signature")
+
+		fileSignature := &rawFileSignature
+
+		if helpers.IsEmptyOrWhitespace(rawFileSignature) {
+			fileSignature = nil
+		}
+
+		response, err := c.TrackController.GetTrackAudio(r.Context(), id, fileSignature)
 		if err != nil {
 			handleHTTPError(err, w)
 			return
@@ -132,10 +141,19 @@ func TrackRouter(c internal.Container) http.Handler {
 			func(w http.ResponseWriter, r *http.Request) {
 				id := chi.URLParam(r, "id")
 
+				rawFileSignature := r.Header.Get("Melodink-Signature")
+
+				fileSignature := &rawFileSignature
+
+				if helpers.IsEmptyOrWhitespace(rawFileSignature) {
+					fileSignature = nil
+				}
+
 				response, err := c.TrackController.GetTrackAudioWithTranscode(
 					r.Context(),
 					id,
 					quality,
+					fileSignature,
 				)
 				if err != nil {
 					handleHTTPError(err, w)

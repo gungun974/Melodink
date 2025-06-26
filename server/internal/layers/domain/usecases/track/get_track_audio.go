@@ -13,6 +13,7 @@ import (
 func (u *TrackUsecase) GetTrackAudio(
 	ctx context.Context,
 	trackId int,
+	fileSignature *string,
 ) (models.APIResponse, error) {
 	track, err := u.trackRepository.GetTrack(trackId)
 	if err != nil {
@@ -20,6 +21,10 @@ func (u *TrackUsecase) GetTrackAudio(
 			return nil, entities.NewNotFoundError("Track not found")
 		}
 		return nil, entities.NewInternalError(err)
+	}
+
+	if fileSignature != nil && *fileSignature != track.FileSignature {
+		return nil, entities.NewNotFoundError("Track file have changed")
 	}
 
 	mtype, err := mimetype.DetectFile(track.Path)

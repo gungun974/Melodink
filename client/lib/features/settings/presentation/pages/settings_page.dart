@@ -16,6 +16,7 @@ import 'package:melodink_client/features/settings/domain/providers/settings_prov
 import 'package:melodink_client/features/settings/presentation/widgets/server_info.dart';
 import 'package:melodink_client/features/settings/presentation/widgets/setting_button_option.dart';
 import 'package:melodink_client/features/settings/presentation/widgets/setting_dropdown_option.dart';
+import 'package:melodink_client/features/settings/presentation/widgets/setting_equalizer.dart';
 import 'package:melodink_client/features/settings/presentation/widgets/setting_pannel.dart';
 import 'package:melodink_client/features/settings/presentation/widgets/setting_toggle_option.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
@@ -338,6 +339,8 @@ class SettingsPage extends ConsumerWidget {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      SettingEqualizer(),
                       const SizedBox(height: 16),
                       SettingPannel(
                         title: t.general.playing,

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -7,8 +8,12 @@ part 'settings_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 class AppSettingsNotifier extends _$AppSettingsNotifier {
+  late AudioController _audioController;
+
   @override
   Future<AppSettings> build() async {
+    _audioController = ref.read(audioControllerProvider);
+
     return await SettingsRepository().getSettings();
   }
 
@@ -18,6 +23,8 @@ class AppSettingsNotifier extends _$AppSettingsNotifier {
     );
 
     state = AsyncData(await SettingsRepository().getSettings());
+
+    await _audioController.updatePlayerQuality();
   }
 }
 

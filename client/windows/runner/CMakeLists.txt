@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
 project(runner LANGUAGES CXX)
-project(melodink_player VERSION 1.0.0 LANGUAGES CXX)
-project(miniaudio VERSION 1.0.0 LANGUAGES C)
 
 function(download_and_verify url md5 locationForArchive)
   # Check if the archive exists.
@@ -97,27 +95,24 @@ download_and_verify(
 
 # ------------------------------------------------------------------------------
 
-add_library(miniaudio STATIC
-    ../../melodink_player/miniaudio.c
+set(MELODINK_DIR "${CMAKE_SOURCE_DIR}/../melodink_player")
+set(MELODINK_LIB "${MELODINK_DIR}/zig-out/bin/melodink_player.dll")
+
+find_program(ZIG_EXECUTABLE zig)
+
+if(NOT ZIG_EXECUTABLE)
+  message(FATAL_ERROR "Zig is required but was not found. Please install Zig and make sure it is in your PATH.")
+endif()
+
+add_custom_command(
+    OUTPUT ${MELODINK_LIB}
+    COMMAND ${CMAKE_COMMAND} -E echo "Building Zig lib..."
+    COMMAND ${CMAKE_COMMAND} -E chdir ${MELODINK_DIR} zig build -Doptimize=ReleaseFast
+    DEPENDS ${MELODINK_DIR}/build.zig
+    COMMENT "Building melodink_player.dll with Zig"
 )
 
-target_compile_definitions(miniaudio
-  PRIVATE MA_NO_DECODING MA_NO_ENCODING
-)
-
-target_compile_options(miniaudio PRIVATE /W0)
-
-add_library(melodink_player SHARED
-  "../../melodink_player/melodink_player.cpp"
-  "../../melodink_player/sendevent.cc"
-  "../../melodink_player/melodink_player.def"
-)
-
-include_directories(
- "${FFMPEG_SRC}/include"
-)
-
-target_link_libraries(melodink_player PRIVATE miniaudio)
+add_custom_target(build_melodink_player ALL DEPENDS ${MELODINK_LIB})
 
 # Define the application target. To change its name, change BINARY_NAME in the
 # top-level CMakeLists.txt, not the value here, or `flutter run` will no longer
@@ -156,15 +151,5 @@ target_include_directories(${BINARY_NAME} PRIVATE "${CMAKE_SOURCE_DIR}")
 
 # Run the Flutter tool portions of the build. This must not be removed.
 add_dependencies(${BINARY_NAME} flutter_assemble)
-
-target_link_libraries(
-  melodink_player PRIVATE
-  "${FFMPEG_SRC}/lib/libswscale.dll.a"
-  "${FFMPEG_SRC}/lib/libswresample.dll.a"
-  "${FFMPEG_SRC}/lib/libavutil.dll.a"
-  "${FFMPEG_SRC}/lib/libavformat.dll.a"
-  "${FFMPEG_SRC}/lib/libavfilter.dll.a"
-  "${FFMPEG_SRC}/lib/libavcodec.dll.a"
-)
 
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")

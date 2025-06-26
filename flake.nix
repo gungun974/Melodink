@@ -19,6 +19,10 @@
     android-nixpkgs = {
       url = "github:tadfisher/android-nixpkgs?rev=5a052c62cdb51b210bc0717177d5bd014cba3df1";
     };
+
+    zig-overlay.url = "github:mitchellh/zig-overlay";
+    # Keep in sync with zigVersion below.
+    zls-overlay.url = "github:nihklas/zls/0.14.0";
   };
 
   outputs = {
@@ -28,6 +32,8 @@
     gitignore,
     flake-utils,
     android-nixpkgs,
+    zig-overlay,
+    zls-overlay,
     ...
   }:
     flake-utils.lib.eachDefaultSystem (system: let
@@ -36,7 +42,17 @@
         config = {
           allowUnfree = true;
         };
+        overlays = [
+          (final: prev: {
+            zigpkgs = zig-overlay.packages.${prev.system};
+          })
+        ];
       };
+
+      zig = pkgs.zigpkgs."0.14.1";
+      zls = zls-overlay.packages.${system}.zls.overrideAttrs (old: {
+        nativeBuildInputs = [zig];
+      });
 
       flutter-pkgs = import flutter-nixpkgs {
         inherit system;
@@ -145,6 +161,7 @@
             ffmpeg.dev
             pkgs.pulseaudio.dev
             pkgs.zenity
+            zig
           ];
 
           nativeBuildInputs = buildInputs;
@@ -157,6 +174,11 @@
               url = "https://github.com/microsoft/mimalloc/archive/refs/tags/v2.1.2.tar.gz";
               hash = "sha256-Kxv/b3F/lyXHC/jXnkeG2hPeiicAWeS6C90mKue+Rus=";
             }} /build/source/build/linux/x64/release/mimalloc-2.1.2.tar.gz
+
+            ZIG_GLOBAL_CACHE_DIR=$(mktemp -d)
+            export ZIG_GLOBAL_CACHE_DIR
+
+            ln -s ${pkgs.callPackage ./client/melodink_player/deps.nix {}} $ZIG_GLOBAL_CACHE_DIR/p
           '';
 
           NIX = "true";
@@ -240,6 +262,10 @@
 
           pkgs.zenity
           pkgs.cmake
+
+          zig
+          zls
+          pkgs.zon2nix
         ];
       };
     });

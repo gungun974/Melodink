@@ -153,6 +153,7 @@ func (c *TrackController) GetCompressedCover(
 func (c *TrackController) GetTrackAudio(
 	ctx context.Context,
 	rawId string,
+	fileSignature *string,
 ) (models.APIResponse, error) {
 	id, err := validator.CoerceAndValidateInt(
 		rawId,
@@ -164,13 +165,14 @@ func (c *TrackController) GetTrackAudio(
 		return nil, entities.NewValidationError(err.Error())
 	}
 
-	return c.trackUsecase.GetTrackAudio(ctx, id)
+	return c.trackUsecase.GetTrackAudio(ctx, id, fileSignature)
 }
 
 func (c *TrackController) GetTrackAudioWithTranscode(
 	ctx context.Context,
 	rawId string,
 	quality string,
+	fileSignature *string,
 ) (models.APIResponse, error) {
 	id, err := validator.CoerceAndValidateInt(
 		rawId,
@@ -186,6 +188,7 @@ func (c *TrackController) GetTrackAudioWithTranscode(
 		ctx,
 		id,
 		track_usecase.AudioTranscodeQuality(quality),
+		fileSignature,
 	)
 }
 

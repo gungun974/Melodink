@@ -1,8 +1,6 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.10)
 project(runner LANGUAGES CXX)
-project(melodink_player VERSION 1.0.0 LANGUAGES CXX)
-project(miniaudio VERSION 1.0.0 LANGUAGES C)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
@@ -58,19 +56,31 @@ pkg_check_modules(GTK REQUIRED IMPORTED_TARGET gtk+-3.0)
 
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")
 
-add_library(miniaudio STATIC
-    ../melodink_player/miniaudio.c
+set(MELODINK_DIR "${CMAKE_SOURCE_DIR}/../melodink_player")
+set(MELODINK_LIB "${MELODINK_DIR}/zig-out/lib/libmelodink_player.so")
+
+find_program(ZIG_EXECUTABLE zig)
+
+if(NOT ZIG_EXECUTABLE)
+  message(FATAL_ERROR "Zig is required but was not found. Please install Zig and make sure it is in your PATH.")
+endif()
+
+add_custom_command(
+    OUTPUT ${MELODINK_LIB}
+    COMMAND ${CMAKE_COMMAND} -E echo "Building Zig lib..."
+    COMMAND ${CMAKE_COMMAND} -E chdir ${MELODINK_DIR} zig build -Doptimize=ReleaseFast
+    DEPENDS ${MELODINK_DIR}/build.zig
+    COMMENT "Building libmelodink_player.so with Zig"
 )
 
-target_compile_definitions(miniaudio
-  PRIVATE MA_NO_DECODING MA_NO_ENCODING
+add_custom_target(build_melodink_player ALL DEPENDS ${MELODINK_LIB})
+
+add_library(melodink_player SHARED IMPORTED GLOBAL)
+set_target_properties(melodink_player PROPERTIES
+  IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/../melodink_player/zig-out/lib/libmelodink_player.so"
 )
 
-target_compile_options(miniaudio PRIVATE -w)
-
-add_library(melodink_player SHARED ../melodink_player/melodink_player.cpp ../melodink_player/sendevent.cc)
-
-target_link_libraries(melodink_player PRIVATE miniaudio)
+add_dependencies(melodink_player build_melodink_player)
 
 # Define the application target. To change its name, change BINARY_NAME above,
 # not the value here, or `flutter run` will no longer work.
@@ -134,11 +144,8 @@ install(FILES "${FLUTTER_ICU_DATA_FILE}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}
 install(FILES "${FLUTTER_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
   COMPONENT Runtime)
 
-install(TARGETS melodink_player
-    RUNTIME DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime 
-    LIBRARY DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime
-    ARCHIVE DESTINATION "${INSTALL_BUNDLE_LIB_DIR}" COMPONENT Runtime
-)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../melodink_player/zig-out/lib/libmelodink_player.so" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime)
 
 foreach(bundled_library ${PLUGIN_BUNDLED_LIBRARIES})
   install(FILES "${bundled_library}"
@@ -239,7 +246,7 @@ add_custom_target("MIMALLOC_TARGET" ALL DEPENDS ${MIMALLOC_LIB})
 
 # ------------------------------------------------------------------------------
 
-target_link_libraries(${BINARY_NAME} PRIVATE melodink_player avformat avcodec avutil swresample dl pthread m pulse)
+target_link_libraries(${BINARY_NAME} PRIVATE avformat avcodec avutil swresample dl pthread m pulse melodink_player)
 
 # ----
 

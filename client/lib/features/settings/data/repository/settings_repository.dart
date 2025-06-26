@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:melodink_client/core/database/database.dart';
+import 'package:melodink_client/features/settings/domain/entities/equalizer.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -108,6 +110,7 @@ class SettingsRepository {
       autoScrollViewToCurrentTrack: autoScrollViewToCurrentTrack ?? true,
       enableHistoryTracking: enableHistoryTracking ?? true,
       shareAllHistoryTrackingToServer: shareAllHistoryTrackingToServer ?? true,
+      equalizer: await getEqualizer(),
     );
   }
 
@@ -165,6 +168,50 @@ class SettingsRepository {
       "settingShareAllHistoryTrackingToServer",
       settings.shareAllHistoryTrackingToServer,
     );
+
+    await saveEqualizer(settings.equalizer);
+  }
+
+  Future<void> saveEqualizer(AppEqualizer equalizer) async {
+    await asyncPrefs.setBool('equalizer', equalizer.enabled);
+
+    await asyncPrefs.setString(
+      'equalizerBands',
+      jsonEncode(
+        equalizer.bands.map(
+          (key, value) => MapEntry(key.toString(), value),
+        ),
+      ),
+    );
+  }
+
+  Future<AppEqualizer> getEqualizer() async {
+    try {
+      final enabled = await asyncPrefs.getBool('equalizer') ?? false;
+
+      final jsonString = await asyncPrefs.getString('equalizerBands');
+      if (jsonString == null) {
+        return AppEqualizer(
+          enabled: enabled,
+          bands: {},
+        );
+      }
+
+      return AppEqualizer(
+        enabled: enabled,
+        bands: (jsonDecode(jsonString) as Map<String, dynamic>).map(
+          (key, value) => MapEntry(
+            double.parse(key),
+            (value as num).toDouble(),
+          ),
+        ),
+      );
+    } catch (e) {
+      return AppEqualizer(
+        enabled: false,
+        bands: {},
+      );
+    }
   }
 
   Future<String> getDeviceId() async {
