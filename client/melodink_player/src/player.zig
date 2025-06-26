@@ -423,8 +423,47 @@ pub const Player = struct {
             return;
         }
 
+        errdefer self.paused = false;
+
+        try self.device_start();
+    }
+
+    fn device_start(self: *Self) !void {
+        if (!self.has_init_ma_device) {
+            return;
+        }
+
+        if (c.ma_device_start(self.ma_device) == c.MA_SUCCESS) {
+            return;
+        }
+
+        std.time.sleep(std.time.ns_per_ms * 5);
+
+        const current_track = self.track_manager.getCurrentIndexedTrack();
+
+        if (current_track == null) {
+            return error.CantStartMiniaudio;
+        }
+
+        c.ma_device_uninit(self.ma_device);
+        self.equalizer.deinit();
+        self.has_init_ma_device = false;
+
+        const track = current_track.?.track;
+
+        try self.equalizer.init(track.getAudioChannelCount(), track.getAudioSampleRate());
+
+        if (c.ma_device_init(self.ma_context, &self.ma_device_config, self.ma_device) !=
+            c.MA_SUCCESS)
+        {
+            return error.CantStartMiniaudio;
+        }
+
+        self.has_init_ma_device = true;
+
+        std.time.sleep(std.time.ns_per_ms * 5);
+
         if (c.ma_device_start(self.ma_device) != c.MA_SUCCESS) {
-            self.paused = true;
             return error.CantStartMiniaudio;
         }
     }
@@ -468,9 +507,11 @@ pub const Player = struct {
 
         current_track.?.track.seekWhenReady(new_time, true);
 
-        if (!self.paused and self.has_init_ma_device and c.ma_device_start(self.ma_device) != c.MA_SUCCESS) {
-            return error.CantStartMiniaudio;
+        if (self.paused) {
+            return;
         }
+
+        try self.device_start();
     }
 
     pub fn skipToPrevious(self: *Self) void {
@@ -703,9 +744,7 @@ pub const Player = struct {
 
         if (!self.paused) {
             self.tracks_mutex.unlock();
-            if (c.ma_device_start(self.ma_device) != c.MA_SUCCESS) {
-                return error.CantStartMiniaudio;
-            }
+            try self.device_start();
             self.tracks_mutex.lock();
         }
 
