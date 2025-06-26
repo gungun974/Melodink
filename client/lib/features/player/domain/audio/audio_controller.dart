@@ -198,9 +198,15 @@ class AudioController extends BaseAudioHandler {
     return pause();
   }
 
+  bool shouldStop = false;
+
   @override
   Future<void> onTaskRemoved() async {
+    shouldStop = true;
+
     await pause();
+
+    await _updatePlaybackState();
   }
 
   @override
@@ -749,6 +755,33 @@ class AudioController extends BaseAudioHandler {
   }
 
   Future<void> _updatePlaybackState({shouldDoubleCheck = true}) async {
+    if (shouldStop) {
+      final newState = playbackState.value.copyWith(
+        controls: [
+          MediaControl.skipToPrevious,
+          MediaControl.skipToNext,
+        ],
+        systemActions: const {
+          MediaAction.seek,
+        },
+        androidCompactActionIndices: const [0, 1, 2],
+        processingState: AudioProcessingState.idle,
+        playing: false,
+        updatePosition: Duration.zero,
+        bufferedPosition: Duration.zero,
+        speed: 1.0,
+        repeatMode: AudioServiceRepeatMode.none,
+        queueIndex: _previousTracks.lastOrNull?.id,
+        shuffleMode: isShuffled
+            ? AudioServiceShuffleMode.all
+            : AudioServiceShuffleMode.none,
+      );
+
+      playbackState.add(newState);
+
+      return;
+    }
+
     _updateUiTrackLists();
 
     final playerPlaying = player.getCurrentPlaying();
