@@ -779,6 +779,8 @@ pub const Player = struct {
     fn playAudio(pDevice: ?*anyopaque, output: ?*anyopaque, _: ?*const anyopaque, frame_count: c.ma_uint32) callconv(.c) void {
         const ma_device: *c.ma_device = @ptrCast(@alignCast(pDevice));
 
+        const now = std.time.nanoTimestamp();
+
         const self: *Self = @ptrCast(@alignCast(ma_device.*.pUserData));
 
         if ((frame_count < 0)) {
@@ -796,6 +798,10 @@ pub const Player = struct {
                 c.ma_format_u8 => self.useEqualizer(@as([*]u8, @ptrCast(@alignCast(output))), frame_count),
                 else => {},
             }
+        }
+
+        if (std.time.nanoTimestamp() - now > std.time.ns_per_ms * 10) {
+            self.sendEventUpdateState(.buffering, true);
         }
     }
 
