@@ -501,11 +501,13 @@ pub const Player = struct {
             return;
         }
 
+        current_track.?.track.seekWhenReady(new_time, true);
+
+        self.sendEventUpdateState(current_track.?.track.getStatus(), true);
+
         if (self.has_init_ma_device and c.ma_device_stop(self.ma_device) != c.MA_SUCCESS) {
             return error.CantStopMiniaudio;
         }
-
-        current_track.?.track.seekWhenReady(new_time, true);
 
         if (self.paused) {
             return;
