@@ -391,6 +391,10 @@ class AudioController extends BaseAudioHandler {
 
   Future<void> addTrackToQueue(MinimalTrack track) async {
     await playlistTracksMutex.protect(() async {
+      if (!(playbackState.valueOrNull?.playing ?? false)) {
+        pause();
+      }
+
       _queueTracks.add(track);
 
       if (_previousTracks.isEmpty && _queueTracks.isNotEmpty) {
@@ -405,6 +409,10 @@ class AudioController extends BaseAudioHandler {
 
   Future<void> addTracksToQueue(List<MinimalTrack> tracks) async {
     await playlistTracksMutex.protect(() async {
+      if (!(playbackState.valueOrNull?.playing ?? false)) {
+        pause();
+      }
+
       _queueTracks.addAll(tracks);
 
       if (_previousTracks.isEmpty && _queueTracks.isNotEmpty) {
@@ -422,6 +430,10 @@ class AudioController extends BaseAudioHandler {
     List<MinimalTrack> nextTracks,
   ) async {
     await playlistTracksMutex.protect(() async {
+      if (!(playbackState.valueOrNull?.playing ?? false)) {
+        pause();
+      }
+
       _queueTracks.clear();
       _nextTracks.clear();
 
