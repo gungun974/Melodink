@@ -65,6 +65,10 @@ pub fn drain(self: *Self, samples: u64) void {
     self.mutex.lock();
     defer self.mutex.unlock();
 
+    if (self.av_fifo == null) {
+        return;
+    }
+
     _ = c.av_audio_fifo_drain(self.av_fifo, @intCast(samples));
 }
 
@@ -72,12 +76,20 @@ pub fn size(self: *Self) u64 {
     self.mutex.lock();
     defer self.mutex.unlock();
 
+    if (self.av_fifo == null) {
+        return 0;
+    }
+
     return @intCast(c.av_audio_fifo_size(self.av_fifo));
 }
 
 pub fn capacity(self: *Self) u64 {
     self.mutex.lock();
     defer self.mutex.unlock();
+
+    if (self.av_fifo == null) {
+        return 0;
+    }
 
     return @intCast(c.av_audio_fifo_space(self.av_fifo) + c.av_audio_fifo_size(self.av_fifo));
 }
@@ -94,6 +106,10 @@ pub fn clear(self: *Self) void {
 pub fn free(self: *Self) void {
     self.mutex.lock();
     defer self.mutex.unlock();
+
+    if (self.av_fifo == null) {
+        return;
+    }
 
     c.av_audio_fifo_free(self.av_fifo);
     self.av_fifo = null;
