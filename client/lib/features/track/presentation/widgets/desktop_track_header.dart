@@ -154,6 +154,8 @@ class DesktopTrackHeader extends StatelessWidget {
                         yield SizedBox(width: module.width);
                       case DesktopTrackModule.reorderable:
                         yield SizedBox(width: module.width);
+                      case DesktopTrackModule.remove:
+                        yield SizedBox(width: module.width);
                     }
 
                     if (module.rightPadding != 0) {

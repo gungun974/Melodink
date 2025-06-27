@@ -35,7 +35,8 @@ enum DesktopTrackModule {
   duration(leftPadding: 4, width: 60, rightPadding: 8),
   score(leftPadding: 0, width: 0, rightPadding: 0),
   moreActions(leftPadding: 0, width: 72, rightPadding: 4),
-  reorderable(leftPadding: 4, width: 72, rightPadding: 4);
+  reorderable(leftPadding: 4, width: 72, rightPadding: 4),
+  remove(leftPadding: 16, width: 24, rightPadding: 4);
 
   final double width;
   final double leftPadding;
@@ -123,12 +124,15 @@ class DesktopTrack extends HookConsumerWidget {
 
   final int trackNumber;
   final bool showImage;
+  final bool showPlayButton;
 
   final List<DesktopTrackModule> modules;
 
   final void Function(MinimalTrack track) playCallback;
 
   final void Function(MinimalTrack track)? selectCallback;
+
+  final void Function(MinimalTrack track)? removeCallback;
 
   final bool selected;
   final bool selectedTop;
@@ -148,6 +152,8 @@ class DesktopTrack extends HookConsumerWidget {
     List<MinimalTrack> tracks,
   )? multiCustomActionsBuilder;
 
+  final bool showDefaultActions;
+
   const DesktopTrack({
     super.key,
     required this.track,
@@ -155,13 +161,16 @@ class DesktopTrack extends HookConsumerWidget {
     required this.playCallback,
     required this.modules,
     this.showImage = true,
+    this.showPlayButton = true,
     this.selectCallback,
+    this.removeCallback,
     this.selected = false,
     this.selectedTop = true,
     this.selectedBottom = true,
     this.selectedTracks = const [],
     this.singleCustomActionsBuilder,
     this.multiCustomActionsBuilder,
+    this.showDefaultActions = true,
   });
 
   @override
@@ -228,6 +237,7 @@ class DesktopTrack extends HookConsumerWidget {
             tracks: selectedTracks,
             singleMenuController: trackContextMenuController,
             multiMenuController: tracksContextMenuController,
+            showDefaultActions: showDefaultActions,
             singleCustomActionsBuilder: singleCustomActionsBuilder,
             multiCustomActionsBuilder: multiCustomActionsBuilder,
             child: Container(
@@ -259,9 +269,12 @@ class DesktopTrack extends HookConsumerWidget {
                         );
                       }
 
+                      final showPlayButton =
+                          this.showPlayButton && isHovering.value;
+
                       switch (module) {
                         case DesktopTrackModule.title:
-                          if (!isHovering.value) {
+                          if (!showPlayButton) {
                             yield SizedBox(
                               width: 28,
                               child: Text(
@@ -520,7 +533,7 @@ class DesktopTrack extends HookConsumerWidget {
                           yield Opacity(
                             opacity: isTouchDevice(context)
                                 ? 1.0
-                                : (isHovering.value ? 1.0 : 0.0),
+                                : (showPlayButton ? 1.0 : 0.0),
                             child: SizedBox(
                               width: module.width,
                               child: Center(
@@ -570,6 +583,38 @@ class DesktopTrack extends HookConsumerWidget {
                                           height: 20,
                                           width: 20,
                                           child: AdwaitaIcon(AdwaitaIcons.menu),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        case DesktopTrackModule.remove:
+                          yield SizedBox(
+                            width: module.width,
+                            child: Center(
+                              child: GestureDetector(
+                                onTap: () {},
+                                onDoubleTap: () {},
+                                child: Listener(
+                                  onPointerDown: (_) {
+                                    removeCallback?.call(track);
+                                  },
+                                  child: Container(
+                                    height: 50,
+                                    color: Colors.transparent,
+                                    child: const MouseRegion(
+                                      cursor: SystemMouseCursors.grab,
+                                      child: Padding(
+                                        padding: EdgeInsets.all(4.0),
+                                        child: SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: AdwaitaIcon(
+                                            AdwaitaIcons.list_remove,
+                                          ),
                                         ),
                                       ),
                                     ),

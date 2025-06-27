@@ -22,6 +22,7 @@ class TrackList extends HookConsumerWidget {
   final List<DesktopTrackModule> modules;
 
   final bool showImage;
+  final bool showPlayButton;
 
   final bool showTrackIndex;
 
@@ -45,9 +46,13 @@ class TrackList extends HookConsumerWidget {
     VoidCallback unselect,
   )? multiCustomActionsBuilder;
 
+  final bool showDefaultActions;
+
   final String? source;
 
   final void Function(MinimalTrack track, int index)? playCallback;
+
+  final void Function(MinimalTrack track, int index)? removeCallback;
 
   const TrackList({
     super.key,
@@ -56,14 +61,17 @@ class TrackList extends HookConsumerWidget {
     required this.size,
     required this.modules,
     this.showImage = true,
+    this.showPlayButton = true,
     this.showTrackIndex = true,
     this.singleCustomActionsBuilder,
     this.multiCustomActionsBuilder,
+    this.showDefaultActions = true,
     this.scrollController,
     this.autoScrollToCurrentTrack = false,
     this.scrollToTrackIdOnMounted,
     this.source,
     this.playCallback,
+    this.removeCallback,
   });
 
   @override
@@ -309,8 +317,15 @@ class TrackList extends HookConsumerWidget {
               selectedBottom: !selectedElements.value.contains(index + 1),
               selectedTracks: selectedTracks.length == 1 ? [] : selectedTracks,
               selectCallback: selectCallback,
+              removeCallback: (track) {
+                removeCallback?.call(track, index);
+              },
               singleCustomActionsBuilder: localSingleCustomActionsBuilder,
               multiCustomActionsBuilder: localMultiCustomActionsBuilder,
+              showDefaultActions: showDefaultActions,
+              displayReorderable: orderKeys != null,
+              displayMoreActions: orderKeys == null,
+              displayRemove: orderKeys != null,
             );
           } else {
             child = DesktopTrack(
@@ -330,13 +345,18 @@ class TrackList extends HookConsumerWidget {
               },
               modules: modules,
               showImage: showImage,
+              showPlayButton: showPlayButton,
               selected: selected,
               selectedTracks: selectedTracks.length == 1 ? [] : selectedTracks,
               selectCallback: selectCallback,
               selectedTop: !selectedElements.value.contains(index - 1),
               selectedBottom: !selectedElements.value.contains(index + 1),
+              removeCallback: (track) {
+                removeCallback?.call(track, index);
+              },
               singleCustomActionsBuilder: localSingleCustomActionsBuilder,
               multiCustomActionsBuilder: localMultiCustomActionsBuilder,
+              showDefaultActions: showDefaultActions,
             );
           }
 

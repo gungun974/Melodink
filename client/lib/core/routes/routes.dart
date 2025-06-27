@@ -9,9 +9,9 @@ import 'package:melodink_client/features/library/presentation/pages/album_page.d
 import 'package:melodink_client/features/library/presentation/pages/albums_page.dart';
 import 'package:melodink_client/features/library/presentation/pages/artist_page.dart';
 import 'package:melodink_client/features/library/presentation/pages/artists_page.dart';
+import 'package:melodink_client/features/library/presentation/pages/edit_playlist_page.dart';
 import 'package:melodink_client/features/library/presentation/pages/playlist_page.dart';
 import 'package:melodink_client/features/library/presentation/pages/playlists_page.dart';
-import 'package:melodink_client/features/player/presentation/pages/mobile_player_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/player_page.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_and_history_page.dart';
 import 'package:melodink_client/features/settings/presentation/pages/settings_page.dart';
@@ -89,6 +89,18 @@ final List<RouteBase> appRoutesWithShell = [
           return NoTransitionPage(
             key: state.pageKey,
             child: PlaylistPage(playlistId: int.parse(id)),
+          );
+        },
+      ),
+      GoRoute(
+        path: ':id/edit',
+        name: "/playlist/:id/edit",
+        pageBuilder: (BuildContext context, GoRouterState state) {
+          final id = state.pathParameters['id']!;
+
+          return NoTransitionPage(
+            key: state.pageKey,
+            child: PlaylistPageEdit(playlistId: int.parse(id)),
           );
         },
       ),

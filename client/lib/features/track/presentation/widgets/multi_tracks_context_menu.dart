@@ -17,11 +17,14 @@ class MultiTracksContextMenu extends ConsumerWidget {
     required this.menuController,
     required this.child,
     this.customActionsBuilder,
+    this.showDefaultActions = true,
   });
 
   final List<MinimalTrack> tracks;
 
   final MenuController menuController;
+
+  final bool showDefaultActions;
 
   final List<Widget> Function(
     BuildContext context,
@@ -40,126 +43,128 @@ class MultiTracksContextMenu extends ConsumerWidget {
       menuController: menuController,
       child: MenuAnchor(
         menuChildren: [
-          SubmenuButton(
-            leadingIcon: const AdwaitaIcon(
-              AdwaitaIcons.playlist2,
-              size: 20,
-            ),
-            menuChildren: [
-              MenuItemButton(
-                child: Text(t.actions.newPlaylist),
-                onPressed: () {
-                  menuController.close();
-
-                  CreatePlaylistModal.showModal(
-                    context,
-                    tracks: tracks,
-                    pushRouteToNewPlaylist: true,
-                  );
-                },
+          if (showDefaultActions) ...[
+            SubmenuButton(
+              leadingIcon: const AdwaitaIcon(
+                AdwaitaIcons.playlist2,
+                size: 20,
               ),
-              const Divider(height: 0),
-              ...switch (asyncPlaylists) {
-                AsyncData(:final value) => value.map((playlist) {
-                    return MenuItemButton(
-                      child: Text(playlist.name),
-                      onPressed: () async {
-                        menuController.close();
+              menuChildren: [
+                MenuItemButton(
+                  child: Text(t.actions.newPlaylist),
+                  onPressed: () {
+                    menuController.close();
 
-                        if (!NetworkInfo().isServerRecheable()) {
-                          AppNotificationManager.of(context).notify(
-                            context,
-                            title: t.notifications.offline.title,
-                            message: t.notifications.offline.message,
-                            type: AppNotificationType.danger,
-                          );
-                          return;
-                        }
+                    CreatePlaylistModal.showModal(
+                      context,
+                      tracks: tracks,
+                      pushRouteToNewPlaylist: true,
+                    );
+                  },
+                ),
+                const Divider(height: 0),
+                ...switch (asyncPlaylists) {
+                  AsyncData(:final value) => value.map((playlist) {
+                      return MenuItemButton(
+                        child: Text(playlist.name),
+                        onPressed: () async {
+                          menuController.close();
 
-                        try {
-                          await ref
-                              .read(
-                                  playlistContextMenuNotifierProvider.notifier)
-                              .addTracks(
-                                playlist,
-                                tracks,
-                              );
-                        } catch (_) {
-                          if (context.mounted) {
+                          if (!NetworkInfo().isServerRecheable()) {
                             AppNotificationManager.of(context).notify(
                               context,
-                              title: t.notifications.somethingWentWrong.title,
-                              message:
-                                  t.notifications.somethingWentWrong.message,
+                              title: t.notifications.offline.title,
+                              message: t.notifications.offline.message,
                               type: AppNotificationType.danger,
                             );
+                            return;
                           }
 
-                          rethrow;
-                        }
+                          try {
+                            await ref
+                                .read(playlistContextMenuNotifierProvider
+                                    .notifier)
+                                .addTracks(
+                                  playlist,
+                                  tracks,
+                                );
+                          } catch (_) {
+                            if (context.mounted) {
+                              AppNotificationManager.of(context).notify(
+                                context,
+                                title: t.notifications.somethingWentWrong.title,
+                                message:
+                                    t.notifications.somethingWentWrong.message,
+                                type: AppNotificationType.danger,
+                              );
+                            }
 
-                        if (!context.mounted) {
-                          return;
-                        }
+                            rethrow;
+                          }
 
-                        AppNotificationManager.of(context).notify(
-                          context,
-                          message: t.notifications.playlistTrackHaveBeenAdded
-                              .message(
-                            n: tracks.length,
-                            name: playlist.name,
-                          ),
-                        );
-                      },
-                    );
-                  }).toList(),
-                _ => const [],
+                          if (!context.mounted) {
+                            return;
+                          }
+
+                          AppNotificationManager.of(context).notify(
+                            context,
+                            message: t.notifications.playlistTrackHaveBeenAdded
+                                .message(
+                              n: tracks.length,
+                              name: playlist.name,
+                            ),
+                          );
+                        },
+                      );
+                    }).toList(),
+                  _ => const [],
+                },
+              ],
+              child: Text(t.actions.addToPlaylist),
+            ),
+            MenuItemButton(
+              leadingIcon: const AdwaitaIcon(
+                AdwaitaIcons.playlist,
+                size: 20,
+              ),
+              child: Text(t.actions.addToQueue),
+              onPressed: () {
+                menuController.close();
+
+                audioController.addTracksToQueue(tracks);
+
+                AppNotificationManager.of(context).notify(
+                  context,
+                  message: t.notifications.haveBeenAddedToQueue.message(
+                    n: tracks.length,
+                  ),
+                );
               },
-            ],
-            child: Text(t.actions.addToPlaylist),
-          ),
-          MenuItemButton(
-            leadingIcon: const AdwaitaIcon(
-              AdwaitaIcons.playlist,
-              size: 20,
             ),
-            child: Text(t.actions.addToQueue),
-            onPressed: () {
-              menuController.close();
+            MenuItemButton(
+              leadingIcon: const AdwaitaIcon(
+                AdwaitaIcons.media_playlist_shuffle,
+                size: 20,
+              ),
+              child: Text(t.actions.randomAddToQueue),
+              onPressed: () {
+                menuController.close();
 
-              audioController.addTracksToQueue(tracks);
+                final List<MinimalTrack> newTracks = List.from(tracks);
 
-              AppNotificationManager.of(context).notify(
-                context,
-                message: t.notifications.haveBeenAddedToQueue.message(
-                  n: tracks.length,
-                ),
-              );
-            },
-          ),
-          MenuItemButton(
-            leadingIcon: const AdwaitaIcon(
-              AdwaitaIcons.media_playlist_shuffle,
-              size: 20,
+                newTracks.shuffle();
+
+                audioController.addTracksToQueue(newTracks);
+
+                AppNotificationManager.of(context).notify(
+                  context,
+                  message: t.notifications.haveBeenAddedToQueue.message(
+                    n: tracks.length,
+                  ),
+                );
+              },
             ),
-            child: Text(t.actions.randomAddToQueue),
-            onPressed: () {
-              menuController.close();
-
-              final List<MinimalTrack> newTracks = List.from(tracks);
-
-              newTracks.shuffle();
-
-              audioController.addTracksToQueue(newTracks);
-
-              AppNotificationManager.of(context).notify(
-                context,
-                message: t.notifications.haveBeenAddedToQueue.message(
-                  n: tracks.length,
-                ),
-              );
-            },
-          ),
+          ],
           if (customActionsBuilder != null)
             ...customActionsBuilder!(context, menuController, tracks),
         ],

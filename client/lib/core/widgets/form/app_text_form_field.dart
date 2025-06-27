@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
-class AppTextFormField extends StatelessWidget {
+class AppTextFormField extends HookWidget {
   final String labelText;
 
   final TextEditingController? controller;
@@ -50,99 +50,113 @@ class AppTextFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final focusNode = useFocusNode();
+
     return FormField<String>(
       autovalidateMode: autovalidateMode,
       validator: validator,
       initialValue: controller?.text ?? "",
       builder: (FormFieldState field) {
-        return Container(
-          decoration: BoxDecoration(
-            color: readOnly
-                ? const Color.fromRGBO(10, 12, 13, 0.25)
-                : const Color.fromRGBO(39, 44, 46, 0.55),
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: Stack(
-            children: [
-              SizedBox(
-                height: maxLines == 1 ? 40 : null,
-                child: Center(
-                  child: TextField(
-                    controller: controller,
-                    onChanged: (String value) {
-                      field.didChange(value);
-                      onChanged?.call(value);
-                    },
-                    readOnly: readOnly,
-                    obscureText: obscureText,
-                    style: TextStyle(
-                      color: readOnly ? Colors.grey[200] : Colors.white,
-                      fontSize: 14,
-                      letterSpacing: 24 * 0.03,
-                      fontWeight: FontWeight.w400,
-                      height: Platform.isLinux ? 1.4 : 1,
-                    ),
-                    maxLines: maxLines,
-                    keyboardType: keyboardType,
-                    decoration: InputDecoration(
-                      prefixIcon: prefixIcon != null ? buildPrefixIcon() : null,
-                      prefixIconConstraints: const BoxConstraints(),
-                      suffixIcon: suffixIcon != null ? buildSuffixIcon() : null,
-                      suffixIconConstraints: const BoxConstraints(),
-                      isDense: true,
-                      filled: false,
-                      labelText: labelText,
-                      labelStyle: TextStyle(color: Colors.grey[350]),
-                      floatingLabelStyle: TextStyle(
-                        color: Colors.grey[350],
-                        fontSize: 12,
-                        letterSpacing: 12 * 0.03,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      floatingLabelBehavior: FloatingLabelBehavior.auto,
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.transparent,
-                          width: Platform.isLinux ? 16 : 14,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.transparent,
-                          width: Platform.isLinux ? 16 : 14,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.transparent,
-                          width: Platform.isLinux ? 16 : 14,
-                        ),
-                      ),
-                    ),
-                    autofillHints: autofillHints,
-                  ),
-                ),
+        return MouseRegion(
+          cursor: SystemMouseCursors.text,
+          child: Listener(
+            onPointerDown: (_) {
+              focusNode.requestFocus();
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                color: readOnly
+                    ? const Color.fromRGBO(10, 12, 13, 0.25)
+                    : const Color.fromRGBO(39, 44, 46, 0.55),
+                borderRadius: BorderRadius.circular(8.0),
               ),
-              if (field.hasError)
-                SizedBox(
-                  height: 40 + 5,
-                  child: Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 12, bottom: 4),
-                      child: Text(
-                        field.errorText!,
-                        style: const TextStyle(
-                          color: Colors.redAccent,
-                          fontSize: 11,
-                          letterSpacing: 11 * 0.03,
+              child: Stack(
+                children: [
+                  SizedBox(
+                    height: maxLines == 1 ? 40 : null,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        onChanged: (String value) {
+                          field.didChange(value);
+                          onChanged?.call(value);
+                        },
+                        readOnly: readOnly,
+                        obscureText: obscureText,
+                        style: TextStyle(
+                          color: readOnly ? Colors.grey[200] : Colors.white,
+                          fontSize: 14,
+                          letterSpacing: 24 * 0.03,
                           fontWeight: FontWeight.w400,
+                          height: Platform.isLinux ? 1.4 : 1,
                         ),
+                        maxLines: maxLines,
+                        keyboardType: keyboardType,
+                        decoration: InputDecoration(
+                          prefixIcon:
+                              prefixIcon != null ? buildPrefixIcon() : null,
+                          prefixIconConstraints: const BoxConstraints(),
+                          suffixIcon:
+                              suffixIcon != null ? buildSuffixIcon() : null,
+                          suffixIconConstraints: const BoxConstraints(),
+                          isDense: true,
+                          filled: false,
+                          labelText: labelText,
+                          labelStyle: TextStyle(color: Colors.grey[350]),
+                          floatingLabelStyle: TextStyle(
+                            color: Colors.grey[350],
+                            fontSize: 12,
+                            letterSpacing: 12 * 0.03,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          floatingLabelBehavior: FloatingLabelBehavior.auto,
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                              width: Platform.isLinux ? 16 : 14,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                              width: Platform.isLinux ? 16 : 14,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                              width: Platform.isLinux ? 16 : 14,
+                            ),
+                          ),
+                        ),
+                        autofillHints: autofillHints,
                       ),
                     ),
                   ),
-                )
-            ],
+                  if (field.hasError)
+                    SizedBox(
+                      height: 40 + 5,
+                      child: Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 12, bottom: 4),
+                          child: Text(
+                            field.errorText!,
+                            style: const TextStyle(
+                              color: Colors.redAccent,
+                              fontSize: 11,
+                              letterSpacing: 11 * 0.03,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                ],
+              ),
+            ),
           ),
         );
       },

@@ -10,7 +10,6 @@ import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
-import 'package:melodink_client/features/library/presentation/modals/edit_playlist_modal.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
@@ -126,7 +125,7 @@ class PlaylistContextMenu extends ConsumerWidget {
                     return;
                   }
 
-                  EditPlaylistModal.showModal(context, playlist);
+                  GoRouter.of(context).push("/playlist/${playlist.id}/edit");
                 },
               ),
               MenuItemButton(

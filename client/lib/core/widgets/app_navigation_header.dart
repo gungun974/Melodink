@@ -9,6 +9,7 @@ class AppNavigationHeader extends HookWidget {
     required this.child,
     this.title,
     this.alwayShow = false,
+    this.actions,
   });
 
   final Widget child;
@@ -16,6 +17,8 @@ class AppNavigationHeader extends HookWidget {
   final Widget? title;
 
   final bool alwayShow;
+
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +46,7 @@ class AppNavigationHeader extends HookWidget {
             backgroundColor: const Color.fromRGBO(0, 0, 0, 0.08),
             shadowColor: Colors.transparent,
             title: title,
+            actions: actions,
           ),
         Expanded(
           child: child,

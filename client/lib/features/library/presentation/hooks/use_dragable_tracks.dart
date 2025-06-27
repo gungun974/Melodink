@@ -3,7 +3,13 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 
-useDragableTracks(
+(
+  ValueNotifier<List<MinimalTrack>>,
+  ValueNotifier<List<ValueKey<int>>>,
+  bool Function(Key item, Key newPosition),
+  Null Function(Key draggedItem),
+  CancellationToken,
+) useDragableTracks(
   ValueNotifier<List<MinimalTrack>> tracks,
   void Function(List<MinimalTrack> newTracks) reoderDoneCallback, [
   List<Object?> keys = const <Object>[],
@@ -70,11 +76,11 @@ useDragableTracks(
 
   final dragCancelToken = useMemoized(() => CancellationToken());
 
-  return [
+  return (
     orderTracks,
     orderKeys,
     reorderCallback,
     reorderDone,
     dragCancelToken,
-  ];
+  );
 }

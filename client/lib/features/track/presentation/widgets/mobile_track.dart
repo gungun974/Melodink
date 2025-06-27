@@ -25,6 +25,7 @@ class MobileTrack extends HookConsumerWidget {
 
   final bool showImage;
 
+  final bool displayRemove;
   final bool displayMoreActions;
   final bool displayReorderable;
 
@@ -35,6 +36,8 @@ class MobileTrack extends HookConsumerWidget {
   final bool selectedBottom;
 
   final List<MinimalTrack> selectedTracks;
+
+  final void Function(MinimalTrack track)? removeCallback;
 
   final List<Widget> Function(
     BuildContext context,
@@ -48,11 +51,14 @@ class MobileTrack extends HookConsumerWidget {
     List<MinimalTrack> tracks,
   )? multiCustomActionsBuilder;
 
+  final bool showDefaultActions;
+
   const MobileTrack({
     super.key,
     required this.track,
     required this.playCallback,
     this.showImage = true,
+    this.displayRemove = false,
     this.displayMoreActions = true,
     this.displayReorderable = false,
     this.selectCallback,
@@ -60,8 +66,10 @@ class MobileTrack extends HookConsumerWidget {
     this.selectedTop = true,
     this.selectedBottom = true,
     this.selectedTracks = const [],
+    this.removeCallback,
     this.singleCustomActionsBuilder,
     this.multiCustomActionsBuilder,
+    this.showDefaultActions = true,
   });
 
   @override
@@ -125,6 +133,7 @@ class MobileTrack extends HookConsumerWidget {
             tracks: selectedTracks,
             singleMenuController: trackContextMenuController,
             multiMenuController: tracksContextMenuController,
+            showDefaultActions: showDefaultActions,
             singleCustomActionsBuilder: singleCustomActionsBuilder,
             multiCustomActionsBuilder: multiCustomActionsBuilder,
             child: Container(
@@ -148,6 +157,33 @@ class MobileTrack extends HookConsumerWidget {
               ),
               child: Row(
                 children: [
+                  if (displayRemove)
+                    GestureDetector(
+                      onTap: () {},
+                      child: Listener(
+                        onPointerDown: (_) {
+                          removeCallback?.call(track);
+                        },
+                        child: Container(
+                          height: 50,
+                          padding: const EdgeInsets.only(right: 8.0),
+                          color: Colors.transparent,
+                          child: const MouseRegion(
+                            cursor: SystemMouseCursors.grab,
+                            child: Padding(
+                              padding: EdgeInsets.all(4.0),
+                              child: SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: AdwaitaIcon(
+                                  AdwaitaIcons.list_remove,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
