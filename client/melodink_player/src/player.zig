@@ -98,6 +98,7 @@ const TrackManager = struct {
     }
 
     fn freeTrack(self: *Self, track: *Track) void {
+        track.waitThreadHandlerIsStop();
         track.*.free();
         self.allocator.destroy(track);
     }
@@ -148,12 +149,8 @@ const TrackManager = struct {
                 self.setCurrentIndexedTrack(null);
             }
 
-            if (trackToRemove.?.*.open_thread.load(.seq_cst) or trackToRemove.?.*.status != TrackStatus.idle) {
-                const thread = try Thread.spawn(.{}, TrackManager.freeTrack, .{ self, trackToRemove.?.* });
-                thread.detach();
-            } else {
-                self.freeTrack(trackToRemove.?.*);
-            }
+            const thread = try Thread.spawn(.{}, TrackManager.freeTrack, .{ self, trackToRemove.?.* });
+            thread.detach();
 
             _ = self.manage_loaded_tracks.remove(id);
         }

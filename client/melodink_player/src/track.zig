@@ -212,6 +212,30 @@ pub const Track = struct {
         try pool.spawn(openThreadHandler, .{self});
     }
 
+    pub fn waitThreadHandlerIsStop(self: *Self) void {
+        while (true) {
+            std.time.sleep(std.time.ns_per_ms * 10);
+
+            if (self.open_thread.load(.seq_cst)) {
+                continue;
+            }
+
+            std.time.sleep(std.time.ns_per_ms * 10);
+
+            if (self.open_thread.load(.seq_cst)) {
+                continue;
+            }
+
+            std.time.sleep(std.time.ns_per_ms * 10);
+
+            if (self.open_thread.load(.seq_cst)) {
+                continue;
+            }
+
+            return;
+        }
+    }
+
     fn openThreadHandler(self: *Self) void {
         defer self.open_thread.store(false, .seq_cst);
 
