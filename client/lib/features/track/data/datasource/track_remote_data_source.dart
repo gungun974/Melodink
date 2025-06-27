@@ -179,6 +179,9 @@ class TrackRemoteDataSource {
                     progress.add(sent / total);
                   }
                 : null,
+            options: Options(
+              receiveTimeout: const Duration(hours: 3),
+            ),
           );
 
       return TrackModel.fromJson(response.data).toTrack();
@@ -217,6 +220,9 @@ class TrackRemoteDataSource {
       final response = await AppApi().dio.put(
             "/track/$id/audio",
             data: formData,
+            options: Options(
+              receiveTimeout: const Duration(hours: 3),
+            ),
           );
 
       return TrackModel.fromJson(response.data).toTrack();

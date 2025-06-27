@@ -66,7 +66,7 @@ func (u *TrackUsecase) TranscodeTrack(
 			}
 		}
 
-		if err := u.transcodeProcessor.TranscodeHigh(ctx, track.Path, path.Join(transcodingDirectory, "high.ogg")); err != nil &&
+		if err := u.transcodeProcessor.TranscodeHigh(track.Path, path.Join(transcodingDirectory, "high.ogg")); err != nil &&
 			!errors.Is(err, processor.TranscoderKilledError) {
 			return entities.NewInternalError(err)
 		}
@@ -79,7 +79,7 @@ func (u *TrackUsecase) TranscodeTrack(
 			}
 		}
 
-		if err := u.transcodeProcessor.TranscodeMedium(ctx, track.Path, path.Join(transcodingDirectory, "medium.ogg")); err != nil &&
+		if err := u.transcodeProcessor.TranscodeMedium(track.Path, path.Join(transcodingDirectory, "medium.ogg")); err != nil &&
 			!errors.Is(err, processor.TranscoderKilledError) {
 			return entities.NewInternalError(err)
 		}
@@ -92,7 +92,7 @@ func (u *TrackUsecase) TranscodeTrack(
 			}
 		}
 
-		if err := u.transcodeProcessor.TranscodeLow(ctx, track.Path, path.Join(transcodingDirectory, "low.ogg")); err != nil &&
+		if err := u.transcodeProcessor.TranscodeLow(track.Path, path.Join(transcodingDirectory, "low.ogg")); err != nil &&
 			!errors.Is(err, processor.TranscoderKilledError) {
 			return entities.NewInternalError(err)
 		}

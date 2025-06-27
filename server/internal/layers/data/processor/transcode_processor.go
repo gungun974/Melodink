@@ -1,7 +1,6 @@
 package processor
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -22,11 +21,10 @@ var (
 )
 
 func (p *TranscodeProcessor) TranscodeLow(
-	ctx context.Context,
 	sourcePath string,
 	destinationPath string,
 ) error {
-	return p.transcode(ctx, []string{
+	return p.transcode([]string{
 		"-b:a", "96k",
 		"-c:a", "libopus",
 		"-vbr", "on",
@@ -35,11 +33,10 @@ func (p *TranscodeProcessor) TranscodeLow(
 }
 
 func (p *TranscodeProcessor) TranscodeMedium(
-	ctx context.Context,
 	sourcePath string,
 	destinationPath string,
 ) error {
-	return p.transcode(ctx, []string{
+	return p.transcode([]string{
 		"-b:a", "128k",
 		"-c:a", "libopus",
 		"-vbr", "on",
@@ -48,11 +45,10 @@ func (p *TranscodeProcessor) TranscodeMedium(
 }
 
 func (p *TranscodeProcessor) TranscodeHigh(
-	ctx context.Context,
 	sourcePath string,
 	destinationPath string,
 ) error {
-	return p.transcode(ctx, []string{
+	return p.transcode([]string{
 		"-b:a", "320k",
 		"-c:a", "libopus",
 		"-vbr", "on",
@@ -61,7 +57,6 @@ func (p *TranscodeProcessor) TranscodeHigh(
 }
 
 func (*TranscodeProcessor) transcode(
-	ctx context.Context,
 	audioArguments []string,
 	sourcePath string,
 	destinationPath string,
@@ -89,7 +84,7 @@ func (*TranscodeProcessor) transcode(
 		sourcePath,
 	)
 
-	cmd := exec.CommandContext(ctx, "ffmpeg", args...)
+	cmd := exec.Command("ffmpeg", args...)
 
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("starting cmd: %w", err)
