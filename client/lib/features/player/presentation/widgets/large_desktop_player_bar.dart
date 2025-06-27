@@ -96,21 +96,25 @@ class DesktopCurrentTrack2 extends ConsumerWidget {
 
         audioController.previousTracks.valueOrNull?.take(5).forEach(
           (track) {
-            precacheImage(
-                AppImageCacheProvider(track.getCompressedCoverUri(
-                  TrackCompressedCoverQuality.medium,
-                )),
-                context);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              precacheImage(
+                  AppImageCacheProvider(track.getCompressedCoverUri(
+                    TrackCompressedCoverQuality.medium,
+                  )),
+                  context);
+            });
           },
         );
 
         audioController.nextTracks.valueOrNull?.take(5).forEach(
           (track) {
-            precacheImage(
-                AppImageCacheProvider(track.getCompressedCoverUri(
-                  TrackCompressedCoverQuality.small,
-                )),
-                context);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              precacheImage(
+                  AppImageCacheProvider(track.getCompressedCoverUri(
+                    TrackCompressedCoverQuality.small,
+                  )),
+                  context);
+            });
           },
         );
 

@@ -135,13 +135,17 @@ class MobilePlayerPage extends HookConsumerWidget {
                                                   ?.take(5)
                                                   .forEach(
                                                 (track) {
-                                                  precacheImage(
-                                                      AppImageCacheProvider(track
-                                                          .getCompressedCoverUri(
-                                                        TrackCompressedCoverQuality
-                                                            .high,
-                                                      )),
-                                                      context);
+                                                  WidgetsBinding.instance
+                                                      .addPostFrameCallback(
+                                                          (_) {
+                                                    precacheImage(
+                                                        AppImageCacheProvider(track
+                                                            .getCompressedCoverUri(
+                                                          TrackCompressedCoverQuality
+                                                              .high,
+                                                        )),
+                                                        context);
+                                                  });
                                                 },
                                               );
 
@@ -150,13 +154,17 @@ class MobilePlayerPage extends HookConsumerWidget {
                                                   ?.take(5)
                                                   .forEach(
                                                 (track) {
-                                                  precacheImage(
-                                                      AppImageCacheProvider(track
-                                                          .getCompressedCoverUri(
-                                                        TrackCompressedCoverQuality
-                                                            .high,
-                                                      )),
-                                                      context);
+                                                  WidgetsBinding.instance
+                                                      .addPostFrameCallback(
+                                                          (_) {
+                                                    precacheImage(
+                                                        AppImageCacheProvider(track
+                                                            .getCompressedCoverUri(
+                                                          TrackCompressedCoverQuality
+                                                              .high,
+                                                        )),
+                                                        context);
+                                                  });
                                                 },
                                               );
 
