@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/hooks/use_list_controller.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
@@ -14,6 +15,7 @@ import 'package:super_sliver_list/super_sliver_list.dart';
 
 class TrackList extends HookConsumerWidget {
   final List<MinimalTrack> tracks;
+  final List<Key>? orderKeys;
 
   final AppScreenTypeLayout size;
 
@@ -50,6 +52,7 @@ class TrackList extends HookConsumerWidget {
   const TrackList({
     super.key,
     required this.tracks,
+    this.orderKeys,
     required this.size,
     required this.modules,
     this.showImage = true,
@@ -337,19 +340,46 @@ class TrackList extends HookConsumerWidget {
             );
           }
 
-          return Container(
-            decoration: BoxDecoration(
-              color: const Color.fromRGBO(0, 0, 0, 0.03),
-              borderRadius: BorderRadius.vertical(
-                top: size == AppScreenTypeLayout.mobile && index == 0
-                    ? const Radius.circular(8)
-                    : Radius.zero,
-                bottom: index == tracks.length - 1
-                    ? const Radius.circular(8)
-                    : Radius.zero,
+          if (orderKeys == null) {
+            return Container(
+              decoration: BoxDecoration(
+                color: const Color.fromRGBO(0, 0, 0, 0.03),
+                borderRadius: BorderRadius.vertical(
+                  top: size == AppScreenTypeLayout.mobile && index == 0
+                      ? const Radius.circular(8)
+                      : Radius.zero,
+                  bottom: index == tracks.length - 1
+                      ? const Radius.circular(8)
+                      : Radius.zero,
+                ),
               ),
-            ),
-            child: child,
+              child: child,
+            );
+          }
+
+          return ReorderableItem(
+            key: orderKeys![index],
+            childBuilder: (BuildContext context, ReorderableItemState state) {
+              return Opacity(
+                opacity: state == ReorderableItemState.placeholder ? 0.0 : 1.0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: state == ReorderableItemState.normal
+                        ? const Color.fromRGBO(0, 0, 0, 0.03)
+                        : const Color.fromRGBO(0, 0, 0, 0.05),
+                    borderRadius: BorderRadius.vertical(
+                      top: size == AppScreenTypeLayout.mobile && index == 0
+                          ? const Radius.circular(8)
+                          : Radius.zero,
+                      bottom: index == tracks.length - 1
+                          ? const Radius.circular(8)
+                          : Radius.zero,
+                    ),
+                  ),
+                  child: child,
+                ),
+              );
+            },
           );
         },
         childCount: tracks.length,
