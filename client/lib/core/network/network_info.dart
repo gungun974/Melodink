@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:mutex/mutex.dart';
 import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,8 +25,6 @@ class NetworkInfo {
   static final NetworkInfo _instance = NetworkInfo._privateConstructor();
 
   factory NetworkInfo() {
-    _instance.checkServerReachable();
-
     return _instance;
   }
 
@@ -67,46 +66,62 @@ class NetworkInfo {
     return _streamController.stream;
   }
 
-  void checkServerReachable() async {
-    while (true) {
-      if (_forceOffline) {
-      } else if (AppApi().hasServerUrl()) {
-        final connectivityResult = await (_connectivity.checkConnectivity());
+  final mutex = Mutex();
 
-        if (connectivityResult.contains(ConnectivityResult.none)) {
-          _isServerRecheable = false;
+  void startCheckServerReachable() async {
+    return mutex.protect(
+      () async {
+        while (true) {
+          if (_isServerRecheable) {
+            return;
+          }
+
+          if (_forceOffline) {
+          } else if (AppApi().hasServerUrl()) {
+            final connectivityResult =
+                await (_connectivity.checkConnectivity());
+
+            if (connectivityResult.contains(ConnectivityResult.none)) {
+              _isServerRecheable = false;
+
+              await Future.delayed(const Duration(
+                seconds: 2,
+              ));
+
+              continue;
+            }
+
+            try {
+              final response = await AppApi().dio.get(
+                    "/health",
+                    options: Options(
+                      headers: {},
+                      receiveTimeout: const Duration(seconds: 3),
+                    ),
+                  );
+
+              _isServerRecheable = response.statusCode == 200;
+              _streamController.add(_isServerRecheable);
+            } catch (_) {
+              _isServerRecheable = false;
+              _streamController.add(_isServerRecheable);
+            }
+          } else {
+            _isServerRecheable = false;
+            _streamController.add(_isServerRecheable);
+          }
 
           await Future.delayed(const Duration(
-            seconds: 2,
+            seconds: 1,
           ));
-
-          continue;
         }
+      },
+    );
+  }
 
-        try {
-          final response = await AppApi().dio.get(
-                "/health",
-                options: Options(
-                  headers: {},
-                  receiveTimeout: const Duration(seconds: 3),
-                ),
-              );
-
-          _isServerRecheable = response.statusCode == 200;
-          _streamController.add(_isServerRecheable);
-        } catch (_) {
-          _isServerRecheable = false;
-          _streamController.add(_isServerRecheable);
-        }
-      } else {
-        _isServerRecheable = false;
-        _streamController.add(_isServerRecheable);
-      }
-
-      await Future.delayed(const Duration(
-        seconds: 5,
-      ));
-    }
+  void reportNetworkUnrechable() {
+    _isServerRecheable = false;
+    startCheckServerReachable();
   }
 }
 

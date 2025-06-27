@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:melodink_client/core/network/network_info.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -28,6 +29,29 @@ class AppApi {
             ResponseInterceptorHandler handler) async {
           currentCookies = await getCookies();
           return handler.next(response);
+        },
+        onError: (
+          DioException error,
+          ErrorInterceptorHandler handler,
+        ) {
+          if (error.requestOptions.path == "/health") {
+            return handler.next(error);
+          }
+
+          switch (error.type) {
+            case DioExceptionType.connectionTimeout:
+            case DioExceptionType.sendTimeout:
+            case DioExceptionType.receiveTimeout:
+            case DioExceptionType.badCertificate:
+            case DioExceptionType.connectionError:
+            case DioExceptionType.unknown:
+              NetworkInfo().reportNetworkUnrechable();
+              break;
+            default:
+              break;
+          }
+
+          return handler.next(error);
         },
       ),
     );
