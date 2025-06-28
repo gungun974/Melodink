@@ -109,7 +109,7 @@ const TrackManager = struct {
         return std.mem.eql(u8, a.?, b.?);
     }
 
-    pub fn loads(self: *Self, play_request_index: usize, requests: []const MelodinkTrackRequest, quality: TrackQuality, server_auth: []const u8) !void {
+    pub fn loads(self: *Self, play_request_index: usize, requests: []const MelodinkTrackRequest, quality: TrackQuality, server_auth: []const u8, pool: *std.Thread.Pool) !void {
         if (self.current_track_index != null) {}
         try self.manage_tracks_order.resize(requests.len);
 
@@ -149,8 +149,7 @@ const TrackManager = struct {
                 self.setCurrentIndexedTrack(null);
             }
 
-            const thread = try Thread.spawn(.{}, TrackManager.freeTrack, .{ self, trackToRemove.?.* });
-            thread.detach();
+            try pool.spawn(TrackManager.freeTrack, .{ self, trackToRemove.?.* });
 
             _ = self.manage_loaded_tracks.remove(id);
         }
@@ -579,7 +578,7 @@ pub const Player = struct {
 
         self.current_virtual_index = virtual_index;
 
-        try self.track_manager.loads(play_request_index, requests, self.target_quality, server_auth);
+        try self.track_manager.loads(play_request_index, requests, self.target_quality, server_auth, self.pool_threads);
     }
 
     pub fn setEqualizer(self: *Self, enable: bool, frequencies: []const f64, gains: []const f64) !void {
