@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -127,6 +128,18 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
         final currentTask = state.currentTask;
 
         if (currentTask == null) {
+          _mutex.release();
+
+          continue;
+        }
+
+        if (!NetworkInfo().isServerRecheable()) {
+          currentTask.progressController.close();
+
+          state = state.copyWith(
+            queueTasks: state.queueTasks.skip(1).toList(),
+          );
+
           _mutex.release();
 
           continue;
