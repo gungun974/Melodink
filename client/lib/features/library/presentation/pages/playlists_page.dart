@@ -1,6 +1,8 @@
+import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
+import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
@@ -54,13 +56,34 @@ class PlaylistsPage extends ConsumerWidget {
                     ),
                   ),
                   const Spacer(),
-                  AppButton(
-                    text: t.actions.newPlaylist,
-                    type: AppButtonType.primary,
-                    onPressed: () {
-                      CreatePlaylistModal.showModal(context);
-                    },
-                  )
+                  if (size == AppScreenTypeLayout.desktop)
+                    AppButton(
+                      text: t.actions.newPlaylist,
+                      type: AppButtonType.primary,
+                      onPressed: () {
+                        CreatePlaylistModal.showModal(context);
+                      },
+                    ),
+                  if (size == AppScreenTypeLayout.mobile)
+                    AppIconButton(
+                      icon: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFC47ED0),
+                          borderRadius: BorderRadius.circular(100.0),
+                        ),
+                        child: Center(
+                          child: AdwaitaIcon(
+                            size: 20,
+                            AdwaitaIcons.list_add,
+                          ),
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      iconSize: 42,
+                      onPressed: () {
+                        CreatePlaylistModal.showModal(context);
+                      },
+                    ),
                 ],
               ),
             ),

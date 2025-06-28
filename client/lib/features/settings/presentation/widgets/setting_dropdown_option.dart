@@ -20,6 +20,40 @@ class SettingDropdownOption<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const textStyle = TextStyle(
+      fontWeight: FontWeight.w300,
+      fontSize: 12,
+      letterSpacing: 14 * 0.04,
+    );
+
+    double? estimateSize;
+
+    if (items != null) {
+      for (var i = 0; i < items!.length; i++) {
+        final item = items![i].child;
+
+        if (item is! Text) {
+          estimateSize = null;
+          break;
+        }
+
+        final span = TextSpan(
+          text: item.data,
+          style: textStyle,
+        );
+
+        final textPainter = TextPainter(
+          text: span,
+          textDirection: TextDirection.ltr,
+        );
+
+        textPainter.layout();
+        if ((estimateSize ?? 0) < textPainter.width) {
+          estimateSize = textPainter.width;
+        }
+      }
+    }
+
     return Row(
       children: [
         Text(
@@ -46,24 +80,23 @@ class SettingDropdownOption<T> extends StatelessWidget {
                   left: 16 / 2,
                 ),
                 height: 30,
+                width: 30,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8.0),
                   color: const Color.fromRGBO(39, 44, 46, 0.55),
                 ),
               ),
-              style: const TextStyle(
-                fontWeight: FontWeight.w300,
-                fontSize: 14,
-                letterSpacing: 14 * 0.04,
-              ),
+              style: textStyle,
               menuItemStyleData: const MenuItemStyleData(
                 height: 32,
                 padding: EdgeInsets.only(
-                  left: 16,
+                  left: 12,
+                  right: 12,
                 ),
               ),
               dropdownStyleData: DropdownStyleData(
                 padding: EdgeInsets.zero,
+                width: estimateSize != null ? estimateSize + 24 : null,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8.0),
                 ),

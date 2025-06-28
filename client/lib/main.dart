@@ -84,68 +84,73 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return _EagerInitialization(
       child: _DynamicSystemUIMode(
-        child: Consumer(
-          builder: (contex, ref, _) {
-            final appRouter = ref.watch(appRouterProvider);
+        child: MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(1),
+          ),
+          child: Consumer(
+            builder: (contex, ref, _) {
+              final appRouter = ref.watch(appRouterProvider);
 
-            ref.listen(isUserAuthenticatedProvider, (prev, next) {
-              final prevValue = prev?.valueOrNull ?? false;
-              final nextValue = next.valueOrNull ?? false;
+              ref.listen(isUserAuthenticatedProvider, (prev, next) {
+                final prevValue = prev?.valueOrNull ?? false;
+                final nextValue = next.valueOrNull ?? false;
 
-              if (prevValue && !nextValue) {
-                appRouter.refresh();
-              }
-            });
+                if (prevValue && !nextValue) {
+                  appRouter.refresh();
+                }
+              });
 
-            final audioController = ref.watch(audioControllerProvider);
+              final audioController = ref.watch(audioControllerProvider);
 
-            return Shortcuts(
-              shortcuts: <ShortcutActivator, Intent>{
-                const SingleActivator(LogicalKeyboardKey.space):
-                    VoidCallbackIntent(() {
-                  if (audioController.playbackState.valueOrNull?.playing ==
-                      true) {
-                    audioController.pause();
-                    return;
-                  }
-                  audioController.play();
-                }),
-              },
-              child: Stack(
-                alignment: Alignment.topCenter,
-                children: [
-                  MaterialApp.router(
-                    title: 'Melodink Client',
-                    locale: TranslationProvider.of(context).flutterLocale,
-                    supportedLocales: AppLocaleUtils.supportedLocales,
-                    localizationsDelegates:
-                        GlobalMaterialLocalizations.delegates,
-                    debugShowCheckedModeBanner: false,
-                    theme: ThemeData(
-                      useMaterial3: false,
-                      brightness: Brightness.dark,
-                      appBarTheme:
-                          const AppBarTheme(backgroundColor: Colors.black),
-                      primaryColor: Colors.black,
-                      iconTheme:
-                          const IconThemeData().copyWith(color: Colors.white),
-                      colorScheme: ColorScheme.fromSeed(
-                        seedColor: const Color.fromRGBO(196, 126, 208, 1),
+              return Shortcuts(
+                shortcuts: <ShortcutActivator, Intent>{
+                  const SingleActivator(LogicalKeyboardKey.space):
+                      VoidCallbackIntent(() {
+                    if (audioController.playbackState.valueOrNull?.playing ==
+                        true) {
+                      audioController.pause();
+                      return;
+                    }
+                    audioController.play();
+                  }),
+                },
+                child: Stack(
+                  alignment: Alignment.topCenter,
+                  children: [
+                    MaterialApp.router(
+                      title: 'Melodink Client',
+                      locale: TranslationProvider.of(context).flutterLocale,
+                      supportedLocales: AppLocaleUtils.supportedLocales,
+                      localizationsDelegates:
+                          GlobalMaterialLocalizations.delegates,
+                      debugShowCheckedModeBanner: false,
+                      theme: ThemeData(
+                        useMaterial3: false,
                         brightness: Brightness.dark,
+                        appBarTheme:
+                            const AppBarTheme(backgroundColor: Colors.black),
+                        primaryColor: Colors.black,
+                        iconTheme:
+                            const IconThemeData().copyWith(color: Colors.white),
+                        colorScheme: ColorScheme.fromSeed(
+                          seedColor: const Color.fromRGBO(196, 126, 208, 1),
+                          brightness: Brightness.dark,
+                        ),
+                        fontFamily: "Roboto",
                       ),
-                      fontFamily: "Roboto",
+                      routerConfig: appRouter,
                     ),
-                    routerConfig: appRouter,
-                  ),
-                  RepaintBoundary(
-                    child: AppNotificationManager(
-                      key: appNotificationManagerKey,
+                    RepaintBoundary(
+                      child: AppNotificationManager(
+                        key: appNotificationManagerKey,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

@@ -177,38 +177,40 @@ class SettingsPage extends ConsumerWidget {
                             },
                           ),
                           const Divider(height: 24),
-                          SettingDropdownOption(
-                            text: "${t.settings.desktopPlayerBarPosition} :",
-                            value: settings.playerBarPosition,
-                            onChanged: (position) {
-                              ref
-                                  .read(appSettingsNotifierProvider.notifier)
-                                  .setSettings(
-                                    settings.copyWith(
-                                      playerBarPosition: position,
-                                    ),
-                                  );
-                            },
-                            items: [
-                              DropdownMenuItem(
-                                value: AppSettingPlayerBarPosition.bottom,
-                                child: Text(t.positions.bottom),
-                              ),
-                              DropdownMenuItem(
-                                value: AppSettingPlayerBarPosition.top,
-                                child: Text(t.positions.top),
-                              ),
-                              DropdownMenuItem(
-                                value: AppSettingPlayerBarPosition.side,
-                                child: Text(t.positions.side),
-                              ),
-                              DropdownMenuItem(
-                                value: AppSettingPlayerBarPosition.center,
-                                child: Text(t.positions.center),
-                              ),
-                            ],
-                          ),
-                          const Divider(height: 24),
+                          if (size == AppScreenTypeLayout.desktop)
+                            SettingDropdownOption(
+                              text: "${t.settings.desktopPlayerBarPosition} :",
+                              value: settings.playerBarPosition,
+                              onChanged: (position) {
+                                ref
+                                    .read(appSettingsNotifierProvider.notifier)
+                                    .setSettings(
+                                      settings.copyWith(
+                                        playerBarPosition: position,
+                                      ),
+                                    );
+                              },
+                              items: [
+                                DropdownMenuItem(
+                                  value: AppSettingPlayerBarPosition.bottom,
+                                  child: Text(t.positions.bottom),
+                                ),
+                                DropdownMenuItem(
+                                  value: AppSettingPlayerBarPosition.top,
+                                  child: Text(t.positions.top),
+                                ),
+                                DropdownMenuItem(
+                                  value: AppSettingPlayerBarPosition.side,
+                                  child: Text(t.positions.side),
+                                ),
+                                DropdownMenuItem(
+                                  value: AppSettingPlayerBarPosition.center,
+                                  child: Text(t.positions.center),
+                                ),
+                              ],
+                            ),
+                          if (size == AppScreenTypeLayout.desktop)
+                            const Divider(height: 24),
                           SettingDropdownOption(
                             text: "${t.settings.scoringSystem} :",
                             value: settings.scoringSystem,
