@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 
@@ -20,9 +22,9 @@ class SettingDropdownOption<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const textStyle = TextStyle(
+    final textStyle = TextStyle(
       fontWeight: FontWeight.w300,
-      fontSize: 12,
+      fontSize: Platform.isLinux ? 14 : 12,
       letterSpacing: 14 * 0.04,
     );
 
