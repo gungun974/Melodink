@@ -94,7 +94,11 @@ class AuthCachedNetworkImage extends ConsumerStatefulWidget {
 
 class _AuthCachedNetworkImageState
     extends ConsumerState<AuthCachedNetworkImage> {
+  final GlobalKey imageKey = GlobalKey();
+
   Future<File>? networkImageFuture;
+
+  FileImage? previousNetworkImage;
 
   @override
   void initState() {
@@ -148,8 +152,22 @@ class _AuthCachedNetworkImageState
           future: networkImageFuture,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
+              previousNetworkImage = FileImage(snapshot.data!);
+            }
+
+            if (snapshot.hasError) {
+              return SizedBox(
+                height: widget.height,
+                width: widget.width,
+                child:
+                    widget.errorWidget?.call(context, uri.toString(), Error()),
+              );
+            }
+
+            if (previousNetworkImage != null) {
               return Image(
-                image: FileImage(snapshot.data!),
+                key: imageKey,
+                image: previousNetworkImage!,
                 height: widget.height,
                 width: widget.width,
                 fit: widget.fit ?? BoxFit.fitHeight,
@@ -169,14 +187,7 @@ class _AuthCachedNetworkImageState
                 filterQuality: FilterQuality.high,
               );
             }
-            if (snapshot.hasError) {
-              return SizedBox(
-                height: widget.height,
-                width: widget.width,
-                child:
-                    widget.errorWidget?.call(context, uri.toString(), Error()),
-              );
-            }
+
             return Container(
               height: widget.height,
               width: widget.width,
@@ -188,6 +199,7 @@ class _AuthCachedNetworkImageState
     final localErrorWidget = widget.errorWidget;
 
     return Image(
+      key: imageKey,
       image: FileImage(File(widget.imageUrl)),
       height: widget.height,
       width: widget.width,
