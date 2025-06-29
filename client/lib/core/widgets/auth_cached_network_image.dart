@@ -46,6 +46,13 @@ class ImageCacheManager {
     });
   }
 
+  static Future<void> preCache(Uri uri, BuildContext context) async {
+    precacheImage(
+      FileImage(await getImage(uri)),
+      context,
+    );
+  }
+
   static Future<void> clearCache(Uri uri) {
     return ImageCacheManager().cacheManager.removeFile(uri.toString());
   }

@@ -127,10 +127,12 @@ class DesktopPlayerPage extends HookConsumerWidget {
                                     ?.take(5)
                                     .forEach(
                                   (track) {
-                                    ImageCacheManager.getImage(
-                                        track.getCompressedCoverUri(
-                                      TrackCompressedCoverQuality.high,
-                                    ));
+                                    ImageCacheManager.preCache(
+                                      track.getCompressedCoverUri(
+                                        TrackCompressedCoverQuality.high,
+                                      ),
+                                      context,
+                                    );
                                   },
                                 );
 
@@ -138,10 +140,12 @@ class DesktopPlayerPage extends HookConsumerWidget {
                                     ?.take(5)
                                     .forEach(
                                   (track) {
-                                    ImageCacheManager.getImage(
-                                        track.getCompressedCoverUri(
-                                      TrackCompressedCoverQuality.high,
-                                    ));
+                                    ImageCacheManager.preCache(
+                                      track.getCompressedCoverUri(
+                                        TrackCompressedCoverQuality.high,
+                                      ),
+                                      context,
+                                    );
                                   },
                                 );
 

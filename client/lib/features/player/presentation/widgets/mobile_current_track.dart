@@ -28,17 +28,23 @@ class MobileCurrentTrackInfo extends ConsumerWidget {
 
         audioController.previousTracks.valueOrNull?.take(5).forEach(
           (track) {
-            ImageCacheManager.getImage(track.getCompressedCoverUri(
-              TrackCompressedCoverQuality.small,
-            ));
+            ImageCacheManager.preCache(
+              track.getCompressedCoverUri(
+                TrackCompressedCoverQuality.small,
+              ),
+              context,
+            );
           },
         );
 
         audioController.nextTracks.valueOrNull?.take(5).forEach(
           (track) {
-            ImageCacheManager.getImage(track.getCompressedCoverUri(
-              TrackCompressedCoverQuality.small,
-            ));
+            ImageCacheManager.preCache(
+              track.getCompressedCoverUri(
+                TrackCompressedCoverQuality.small,
+              ),
+              context,
+            );
           },
         );
 
