@@ -160,6 +160,10 @@ class _AuthCachedNetworkImageState
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               previousNetworkImage = FileImage(snapshot.data!);
+            } else {
+              if (!widget.gaplessPlayback) {
+                previousNetworkImage = null;
+              }
             }
 
             if (snapshot.hasError) {
@@ -205,9 +209,11 @@ class _AuthCachedNetworkImageState
 
     final localErrorWidget = widget.errorWidget;
 
+    previousNetworkImage = FileImage(File(widget.imageUrl));
+
     return Image(
       key: imageKey,
-      image: FileImage(File(widget.imageUrl)),
+      image: previousNetworkImage!,
       height: widget.height,
       width: widget.width,
       fit: widget.fit ?? BoxFit.fitHeight,
