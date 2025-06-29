@@ -98,7 +98,7 @@ class DesktopCurrentTrack2 extends ConsumerWidget {
           (track) {
             ImageCacheManager.preCache(
               track.getCompressedCoverUri(
-                TrackCompressedCoverQuality.medium,
+                TrackCompressedCoverQuality.small,
               ),
               context,
             );
