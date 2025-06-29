@@ -47,10 +47,19 @@ class ImageCacheManager {
   }
 
   static Future<void> preCache(Uri uri, BuildContext context) async {
-    precacheImage(
-      FileImage(await getImage(uri)),
-      context,
-    );
+    final image = FileImage(await getImage(uri));
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.inactive) {
+      precacheImage(
+        image,
+        context,
+      );
+    }
   }
 
   static Future<void> clearCache(Uri uri) {
