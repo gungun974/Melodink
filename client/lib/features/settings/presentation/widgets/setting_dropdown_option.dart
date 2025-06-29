@@ -93,12 +93,12 @@ class SettingDropdownOption<T> extends StatelessWidget {
                 height: 32,
                 padding: EdgeInsets.only(
                   left: 12,
-                  right: 12,
+                  right: 8,
                 ),
               ),
               dropdownStyleData: DropdownStyleData(
                 padding: EdgeInsets.zero,
-                width: estimateSize != null ? estimateSize + 24 : null,
+                width: estimateSize != null ? estimateSize + 29 : null,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
