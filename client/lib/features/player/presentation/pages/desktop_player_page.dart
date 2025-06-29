@@ -127,15 +127,10 @@ class DesktopPlayerPage extends HookConsumerWidget {
                                     ?.take(5)
                                     .forEach(
                                   (track) {
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                      precacheImage(
-                                          AppImageCacheProvider(
-                                              track.getCompressedCoverUri(
-                                            TrackCompressedCoverQuality.high,
-                                          )),
-                                          context);
-                                    });
+                                    ImageCacheManager.getImage(
+                                        track.getCompressedCoverUri(
+                                      TrackCompressedCoverQuality.high,
+                                    ));
                                   },
                                 );
 
@@ -143,15 +138,10 @@ class DesktopPlayerPage extends HookConsumerWidget {
                                     ?.take(5)
                                     .forEach(
                                   (track) {
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                      precacheImage(
-                                          AppImageCacheProvider(
-                                              track.getCompressedCoverUri(
-                                            TrackCompressedCoverQuality.high,
-                                          )),
-                                          context);
-                                    });
+                                    ImageCacheManager.getImage(
+                                        track.getCompressedCoverUri(
+                                      TrackCompressedCoverQuality.high,
+                                    ));
                                   },
                                 );
 

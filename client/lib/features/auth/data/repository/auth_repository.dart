@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
+import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/auth/data/models/user_model.dart';
 import 'package:melodink_client/features/auth/domain/entities/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -99,6 +100,8 @@ class AuthRepository {
           model.toJson(),
         ),
       );
+
+      await ImageCacheManager.initCache();
 
       return model.toUser();
     } on DioException catch (e) {

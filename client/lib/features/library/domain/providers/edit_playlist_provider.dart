@@ -40,14 +40,14 @@ class EditPlaylistStream extends _$EditPlaylistStream {
   changePlaylistCover(int id, File file) async {
     final newPlaylist = await _playlistRepository.changePlaylistCover(id, file);
 
-    await AppImageCacheProvider.clearCache(newPlaylist.getOrignalCoverUri());
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(newPlaylist.getOrignalCoverUri());
+    await ImageCacheManager.clearCache(
       newPlaylist.getCompressedCoverUri(TrackCompressedCoverQuality.small),
     );
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(
       newPlaylist.getCompressedCoverUri(TrackCompressedCoverQuality.medium),
     );
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(
       newPlaylist.getCompressedCoverUri(TrackCompressedCoverQuality.high),
     );
 
@@ -62,14 +62,14 @@ class EditPlaylistStream extends _$EditPlaylistStream {
   removePlaylistCover(int id) async {
     final newPlaylist = await _playlistRepository.removePlaylistCover(id);
 
-    await AppImageCacheProvider.clearCache(newPlaylist.getOrignalCoverUri());
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(newPlaylist.getOrignalCoverUri());
+    await ImageCacheManager.clearCache(
       newPlaylist.getCompressedCoverUri(TrackCompressedCoverQuality.small),
     );
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(
       newPlaylist.getCompressedCoverUri(TrackCompressedCoverQuality.medium),
     );
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(
       newPlaylist.getCompressedCoverUri(TrackCompressedCoverQuality.high),
     );
 

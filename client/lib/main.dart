@@ -11,6 +11,7 @@ import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
+import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/domain/audio/melodink_player.dart';
@@ -68,7 +69,11 @@ void main() async {
 
   PaintingBinding.instance.imageCache
     ..maximumSize = 10000
-    ..maximumSizeBytes = 750 * 1024 * 1024; // 750 MB
+    ..maximumSizeBytes = 50 * 1024 * 1024; // 50 MB
+
+  try {
+    await ImageCacheManager.initCache();
+  } catch (_) {}
 
   runApp(ProviderScope(
     child: TranslationProvider(

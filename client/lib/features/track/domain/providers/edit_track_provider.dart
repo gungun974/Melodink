@@ -73,14 +73,14 @@ class TrackEditStream extends _$TrackEditStream {
   changeTrackCover(int id, File file) async {
     final newTrack = await _trackRepository.changeTrackCover(id, file);
 
-    await AppImageCacheProvider.clearCache(newTrack.getOrignalCoverUri());
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(newTrack.getOrignalCoverUri());
+    await ImageCacheManager.clearCache(
       newTrack.getCompressedCoverUri(TrackCompressedCoverQuality.small),
     );
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(
       newTrack.getCompressedCoverUri(TrackCompressedCoverQuality.medium),
     );
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(
       newTrack.getCompressedCoverUri(TrackCompressedCoverQuality.high),
     );
 

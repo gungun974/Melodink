@@ -92,7 +92,7 @@ Future<List<List<int>>?> currentTrackPalette(Ref ref) async {
   ImageProvider imageProvider;
 
   if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
-    imageProvider = AppImageCacheProvider(uri);
+    imageProvider = FileImage(await ImageCacheManager.getImage(uri));
   } else {
     imageProvider = FileImage(File(imageUrl));
   }

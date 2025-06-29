@@ -71,6 +71,7 @@ dependencies:
   audio_session: ^0.1.23
   sqlite3_flutter_libs: ^0.5.28
   diacritic: ^0.1.6
+  flutter_cache_manager: ^3.4.1
 
 dev_dependencies:
   flutter_test:

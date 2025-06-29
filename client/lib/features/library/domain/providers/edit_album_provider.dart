@@ -30,14 +30,14 @@ class EditAlbumStream extends _$EditAlbumStream {
   changeAlbumCover(String id, File file) async {
     final newAlbum = await _albumRepository.changeAlbumCover(id, file);
 
-    await AppImageCacheProvider.clearCache(newAlbum.getOrignalCoverUri());
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(newAlbum.getOrignalCoverUri());
+    await ImageCacheManager.clearCache(
       newAlbum.getCompressedCoverUri(TrackCompressedCoverQuality.small),
     );
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(
       newAlbum.getCompressedCoverUri(TrackCompressedCoverQuality.medium),
     );
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(
       newAlbum.getCompressedCoverUri(TrackCompressedCoverQuality.high),
     );
 
@@ -52,14 +52,14 @@ class EditAlbumStream extends _$EditAlbumStream {
   removeAlbumCover(String id) async {
     final newAlbum = await _albumRepository.removeAlbumCover(id);
 
-    await AppImageCacheProvider.clearCache(newAlbum.getOrignalCoverUri());
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(newAlbum.getOrignalCoverUri());
+    await ImageCacheManager.clearCache(
       newAlbum.getCompressedCoverUri(TrackCompressedCoverQuality.small),
     );
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(
       newAlbum.getCompressedCoverUri(TrackCompressedCoverQuality.medium),
     );
-    await AppImageCacheProvider.clearCache(
+    await ImageCacheManager.clearCache(
       newAlbum.getCompressedCoverUri(TrackCompressedCoverQuality.high),
     );
 

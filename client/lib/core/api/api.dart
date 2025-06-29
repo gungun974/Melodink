@@ -4,6 +4,7 @@ import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:melodink_client/core/network/network_info.dart';
+import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -91,6 +92,7 @@ class AppApi {
 
   Future<void> setServerUUID(String uuid) async {
     await asyncPrefs.setString("serverUUID", uuid);
+    ImageCacheManager.initCache();
   }
 
   Future<String?> getServerUUID() {

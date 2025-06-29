@@ -31,25 +31,17 @@ class DesktopCurrentTrack extends HookConsumerWidget {
 
         audioController.previousTracks.valueOrNull?.take(5).forEach(
           (track) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              precacheImage(
-                  AppImageCacheProvider(track.getCompressedCoverUri(
-                    TrackCompressedCoverQuality.medium,
-                  )),
-                  context);
-            });
+            ImageCacheManager.getImage(track.getCompressedCoverUri(
+              TrackCompressedCoverQuality.medium,
+            ));
           },
         );
 
         audioController.nextTracks.valueOrNull?.take(5).forEach(
           (track) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              precacheImage(
-                  AppImageCacheProvider(track.getCompressedCoverUri(
-                    TrackCompressedCoverQuality.medium,
-                  )),
-                  context);
-            });
+            ImageCacheManager.getImage(track.getCompressedCoverUri(
+              TrackCompressedCoverQuality.medium,
+            ));
           },
         );
 

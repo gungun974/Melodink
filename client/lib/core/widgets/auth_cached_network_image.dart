@@ -1,187 +1,57 @@
 import 'dart:io';
 
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
-
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
 
-import 'dart:async';
-import 'dart:ui' as ui;
-
-import 'package:melodink_client/core/helpers/split_hash_to_path.dart';
 import 'package:melodink_client/core/network/network_info.dart';
+import 'package:melodink_client/core/widgets/file_system.dart';
 
-String createUrlHash(String url) {
-  final bytes = utf8.encode(url);
+class ImageCacheManager {
+  late CacheManager _cacheManager;
 
-  final digest = md5.convert(bytes);
+  Future<void> initCacheManager() async {
+    final path = (await getMelodinkInstanceSupportDirectory()).path;
+    _cacheManager = CacheManager(Config(
+      'melodinkImageCache',
+      stalePeriod: const Duration(hours: 1),
+      maxNrOfCacheObjects: 10000,
+      fileSystem: NewFileSystem('melodinkImageCache'),
+      repo: JsonCacheInfoRepository(path: '$path/melodinkImageCache.json'),
+    ));
+  }
 
-  return digest.toString();
+  ImageCacheManager._internal();
+
+  factory ImageCacheManager() {
+    return _instance;
+  }
+
+  static final ImageCacheManager _instance = ImageCacheManager._internal();
+
+  CacheManager get cacheManager => _cacheManager;
+
+  static Future<void> initCache() {
+    return ImageCacheManager().initCacheManager();
+  }
+
+  static Future<File> getImage(Uri uri) {
+    return ImageCacheManager()
+        .cacheManager
+        .getSingleFile(uri.toString(), headers: {
+      "Cookie": AppApi().generateCookieHeader(),
+    });
+  }
+
+  static Future<void> clearCache(Uri uri) {
+    return ImageCacheManager().cacheManager.removeFile(uri.toString());
+  }
 }
 
-@immutable
-class AppImageCacheProvider extends ImageProvider<AppImageCacheProvider> {
-  AppImageCacheProvider(this.url, {this.scale = 1.0})
-      : dio = AppApi().dio,
-        cacheId = splitHashToPath(createUrlHash(url.toString()));
-
-  final Uri url;
-
-  final String cacheId;
-
-  final double scale;
-
-  final Dio dio;
-
-  @override
-  Future<AppImageCacheProvider> obtainKey(ImageConfiguration configuration) {
-    return SynchronousFuture<AppImageCacheProvider>(this);
-  }
-
-  @override
-  ImageStreamCompleter loadImage(
-      AppImageCacheProvider key, ImageDecoderCallback decode) {
-    // Ownership of this controller is handed off to [_loadAsync]; it is that
-    // method's responsibility to close the controller's stream when the image
-    // has been loaded or an error is thrown.
-    final chunkEvents = StreamController<ImageChunkEvent>();
-
-    return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key, chunkEvents, decode),
-      chunkEvents: chunkEvents.stream,
-      scale: key.scale,
-      debugLabel: key.url.toString(),
-      informationCollector: () => <DiagnosticsNode>[
-        DiagnosticsProperty<ImageProvider>('Image provider', this),
-        DiagnosticsProperty<AppImageCacheProvider>('Image key', key),
-      ],
-    );
-  }
-
-  static clearCache(Uri url) async {
-    final cacheId = splitHashToPath(createUrlHash(url.toString()));
-
-    final cacheLocation = File(
-      "${(await getMelodinkInstanceCacheDirectory()).path}/imacheCache/$cacheId",
-    );
-
-    if (await cacheLocation.exists()) {
-      await cacheLocation.delete();
-    }
-
-    await AppImageCacheProvider(url).evict();
-  }
-
-  Future<ui.Codec> _loadAsync(
-    AppImageCacheProvider key,
-    StreamController<ImageChunkEvent> chunkEvents,
-    ImageDecoderCallback decode,
-  ) async {
-    try {
-      assert(key == this);
-
-      final cacheLocation = File(
-        "${(await getMelodinkInstanceCacheDirectory()).path}/imacheCache/$cacheId",
-      );
-
-      if (await cacheLocation.exists()) {
-        final time = await cacheLocation.lastModified();
-
-        final currentTime = DateTime.now();
-
-        final difference = currentTime.difference(time);
-
-        if (difference.inHours <= 1) {
-          try {
-            final buffer = await ui.ImmutableBuffer.fromUint8List(
-                await cacheLocation.readAsBytes());
-
-            return await decode(buffer);
-          } catch (_) {
-            await cacheLocation.delete();
-          }
-        }
-      }
-
-      final response = await dio.getUri<dynamic>(
-        url,
-        options: Options(
-          responseType: ResponseType.bytes,
-          receiveTimeout: const Duration(
-            seconds: 10,
-          ),
-        ),
-        onReceiveProgress: (count, total) {
-          chunkEvents.add(ImageChunkEvent(
-            cumulativeBytesLoaded: count,
-            expectedTotalBytes: total > 0 ? total : null,
-          ));
-        },
-      );
-
-      if (response.statusCode != 200) {
-        throw NetworkImageLoadException(
-          uri: url,
-          statusCode: response.statusCode!,
-        );
-      }
-
-      final bytes = Uint8List.fromList(response.data as List<int>);
-
-      if (bytes.lengthInBytes == 0) {
-        throw NetworkImageLoadException(
-          uri: url,
-          statusCode: response.statusCode!,
-        );
-      }
-
-      await cacheLocation.create(recursive: true);
-
-      RandomAccessFile raf = await cacheLocation.open(mode: FileMode.write);
-
-      await raf.writeFrom(bytes);
-
-      await raf.close();
-
-      final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
-      return decode(buffer);
-    } catch (e) {
-      // Depending on where the exception was thrown, the image cache may not
-      // have had a chance to track the key in the cache at all.
-      // Schedule a microtask to give the cache a chance to add the key.
-      scheduleMicrotask(() {
-        PaintingBinding.instance.imageCache.evict(key);
-      });
-      rethrow;
-    } finally {
-      unawaited(chunkEvents.close());
-    }
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (other.runtimeType != runtimeType) {
-      return false;
-    }
-    return other is AppImageCacheProvider &&
-        other.url == url &&
-        other.scale == scale;
-  }
-
-  @override
-  int get hashCode => Object.hash(url, scale);
-
-  @override
-  String toString() =>
-      '${objectRuntimeType(this, 'AppImageCacheProvider')}("$url", scale: $scale)';
-}
-
-class AuthCachedNetworkImage extends ConsumerWidget {
+class AuthCachedNetworkImage extends ConsumerStatefulWidget {
   final String imageUrl;
 
   final double? width;
@@ -218,45 +88,121 @@ class AuthCachedNetworkImage extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    Uri? uri = Uri.tryParse(imageUrl);
+  ConsumerState<AuthCachedNetworkImage> createState() =>
+      _AuthCachedNetworkImageState();
+}
 
-    ImageProvider imageProvider;
+class _AuthCachedNetworkImageState
+    extends ConsumerState<AuthCachedNetworkImage> {
+  Future<File>? networkImageFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    Uri? uri = Uri.tryParse(widget.imageUrl);
+
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+      if (!NetworkInfo().isServerRecheable()) {
+        return;
+      }
+
+      networkImageFuture = ImageCacheManager.getImage(uri);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant AuthCachedNetworkImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    Uri? uri = Uri.tryParse(widget.imageUrl);
+
+    if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+      if (!NetworkInfo().isServerRecheable()) {
+        return;
+      }
+
+      if (oldWidget.imageUrl != widget.imageUrl) {
+        networkImageFuture = ImageCacheManager.getImage(uri);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Uri? uri = Uri.tryParse(widget.imageUrl);
 
     final isServerReachable = ref.read(isServerReachableProvider);
 
     if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
-      imageProvider = AppImageCacheProvider(uri);
-
       if (!isServerReachable) {
         return SizedBox(
-          height: height,
-          width: width,
-          child: errorWidget?.call(context, uri.toString(), Error()),
+          height: widget.height,
+          width: widget.width,
+          child: widget.errorWidget?.call(context, uri.toString(), Error()),
         );
       }
-    } else {
-      imageProvider = FileImage(File(imageUrl));
+
+      final localErrorWidget = widget.errorWidget;
+
+      return FutureBuilder(
+          future: networkImageFuture,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Image(
+                image: FileImage(snapshot.data!),
+                height: widget.height,
+                width: widget.width,
+                fit: widget.fit ?? BoxFit.fitHeight,
+                alignment: widget.alignment ?? Alignment.bottomCenter,
+                errorBuilder: localErrorWidget != null
+                    ? (BuildContext context, Object error,
+                        StackTrace? stackTrace) {
+                        return SizedBox(
+                          height: widget.height,
+                          width: widget.width,
+                          child:
+                              localErrorWidget(context, uri.toString(), error),
+                        );
+                      }
+                    : null,
+                gaplessPlayback: widget.gaplessPlayback,
+                filterQuality: FilterQuality.high,
+              );
+            }
+            if (snapshot.hasError) {
+              return SizedBox(
+                height: widget.height,
+                width: widget.width,
+                child:
+                    widget.errorWidget?.call(context, uri.toString(), Error()),
+              );
+            }
+            return Container(
+              height: widget.height,
+              width: widget.width,
+              color: Colors.transparent,
+            );
+          });
     }
 
-    final localErrorWidget = errorWidget;
+    final localErrorWidget = widget.errorWidget;
 
     return Image(
-      image: imageProvider,
-      height: height,
-      width: width,
-      fit: fit ?? BoxFit.fitHeight,
-      alignment: alignment ?? Alignment.bottomCenter,
+      image: FileImage(File(widget.imageUrl)),
+      height: widget.height,
+      width: widget.width,
+      fit: widget.fit ?? BoxFit.fitHeight,
+      alignment: widget.alignment ?? Alignment.bottomCenter,
       errorBuilder: localErrorWidget != null
           ? (BuildContext context, Object error, StackTrace? stackTrace) {
               return SizedBox(
-                height: height,
-                width: width,
+                height: widget.height,
+                width: widget.width,
                 child: localErrorWidget(context, uri.toString(), error),
               );
             }
           : null,
-      gaplessPlayback: gaplessPlayback,
+      gaplessPlayback: widget.gaplessPlayback,
       filterQuality: FilterQuality.high,
     );
   }
