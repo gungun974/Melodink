@@ -572,13 +572,7 @@ fn prepareMiniaudio(b: *std.Build) std.Build.LazyPath {
     const miniaudio_h = b.dependency("miniaudio", .{}).path("extras/miniaudio_split/miniaudio.h");
 
     if (builtin.os.tag == .windows) {
-        const patch = b.dependency("patch_win32", .{});
-
-        const manifest = b.path("build/patch.exe.manifest");
-
-        std.fs.copyFileAbsolute(manifest.getPath(b), patch.path("bin/patch.exe.manifest").getPath(b), .{}) catch unreachable;
-
-        const tool_run = b.addSystemCommand(&.{patch.path("bin/patch.exe").getPath(b)});
+        const tool_run = b.addSystemCommand(&.{"patch.exe"});
         tool_run.addFileArg(miniaudio_h);
 
         tool_run.addArg("-o");

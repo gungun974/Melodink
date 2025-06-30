@@ -47,10 +47,6 @@
             .hash = "N-V-__8AAJ8bbwgQf_QTYTYX75tN42xYTQQ1fdJ652O03odP",
             .lazy = true,
         },
-        .patch_win32 = .{
-            .url = "https://icolo.dl.sourceforge.net/project/gnuwin32/patch/2.5.9-7/patch-2.5.9-7-bin.zip?viasf=1",
-            .hash = "N-V-__8AACGMBABgKdmDWqNHjOLJ_eVn1c_tDbaxu3r1pkpS",
-        },
     },
 
     .paths = .{

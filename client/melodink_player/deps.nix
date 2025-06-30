@@ -11,13 +11,6 @@ linkFarm "zig-packages" [
     };
   }
   {
-    name = "N-V-__8AACGMBABgKdmDWqNHjOLJ_eVn1c_tDbaxu3r1pkpS";
-    path = fetchzip {
-      url = "https://icolo.dl.sourceforge.net/project/gnuwin32/patch/2.5.9-7/patch-2.5.9-7-bin.zip?viasf=1";
-      hash = "sha256-ZxW1OeP+o5qxGlVvzaEdAOGOk5dv56yabQ+clV3+ZzI=";
-    };
-  }
-  {
     name = "N-V-__8AAIHakgFASykx4lexFZQChFGwWwQ5rDBL5XrOCezh";
     path = fetchzip {
       url = "https://github.com/gungun974/melodink-ffmpeg-android-build/releases/download/v7.1-3/default-x86_64.zip";
