@@ -22,7 +22,7 @@
 
     zig-overlay.url = "github:mitchellh/zig-overlay";
     # Keep in sync with zigVersion below.
-    zls-overlay.url = "github:nihklas/zls/0.14.0";
+    zls-overlay.url = "github:gungun974/zls/fix-0.14.0-nix";
   };
 
   outputs = {
@@ -93,6 +93,8 @@
           ndk-23-1-7779620
         ]);
       pinnedJDK = flutter-pkgs.jdk17;
+
+      mkMinShell = (import ./nix/minshell) pkgs;
     in {
       packages = rec {
         melodink-server = pkgs.buildGo122Module rec {
@@ -226,47 +228,86 @@
         };
       };
 
-      devShell = pkgs.mkShell {
-        ANDROID_SDK_ROOT = "${sdk}/share/android-sdk";
-        ANDROID_HOME = "${sdk}/share/android-sdk";
-        CHROME_EXECUTABLE = "chromium";
-        FLUTTER_SDK = "${flutter-sdk}";
-        GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
+      devShell =
+        if !pkgs.stdenv.isDarwin
+        then
+          (pkgs.mkShell {
+            ANDROID_SDK_ROOT = "${sdk}/share/android-sdk";
+            ANDROID_HOME = "${sdk}/share/android-sdk";
+            CHROME_EXECUTABLE = "chromium";
+            FLUTTER_SDK = "${flutter-sdk}";
+            GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
 
-        GOROOT = "${pkgs.go_1_22}/share/go";
+            GOROOT = "${pkgs.go_1_22}/share/go";
 
-        shellHook = ''
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.sqlite pkgs.chromaprint]}
-        '';
+            shellHook = ''
+              export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.sqlite pkgs.chromaprint]}
+            '';
 
-        buildInputs = [
-          (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo122Module;})
-          pkgs.go_1_22
-          air-pkgs.air
-          flutter-sdk
-          pinnedJDK
-          sdk
-          (pkgs.go-migrate.overrideAttrs (finalAttrs: previousAttrs: {
-            tags = ["sqlite3" "sqlite"];
-          }))
-          pkgs.sqlite
+            buildInputs = [
+              (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo122Module;})
+              pkgs.go_1_22
+              air-pkgs.air
+              flutter-sdk
+              pinnedJDK
+              sdk
+              (pkgs.go-migrate.overrideAttrs (finalAttrs: previousAttrs: {
+                tags = ["sqlite3" "sqlite"];
+              }))
+              pkgs.sqlite
 
-          pkgs.pkg-config
-          pkgs.gtk3
-          ffmpeg.dev
-          pkgs.pulseaudio.dev
+              pkgs.pkg-config
+              pkgs.gtk3
+              ffmpeg.dev
+              pkgs.pulseaudio.dev
 
-          pkgs.chromaprint
-          pkgs.fftw
-          pkgs.vips
+              pkgs.chromaprint
+              pkgs.fftw
+              pkgs.vips
 
-          pkgs.zenity
-          pkgs.cmake
+              pkgs.zenity
+              pkgs.cmake
 
-          zig
-          zls
-          pkgs.zon2nix
-        ];
-      };
+              zig
+              zls
+              pkgs.zon2nix
+            ];
+          })
+        else
+          (mkMinShell {
+            name = "app-ios-macos";
+
+            env = {
+              PKG_CONFIG_PATH = "${pkgs.chromaprint}/lib/pkgconfig:${pkgs.fftw.dev}/lib/pkgconfig:${pkgs.vips.dev}/lib/pkgconfig:${pkgs.glib.dev}/lib/pkgconfig";
+              CGO_CFLAGS = "-I${pkgs.chromaprint}/include";
+              CGO_LDFLAGS = "-L${pkgs.chromaprint}/lib";
+            };
+
+            shellHook = ''
+              export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.sqlite pkgs.chromaprint]}
+            '';
+
+            packages = [
+              (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo122Module;})
+              pkgs.go_1_22
+              air-pkgs.air
+              pkgs.cocoapods
+              (pkgs.go-migrate.overrideAttrs (finalAttrs: previousAttrs: {
+                tags = ["sqlite3" "sqlite"];
+              }))
+              pkgs.sqlite
+
+              ffmpeg.dev
+              ffmpeg
+
+              pkgs.chromaprint
+              pkgs.fftw
+              pkgs.vips
+
+              zig
+              zls
+              pkgs.zon2nix
+            ];
+          });
     });
 }
