@@ -62,7 +62,7 @@ final List<RouteBase> appRoutesWithShell = [
           return NoTransitionPage(
             key: state.pageKey,
             child: AlbumPage(
-              albumId: id,
+              albumId: int.parse(id),
               openWithScrollOnSpecificTrackId: trackId,
             ),
           );
@@ -124,7 +124,7 @@ final List<RouteBase> appRoutesWithShell = [
 
           return NoTransitionPage(
             key: state.pageKey,
-            child: ArtistPage(artistId: id),
+            child: ArtistPage(artistId: int.parse(id)),
           );
         },
       ),

@@ -7,21 +7,24 @@ import (
 )
 
 type AlbumUsecase struct {
-	albumRepository repository.AlbumRepository
-	trackRepository repository.TrackRepository
-	coverStorage    storage.CoverStorage
-	albumPresenter  presenter.AlbumPresenter
+	albumRepository  repository.AlbumRepository
+	trackRepository  repository.TrackRepository
+	artistRepository repository.ArtistRepository
+	coverStorage     storage.CoverStorage
+	albumPresenter   presenter.AlbumPresenter
 }
 
 func NewAlbumUsecase(
 	albumRepository repository.AlbumRepository,
 	trackRepository repository.TrackRepository,
+	artistRepository repository.ArtistRepository,
 	coverStorage storage.CoverStorage,
 	albumPresenter presenter.AlbumPresenter,
 ) AlbumUsecase {
 	return AlbumUsecase{
 		albumRepository,
 		trackRepository,
+		artistRepository,
 		coverStorage,
 		albumPresenter,
 	}

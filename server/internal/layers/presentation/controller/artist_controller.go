@@ -31,10 +31,10 @@ func (c *ArtistController) GetUserArtistTracks(
 	ctx context.Context,
 	rawId string,
 ) (models.APIResponse, error) {
-	id, err := validator.ValidateString(
+	id, err := validator.CoerceAndValidateInt(
 		rawId,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 1},
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
 		},
 	)
 	if err != nil {
@@ -48,10 +48,10 @@ func (c *ArtistController) GetUserArtistAlbums(
 	ctx context.Context,
 	rawId string,
 ) (models.APIResponse, error) {
-	id, err := validator.ValidateString(
+	id, err := validator.CoerceAndValidateInt(
 		rawId,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 1},
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
 		},
 	)
 	if err != nil {
@@ -65,10 +65,10 @@ func (c *ArtistController) GetUserArtistCover(
 	ctx context.Context,
 	rawId string,
 ) (models.APIResponse, error) {
-	id, err := validator.ValidateString(
+	id, err := validator.CoerceAndValidateInt(
 		rawId,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 1},
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
 		},
 	)
 	if err != nil {
@@ -83,8 +83,26 @@ func (c *ArtistController) GetCompressedUserArtistCover(
 	rawId string,
 	quality string,
 ) (models.APIResponse, error) {
-	id, err := validator.ValidateString(
+	id, err := validator.CoerceAndValidateInt(
 		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.artistUsecase.GetCompressedArtistCover(ctx, id, quality)
+}
+
+func (c *ArtistController) CreateArtist(
+	ctx context.Context,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	name, err := validator.ValidateMapString(
+		"name",
+		bodyData,
 		validator.StringValidators{
 			validator.StringMinValidator{Min: 1},
 		},
@@ -93,5 +111,57 @@ func (c *ArtistController) GetCompressedUserArtistCover(
 		return nil, entities.NewValidationError(err.Error())
 	}
 
-	return c.artistUsecase.GetCompressedArtistCover(ctx, id, quality)
+	return c.artistUsecase.CreateArtist(ctx, artist_usecase.CreateArtistParams{
+		Name: name,
+	})
+}
+
+func (c *ArtistController) EditArtist(
+	ctx context.Context,
+	rawId string,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	name, err := validator.ValidateMapString(
+		"name",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.artistUsecase.EditArtist(ctx, artist_usecase.EditArtistParams{
+		Id: id,
+
+		Name: name,
+	})
+}
+
+func (c *ArtistController) DeleteArtist(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.artistUsecase.DeleteArtist(ctx, id)
 }

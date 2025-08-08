@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/logger/logger.dart';
+import 'package:melodink_client/features/library/domain/entities/album.dart';
+import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/data/models/track_model.dart';
 import 'package:melodink_client/features/track/data/models/minimal_track_model.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
@@ -372,6 +374,66 @@ class TrackRemoteDataSource {
         "/track/$id/score",
         data: {
           "score": score,
+        },
+      );
+
+      return TrackModel.fromJson(response.data).toTrack();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw TrackNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<Track> setTrackAlbums(
+    int trackId,
+    List<Album> albums,
+  ) async {
+    try {
+      final response = await AppApi().dio.put(
+        "/track/$trackId/albums",
+        data: {
+          "album_ids": albums.map((album) => album.id).toList(),
+        },
+      );
+
+      return TrackModel.fromJson(response.data).toTrack();
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw TrackNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<Track> setTrackArtists(
+    int trackId,
+    List<Artist> artists,
+  ) async {
+    try {
+      final response = await AppApi().dio.put(
+        "/track/$trackId/artists",
+        data: {
+          "artist_ids": artists.map((artist) => artist.id).toList(),
         },
       );
 

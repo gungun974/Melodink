@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -84,6 +85,56 @@ func ArtistRouter(c internal.Container) http.Handler {
 		id := chi.URLParam(r, "id")
 
 		response, err := c.ArtistController.GetCompressedUserArtistCover(r.Context(), id, "high")
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.ArtistController.CreateArtist(r.Context(), bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Put("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.ArtistController.EditArtist(r.Context(), id, bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Delete("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		response, err := c.ArtistController.DeleteArtist(r.Context(), id)
 		if err != nil {
 			handleHTTPError(err, w)
 			return

@@ -118,7 +118,7 @@ class AlbumById extends _$AlbumById {
   late PlayedTrackRepository _playedTrackRepository;
 
   @override
-  Future<Album> build(String id) async {
+  Future<Album> build(int id) async {
     final albumRepository = ref.watch(albumRepositoryProvider);
     _playedTrackRepository = ref.watch(playedTrackRepositoryProvider);
 
@@ -281,7 +281,7 @@ class AlbumDownloadError extends Equatable {
 @riverpod
 class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
   @override
-  AlbumDownloadState build(String albumId) {
+  AlbumDownloadState build(int albumId) {
     refresh(shouldCheckDownload: true);
 
     return const AlbumDownloadState(
@@ -375,7 +375,7 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
 }
 
 @riverpod
-Future<List<MinimalTrack>> albumSortedTracks(Ref ref, String albumId) async {
+Future<List<MinimalTrack>> albumSortedTracks(Ref ref, int albumId) async {
   final album = await ref.watch(albumByIdProvider(albumId).future);
 
   final tracks = [...album.tracks];

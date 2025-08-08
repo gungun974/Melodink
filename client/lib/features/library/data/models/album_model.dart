@@ -3,7 +3,7 @@ import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/track/data/models/minimal_track_model.dart';
 
 class AlbumModel {
-  final String id;
+  final int id;
 
   final String name;
 

@@ -17,7 +17,7 @@ import 'package:melodink_client/features/track/presentation/widgets/track_list.d
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class AlbumPage extends HookConsumerWidget {
-  final String albumId;
+  final int albumId;
 
   final int? openWithScrollOnSpecificTrackId;
 

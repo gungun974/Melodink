@@ -13,14 +13,14 @@ import (
 
 func (u *AlbumUsecase) DeleteAlbumCover(
 	ctx context.Context,
-	albumId string,
+	albumId int,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	album, err := u.albumRepository.GetAlbumByIdFromUser(user.Id, albumId)
+	album, err := u.albumRepository.GetAlbumById(albumId)
 	if err != nil {
 		if errors.Is(err, repository.AlbumNotFoundError) {
 			return nil, entities.NewNotFoundError("Album not found")
@@ -37,11 +37,11 @@ func (u *AlbumUsecase) DeleteAlbumCover(
 		return nil, entities.NewInternalError(err)
 	}
 
-	err = u.coverStorage.RemoveAlbumCoverFiles(&album)
+	err = u.coverStorage.RemoveAlbumCoverFiles(album)
 	if err != nil {
 		logger.MainLogger.Error("Failed to remove album Cover")
 		return nil, err
 	}
 
-	return u.albumPresenter.ShowAlbum(ctx, album), nil
+	return u.albumPresenter.ShowAlbum(ctx, *album), nil
 }

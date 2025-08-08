@@ -269,12 +269,12 @@ class ImportTracks extends _$ImportTracks {
         final newGenres = track.metadata.genres.toList();
 
         while (newArtists.length < scannedTrack.metadata.artists.length) {
-          newArtists.add(const MinimalArtist(id: "", name: ""));
+          newArtists.add(const MinimalArtist(id: 0, name: ""));
         }
 
         while (newAlbumArtists.length <
             scannedTrack.metadata.albumArtists.length) {
-          newAlbumArtists.add(const MinimalArtist(id: "", name: ""));
+          newAlbumArtists.add(const MinimalArtist(id: 0, name: ""));
         }
 
         while (newGenres.length < scannedTrack.metadata.genres.length) {

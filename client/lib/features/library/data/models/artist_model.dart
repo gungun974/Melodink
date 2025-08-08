@@ -2,7 +2,7 @@ import 'package:melodink_client/features/library/data/models/album_model.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 
 class ArtistModel {
-  final String id;
+  final int id;
 
   final String name;
 
@@ -70,7 +70,7 @@ class ArtistModel {
 }
 
 class MinimalArtistModel {
-  final String id;
+  final int id;
 
   final String name;
 

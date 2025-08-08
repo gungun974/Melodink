@@ -5,7 +5,7 @@ import 'package:melodink_client/features/track/domain/entities/minimal_track.dar
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 
 class Album extends Equatable {
-  final String id;
+  final int id;
 
   final String name;
 
@@ -34,7 +34,7 @@ class Album extends Equatable {
   });
 
   Album copyWith({
-    String? id,
+    int? id,
     String? name,
     List<MinimalArtist>? albumArtists,
     List<MinimalTrack>? tracks,

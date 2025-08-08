@@ -29,7 +29,7 @@ class ArtistRemoteDataSource {
     }
   }
 
-  Future<Artist> getArtistById(String id) async {
+  Future<Artist> getArtistById(int id) async {
     try {
       final response = await AppApi().dio.get("/artist/$id");
 

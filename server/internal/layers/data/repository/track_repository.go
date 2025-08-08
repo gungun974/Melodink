@@ -13,14 +13,19 @@ import (
 
 var TrackNotFoundError = errors.New("Track is not found")
 
-func NewTrackRepository(db *sqlx.DB) TrackRepository {
+func NewTrackRepository(
+	db *sqlx.DB,
+	albumRepository AlbumRepository,
+) TrackRepository {
 	return TrackRepository{
-		Database: db,
+		Database:        db,
+		albumRepository: albumRepository,
 	}
 }
 
 type TrackRepository struct {
-	Database *sqlx.DB
+	Database        *sqlx.DB
+	albumRepository AlbumRepository
 }
 
 func (r *TrackRepository) GetAllTracks() ([]entities.Track, error) {
@@ -34,7 +39,19 @@ func (r *TrackRepository) GetAllTracks() ([]entities.Track, error) {
 		return nil, err
 	}
 
-	return m.ToTracks(), nil
+	tracks := m.ToTracks()
+
+	err = r.LoadAlbumsInTracks(tracks)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.LoadArtistsInTracks(tracks)
+	if err != nil {
+		return nil, err
+	}
+
+	return tracks, nil
 }
 
 func (r *TrackRepository) GetAllTracksFromUser(userId int) ([]entities.Track, error) {
@@ -48,7 +65,19 @@ func (r *TrackRepository) GetAllTracksFromUser(userId int) ([]entities.Track, er
 		return nil, err
 	}
 
-	return m.ToTracks(), nil
+	tracks := m.ToTracks()
+
+	err = r.LoadAlbumsInTracks(tracks)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.LoadArtistsInTracks(tracks)
+	if err != nil {
+		return nil, err
+	}
+
+	return tracks, nil
 }
 
 func (r *TrackRepository) GetAllPendingImportTracksFromUser(userId int) ([]entities.Track, error) {
@@ -62,7 +91,19 @@ func (r *TrackRepository) GetAllPendingImportTracksFromUser(userId int) ([]entit
 		return nil, err
 	}
 
-	return m.ToTracks(), nil
+	tracks := m.ToTracks()
+
+	err = r.LoadAlbumsInTracks(tracks)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.LoadArtistsInTracks(tracks)
+	if err != nil {
+		return nil, err
+	}
+
+	return tracks, nil
 }
 
 func (r *TrackRepository) GetTrack(
@@ -85,7 +126,84 @@ func (r *TrackRepository) GetTrack(
 
 	track := m.ToTrack()
 
+	err = r.LoadAlbumsInTrack(&track)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.LoadArtistsInTrack(&track)
+	if err != nil {
+		return nil, err
+	}
+
 	return &track, nil
+}
+
+func (r *TrackRepository) LoadAlbumsInTrack(track *entities.Track) error {
+	m := data_models.AlbumModels{}
+
+	err := r.Database.Select(&m, `
+		SELECT albums.*
+		FROM albums
+		JOIN track_album ON albums.id = track_album.album_id
+		WHERE track_album.track_id = ?
+		ORDER BY track_album.album_pos ASC
+  `, track.Id)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return err
+	}
+
+	track.Albums = m.ToAlbums()
+
+	err = r.albumRepository.LoadArtistsInAlbums(track.Albums)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *TrackRepository) LoadAlbumsInTracks(tracks []entities.Track) error {
+	for i := range tracks {
+		err := r.LoadAlbumsInTrack(&tracks[i])
+		if err != nil {
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func (r *TrackRepository) LoadArtistsInTrack(track *entities.Track) error {
+	m := data_models.ArtistModels{}
+
+	err := r.Database.Select(&m, `
+		SELECT artists.*
+		FROM artists
+		JOIN track_artist ON artists.id = track_artist.artist_id
+		WHERE track_artist.track_id = ?
+		ORDER BY track_artist.artist_pos ASC
+  `, track.Id)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return err
+	}
+
+	track.Artists = m.ToArtists()
+
+	return nil
+}
+
+func (r *TrackRepository) LoadArtistsInTracks(tracks []entities.Track) error {
+	for i := range tracks {
+		err := r.LoadArtistsInTrack(&tracks[i])
+		if err != nil {
+			return nil
+		}
+	}
+
+	return nil
 }
 
 func (r *TrackRepository) CreateTrack(track *entities.Track) error {
@@ -263,8 +381,6 @@ func (r *TrackRepository) CreateTrack(track *entities.Track) error {
 
 	*track = m.ToTrack()
 
-	invalidateAlbumCache()
-
 	return nil
 }
 
@@ -414,8 +530,6 @@ func (r *TrackRepository) UpdateTrack(track *entities.Track) error {
 
 	*track = m.ToTrack()
 
-	invalidateAlbumCache()
-
 	return nil
 }
 
@@ -443,7 +557,177 @@ func (r *TrackRepository) UpdateTrackPath(track *entities.Track) error {
 
 	*track = m.ToTrack()
 
-	invalidateAlbumCache()
+	return nil
+}
+
+func (r TrackRepository) SetTrackAlbums(track *entities.Track) any {
+	if len(track.Albums) == 0 {
+		_, err := r.Database.Exec(`
+			DELETE FROM track_album
+			WHERE track_id = ?
+		`, track.Id)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	tx, err := r.Database.Beginx()
+	if err != nil {
+		return err
+	}
+
+	albumIds := make([]int, len(track.Albums))
+
+	for i, album := range track.Albums {
+		albumIds[i] = album.Id
+	}
+
+	// Remove Extra
+
+	delQuery, delArgs, err := sqlx.In(`
+		DELETE FROM track_album
+		WHERE track_id = ? AND album_id NOT IN (?)
+	`, track.Id, albumIds)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	delQuery = tx.Rebind(delQuery)
+
+	_, err = tx.Exec(delQuery, delArgs...)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Insert Missing
+
+	insertQuery := `INSERT OR IGNORE INTO track_album (track_id, album_id) VALUES `
+	args := make([]any, 0, len(albumIds)*2)
+	valuePlaceholders := ""
+
+	for i, albumId := range albumIds {
+		if i > 0 {
+			valuePlaceholders += ", "
+		}
+		valuePlaceholders += "(?, ?)"
+		args = append(args, track.Id, albumId)
+	}
+
+	insertQuery += valuePlaceholders
+
+	_, err = tx.Exec(insertQuery, args...)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Set Order
+
+	for i, albumId := range albumIds {
+		_, err = tx.Exec(
+			"UPDATE track_album SET album_pos = ? WHERE track_id = ? AND album_id = ?",
+			i,
+			track.Id,
+			albumId,
+		)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r TrackRepository) SetTrackArtists(track *entities.Track) any {
+	if len(track.Artists) == 0 {
+		_, err := r.Database.Exec(`
+			DELETE FROM track_artist
+			WHERE track_id = ?
+		`, track.Id)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	tx, err := r.Database.Beginx()
+	if err != nil {
+		return err
+	}
+
+	artistIds := make([]int, len(track.Artists))
+
+	for i, artist := range track.Artists {
+		artistIds[i] = artist.Id
+	}
+
+	// Remove Extra
+
+	delQuery, delArgs, err := sqlx.In(`
+		DELETE FROM track_artist
+		WHERE track_id = ? AND artist_id NOT IN (?)
+	`, track.Id, artistIds)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	delQuery = tx.Rebind(delQuery)
+
+	_, err = tx.Exec(delQuery, delArgs...)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Insert Missing
+
+	insertQuery := `INSERT OR IGNORE INTO track_artist (track_id, artist_id) VALUES `
+	args := make([]any, 0, len(artistIds)*2)
+	valuePlaceholders := ""
+
+	for i, artistId := range artistIds {
+		if i > 0 {
+			valuePlaceholders += ", "
+		}
+		valuePlaceholders += "(?, ?)"
+		args = append(args, track.Id, artistId)
+	}
+
+	insertQuery += valuePlaceholders
+
+	_, err = tx.Exec(insertQuery, args...)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Set Order
+
+	for i, artistId := range artistIds {
+		_, err = tx.Exec(
+			"UPDATE track_artist SET artist_pos = ? WHERE track_id = ? AND artist_id = ?",
+			i,
+			track.Id,
+			artistId,
+		)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -466,8 +750,6 @@ func (r *TrackRepository) DeleteTrack(track *entities.Track) error {
 	}
 
 	*track = m.ToTrack()
-
-	invalidateAlbumCache()
 
 	return nil
 }

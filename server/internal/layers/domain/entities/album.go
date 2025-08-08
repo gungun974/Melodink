@@ -1,13 +1,13 @@
 package entities
 
 type Album struct {
-	Id string
+	Id int
 
 	UserId *int
 
 	Name string
 
-	AlbumArtists []string
+	Artists []Artist
 
 	Tracks []Track
 }

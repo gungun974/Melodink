@@ -19,6 +19,8 @@ import 'package:melodink_client/features/track/data/repository/track_repository.
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/modals/manage_track_albums_modal.dart';
+import 'package:melodink_client/features/track/presentation/modals/manage_track_artists_modal.dart';
 import 'package:melodink_client/features/track/presentation/modals/scan_configuration_modal.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
@@ -47,16 +49,20 @@ class EditTrackModal extends HookConsumerWidget {
       text: track.title,
     );
 
-    final albumTextController = useTextEditingController(
-      text: track.metadata.album,
+    final albums = useState(
+      track.metadata.album,
+    );
+
+    final selectedAlbums = useState(
+      [track.metadata.albumId],
     );
 
     final artists = useState(
-      track.metadata.artists.map((artist) => artist.name).toList(),
+      track.metadata.artists.map((artist) => artist.name).join(", "),
     );
 
-    final albumArtists = useState(
-      track.metadata.albumArtists.map((artist) => artist.name).toList(),
+    final selectedArtists = useState(
+      track.metadata.artists.map((artist) => artist.id).toList(),
     );
 
     final trackNumberTextController = useTextEditingController(
@@ -140,170 +146,70 @@ class EditTrackModal extends HookConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      AppTextFormField(
+                      AppButtonValueTextField(
+                        onTap: () async {
+                          final newAlbums =
+                              await ManageTrackAlbumsModal.showModal(
+                            context,
+                            track,
+                            selectedAlbums.value,
+                          );
+
+                          if (newAlbums != null) {
+                            if (newAlbums.isEmpty) {
+                              albums.value = "";
+                              selectedAlbums.value = [];
+                            } else {
+                              albums.value = newAlbums
+                                  .map(
+                                    (album) => album.name,
+                                  )
+                                  .join(
+                                    ", ",
+                                  );
+                              selectedAlbums.value = newAlbums
+                                  .map(
+                                    (album) => album.id,
+                                  )
+                                  .toList();
+                            }
+                          }
+                        },
                         labelText: t.general.album,
-                        controller: albumTextController,
+                        value: albums.value,
                       ),
-                      const Divider(
-                        height: 24,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Text(
-                                  t.general.trackArtists,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 20,
-                                    letterSpacing: 20 * 0.04,
-                                  ),
-                                ),
-                                AppIconButton(
-                                  icon: const AdwaitaIcon(
-                                    AdwaitaIcons.list_add,
-                                  ),
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 4),
-                                  iconSize: 20,
-                                  onPressed: () {
-                                    artists.value = [...artists.value, ""];
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Row(
-                              children: [
-                                Text(
-                                  t.general.albumArtists,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 20,
-                                    letterSpacing: 20 * 0.04,
-                                  ),
-                                ),
-                                AppIconButton(
-                                  icon: const AdwaitaIcon(
-                                    AdwaitaIcons.list_add,
-                                  ),
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 4),
-                                  iconSize: 20,
-                                  onPressed: () {
-                                    albumArtists.value = [
-                                      ...albumArtists.value,
-                                      ""
-                                    ];
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (artists.value.isNotEmpty || artists.value.isNotEmpty)
-                        const SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              children: artists.value.indexed.expand(
-                                (entry) sync* {
-                                  yield AppValueTextField(
-                                    labelText: t.general.trackArtist,
-                                    value: entry.$2,
-                                    suffixIcon: const AdwaitaIcon(
-                                      size: 20,
-                                      AdwaitaIcons.list_remove,
-                                    ),
-                                    suffixIconOnPressed: () {
-                                      artists.value = [
-                                        ...artists.value..removeAt(entry.$1)
-                                      ];
-                                    },
-                                    onChanged: (value) {
-                                      artists.value = [
-                                        ...artists.value.sublist(0, entry.$1),
-                                        value,
-                                        ...artists.value.sublist(entry.$1 + 1),
-                                      ];
-                                    },
-                                    autovalidateMode: autoValidate.value
-                                        ? AutovalidateMode.always
-                                        : AutovalidateMode.disabled,
-                                    validator: FormBuilderValidators.compose(
-                                      [
-                                        FormBuilderValidators.required(
-                                          errorText: t.validators
-                                              .fieldShouldNotBeEmpty(
-                                            field: t.general.trackArtist,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                      const SizedBox(height: 8),
+                      AppButtonValueTextField(
+                        onTap: () async {
+                          final newArtists =
+                              await ManageTrackArtistsModal.showModal(
+                            context,
+                            track,
+                            selectedArtists.value,
+                          );
+
+                          if (newArtists != null) {
+                            if (newArtists.isEmpty) {
+                              artists.value = "";
+                              selectedArtists.value = [];
+                            } else {
+                              artists.value = newArtists
+                                  .map(
+                                    (artist) => artist.name,
+                                  )
+                                  .join(
+                                    ", ",
                                   );
-                                  if (entry.$1 < artists.value.length - 1) {
-                                    yield const SizedBox(height: 8);
-                                  }
-                                },
-                              ).toList(),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              children: albumArtists.value.indexed.expand(
-                                (entry) sync* {
-                                  yield AppValueTextField(
-                                    labelText: t.general.albumArtist,
-                                    value: entry.$2,
-                                    suffixIcon: const AdwaitaIcon(
-                                      size: 20,
-                                      AdwaitaIcons.list_remove,
-                                    ),
-                                    suffixIconOnPressed: () {
-                                      albumArtists.value = [
-                                        ...albumArtists.value
-                                          ..removeAt(entry.$1)
-                                      ];
-                                    },
-                                    onChanged: (value) {
-                                      albumArtists.value = [
-                                        ...albumArtists.value
-                                            .sublist(0, entry.$1),
-                                        value,
-                                        ...albumArtists.value
-                                            .sublist(entry.$1 + 1),
-                                      ];
-                                    },
-                                    autovalidateMode: autoValidate.value
-                                        ? AutovalidateMode.always
-                                        : AutovalidateMode.disabled,
-                                    validator: FormBuilderValidators.compose(
-                                      [
-                                        FormBuilderValidators.required(
-                                          errorText: t.validators
-                                              .fieldShouldNotBeEmpty(
-                                            field: t.general.albumArtist,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (entry.$1 <
-                                      albumArtists.value.length - 1) {
-                                    yield const SizedBox(height: 8);
-                                  }
-                                },
-                              ).toList(),
-                            ),
-                          ),
-                        ],
+                              selectedArtists.value = newArtists
+                                  .map(
+                                    (artist) => artist.id,
+                                  )
+                                  .toList();
+                            }
+                          }
+                        },
+                        labelText: t.general.artists,
+                        value: artists.value,
                       ),
                       const Divider(
                         height: 24,
@@ -721,61 +627,14 @@ class EditTrackModal extends HookConsumerWidget {
                                         scannedTrack.title;
                                   }
 
-                                  if (!configuration.onlyReplaceEmptyFields ||
-                                      albumTextController.text.trim().isEmpty) {
-                                    albumTextController.text =
-                                        scannedTrack.metadata.album;
-                                  }
-
                                   if (!configuration.onlyReplaceEmptyFields) {
-                                    artists.value = scannedTrack
-                                        .metadata.artists
-                                        .map((artist) => artist.name)
-                                        .toList();
-
-                                    albumArtists.value = scannedTrack
-                                        .metadata.albumArtists
-                                        .map((artist) => artist.name)
-                                        .toList();
-
                                     genres.value = scannedTrack.metadata.genres;
                                   } else {
-                                    final newArtists = artists.value.toList();
-                                    final newAlbumArtists =
-                                        albumArtists.value.toList();
                                     final newGenres = genres.value.toList();
-
-                                    while (newArtists.length <
-                                        scannedTrack.metadata.artists.length) {
-                                      newArtists.add("");
-                                    }
-
-                                    while (newAlbumArtists.length <
-                                        scannedTrack
-                                            .metadata.albumArtists.length) {
-                                      newAlbumArtists.add("");
-                                    }
 
                                     while (newGenres.length <
                                         scannedTrack.metadata.genres.length) {
                                       newGenres.add("");
-                                    }
-
-                                    for (final entry in scannedTrack
-                                        .metadata.artists.indexed) {
-                                      if (newArtists[entry.$1].trim().isEmpty) {
-                                        newArtists[entry.$1] = entry.$2.name;
-                                      }
-                                    }
-
-                                    for (final entry in scannedTrack
-                                        .metadata.albumArtists.indexed) {
-                                      if (newAlbumArtists[entry.$1]
-                                          .trim()
-                                          .isEmpty) {
-                                        newAlbumArtists[entry.$1] =
-                                            entry.$2.name;
-                                      }
                                     }
 
                                     for (final entry in scannedTrack
@@ -785,8 +644,6 @@ class EditTrackModal extends HookConsumerWidget {
                                       }
                                     }
 
-                                    artists.value = newArtists;
-                                    albumArtists.value = newAlbumArtists;
                                     genres.value = newGenres;
                                   }
 
@@ -970,15 +827,9 @@ class EditTrackModal extends HookConsumerWidget {
                                         track.copyWith(
                                           title: titleTextController.text,
                                           metadata: track.metadata.copyWith(
-                                            album: albumTextController.text,
-                                            artists: artists.value
-                                                .map((artist) => MinimalArtist(
-                                                    id: artist, name: artist))
-                                                .toList(),
-                                            albumArtists: albumArtists.value
-                                                .map((artist) => MinimalArtist(
-                                                    id: artist, name: artist))
-                                                .toList(),
+                                            album: "",
+                                            artists: [],
+                                            albumArtists: [],
                                             trackNumber: int.parse(
                                               trackNumberTextController.text,
                                             ),

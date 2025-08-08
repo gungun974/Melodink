@@ -66,7 +66,7 @@ class AlbumRepository {
     return await albumLocalDataSource.getAllAlbums();
   }
 
-  Future<Album> getAlbumById(String id) async {
+  Future<Album> getAlbumById(int id) async {
     Album? album = await albumLocalDataSource.getAlbumById(id);
 
     album ??= await albumRemoteDataSource.getAlbumById(id);
@@ -76,8 +76,7 @@ class AlbumRepository {
     return album;
   }
 
-  Future<Album> updateAndStoreAlbum(
-      String id, bool shouldDownloadTracks) async {
+  Future<Album> updateAndStoreAlbum(int id, bool shouldDownloadTracks) async {
     final album = await albumRemoteDataSource.getAlbumById(id);
     await albumLocalDataSource.storeAlbum(album, shouldDownloadTracks);
 
@@ -105,7 +104,7 @@ class AlbumRepository {
     return albums;
   }
 
-  Future<void> deleteStoredAlbum(String id) async {
+  Future<void> deleteStoredAlbum(int id) async {
     await albumLocalDataSource.deleteStoredAlbum(id);
   }
 
@@ -113,7 +112,7 @@ class AlbumRepository {
     await albumLocalDataSource.deleteOrphanAlbums();
   }
 
-  Future<bool> isAlbumDownloaded(String id) async {
+  Future<bool> isAlbumDownloaded(int id) async {
     final album = await albumLocalDataSource.getAlbumById(id);
 
     if (album == null) {
@@ -123,11 +122,11 @@ class AlbumRepository {
     return album.downloadTracks;
   }
 
-  Future<Album> changeAlbumCover(String id, File file) async {
+  Future<Album> changeAlbumCover(int id, File file) async {
     return await albumRemoteDataSource.changeAlbumCover(id, file);
   }
 
-  Future<Album> removeAlbumCover(String id) async {
+  Future<Album> removeAlbumCover(int id) async {
     return await albumRemoteDataSource.removeAlbumCover(id);
   }
 }

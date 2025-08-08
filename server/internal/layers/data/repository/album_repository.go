@@ -1,111 +1,488 @@
 package repository
 
 import (
+	"database/sql"
 	"errors"
 	"sync"
 
+	data_models "github.com/gungun974/Melodink/server/internal/layers/data/models"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
+	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/jmoiron/sqlx"
 )
 
 var AlbumNotFoundError = errors.New("Album is not found")
 
-var albumCacheMutex = sync.Mutex{}
-
-var allAlbumsCache = map[int][]entities.Album{}
-
 func NewAlbumRepository(
-	db *sqlx.DB, trackRepository TrackRepository,
+	db *sqlx.DB,
 ) AlbumRepository {
 	return AlbumRepository{
-		Database:        db,
-		trackRepository: trackRepository,
+		Database: db,
+
+		getAlbumOrCreateMutex: &sync.Mutex{},
 	}
 }
 
 type AlbumRepository struct {
-	Database        *sqlx.DB
-	trackRepository TrackRepository
-}
+	Database *sqlx.DB
 
-func (r *AlbumRepository) GroupTracksInAlbums(
-	userId *int,
-	tracks []entities.Track,
-) []entities.Album {
-	albums := []entities.Album{}
-
-outerloop:
-	for _, track := range tracks {
-		albumId, err := track.Metadata.GetVirtualAlbumId()
-		if err != nil {
-			continue
-		}
-
-		for i, album := range albums {
-			if album.Id == albumId {
-				albums[i].Tracks = append(albums[i].Tracks, track)
-				continue outerloop
-			}
-		}
-
-		albums = append(albums, entities.Album{
-			Id: albumId,
-
-			UserId: userId,
-
-			Name: track.Metadata.Album,
-
-			AlbumArtists: track.Metadata.GetVirtualAlbumArtists(),
-
-			Tracks: []entities.Track{
-				track,
-			},
-		})
-	}
-
-	return albums
+	getAlbumOrCreateMutex *sync.Mutex
 }
 
 func (r *AlbumRepository) GetAllAlbumsFromUser(userId int) ([]entities.Album, error) {
-	albumCacheMutex.Lock()
-	defer albumCacheMutex.Unlock()
+	m := data_models.AlbumModels{}
 
-	if cache, ok := allAlbumsCache[userId]; ok {
-		return cache, nil
+	err := r.Database.Select(&m, `
+    SELECT * FROM albums WHERE user_id = ?
+  `, userId)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return nil, err
 	}
 
-	tracks, err := r.trackRepository.GetAllTracksFromUser(userId)
+	albums := m.ToAlbums()
+
+	err = r.LoadTracksInAlbums(albums)
 	if err != nil {
 		return nil, entities.NewInternalError(err)
 	}
 
-	albums := r.GroupTracksInAlbums(&userId, tracks)
-
-	allAlbumsCache[userId] = albums
+	err = r.LoadArtistsInAlbums(albums)
+	if err != nil {
+		return nil, err
+	}
 
 	return albums, nil
 }
 
-func (r *AlbumRepository) GetAlbumByIdFromUser(userId int, albumId string) (entities.Album, error) {
-	albums, err := r.GetAllAlbumsFromUser(userId)
+func (r *AlbumRepository) GetAlbumById(id int) (*entities.Album, error) {
+	m := data_models.AlbumModel{}
+
+	err := r.Database.Get(&m, `
+    SELECT *
+    FROM albums
+    WHERE id = ?
+  `, id)
 	if err != nil {
-		return entities.Album{}, entities.NewInternalError(err)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, AlbumNotFoundError
+		}
+		logger.DatabaseLogger.Error(err)
+		return nil, err
 	}
 
-	for _, album := range albums {
-		if album.Id == albumId {
-			return album, nil
+	album := m.ToAlbum()
+
+	err = r.LoadTracksInAlbum(&album)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	err = r.LoadArtistsInAlbum(&album)
+	if err != nil {
+		return nil, err
+	}
+
+	return &album, nil
+}
+
+func (r *AlbumRepository) GetAlbumByName(
+	name string,
+	albumArtists []entities.Artist,
+	userId int,
+) (*entities.Album, error) {
+	m := data_models.AlbumModel{}
+
+	artistIds := make([]int, len(albumArtists))
+
+	for i, artist := range albumArtists {
+		artistIds[i] = artist.Id
+	}
+
+	reqQuery, reqArgs, err := sqlx.In(`
+		SELECT albums.*
+		FROM albums
+		JOIN album_artist ON album_artist.album_id = albums.id
+		WHERE LOWER(albums.name) = LOWER(?) 
+			AND albums.user_id = ?
+		GROUP BY albums.id
+		HAVING COUNT(DISTINCT album_artist.artist_id) = ?
+			AND COUNT(DISTINCT CASE WHEN album_artist.artist_id IN (?) THEN album_artist.artist_id END) = ?;
+	`, name, userId, len(artistIds), artistIds, len(artistIds))
+	if err != nil {
+		return nil, err
+	}
+	reqQuery = r.Database.Rebind(reqQuery)
+
+	err = r.Database.Get(&m, reqQuery, reqArgs...)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, AlbumNotFoundError
+		}
+		logger.DatabaseLogger.Error(err)
+		return nil, err
+	}
+
+	album := m.ToAlbum()
+
+	err = r.LoadTracksInAlbum(&album)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	err = r.LoadArtistsInAlbum(&album)
+	if err != nil {
+		return nil, err
+	}
+
+	return &album, nil
+}
+
+func (r *AlbumRepository) LoadTracksInAlbum(album *entities.Album) error {
+	m := data_models.TracksModels{}
+
+	err := r.Database.Select(&m, `
+		SELECT tracks.*
+		FROM tracks
+		JOIN track_album ON tracks.id = track_album.track_id
+		WHERE track_album.album_id = ? AND pending_import = 0
+  `, album.Id)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return err
+	}
+
+	album.Tracks = m.ToTracks()
+
+	return nil
+}
+
+func (r *AlbumRepository) LoadTracksInAlbums(albums []entities.Album) error {
+	for i := range albums {
+		err := r.LoadTracksInAlbum(&albums[i])
+		if err != nil {
+			return nil
 		}
 	}
 
-	return entities.Album{}, AlbumNotFoundError
+	return nil
 }
 
-func invalidateAlbumCache() {
-	albumCacheMutex.Lock()
-	defer albumCacheMutex.Unlock()
+func (r *AlbumRepository) LoadArtistsInAlbum(album *entities.Album) error {
+	m := data_models.ArtistModels{}
 
-	allAlbumsCache = map[int][]entities.Album{}
+	err := r.Database.Select(&m, `
+		SELECT artists.*
+		FROM artists
+		JOIN album_artist ON artists.id = album_artist.artist_id
+		WHERE album_artist.album_id = ?
+		ORDER BY album_artist.artist_pos ASC
+  `, album.Id)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return err
+	}
 
-	invalidateArtistCache()
+	album.Artists = m.ToArtists()
+
+	return nil
+}
+
+func (r *AlbumRepository) LoadArtistsInAlbums(albums []entities.Album) error {
+	for i := range albums {
+		err := r.LoadArtistsInAlbum(&albums[i])
+		if err != nil {
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func (r *AlbumRepository) CreateAlbum(album *entities.Album) error {
+	m := data_models.AlbumModel{}
+
+	err := r.Database.Get(
+		&m,
+		`
+    INSERT INTO albums
+      (
+        user_id,
+
+        name
+      )
+    VALUES
+      (
+        ?,
+        ?
+      )
+    RETURNING *
+  `,
+		album.UserId,
+
+		album.Name,
+	)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return err
+	}
+
+	*album = m.ToAlbum()
+
+	return nil
+}
+
+func (r AlbumRepository) GetAlbumByNameOrCreate(
+	name string,
+	albumArtists []entities.Artist,
+	userId int,
+) (*entities.Album, error) {
+	r.getAlbumOrCreateMutex.Lock()
+	defer r.getAlbumOrCreateMutex.Unlock()
+
+	album, err := r.GetAlbumByName(name, albumArtists, userId)
+
+	if err != nil && errors.Is(err, AlbumNotFoundError) {
+		album = &entities.Album{
+			UserId: &userId,
+			Name:   name,
+		}
+
+		err = r.CreateAlbum(album)
+		if err != nil {
+			logger.DatabaseLogger.Error(err)
+			return nil, entities.NewInternalError(err)
+		}
+
+		album.Artists = albumArtists
+
+		err = r.SetAlbumArtists(album)
+	}
+
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return nil, entities.NewInternalError(err)
+	}
+
+	return album, nil
+}
+
+func (r *AlbumRepository) UpdateAlbum(album *entities.Album) error {
+	m := data_models.AlbumModel{}
+
+	err := r.Database.Get(
+		&m,
+		`
+    UPDATE albums
+    SET
+        user_id = ?,
+
+        name = ?,
+      	updated_at = CURRENT_TIMESTAMP
+    WHERE
+      id = ?
+    RETURNING *
+  `,
+		album.UserId,
+
+		album.Name,
+		album.Id,
+	)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return err
+	}
+
+	*album = m.ToAlbum()
+
+	return nil
+}
+
+func (r *AlbumRepository) DeleteAlbum(album *entities.Album) error {
+	if len(album.Tracks) == 0 {
+		return nil
+	}
+
+	m := data_models.AlbumModel{}
+
+	err := r.Database.Get(&m, `
+    DELETE FROM
+      albums
+    WHERE 
+      id = ?
+    RETURNING *
+  `,
+		album.Id,
+	)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return err
+	}
+
+	*album = m.ToAlbum()
+
+	return nil
+}
+
+func (r AlbumRepository) AddAlbumTracks(album *entities.Album) error {
+	if len(album.Tracks) == 0 {
+		return nil
+	}
+
+	tx, err := r.Database.Beginx()
+	if err != nil {
+		return err
+	}
+
+	trackIds := make([]int, len(album.Tracks))
+
+	for i, track := range album.Tracks {
+		trackIds[i] = track.Id
+	}
+
+	insertQuery := `INSERT OR IGNORE INTO track_album (album_id, track_id, album_pos) VALUES `
+	args := make([]any, 0, len(trackIds)*3)
+	valuePlaceholders := ""
+
+	for i, trackId := range trackIds {
+		var maxPos int
+		err = tx.QueryRow(
+			`SELECT COALESCE(MAX(album_pos), 0) FROM track_album WHERE track_id = ?`,
+			trackId,
+		).Scan(&maxPos)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+
+		if i > 0 {
+			valuePlaceholders += ", "
+		}
+		valuePlaceholders += "(?, ?, ?)"
+		args = append(args, album.Id, trackId, maxPos+1)
+	}
+
+	insertQuery += valuePlaceholders
+
+	_, err = tx.Exec(insertQuery, args...)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r AlbumRepository) RemoveAlbumTracks(album *entities.Album) error {
+	trackIds := make([]int, len(album.Tracks))
+
+	for i, track := range album.Tracks {
+		trackIds[i] = track.Id
+	}
+
+	delQuery, delArgs, err := sqlx.In(`
+		DELETE FROM track_album
+		WHERE album_id = ? AND track_id IN (?)
+	`, album.Id, trackIds)
+	if err != nil {
+		return err
+	}
+	delQuery = r.Database.Rebind(delQuery)
+
+	_, err = r.Database.Exec(delQuery, delArgs...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r AlbumRepository) SetAlbumArtists(album *entities.Album) error {
+	if len(album.Artists) == 0 {
+		_, err := r.Database.Exec(`
+			DELETE FROM album_artist
+			WHERE album_id = ?
+		`, album.Id)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	tx, err := r.Database.Beginx()
+	if err != nil {
+		return err
+	}
+
+	artistIds := make([]int, len(album.Artists))
+
+	for i, artist := range album.Artists {
+		artistIds[i] = artist.Id
+	}
+
+	// Remove Extra
+
+	delQuery, delArgs, err := sqlx.In(`
+		DELETE FROM album_artist
+		WHERE album_id = ? AND artist_id NOT IN (?)
+	`, album.Id, artistIds)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	delQuery = tx.Rebind(delQuery)
+
+	_, err = tx.Exec(delQuery, delArgs...)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Insert Missing
+
+	insertQuery := `INSERT OR IGNORE INTO album_artist (album_id, artist_id) VALUES `
+	args := make([]any, 0, len(artistIds)*2)
+	valuePlaceholders := ""
+
+	for i, artistId := range artistIds {
+		if i > 0 {
+			valuePlaceholders += ", "
+		}
+		valuePlaceholders += "(?, ?)"
+		args = append(args, album.Id, artistId)
+	}
+
+	insertQuery += valuePlaceholders
+
+	_, err = tx.Exec(insertQuery, args...)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// Set Order
+
+	for i, artistId := range artistIds {
+		_, err = tx.Exec(
+			"UPDATE album_artist SET artist_pos = ? WHERE album_id = ? AND artist_id = ?",
+			i,
+			album.Id,
+			artistId,
+		)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }

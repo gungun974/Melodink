@@ -23,6 +23,15 @@ func (p *ArtistPresenter) ShowArtists(
 	}
 }
 
+func (p *ArtistPresenter) ShowArtist(
+	ctx context.Context,
+	artist entities.Artist,
+) models.APIResponse {
+	return models.JsonAPIResponse{
+		Data: view_models.ConvertToArtistViewModel(ctx, artist),
+	}
+}
+
 func (p *ArtistPresenter) ShowAllArtistTracks(
 	ctx context.Context,
 	artist entities.Artist,

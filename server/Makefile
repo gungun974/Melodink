@@ -42,7 +42,7 @@ migrate:
 
 migrate-down: 
 	migrate -database $(DATABASE_URL) \
-		-path ./internal/database/migrations down
+		-path ./internal/database/migrations down 1
 
 migrate-create: 
 	@echo -n "Name for migration to create : "

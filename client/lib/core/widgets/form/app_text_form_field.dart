@@ -268,3 +268,81 @@ class AppValueTextField extends HookWidget {
     );
   }
 }
+
+class AppButtonValueTextField extends StatelessWidget {
+  final String labelText;
+  final String value;
+
+  final Future<Null> Function() onTap;
+
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
+
+  final TextInputType? keyboardType;
+
+  final bool? obscureText;
+
+  final VoidCallback? prefixIconOnPressed;
+  final VoidCallback? suffixIconOnPressed;
+
+  final AutovalidateMode? autovalidateMode;
+
+  final String? Function(String?)? validator;
+
+  final ValueChanged<String>? onChanged;
+
+  final bool? readOnly;
+
+  final int? maxLines;
+
+  const AppButtonValueTextField({
+    super.key,
+    required this.labelText,
+    required this.value,
+    required this.onTap,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.keyboardType,
+    this.obscureText,
+    this.prefixIconOnPressed,
+    this.suffixIconOnPressed,
+    this.autovalidateMode,
+    this.validator,
+    this.onChanged,
+    this.readOnly,
+    this.maxLines,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: onTap,
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.centerLeft,
+      ),
+      child: ExcludeSemantics(
+        child: ExcludeFocus(
+          child: AbsorbPointer(
+            child: AppValueTextField(
+              labelText: labelText,
+              value: value,
+              prefixIcon: prefixIcon,
+              suffixIcon: suffixIcon,
+              keyboardType: keyboardType,
+              obscureText: obscureText,
+              prefixIconOnPressed: prefixIconOnPressed,
+              suffixIconOnPressed: suffixIconOnPressed,
+              autovalidateMode: autovalidateMode,
+              validator: validator,
+              onChanged: onChanged,
+              readOnly: readOnly,
+              maxLines: maxLines,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

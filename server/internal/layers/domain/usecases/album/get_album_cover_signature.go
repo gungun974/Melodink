@@ -12,14 +12,14 @@ import (
 
 func (u *AlbumUsecase) GetAlbumCoverSignature(
 	ctx context.Context,
-	albumId string,
+	albumId int,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	album, err := u.albumRepository.GetAlbumByIdFromUser(user.Id, albumId)
+	album, err := u.albumRepository.GetAlbumById(user.Id)
 	if err != nil {
 		if errors.Is(err, repository.AlbumNotFoundError) {
 			return nil, entities.NewNotFoundError("Album not found")
@@ -37,7 +37,7 @@ func (u *AlbumUsecase) GetAlbumCoverSignature(
 		)
 	}
 
-	signature := u.coverStorage.GetAlbumCoverSignature(&album)
+	signature := u.coverStorage.GetAlbumCoverSignature(album)
 
 	if signature != "" {
 		return models.PlainAPIResponse{

@@ -161,7 +161,7 @@ class Track extends Equatable {
 
 class TrackMetadata extends Equatable {
   final String album;
-  final String albumId;
+  final int albumId;
 
   final int trackNumber;
   final int totalTracks;
@@ -210,7 +210,7 @@ class TrackMetadata extends Equatable {
 
   TrackMetadata copyWith({
     String? album,
-    String? albumId,
+    int? albumId,
     int? trackNumber,
     int? totalTracks,
     int? discNumber,

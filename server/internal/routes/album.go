@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -140,6 +141,116 @@ func AlbumRouter(c internal.Container) http.Handler {
 		id := chi.URLParam(r, "id")
 
 		response, err := c.AlbumController.DeleteAlbumCover(r.Context(), id)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.AlbumController.CreateAlbum(r.Context(), bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Put("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.AlbumController.EditAlbum(r.Context(), id, bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Post("/{id}/tracks", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.AlbumController.AddAlbumTracks(r.Context(), id, bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Delete("/{id}/tracks", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.AlbumController.RemoveAlbumTracks(r.Context(), id, bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Put("/{id}/artists", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.AlbumController.SetAlbumArtists(r.Context(), id, bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Delete("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		response, err := c.AlbumController.DeleteAlbum(r.Context(), id)
 		if err != nil {
 			handleHTTPError(err, w)
 			return

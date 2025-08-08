@@ -12,14 +12,14 @@ import (
 
 func (u *AlbumUsecase) GetUserAlbumById(
 	ctx context.Context,
-	albumId string,
+	albumId int,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	album, err := u.albumRepository.GetAlbumByIdFromUser(user.Id, albumId)
+	album, err := u.albumRepository.GetAlbumById(albumId)
 	if err != nil {
 		if errors.Is(err, repository.AlbumNotFoundError) {
 			return nil, entities.NewNotFoundError("Album not found")
@@ -27,10 +27,24 @@ func (u *AlbumUsecase) GetUserAlbumById(
 		return nil, entities.NewInternalError(err)
 	}
 
+	if album.UserId != nil && *album.UserId != user.Id {
+		return nil, entities.NewUnauthorizedError()
+	}
+
 	err = u.trackRepository.LoadAllScoresWithTracks(album.Tracks)
 	if err != nil {
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.albumPresenter.ShowAlbum(ctx, album), nil
+	err = u.trackRepository.LoadAlbumsInTracks(album.Tracks)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	err = u.trackRepository.LoadArtistsInTracks(album.Tracks)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	return u.albumPresenter.ShowAlbum(ctx, *album), nil
 }

@@ -12,14 +12,14 @@ import (
 
 func (u *ArtistUsecase) GetUserArtistAlbums(
 	ctx context.Context,
-	artistId string,
+	artistId int,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	artist, err := u.artistRepository.GetArtistByIdFromUser(user.Id, artistId)
+	artist, err := u.artistRepository.GetArtistById(artistId)
 	if err != nil {
 		if errors.Is(err, repository.ArtistNotFoundError) {
 			return nil, entities.NewNotFoundError("Artist not found")
@@ -27,5 +27,9 @@ func (u *ArtistUsecase) GetUserArtistAlbums(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.artistPresenter.ShowAllArtistAlbums(ctx, artist), nil
+	if artist.UserId != nil && *artist.UserId != user.Id {
+		return nil, entities.NewUnauthorizedError()
+	}
+
+	return u.artistPresenter.ShowAllArtistAlbums(ctx, *artist), nil
 }

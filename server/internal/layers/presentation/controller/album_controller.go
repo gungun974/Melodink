@@ -38,10 +38,10 @@ func (c *AlbumController) GetUserAlbum(
 	ctx context.Context,
 	rawId string,
 ) (models.APIResponse, error) {
-	id, err := validator.ValidateString(
+	id, err := validator.CoerceAndValidateInt(
 		rawId,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 1},
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
 		},
 	)
 	if err != nil {
@@ -55,10 +55,10 @@ func (c *AlbumController) GetUserAlbumCover(
 	ctx context.Context,
 	rawId string,
 ) (models.APIResponse, error) {
-	id, err := validator.ValidateString(
+	id, err := validator.CoerceAndValidateInt(
 		rawId,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 1},
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
 		},
 	)
 	if err != nil {
@@ -73,10 +73,10 @@ func (c *AlbumController) GetCompressedUserAlbumCover(
 	rawId string,
 	quality string,
 ) (models.APIResponse, error) {
-	id, err := validator.ValidateString(
+	id, err := validator.CoerceAndValidateInt(
 		rawId,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 1},
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
 		},
 	)
 	if err != nil {
@@ -91,10 +91,10 @@ func (c *AlbumController) ChangeAlbumCover(
 	r *http.Request,
 	rawId string,
 ) (models.APIResponse, error) {
-	id, err := validator.ValidateString(
+	id, err := validator.CoerceAndValidateInt(
 		rawId,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 1},
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
 		},
 	)
 	if err != nil {
@@ -127,10 +127,10 @@ func (c *AlbumController) GetAlbumCoverSignature(
 	ctx context.Context,
 	rawId string,
 ) (models.APIResponse, error) {
-	id, err := validator.ValidateString(
+	id, err := validator.CoerceAndValidateInt(
 		rawId,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 1},
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
 		},
 	)
 	if err != nil {
@@ -144,10 +144,10 @@ func (c *AlbumController) GetAlbumCustomCoverSignature(
 	ctx context.Context,
 	rawId string,
 ) (models.APIResponse, error) {
-	id, err := validator.ValidateString(
+	id, err := validator.CoerceAndValidateInt(
 		rawId,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 1},
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
 		},
 	)
 	if err != nil {
@@ -167,10 +167,10 @@ func (c *AlbumController) DeleteAlbumCover(
 	ctx context.Context,
 	rawId string,
 ) (models.APIResponse, error) {
-	id, err := validator.ValidateString(
+	id, err := validator.CoerceAndValidateInt(
 		rawId,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 1},
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
 		},
 	)
 	if err != nil {
@@ -180,4 +180,212 @@ func (c *AlbumController) DeleteAlbumCover(
 	return c.albumUsecase.DeleteAlbumCover(ctx,
 		id,
 	)
+}
+
+func (c *AlbumController) CreateAlbum(
+	ctx context.Context,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	name, err := validator.ValidateMapString(
+		"name",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.albumUsecase.CreateAlbum(ctx, album_usecase.CreateAlbumParams{
+		Name: name,
+	})
+}
+
+func (c *AlbumController) EditAlbum(
+	ctx context.Context,
+	rawId string,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	name, err := validator.ValidateMapString(
+		"name",
+		bodyData,
+		validator.StringValidators{
+			validator.StringMinValidator{Min: 1},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.albumUsecase.EditAlbum(ctx, album_usecase.EditAlbumParams{
+		Id: id,
+
+		Name: name,
+	})
+}
+
+func (c *AlbumController) AddAlbumTracks(
+	ctx context.Context,
+	rawId string,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	rawTrackIds, ok := bodyData["track_ids"]
+	if !ok {
+		return nil, entities.NewValidationError("missing key \"track_ids\"")
+	}
+
+	unknownTrackIds, ok := rawTrackIds.([]any)
+	if !ok {
+		return nil, entities.NewValidationError("\"track_ids\" should be an array")
+	}
+
+	trackIds := make([]int, len(unknownTrackIds))
+
+	for i, trackId := range unknownTrackIds {
+		id, err := validator.CoerceAndValidateInt(
+			trackId,
+			validator.IntValidators{
+				validator.IntMinValidator{Min: 0},
+			},
+		)
+		if err != nil {
+			return nil, entities.NewValidationError(err.Error())
+		}
+		trackIds[i] = id
+	}
+
+	return c.albumUsecase.AddAlbumTracks(ctx, album_usecase.AddAlbumTracksParams{
+		Id:       id,
+		TrackIds: trackIds,
+	})
+}
+
+func (c *AlbumController) RemoveAlbumTracks(
+	ctx context.Context,
+	rawId string,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	rawTrackIds, ok := bodyData["track_ids"]
+	if !ok {
+		return nil, entities.NewValidationError("missing key \"track_ids\"")
+	}
+
+	unknownTrackIds, ok := rawTrackIds.([]any)
+	if !ok {
+		return nil, entities.NewValidationError("\"track_ids\" should be an array")
+	}
+
+	trackIds := make([]int, len(unknownTrackIds))
+
+	for i, trackId := range unknownTrackIds {
+		id, err := validator.CoerceAndValidateInt(
+			trackId,
+			validator.IntValidators{
+				validator.IntMinValidator{Min: 0},
+			},
+		)
+		if err != nil {
+			return nil, entities.NewValidationError(err.Error())
+		}
+		trackIds[i] = id
+	}
+
+	return c.albumUsecase.RemoveAlbumTracksParams(ctx, album_usecase.RemoveAlbumTracksParams{
+		Id:       id,
+		TrackIds: trackIds,
+	})
+}
+
+func (c *AlbumController) SetAlbumArtists(
+	ctx context.Context,
+	rawId string,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	rawArtistIds, ok := bodyData["artist_ids"]
+	if !ok {
+		return nil, entities.NewValidationError("missing key \"artist_ids\"")
+	}
+
+	unknownArtistIds, ok := rawArtistIds.([]any)
+	if !ok {
+		return nil, entities.NewValidationError("\"artist_ids\" should be an array")
+	}
+
+	artistIds := make([]int, len(unknownArtistIds))
+
+	for i, artistId := range unknownArtistIds {
+		id, err := validator.CoerceAndValidateInt(
+			artistId,
+			validator.IntValidators{
+				validator.IntMinValidator{Min: 0},
+			},
+		)
+		if err != nil {
+			return nil, entities.NewValidationError(err.Error())
+		}
+		artistIds[i] = id
+	}
+
+	return c.albumUsecase.SetAlbumArtists(ctx, album_usecase.SetAlbumArtistsParams{
+		Id:        id,
+		ArtistIds: artistIds,
+	})
+}
+
+func (c *AlbumController) DeleteAlbum(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.albumUsecase.DeleteAlbum(ctx, id)
 }

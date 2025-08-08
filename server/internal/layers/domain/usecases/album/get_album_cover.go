@@ -13,14 +13,14 @@ import (
 
 func (u *AlbumUsecase) GetAlbumCover(
 	ctx context.Context,
-	albumId string,
+	albumId int,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	album, err := u.albumRepository.GetAlbumByIdFromUser(user.Id, albumId)
+	album, err := u.albumRepository.GetAlbumById(albumId)
 	if err != nil {
 		if errors.Is(err, repository.AlbumNotFoundError) {
 			return nil, entities.NewNotFoundError("Album not found")
@@ -28,7 +28,11 @@ func (u *AlbumUsecase) GetAlbumCover(
 		return nil, entities.NewInternalError(err)
 	}
 
-	image, err := u.coverStorage.GetOriginalAlbumCover(&album)
+	if album.UserId != nil && *album.UserId != user.Id {
+		return nil, entities.NewUnauthorizedError()
+	}
+
+	image, err := u.coverStorage.GetOriginalAlbumCover(album)
 
 	if err == nil {
 		mtype := mimetype.Detect(image.Bytes())

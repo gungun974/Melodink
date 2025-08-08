@@ -20,7 +20,7 @@ class AlbumLinkText extends StatelessWidget {
   });
 
   final String text;
-  final String albumId;
+  final int albumId;
 
   final TextStyle style;
 

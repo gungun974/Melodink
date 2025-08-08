@@ -4,7 +4,7 @@ import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 
 class Artist extends Equatable {
-  final String id;
+  final int id;
 
   final String name;
 
@@ -27,7 +27,7 @@ class Artist extends Equatable {
   });
 
   Artist copyWith({
-    String? id,
+    int? id,
     String? name,
     List<Album>? albums,
     List<Album>? appearAlbums,
@@ -84,7 +84,7 @@ class Artist extends Equatable {
 }
 
 class MinimalArtist extends Equatable {
-  final String id;
+  final int id;
   final String name;
 
   const MinimalArtist({
@@ -93,7 +93,7 @@ class MinimalArtist extends Equatable {
   });
 
   MinimalArtist copyWith({
-    String? id,
+    int? id,
     String? name,
   }) {
     return MinimalArtist(

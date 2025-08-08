@@ -8,13 +8,13 @@ import (
 )
 
 type AlbumViewModel struct {
-	Id string `json:"id"`
+	Id int `json:"id"`
 
 	UserId *int `json:"user_id"`
 
 	Name string `json:"name"`
 
-	AlbumArtists []MinimalArtistViewModel `json:"album_artists"`
+	Artists []MinimalArtistViewModel `json:"album_artists"`
 
 	Tracks []MinimalTrackViewModel `json:"tracks"`
 
@@ -75,7 +75,7 @@ func ConvertToAlbumViewModel(
 
 		Name: album.Name,
 
-		AlbumArtists: ConvertToMinimalArtistsViewModel(album.AlbumArtists),
+		Artists: ConvertToMinimalArtistsViewModel(album.Artists),
 
 		Tracks: tracksViewModels,
 

@@ -11,7 +11,7 @@ import 'package:melodink_client/features/track/domain/entities/track_compressed_
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class ArtistPage extends ConsumerWidget {
-  final String artistId;
+  final int artistId;
 
   const ArtistPage({
     super.key,

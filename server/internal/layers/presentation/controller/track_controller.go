@@ -687,6 +687,115 @@ func (c *TrackController) ChangeTrackCover(
 	)
 }
 
+func (c *TrackController) SetTrackAlbums(
+	ctx context.Context,
+	rawId string,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	rawAlbumIds, ok := bodyData["album_ids"]
+	if !ok {
+		return nil, entities.NewValidationError("missing key \"album_ids\"")
+	}
+
+	unknownAlbumIds, ok := rawAlbumIds.([]any)
+	if !ok {
+		return nil, entities.NewValidationError("\"album_ids\" should be an array")
+	}
+
+	albumIds := make([]int, len(unknownAlbumIds))
+
+	for i, artistId := range unknownAlbumIds {
+		id, err := validator.CoerceAndValidateInt(
+			artistId,
+			validator.IntValidators{
+				validator.IntMinValidator{Min: 0},
+			},
+		)
+		if err != nil {
+			return nil, entities.NewValidationError(err.Error())
+		}
+		albumIds[i] = id
+	}
+
+	return c.trackUsecase.SetTrackAlbums(ctx, track_usecase.SetTrackAlbumsParams{
+		Id:       id,
+		AlbumIds: albumIds,
+	})
+}
+
+func (c *TrackController) SetTrackArtists(
+	ctx context.Context,
+	rawId string,
+	bodyData map[string]any,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	rawArtistIds, ok := bodyData["artist_ids"]
+	if !ok {
+		return nil, entities.NewValidationError("missing key \"artist_ids\"")
+	}
+
+	unknownArtistIds, ok := rawArtistIds.([]any)
+	if !ok {
+		return nil, entities.NewValidationError("\"artist_ids\" should be an array")
+	}
+
+	artistIds := make([]int, len(unknownArtistIds))
+
+	for i, artistId := range unknownArtistIds {
+		id, err := validator.CoerceAndValidateInt(
+			artistId,
+			validator.IntValidators{
+				validator.IntMinValidator{Min: 0},
+			},
+		)
+		if err != nil {
+			return nil, entities.NewValidationError(err.Error())
+		}
+		artistIds[i] = id
+	}
+
+	return c.trackUsecase.SetTrackArtists(ctx, track_usecase.SetTrackArtistsParams{
+		Id:        id,
+		ArtistIds: artistIds,
+	})
+}
+
+func (c *TrackController) AutoLinkTrack(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.trackUsecase.AutoLinkTrack(ctx, id)
+}
+
 func (c *TrackController) DeleteTrack(
 	ctx context.Context,
 	rawId string,

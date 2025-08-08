@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS track_album;
+DROP TABLE IF EXISTS track_artist;
+DROP TABLE IF EXISTS album_artist;
+
+DROP TABLE IF EXISTS albums;
+DROP TABLE IF EXISTS artists;

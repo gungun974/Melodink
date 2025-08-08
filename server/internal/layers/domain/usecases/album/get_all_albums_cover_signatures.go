@@ -21,7 +21,7 @@ func (u *AlbumUsecase) GetAllAlbumsCoverSignatures(
 		return nil, entities.NewInternalError(err)
 	}
 
-	results := map[string]string{}
+	results := map[int]string{}
 
 outer:
 	for _, album := range albums {

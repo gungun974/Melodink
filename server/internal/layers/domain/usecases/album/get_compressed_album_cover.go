@@ -13,7 +13,7 @@ import (
 
 func (u *AlbumUsecase) GetCompressedAlbumCover(
 	ctx context.Context,
-	albumId string,
+	albumId int,
 	quality string,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
@@ -21,7 +21,7 @@ func (u *AlbumUsecase) GetCompressedAlbumCover(
 		return nil, err
 	}
 
-	album, err := u.albumRepository.GetAlbumByIdFromUser(user.Id, albumId)
+	album, err := u.albumRepository.GetAlbumById(albumId)
 	if err != nil {
 		if errors.Is(err, repository.AlbumNotFoundError) {
 			return nil, entities.NewNotFoundError("Album not found")
@@ -29,7 +29,11 @@ func (u *AlbumUsecase) GetCompressedAlbumCover(
 		return nil, entities.NewInternalError(err)
 	}
 
-	image, err := u.coverStorage.GetCompressedAlbumCover(&album, quality)
+	if album.UserId != nil && *album.UserId != user.Id {
+		return nil, entities.NewUnauthorizedError()
+	}
+
+	image, err := u.coverStorage.GetCompressedAlbumCover(album, quality)
 
 	if err == nil {
 		mtype := mimetype.Detect(image.Bytes())

@@ -55,7 +55,9 @@ func ConvertToTrackViewModel(
 
 		DateAdded: track.DateAdded.UTC().Format(time.RFC3339),
 
-		Metadata: ConvertToTrackMetadataViewModel(track.Metadata),
+		Metadata: ConvertToTrackMetadataViewModel(
+			track,
+		),
 
 		SampleRate:       track.SampleRate,
 		BitRate:          track.BitRate,
@@ -67,7 +69,7 @@ func ConvertToTrackViewModel(
 
 type TrackMetadataViewModel struct {
 	Album   string `json:"album"`
-	AlbumId string `json:"album_id"`
+	AlbumId int    `json:"album_id"`
 
 	TrackNumber int `json:"track_number"`
 	TotalTracks int `json:"total_tracks"`
@@ -96,12 +98,18 @@ type TrackMetadataViewModel struct {
 }
 
 func ConvertToTrackMetadataViewModel(
-	metadata entities.TrackMetadata,
+	track entities.Track,
 ) TrackMetadataViewModel {
-	albumId := ""
+	album := ""
+	albumId := 0
+	albumArtists := []entities.Artist{}
 
-	if id, err := metadata.GetVirtualAlbumId(); err == nil {
-		albumId = id
+	metadata := track.Metadata
+
+	if len(track.Albums) != 0 {
+		album = track.Albums[0].Name
+		albumId = track.Albums[0].Id
+		albumArtists = track.Albums[0].Artists
 	}
 
 	if metadata.Genres == nil {
@@ -109,7 +117,7 @@ func ConvertToTrackMetadataViewModel(
 	}
 
 	return TrackMetadataViewModel{
-		Album:   metadata.Album,
+		Album:   album,
 		AlbumId: albumId,
 
 		TrackNumber: metadata.TrackNumber,
@@ -131,8 +139,8 @@ func ConvertToTrackMetadataViewModel(
 		MusicBrainzTrackId:     metadata.MusicBrainzTrackId,
 		MusicBrainzRecordingId: metadata.MusicBrainzRecordingId,
 
-		Artists:      ConvertToMinimalArtistsViewModel(metadata.Artists),
-		AlbumArtists: ConvertToMinimalArtistsViewModel(metadata.AlbumArtists),
+		Artists:      ConvertToMinimalArtistsViewModel(track.Artists),
+		AlbumArtists: ConvertToMinimalArtistsViewModel(albumArtists),
 		ArtistsRoles: ConvertToTrackArtistsRolesViewModel(metadata.ArtistsRoles),
 
 		Composer: metadata.Composer,
@@ -178,7 +186,7 @@ type MinimalTrackViewModel struct {
 	Duration int    `json:"duration"`
 
 	Album   string `json:"album"`
-	AlbumId string `json:"album_id"`
+	AlbumId int    `json:"album_id"`
 
 	TrackNumber int `json:"track_number"`
 
@@ -210,10 +218,14 @@ func ConvertToMinimalTrackViewModel(
 	ctx context.Context,
 	track entities.Track,
 ) MinimalTrackViewModel {
-	albumId := ""
+	album := ""
+	albumId := 0
+	albumArtists := []entities.Artist{}
 
-	if id, err := track.Metadata.GetVirtualAlbumId(); err == nil {
-		albumId = id
+	if len(track.Albums) != 0 {
+		album = track.Albums[0].Name
+		albumId = track.Albums[0].Id
+		albumArtists = track.Albums[0].Artists
 	}
 
 	if track.Metadata.Genres == nil {
@@ -226,7 +238,7 @@ func ConvertToMinimalTrackViewModel(
 		Title:    track.Title,
 		Duration: track.Duration,
 
-		Album:   track.Metadata.Album,
+		Album:   album,
 		AlbumId: albumId,
 
 		TrackNumber: track.Metadata.TrackNumber,
@@ -238,8 +250,8 @@ func ConvertToMinimalTrackViewModel(
 
 		Genres: track.Metadata.Genres,
 
-		Artists:      ConvertToMinimalArtistsViewModel(track.Metadata.Artists),
-		AlbumArtists: ConvertToMinimalArtistsViewModel(track.Metadata.AlbumArtists),
+		Artists:      ConvertToMinimalArtistsViewModel(track.Artists),
+		AlbumArtists: ConvertToMinimalArtistsViewModel(albumArtists),
 
 		FileType: track.FileType,
 

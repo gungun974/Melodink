@@ -9,7 +9,6 @@ import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
-import 'package:melodink_client/core/helpers/split_hash_to_path.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/library/data/models/artist_model.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
@@ -28,7 +27,7 @@ class AlbumLocalDataSource {
         .toList();
 
     return Album(
-      id: data["album_id"] as String,
+      id: int.parse(data["album_id"] as String),
       localCover: rawImageFile != null
           ? "$applicationSupportDirectory/$rawImageFile"
           : null,
@@ -70,15 +69,15 @@ class AlbumLocalDataSource {
     }
   }
 
-  Future<Album?> getAlbumById(String id) async {
+  Future<Album?> getAlbumById(int id) async {
     final db = await DatabaseService.getDatabase();
 
     final applicationSupportDirectory =
         (await getMelodinkInstanceSupportDirectory()).path;
 
     try {
-      final data = await db
-          .rawQuery("SELECT * FROM album_download WHERE album_id = ?", [id]);
+      final data = await db.rawQuery(
+          "SELECT * FROM album_download WHERE album_id = ?", [id.toString()]);
 
       final downloadTrack = data.firstOrNull;
 
@@ -106,7 +105,7 @@ class AlbumLocalDataSource {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final downloadPath = "/download-album/${splitHashToPath(album.id)}";
+      final downloadPath = "/download-album/${album.id}";
       String? downloadImagePath;
 
       late final String? coverSignature;
@@ -188,7 +187,7 @@ class AlbumLocalDataSource {
 
       if (savedAlbum == null) {
         await db.insert("album_download", {
-          "album_id": album.id,
+          "album_id": album.id.toString(),
           ...body,
           "download_tracks": shouldDownloadTracks ? 1 : 0,
         });
@@ -199,7 +198,7 @@ class AlbumLocalDataSource {
         "album_download",
         body,
         where: "album_id = ?",
-        whereArgs: [album.id],
+        whereArgs: [album.id.toString()],
       );
     } on DioException catch (e) {
       final response = e.response;
@@ -221,7 +220,7 @@ class AlbumLocalDataSource {
   Future<void> storeAlbums(
     List<Album> albums,
     bool shouldDownloadTracks,
-    Map<String, String> signatures, [
+    Map<int, String> signatures, [
     StreamController<double>? streamController,
   ]) async {
     final db = await DatabaseService.getDatabase();
@@ -247,7 +246,7 @@ class AlbumLocalDataSource {
 
         final customSignature = signatures[album.id];
 
-        final downloadPath = "/download-album/${splitHashToPath(album.id)}";
+        final downloadPath = "/download-album/${album.id}";
         String? downloadImagePath;
 
         late final String? coverSignature;
@@ -329,7 +328,7 @@ class AlbumLocalDataSource {
 
         if (savedAlbum == null) {
           await db.insert("album_download", {
-            "album_id": album.id,
+            "album_id": album.id.toString(),
             ...body,
             "download_tracks": shouldDownloadTracks ? 1 : 0,
           });
@@ -340,7 +339,7 @@ class AlbumLocalDataSource {
           "album_download",
           body,
           where: "album_id = ?",
-          whereArgs: [album.id],
+          whereArgs: [album.id.toString()],
         );
       }
     } on DioException catch (e) {
@@ -360,7 +359,7 @@ class AlbumLocalDataSource {
     }
   }
 
-  Future<void> deleteStoredAlbum(String albumId) async {
+  Future<void> deleteStoredAlbum(int albumId) async {
     final db = await DatabaseService.getDatabase();
 
     try {
@@ -381,7 +380,7 @@ class AlbumLocalDataSource {
       await db.delete(
         "album_download",
         where: "album_id = ?",
-        whereArgs: [albumId],
+        whereArgs: [albumId.toString()],
       );
     } on AlbumNotFoundException {
       rethrow;

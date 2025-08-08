@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
+	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/gungun974/Melodink/server/internal/models"
 )
@@ -90,5 +91,12 @@ func (u *TrackUsecase) UploadTrack(
 	_ = u.TranscodeTrack(ctx, track.Id, AudioTranscodeMedium)
 	_ = u.TranscodeTrack(ctx, track.Id, AudioTranscodeHigh)
 
-	return u.trackPresenter.ShowDetailedTrack(ctx, track), nil
+	_, _ = u.AutoLinkTrack(ctx, track.Id)
+
+	newTrack, err := u.trackRepository.GetTrack(track.Id)
+	if err != nil {
+		return nil, entities.NewInternalError(err)
+	}
+
+	return u.trackPresenter.ShowDetailedTrack(ctx, *newTrack), nil
 }

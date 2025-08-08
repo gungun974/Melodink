@@ -34,7 +34,7 @@ class ArtistRepository {
     return await artistLocalDataSource.getAllArtists();
   }
 
-  Future<Artist> getArtistById(String id) async {
+  Future<Artist> getArtistById(int id) async {
     try {
       return await artistRemoteDataSource.getArtistById(id);
     } catch (_) {

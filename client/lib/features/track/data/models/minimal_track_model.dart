@@ -9,7 +9,7 @@ class MinimalTrackModel {
   final Duration duration;
 
   final String album;
-  final String albumId;
+  final int albumId;
 
   final int trackNumber;
   final int discNumber;

@@ -121,7 +121,8 @@ Future<List<MinimalTrack>> allSortedTracks(Ref ref) async {
       return dateCompare;
     }
 
-    int albumCompare = (a.album + a.albumId).compareTo(b.album + b.albumId);
+    int albumCompare = (a.album + a.albumId.toString())
+        .compareTo(b.album + b.albumId.toString());
     if (albumCompare != 0) {
       return albumCompare;
     }
@@ -179,7 +180,7 @@ Future<List<MinimalTrack>> allSearchTracks(Ref ref) async {
 //! Filter Artists
 
 final allTracksArtistsSelectedOptionsProvider =
-    StateProvider.autoDispose<List<String>>((ref) => []);
+    StateProvider.autoDispose<List<int>>((ref) => []);
 
 @riverpod
 Future<List<MinimalArtist>> allTracksArtistFiltersOptions(Ref ref) async {
@@ -248,16 +249,16 @@ Future<List<MinimalTrack>> allFilteredArtistsTracks(Ref ref) async {
 //! Filter Albums
 
 final allTracksAlbumsSelectedOptionsProvider =
-    StateProvider.autoDispose<List<String>>((ref) => []);
+    StateProvider.autoDispose<List<int>>((ref) => []);
 
 @riverpod
-Future<List<(String, String)>> allTracksAlbumFiltersOptions(Ref ref) async {
+Future<List<(int, String)>> allTracksAlbumFiltersOptions(Ref ref) async {
   final allFilteredArtistsTracks =
       await ref.watch(allFilteredArtistsTracksProvider.future);
 
-  final List<(String, String)> albums = [];
+  final List<(int, String)> albums = [];
 
-  void addAlbum((String, String) newAlbum) {
+  void addAlbum((int, String) newAlbum) {
     for (final album in albums) {
       if (album.$1 == newAlbum.$1) {
         return;

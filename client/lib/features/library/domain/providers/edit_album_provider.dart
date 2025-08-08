@@ -27,7 +27,7 @@ class EditAlbumStream extends _$EditAlbumStream {
     return _controller.stream;
   }
 
-  changeAlbumCover(String id, File file) async {
+  changeAlbumCover(int id, File file) async {
     final newAlbum = await _albumRepository.changeAlbumCover(id, file);
 
     await ImageCacheManager.clearCache(newAlbum.getOrignalCoverUri());
@@ -49,7 +49,7 @@ class EditAlbumStream extends _$EditAlbumStream {
     }
   }
 
-  removeAlbumCover(String id) async {
+  removeAlbumCover(int id) async {
     final newAlbum = await _albumRepository.removeAlbumCover(id);
 
     await ImageCacheManager.clearCache(newAlbum.getOrignalCoverUri());

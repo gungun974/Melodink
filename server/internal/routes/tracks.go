@@ -311,6 +311,58 @@ func TrackRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
+	router.Put("/{id}/albums", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.TrackController.SetTrackAlbums(r.Context(), id, bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Put("/{id}/artists", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		var bodyData map[string]any
+
+		err := json.NewDecoder(r.Body).Decode(&bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response, err := c.TrackController.SetTrackArtists(r.Context(), id, bodyData)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
+	router.Put("/{id}/autolink", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		response, err := c.TrackController.AutoLinkTrack(r.Context(), id)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
 	router.Delete("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 

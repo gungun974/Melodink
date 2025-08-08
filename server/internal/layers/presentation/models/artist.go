@@ -8,7 +8,7 @@ import (
 )
 
 type ArtistViewModel struct {
-	Id string `json:"id"`
+	Id int `json:"id"`
 
 	UserId *int `json:"user_id"`
 
@@ -140,13 +140,13 @@ func ConvertToArtistViewModel(
 }
 
 type MinimalArtistViewModel struct {
-	Id string `json:"id"`
+	Id int `json:"id"`
 
 	Name string `json:"name"`
 }
 
 func ConvertToMinimalArtistsViewModel(
-	artists []string,
+	artists []entities.Artist,
 ) []MinimalArtistViewModel {
 	minimalArtistsViewModels := make([]MinimalArtistViewModel, len(artists))
 
@@ -158,16 +158,10 @@ func ConvertToMinimalArtistsViewModel(
 }
 
 func ConvertToMinimalArtistViewModel(
-	artist string,
+	artist entities.Artist,
 ) MinimalArtistViewModel {
-	artistId := ""
-
-	if id, err := entities.GenerateArtistId(artist); err == nil {
-		artistId = id
-	}
-
 	return MinimalArtistViewModel{
-		Id:   artistId,
-		Name: artist,
+		Id:   artist.Id,
+		Name: artist.Name,
 	}
 }

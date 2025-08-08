@@ -16,7 +16,7 @@ class ArtistLocalDataSource {
   Future<List<Artist>> getAllArtists() async {
     final allAlbums = await albumLocalDataSource.getAllAlbums();
 
-    final artists = <String, Artist>{};
+    final artists = <int, Artist>{};
 
     for (final album in allAlbums) {
       for (final track in album.tracks.toList(growable: false)
@@ -83,7 +83,7 @@ class ArtistLocalDataSource {
     return artists.values.toList();
   }
 
-  Future<Artist?> getArtistById(String id) async {
+  Future<Artist?> getArtistById(int id) async {
     final artists = await getAllArtists();
 
     return artists.firstWhere(

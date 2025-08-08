@@ -52,11 +52,13 @@ class AlbumRemoteDataSource {
     }
   }
 
-  Future<Map<String, String>> getAllAlbumsCoverSignatures() async {
+  Future<Map<int, String>> getAllAlbumsCoverSignatures() async {
     try {
       final response = await AppApi().dio.get("/album/covers/signatures");
 
-      return Map<String, String>.from(response.data);
+      return Map<String, String>.from(response.data).map(
+        (key, value) => MapEntry(int.parse(key), value),
+      );
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -69,7 +71,7 @@ class AlbumRemoteDataSource {
     }
   }
 
-  Future<Album> getAlbumById(String id) async {
+  Future<Album> getAlbumById(int id) async {
     try {
       final response = await AppApi().dio.get("/album/$id");
 
@@ -91,7 +93,7 @@ class AlbumRemoteDataSource {
     }
   }
 
-  Future<Album> changeAlbumCover(String id, File file) async {
+  Future<Album> changeAlbumCover(int id, File file) async {
     final fileName = file.path.split('/').last;
 
     final formData = FormData.fromMap({
@@ -122,7 +124,7 @@ class AlbumRemoteDataSource {
     }
   }
 
-  Future<Album> removeAlbumCover(String id) async {
+  Future<Album> removeAlbumCover(int id) async {
     try {
       final response = await AppApi().dio.delete(
             "/album/$id/cover",

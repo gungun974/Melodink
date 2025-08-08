@@ -14,7 +14,7 @@ import (
 
 func (u *AlbumUsecase) ChangeAlbumCover(
 	ctx context.Context,
-	albumId string,
+	albumId int,
 	file io.Reader,
 ) (models.APIResponse, error) {
 	user, err := helpers.ExtractCurrentLoggedUser(ctx)
@@ -22,7 +22,7 @@ func (u *AlbumUsecase) ChangeAlbumCover(
 		return nil, err
 	}
 
-	album, err := u.albumRepository.GetAlbumByIdFromUser(user.Id, albumId)
+	album, err := u.albumRepository.GetAlbumById(albumId)
 	if err != nil {
 		if errors.Is(err, repository.AlbumNotFoundError) {
 			return nil, entities.NewNotFoundError("Album not found")
@@ -39,11 +39,11 @@ func (u *AlbumUsecase) ChangeAlbumCover(
 		return nil, entities.NewInternalError(err)
 	}
 
-	err = u.coverStorage.UploadCustomAlbumCover(&album, file)
+	err = u.coverStorage.UploadCustomAlbumCover(album, file)
 	if err != nil {
 		logger.MainLogger.Error("Failed to save uploaded Cover")
 		return nil, err
 	}
 
-	return u.albumPresenter.ShowAlbum(ctx, album), nil
+	return u.albumPresenter.ShowAlbum(ctx, *album), nil
 }

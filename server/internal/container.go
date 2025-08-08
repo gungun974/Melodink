@@ -37,9 +37,9 @@ func NewContainer(db *sqlx.DB) Container {
 	container.ConfigRepository = repository.NewConfigRepository(db)
 
 	userRepository := repository.NewUserRepository(db)
-	trackRepository := repository.NewTrackRepository(db)
+	albumRepository := repository.NewAlbumRepository(db)
+	trackRepository := repository.NewTrackRepository(db, albumRepository)
 	playlistRepository := repository.NewPlaylistRepository(db, trackRepository)
-	albumRepository := repository.NewAlbumRepository(db, trackRepository)
 	artistRepository := repository.NewArtistRepository(db, trackRepository, albumRepository)
 	sharedPlayedTrackRepository := repository.NewSharedPlayedTrackRepository(db)
 
@@ -81,6 +81,8 @@ func NewContainer(db *sqlx.DB) Container {
 
 	trackUsecase := track_usecase.NewTrackUsecase(
 		trackRepository,
+		albumRepository,
+		artistRepository,
 		trackStorage,
 		coverStorage,
 		transcodeStorage,
@@ -100,6 +102,7 @@ func NewContainer(db *sqlx.DB) Container {
 	albumUsecase := album_usecase.NewAlbumUsecase(
 		albumRepository,
 		trackRepository,
+		artistRepository,
 		coverStorage,
 		albumPresenter,
 	)

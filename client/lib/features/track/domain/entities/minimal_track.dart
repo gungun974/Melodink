@@ -13,7 +13,7 @@ class MinimalTrack extends Equatable {
   final Duration duration;
 
   final String album;
-  final String albumId;
+  final int albumId;
 
   final int trackNumber;
   final int discNumber;
@@ -70,7 +70,7 @@ class MinimalTrack extends Equatable {
     String? title,
     Duration? duration,
     String? album,
-    String? albumId,
+    int? albumId,
     int? trackNumber,
     int? discNumber,
     String? date,

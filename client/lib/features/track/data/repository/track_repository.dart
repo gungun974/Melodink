@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/network/network_info.dart';
+import 'package:melodink_client/features/library/domain/entities/album.dart';
+import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/data/datasource/track_local_data_source.dart';
 import 'package:melodink_client/features/track/data/datasource/track_remote_data_source.dart';
 import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
@@ -105,6 +107,20 @@ class TrackRepository {
 
   Future<Track> setTrackScore(int id, double score) async {
     return await trackRemoteDataSource.setTrackScore(id, score);
+  }
+
+  Future<Track> setTrackAlbums(
+    int trackId,
+    List<Album> albums,
+  ) async {
+    return await trackRemoteDataSource.setTrackAlbums(trackId, albums);
+  }
+
+  Future<Track> setTrackArtists(
+    int trackId,
+    List<Artist> artists,
+  ) async {
+    return await trackRemoteDataSource.setTrackArtists(trackId, artists);
   }
 }
 

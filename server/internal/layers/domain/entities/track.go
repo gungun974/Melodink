@@ -1,11 +1,6 @@
 package entities
 
 import (
-	"crypto/md5"
-	"encoding/hex"
-	"errors"
-	"slices"
-	"strings"
 	"time"
 )
 
@@ -27,6 +22,9 @@ type Track struct {
 	TranscodingLowSignature    string
 	TranscodingMediumSignature string
 	TranscodingHighSignature   string
+
+	Albums  []Album
+	Artists []Artist
 
 	Metadata TrackMetadata
 
@@ -77,44 +75,6 @@ type TrackArtistRole struct {
 	Artist string
 
 	Attributes []string
-}
-
-func (m TrackMetadata) GetVirtualAlbumArtists() []string {
-	artists := slices.Clone(m.AlbumArtists)
-
-	if len(artists) == 0 && len(m.Artists) > 0 {
-		artists = []string{m.Artists[0]}
-	}
-
-	slices.Sort(artists)
-
-	return artists
-}
-
-func (m TrackMetadata) GetVirtualAlbumId() (string, error) {
-	if len(strings.TrimSpace(m.Album)) == 0 {
-		return "", errors.New("This track has no album")
-	}
-
-	rawId := "a#" + strings.ReplaceAll(
-		m.Album,
-		"#",
-		"##",
-	) + "r#" + strings.ReplaceAll(
-		strings.Join(m.GetVirtualAlbumArtists(), "$"),
-		"#",
-		"##",
-	)
-
-	hasher := md5.New()
-
-	hasher.Write([]byte(rawId))
-
-	hashBytes := hasher.Sum(nil)
-
-	hashString := hex.EncodeToString(hashBytes)
-
-	return hashString, nil
 }
 
 type TrackScore struct {

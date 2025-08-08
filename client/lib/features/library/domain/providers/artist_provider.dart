@@ -62,7 +62,7 @@ Future<List<Artist>> allSearchArtists(Ref ref) async {
 //! Artist Page
 
 @riverpod
-Future<Artist> artistById(Ref ref, String id) async {
+Future<Artist> artistById(Ref ref, int id) async {
   final artistRepository = ref.watch(artistRepositoryProvider);
 
   final artist = await artistRepository.getArtistById(id);
