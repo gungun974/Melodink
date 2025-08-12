@@ -106,7 +106,7 @@ class DesktopCurrentTrack extends HookConsumerWidget {
                       const SizedBox(height: 6),
                       AlbumLinkText(
                         text: currentTrack.title,
-                        albumId: currentTrack.albumId,
+                        albumId: currentTrack.albums.firstOrNull?.id,
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -125,8 +125,12 @@ class DesktopCurrentTrack extends HookConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       AlbumLinkText(
-                        text: currentTrack.album,
-                        albumId: currentTrack.albumId,
+                        text: currentTrack.albums
+                            .map(
+                              (album) => album.name,
+                            )
+                            .join(", "),
+                        albumId: currentTrack.albums.firstOrNull?.id,
                         style: TextStyle(
                           fontSize: 11.2,
                           fontWeight: FontWeight.w300,

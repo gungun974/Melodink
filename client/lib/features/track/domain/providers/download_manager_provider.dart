@@ -4,10 +4,12 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
+import 'package:melodink_client/features/library/data/repository/download_album_repository.dart';
+import 'package:melodink_client/features/library/data/repository/download_playlist_repository.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:mutex/mutex.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -15,7 +17,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'download_manager_provider.g.dart';
 
 class DownloadTask extends Equatable {
-  final MinimalTrack track;
+  final Track track;
   final Stream<double> progress;
   final StreamController<double> progressController;
 
@@ -26,7 +28,7 @@ class DownloadTask extends Equatable {
   });
 
   DownloadTask copyWith({
-    MinimalTrack? track,
+    Track? track,
   }) {
     return DownloadTask(
       track: track ?? this.track,
@@ -104,7 +106,7 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
     );
   }
 
-  addTracksToDownloadTodo(List<MinimalTrack> tracks) {
+  addTracksToDownloadTodo(List<Track> tracks) {
     state = state.copyWith(queueTasks: [
       ...state.queueTasks,
       ...tracks.map((track) {
@@ -147,7 +149,7 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
 
         final result =
             await _downloadTrackRepository.shouldDownloadOrUpdateTrack(
-          currentTask.track.id,
+          currentTask.track,
         );
 
         if (result.shouldDownload) {
@@ -241,17 +243,23 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
   Future<void> downloadAllAlbums(
     StreamController<double>? streamController,
   ) async {
+    final downloadAlbumRepository = ref.read(downloadAlbumRepositoryProvider);
     final albumRepository = ref.read(albumRepositoryProvider);
 
-    final albums = await albumRepository.updateAndStoreAllAlbums(
-      true,
-      streamController,
-    );
+    final albums = await albumRepository.getAllAlbums();
 
     final Set<int> trackIds = {};
-    final List<MinimalTrack> tracks = [];
+    final List<Track> tracks = [];
 
-    for (final album in albums) {
+    for (final indexed in albums.indexed) {
+      streamController?.add(indexed.$1 / albums.length);
+
+      final album = await albumRepository.getAlbumById(indexed.$2.id);
+
+      await downloadAlbumRepository.downloadAlbum(
+        album.id,
+      );
+
       for (final track in album.tracks) {
         if (trackIds.add(track.id)) {
           tracks.add(track);
@@ -276,31 +284,15 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
   }
 
   Future<void> removeAllDownloads() async {
-    final playlistRepository = ref.read(playlistRepositoryProvider);
+    final downloadPlaylistRepository =
+        ref.read(downloadPlaylistRepositoryProvider);
 
-    final playlists = await playlistRepository.getAllPlaylists();
+    await downloadPlaylistRepository.freeAllPlaylists();
 
-    for (final playlist in playlists) {
-      try {
-        await playlistRepository.deleteStoredPlaylist(playlist.id);
-      } on PlaylistNotFoundException {
-        //
-      }
-    }
+    final downloadAlbumRepository = ref.read(downloadAlbumRepositoryProvider);
 
-    final albumRepository = ref.read(albumRepositoryProvider);
+    await downloadAlbumRepository.freeAllAlbums();
 
-    final albums = await albumRepository.getAllAlbums();
-
-    for (final album in albums) {
-      try {
-        await albumRepository.deleteStoredAlbum(album.id);
-      } on AlbumNotFoundException {
-        //
-      }
-    }
-
-    await albumRepository.deleteOrphanAlbums();
     await deleteOrphanTracks();
   }
 }

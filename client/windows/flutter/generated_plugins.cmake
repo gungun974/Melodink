@@ -7,7 +7,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   desktop_drop
   file_saver
   screen_retriever_windows
-  sqlite3_flutter_libs
   window_manager
 )
 

@@ -1,9 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqlite3/sqlite3.dart';
 
 class DatabaseMigrationFile {
   final int version;
@@ -30,6 +32,12 @@ class DatabaseService {
         final appDir = await getMelodinkInstanceSupportDirectory();
 
         databasePath = join(appDir.path, "databases", "melodink.db");
+
+        final dir = Directory(join(appDir.path, "databases"));
+
+        if (!await dir.exists()) {
+          await dir.create(recursive: true);
+        }
       } catch (_) {
         databaseLogger
             .w("Database can't be open when no instance is available");
@@ -40,26 +48,20 @@ class DatabaseService {
       databasePath = "melodink-web.db";
     }
 
-    final database = await openDatabase(
+    final database = sqlite3.open(
       databasePath,
-      version: 1,
-      onCreate: (Database db, int version) async {
-        var batch = db.batch();
-
-        batch.execute('''
-          CREATE TABLE schema_migrations(
-            version uint64
-          )
-        ''');
-
-        batch.execute('''
-          CREATE UNIQUE INDEX version_unique
-              on schema_migrations (version);
-        ''');
-
-        await batch.commit();
-      },
     );
+
+    database.execute('''
+      CREATE TABLE IF NOT EXISTS schema_migrations(
+        version uint64
+      )
+    ''');
+
+    database.execute('''
+      CREATE UNIQUE INDEX IF NOT EXISTS version_unique
+          on schema_migrations (version);
+    ''');
 
     databaseLogger.i("📀 Database connection established successfully!");
 
@@ -70,12 +72,12 @@ class DatabaseService {
     return database;
   }
 
-  static disconnectDatabase() async {
+  static disconnectDatabase() {
     if (_database == null) {
       return;
     }
 
-    await _database!.close();
+    _database!.dispose();
     _database = null;
 
     databaseLogger.i("📀 Database connection have been close");
@@ -113,9 +115,9 @@ class DatabaseService {
       );
   }
 
-  static Future<int> _getDatabaseVersion(Database database) async {
-    final result = await database
-        .rawQuery("SELECT version FROM schema_migrations LIMIT 1");
+  static int _getDatabaseVersion(Database database) {
+    final result =
+        database.select("SELECT version FROM schema_migrations LIMIT 1");
 
     if (result.isNotEmpty) {
       return result.first["version"] as int;
@@ -124,10 +126,10 @@ class DatabaseService {
     return -1;
   }
 
-  static _setDatabaseVersion(Transaction txn, int version) async {
-    await txn.rawDelete('DELETE FROM schema_migrations');
+  static _setDatabaseVersion(Database database, int version) {
+    database.execute('DELETE FROM schema_migrations');
 
-    await txn.rawInsert(
+    database.execute(
       'INSERT INTO schema_migrations (version) VALUES (?)',
       [version],
     );
@@ -138,7 +140,7 @@ class DatabaseService {
   static _migrateDatabase(Database database) async {
     final migrationsFiles = await _getUpMigrationsFiles();
 
-    int currentVersion = await _getDatabaseVersion(database);
+    int currentVersion = _getDatabaseVersion(database);
 
     bool hasStartedMigration = false;
 
@@ -151,22 +153,25 @@ class DatabaseService {
 
         hasStartedMigration = true;
         try {
-          await database.transaction((txn) async {
-            final rawQueries = await rootBundle.loadString(migrationFile.path);
+          final rawQueries = await rootBundle.loadString(migrationFile.path);
 
-            List<String> queries = rawQueries
-                .split(';')
-                .map((q) => q.trim())
-                .where((q) => q.isNotEmpty)
-                .toList();
+          List<String> queries = rawQueries
+              .split(';')
+              .map((q) => q.trim())
+              .where((q) => q.isNotEmpty)
+              .toList();
 
-            for (String query in queries) {
-              await txn.execute(query);
-            }
+          database.execute('BEGIN TRANSACTION;');
 
-            await _setDatabaseVersion(txn, migrationFile.version);
-          });
+          for (String query in queries) {
+            database.execute(query);
+          }
+
+          _setDatabaseVersion(database, migrationFile.version);
+
+          database.execute('COMMIT;');
         } catch (e) {
+          database.execute("ROLLBACK;");
           databaseLogger
               .e("Failed to apply database migration ${migrationFile.version}");
           databaseLogger.e(e);

@@ -98,7 +98,8 @@ func (r *SharedPlayedTrackRepository) AddSharedPlayedTrack(
 
         shuffle,
         track_ended,
-        track_duration
+        track_duration,
+				shared_at
       )
     VALUES
       (
@@ -112,7 +113,8 @@ func (r *SharedPlayedTrackRepository) AddSharedPlayedTrack(
         ?,
         ?,
         ?,
-        ?
+        ?,
+				STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')
       )
     RETURNING *
   `,

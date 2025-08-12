@@ -36,5 +36,5 @@ func (u *TrackUsecase) ImportPendingTracks(
 		}
 	}
 
-	return u.trackPresenter.ShowMinimalTracks(ctx, tracks), nil
+	return u.trackPresenter.ShowTracks(ctx, tracks), nil
 }

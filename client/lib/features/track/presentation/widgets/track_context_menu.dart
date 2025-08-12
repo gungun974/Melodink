@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/multi_tracks_context_menu.dart';
 import 'package:melodink_client/features/track/presentation/widgets/single_track_context_menu.dart';
 
@@ -16,9 +16,9 @@ class TrackContextMenu extends StatelessWidget {
     this.showDefaultActions = true,
   });
 
-  final MinimalTrack track;
+  final Track track;
 
-  final List<MinimalTrack> tracks;
+  final List<Track> tracks;
 
   final MenuController singleMenuController;
   final MenuController multiMenuController;
@@ -30,13 +30,13 @@ class TrackContextMenu extends StatelessWidget {
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
-    MinimalTrack track,
+    Track track,
   )? singleCustomActionsBuilder;
 
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
-    List<MinimalTrack> tracks,
+    List<Track> tracks,
   )? multiCustomActionsBuilder;
 
   @override

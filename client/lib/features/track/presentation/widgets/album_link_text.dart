@@ -20,7 +20,7 @@ class AlbumLinkText extends StatelessWidget {
   });
 
   final String text;
-  final int albumId;
+  final int? albumId;
 
   final TextStyle style;
 
@@ -61,8 +61,6 @@ class AlbumLinkText extends StatelessWidget {
                       true) {
                     GoRouter.of(context).pop();
                   }
-
-                  print(GoRouter.of(context));
 
                   if (GoRouter.of(context).location == "/album/$albumId") {
                     return;

@@ -286,17 +286,6 @@ func (c *TrackController) EditTrack(
 		return nil, entities.NewValidationError(err.Error())
 	}
 
-	album, err := validator.ValidateMapString(
-		"album",
-		bodyData,
-		validator.StringValidators{
-			validator.StringMinValidator{Min: 0},
-		},
-	)
-	if err != nil {
-		return nil, entities.NewValidationError(err.Error())
-	}
-
 	trackNumber, err := validator.ValidateMapInt(
 		"track_number",
 		bodyData,
@@ -415,66 +404,6 @@ func (c *TrackController) EditTrack(
 		return nil, entities.NewValidationError(err.Error())
 	}
 
-	rawArtists, ok := bodyData["artists"].([]any)
-	if !ok {
-		return nil, entities.NewValidationError(
-			"artists should be an array",
-		)
-	}
-
-	artists := make([]string, 0, len(rawArtists))
-
-	for _, rawArtist := range rawArtists {
-		artist, ok := rawArtist.(string)
-
-		if !ok {
-			return nil, entities.NewValidationError(
-				"artists should be an array of string",
-			)
-		}
-
-		if _, err := validator.ValidateString(
-			artist,
-			validator.StringValidators{
-				validator.StringMinValidator{Min: 0},
-			},
-		); err != nil {
-			return nil, entities.NewValidationError(err.Error())
-		}
-
-		artists = append(artists, artist)
-	}
-
-	rawAlbumArtists, ok := bodyData["album_artists"].([]any)
-	if !ok {
-		return nil, entities.NewValidationError(
-			"artists should be an array",
-		)
-	}
-
-	albumArtists := make([]string, 0, len(rawAlbumArtists))
-
-	for _, rawAlbumArtist := range rawAlbumArtists {
-		artist, ok := rawAlbumArtist.(string)
-
-		if !ok {
-			return nil, entities.NewValidationError(
-				"artists should be an array of string",
-			)
-		}
-
-		if _, err := validator.ValidateString(
-			artist,
-			validator.StringValidators{
-				validator.StringMinValidator{Min: 0},
-			},
-		); err != nil {
-			return nil, entities.NewValidationError(err.Error())
-		}
-
-		albumArtists = append(albumArtists, artist)
-	}
-
 	composer, err := validator.ValidateMapString(
 		"composer",
 		bodyData,
@@ -554,8 +483,6 @@ func (c *TrackController) EditTrack(
 
 		Title: title,
 
-		Album: album,
-
 		TrackNumber: trackNumber,
 		TotalTracks: totalTracks,
 
@@ -569,9 +496,7 @@ func (c *TrackController) EditTrack(
 		Lyrics:  lyrics,
 		Comment: comment,
 
-		Artists:      artists,
-		AlbumArtists: albumArtists,
-		Composer:     composer,
+		Composer: composer,
 
 		AcoustID: acoustId,
 

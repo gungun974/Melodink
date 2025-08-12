@@ -14,7 +14,7 @@ import 'package:melodink_client/features/library/domain/providers/playlist_conte
 import 'package:melodink_client/features/library/presentation/modals/create_playlist_modal.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/presentation/modals/show_track_modal.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
@@ -28,7 +28,7 @@ class SingleTrackContextMenu extends ConsumerWidget {
     this.showDefaultActions = true,
   });
 
-  final MinimalTrack track;
+  final Track track;
 
   final MenuController menuController;
 
@@ -37,7 +37,7 @@ class SingleTrackContextMenu extends ConsumerWidget {
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
-    MinimalTrack track,
+    Track track,
   )? customActionsBuilder;
 
   final Widget child;
@@ -148,35 +148,82 @@ class SingleTrackContextMenu extends ConsumerWidget {
               child: Text(t.actions.addToPlaylist),
             ),
             const Divider(height: 8),
-            MenuItemButton(
-              leadingIcon: const AdwaitaIcon(
-                AdwaitaIcons.media_optical,
-                size: 20,
+            if (track.albums.length == 1)
+              MenuItemButton(
+                leadingIcon: const AdwaitaIcon(
+                  AdwaitaIcons.media_optical,
+                  size: 20,
+                ),
+                child: Text(t.actions.goToAlbum),
+                onPressed: () {
+                  menuController.close();
+
+                  while (GoRouter.of(context).location?.startsWith("/queue") ??
+                      true) {
+                    GoRouter.of(context).pop();
+                  }
+
+                  while (GoRouter.of(context).location?.startsWith("/player") ??
+                      true) {
+                    GoRouter.of(context).pop();
+                  }
+
+                  if (GoRouter.of(context).location ==
+                      "/album/${track.albums.first.id}") {
+                    return;
+                  }
+
+                  GoRouter.of(context)
+                      .push("/album/${track.albums.first.id}", extra: {
+                    "openWithScrollOnSpecificTrackId": track.id,
+                  });
+                },
               ),
-              child: Text(t.actions.goToAlbum),
-              onPressed: () {
-                menuController.close();
+            if (track.albums.length > 1)
+              SubmenuButton(
+                leadingIcon: const AdwaitaIcon(
+                  AdwaitaIcons.person2,
+                  size: 20,
+                ),
+                menuChildren: track.albums.map(
+                  (album) {
+                    return MenuItemButton(
+                      leadingIcon: const AdwaitaIcon(
+                        AdwaitaIcons.person2,
+                        size: 20,
+                      ),
+                      child: Text(album.name),
+                      onPressed: () {
+                        menuController.close();
 
-                while (GoRouter.of(context).location?.startsWith("/queue") ??
-                    true) {
-                  GoRouter.of(context).pop();
-                }
+                        while (GoRouter.of(context)
+                                .location
+                                ?.startsWith("/queue") ??
+                            true) {
+                          GoRouter.of(context).pop();
+                        }
 
-                while (GoRouter.of(context).location?.startsWith("/player") ??
-                    true) {
-                  GoRouter.of(context).pop();
-                }
+                        while (GoRouter.of(context)
+                                .location
+                                ?.startsWith("/player") ??
+                            true) {
+                          GoRouter.of(context).pop();
+                        }
 
-                if (GoRouter.of(context).location ==
-                    "/album/${track.albumId}") {
-                  return;
-                }
+                        if (GoRouter.of(context).location ==
+                            "/album/${album.id}") {
+                          return;
+                        }
 
-                GoRouter.of(context).push("/album/${track.albumId}", extra: {
-                  "openWithScrollOnSpecificTrackId": track.id,
-                });
-              },
-            ),
+                        GoRouter.of(context).push("/album/${album.id}", extra: {
+                          "openWithScrollOnSpecificTrackId": track.id,
+                        });
+                      },
+                    );
+                  },
+                ).toList(),
+                child: Text(t.actions.goToAlbum),
+              ),
             if (track.artists.length == 1)
               MenuItemButton(
                 leadingIcon: const AdwaitaIcon(

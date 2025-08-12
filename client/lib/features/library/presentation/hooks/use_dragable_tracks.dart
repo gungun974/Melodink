@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 
 (
-  ValueNotifier<List<MinimalTrack>>,
+  ValueNotifier<List<Track>>,
   ValueNotifier<List<ValueKey<int>>>,
   bool Function(Key item, Key newPosition),
   Null Function(Key draggedItem),
   CancellationToken,
 ) useDragableTracks(
-  ValueNotifier<List<MinimalTrack>> tracks,
-  void Function(List<MinimalTrack> newTracks) reoderDoneCallback, [
+  ValueNotifier<List<Track>> tracks,
+  void Function(List<Track> newTracks) reoderDoneCallback, [
   List<Object?> keys = const <Object>[],
 ]) {
   final orderTracks = useState(tracks.value);

@@ -233,7 +233,7 @@ class SettingsRepository {
   Future<void> setConfigString(String key, String value) async {
     final db = await DatabaseService.getDatabase();
 
-    await db.rawInsert("""
+    db.execute("""
        INSERT OR REPLACE INTO config (key, value)
        VALUES (?, ?);
     """, [key, value]);
@@ -242,7 +242,7 @@ class SettingsRepository {
   Future<String?> getConfigString(String key) async {
     final db = await DatabaseService.getDatabase();
 
-    final result = await db.rawQuery("""
+    final result = db.select("""
        SELECT value FROM config WHERE key = ?;
     """, [key]);
 

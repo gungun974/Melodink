@@ -14,17 +14,32 @@ type PlaylistViewModel struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 
-	Tracks []MinimalTrackViewModel `json:"tracks"`
+	CoverSignature string `json:"cover_signature"`
+
+	Tracks []int `json:"tracks"`
+}
+
+func ConvertToPlaylistViewModels(
+	ctx context.Context,
+	playlists []entities.Playlist,
+) []PlaylistViewModel {
+	playlistsViewModels := make([]PlaylistViewModel, len(playlists))
+
+	for i, playlist := range playlists {
+		playlistsViewModels[i] = ConvertToPlaylistViewModel(ctx, playlist)
+	}
+
+	return playlistsViewModels
 }
 
 func ConvertToPlaylistViewModel(
 	ctx context.Context,
 	playlist entities.Playlist,
 ) PlaylistViewModel {
-	tracksViewModels := make([]MinimalTrackViewModel, len(playlist.Tracks))
+	tracks := make([]int, len(playlist.Tracks))
 
 	for i, track := range playlist.Tracks {
-		tracksViewModels[i] = ConvertToMinimalTrackViewModel(ctx, track)
+		tracks[i] = track.Id
 	}
 
 	return PlaylistViewModel{
@@ -35,6 +50,8 @@ func ConvertToPlaylistViewModel(
 		Name:        playlist.Name,
 		Description: playlist.Description,
 
-		Tracks: tracksViewModels,
+		CoverSignature: playlist.CoverSignature,
+
+		Tracks: tracks,
 	}
 }

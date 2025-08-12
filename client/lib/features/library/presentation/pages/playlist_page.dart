@@ -19,7 +19,7 @@ import 'package:melodink_client/features/library/presentation/widgets/desktop_pl
 import 'package:melodink_client/features/library/presentation/widgets/mobile_playlist_header.dart';
 import 'package:melodink_client/features/library/presentation/widgets/playlist_context_menu.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
@@ -44,7 +44,7 @@ class PlaylistPage extends HookConsumerWidget {
 
     final playlist = asyncPlaylist.valueOrNull;
 
-    final tracks = useProviderAsync<List<MinimalTrack>>(
+    final tracks = useProviderAsync<List<Track>>(
       ref,
       playlistSortedTracksProvider(playlistId),
       [],

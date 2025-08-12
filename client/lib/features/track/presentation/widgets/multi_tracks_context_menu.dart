@@ -7,7 +7,7 @@ import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
 import 'package:melodink_client/features/library/presentation/modals/create_playlist_modal.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class MultiTracksContextMenu extends ConsumerWidget {
@@ -20,7 +20,7 @@ class MultiTracksContextMenu extends ConsumerWidget {
     this.showDefaultActions = true,
   });
 
-  final List<MinimalTrack> tracks;
+  final List<Track> tracks;
 
   final MenuController menuController;
 
@@ -29,7 +29,7 @@ class MultiTracksContextMenu extends ConsumerWidget {
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
-    List<MinimalTrack> track,
+    List<Track> track,
   )? customActionsBuilder;
 
   final Widget child;
@@ -150,7 +150,7 @@ class MultiTracksContextMenu extends ConsumerWidget {
               onPressed: () {
                 menuController.close();
 
-                final List<MinimalTrack> newTracks = List.from(tracks);
+                final List<Track> newTracks = List.from(tracks);
 
                 newTracks.shuffle();
 

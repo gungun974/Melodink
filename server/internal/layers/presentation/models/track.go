@@ -19,9 +19,14 @@ type TrackViewModel struct {
 	TagsFormat string `json:"tags_format"`
 	FileType   string `json:"file_type"`
 
-	Path           string `json:"path"`
 	FileSignature  string `json:"file_signature"`
 	CoverSignature string `json:"cover_signature"`
+
+	Albums  []int `json:"albums"`
+	Artists []int `json:"artists"`
+
+	TrackNumber int `json:"track_number"`
+	DiscNumber  int `json:"disc_number"`
 
 	Metadata TrackMetadataViewModel `json:"metadata"`
 
@@ -34,48 +39,9 @@ type TrackViewModel struct {
 	DateAdded string `json:"date_added"`
 }
 
-func ConvertToTrackViewModel(
-	ctx context.Context,
-	track entities.Track,
-) TrackViewModel {
-	return TrackViewModel{
-		Id: track.Id,
-
-		UserId: track.UserId,
-
-		Title:    track.Title,
-		Duration: track.Duration,
-
-		TagsFormat: track.TagsFormat,
-		FileType:   track.FileType,
-
-		Path:           track.Path,
-		FileSignature:  track.FileSignature,
-		CoverSignature: track.CoverSignature,
-
-		DateAdded: track.DateAdded.UTC().Format(time.RFC3339),
-
-		Metadata: ConvertToTrackMetadataViewModel(
-			track,
-		),
-
-		SampleRate:       track.SampleRate,
-		BitRate:          track.BitRate,
-		BitsPerRawSample: track.BitsPerRawSample,
-
-		Score: getTrackScore(ctx, track),
-	}
-}
-
 type TrackMetadataViewModel struct {
-	Album   string `json:"album"`
-	AlbumId int    `json:"album_id"`
-
-	TrackNumber int `json:"track_number"`
 	TotalTracks int `json:"total_tracks"`
-
-	DiscNumber int `json:"disc_number"`
-	TotalDiscs int `json:"total_discs"`
+	TotalDiscs  int `json:"total_discs"`
 
 	Date string `json:"date"`
 	Year int    `json:"year"`
@@ -90,60 +56,91 @@ type TrackMetadataViewModel struct {
 	MusicBrainzTrackId     string `json:"music_brainz_track_id"`
 	MusicBrainzRecordingId string `json:"music_brainz_recording_id"`
 
-	Artists      []MinimalArtistViewModel   `json:"artists"`
-	AlbumArtists []MinimalArtistViewModel   `json:"album_artists"`
-	ArtistsRoles []TrackArtistRoleViewModel `json:"artists_roles"`
-
 	Composer string `json:"composer"`
 }
 
-func ConvertToTrackMetadataViewModel(
+func ConvertToTrackViewModels(
+	ctx context.Context,
+	tracks []entities.Track,
+) []TrackViewModel {
+	tracksViewModels := make([]TrackViewModel, len(tracks))
+
+	for i, track := range tracks {
+		tracksViewModels[i] = ConvertToTrackViewModel(ctx, track)
+	}
+
+	return tracksViewModels
+}
+
+func ConvertToTrackViewModel(
+	ctx context.Context,
 	track entities.Track,
-) TrackMetadataViewModel {
-	album := ""
-	albumId := 0
-	albumArtists := []entities.Artist{}
+) TrackViewModel {
+	albums := make([]int, len(track.Albums))
+
+	for i, album := range track.Albums {
+		albums[i] = album.Id
+	}
+
+	artists := make([]int, len(track.Artists))
+
+	for i, artist := range track.Artists {
+		artists[i] = artist.Id
+	}
 
 	metadata := track.Metadata
-
-	if len(track.Albums) != 0 {
-		album = track.Albums[0].Name
-		albumId = track.Albums[0].Id
-		albumArtists = track.Albums[0].Artists
-	}
 
 	if metadata.Genres == nil {
 		metadata.Genres = []string{}
 	}
 
-	return TrackMetadataViewModel{
-		Album:   album,
-		AlbumId: albumId,
+	return TrackViewModel{
+		Id: track.Id,
+
+		UserId: track.UserId,
+
+		Title:    track.Title,
+		Duration: track.Duration,
+
+		TagsFormat: track.TagsFormat,
+		FileType:   track.FileType,
+
+		FileSignature:  track.FileSignature,
+		CoverSignature: track.CoverSignature,
+
+		DateAdded: track.DateAdded.UTC().Format(time.RFC3339),
+
+		Albums:  albums,
+		Artists: artists,
 
 		TrackNumber: metadata.TrackNumber,
-		TotalTracks: metadata.TotalTracks,
+		DiscNumber:  metadata.DiscNumber,
 
-		DiscNumber: metadata.DiscNumber,
-		TotalDiscs: metadata.TotalDiscs,
+		Metadata: TrackMetadataViewModel{
+			TotalTracks: metadata.TotalTracks,
+			TotalDiscs:  metadata.TotalDiscs,
 
-		Date: metadata.Date,
-		Year: metadata.Year,
+			Date: metadata.Date,
+			Year: metadata.Year,
 
-		Genres:  metadata.Genres,
-		Lyrics:  metadata.Lyrics,
-		Comment: metadata.Comment,
+			Genres:  metadata.Genres,
+			Lyrics:  metadata.Lyrics,
+			Comment: metadata.Comment,
 
-		AcoustID: metadata.AcoustID,
+			AcoustID: metadata.AcoustID,
 
-		MusicBrainzReleaseId:   metadata.MusicBrainzReleaseId,
-		MusicBrainzTrackId:     metadata.MusicBrainzTrackId,
-		MusicBrainzRecordingId: metadata.MusicBrainzRecordingId,
+			MusicBrainzReleaseId:   metadata.MusicBrainzReleaseId,
+			MusicBrainzTrackId:     metadata.MusicBrainzTrackId,
+			MusicBrainzRecordingId: metadata.MusicBrainzRecordingId,
 
-		Artists:      ConvertToMinimalArtistsViewModel(track.Artists),
-		AlbumArtists: ConvertToMinimalArtistsViewModel(albumArtists),
-		ArtistsRoles: ConvertToTrackArtistsRolesViewModel(metadata.ArtistsRoles),
+			Composer: metadata.Composer,
+		},
 
-		Composer: metadata.Composer,
+		SampleRate:       track.SampleRate,
+		BitRate:          track.BitRate,
+		BitsPerRawSample: track.BitsPerRawSample,
+
+		Score: getTrackScore(ctx, track),
 	}
 }
 
@@ -176,94 +173,6 @@ func ConvertToTrackArtistRoleViewModel(
 		Artist: artistRole.Artist,
 
 		Attributes: artistRole.Attributes,
-	}
-}
-
-type MinimalTrackViewModel struct {
-	Id int `json:"id"`
-
-	Title    string `json:"title"`
-	Duration int    `json:"duration"`
-
-	Album   string `json:"album"`
-	AlbumId int    `json:"album_id"`
-
-	TrackNumber int `json:"track_number"`
-
-	DiscNumber int `json:"disc_number"`
-
-	Date string `json:"date"`
-	Year int    `json:"year"`
-
-	Genres []string `json:"genres"`
-
-	Artists      []MinimalArtistViewModel `json:"artists"`
-	AlbumArtists []MinimalArtistViewModel `json:"album_artists"`
-	Composer     string                   `json:"composer"`
-
-	FileType string `json:"file_type"`
-
-	FileSignature string `json:"file_signature"`
-
-	SampleRate       int  `json:"sample_rate"`
-	BitRate          *int `json:"bit_rate"`
-	BitsPerRawSample *int `json:"bits_per_raw_sample"`
-
-	Score float64 `json:"score"`
-
-	DateAdded string `json:"date_added"`
-}
-
-func ConvertToMinimalTrackViewModel(
-	ctx context.Context,
-	track entities.Track,
-) MinimalTrackViewModel {
-	album := ""
-	albumId := 0
-	albumArtists := []entities.Artist{}
-
-	if len(track.Albums) != 0 {
-		album = track.Albums[0].Name
-		albumId = track.Albums[0].Id
-		albumArtists = track.Albums[0].Artists
-	}
-
-	if track.Metadata.Genres == nil {
-		track.Metadata.Genres = []string{}
-	}
-
-	return MinimalTrackViewModel{
-		Id: track.Id,
-
-		Title:    track.Title,
-		Duration: track.Duration,
-
-		Album:   album,
-		AlbumId: albumId,
-
-		TrackNumber: track.Metadata.TrackNumber,
-
-		DiscNumber: track.Metadata.DiscNumber,
-
-		Date: track.Metadata.Date,
-		Year: track.Metadata.Year,
-
-		Genres: track.Metadata.Genres,
-
-		Artists:      ConvertToMinimalArtistsViewModel(track.Artists),
-		AlbumArtists: ConvertToMinimalArtistsViewModel(albumArtists),
-
-		FileType: track.FileType,
-
-		FileSignature: track.FileSignature,
-
-		SampleRate:       track.SampleRate,
-		BitRate:          track.BitRate,
-		BitsPerRawSample: track.BitsPerRawSample,
-
-		Score: getTrackScore(ctx, track),
-
-		DateAdded: track.DateAdded.UTC().Format(time.RFC3339),
 	}
 }
 

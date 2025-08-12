@@ -8,14 +8,14 @@ import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class TrackScore extends HookConsumerWidget {
-  final MinimalTrack track;
+  final Track track;
 
   final bool largeControlButton;
 

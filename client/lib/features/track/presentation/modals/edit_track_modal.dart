@@ -14,7 +14,6 @@ import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_datetime_form_field.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
-import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
@@ -49,30 +48,18 @@ class EditTrackModal extends HookConsumerWidget {
       text: track.title,
     );
 
-    final albums = useState(
-      track.metadata.album,
-    );
+    final albums = useState(track.albums);
 
-    final selectedAlbums = useState(
-      [track.metadata.albumId],
-    );
-
-    final artists = useState(
-      track.metadata.artists.map((artist) => artist.name).join(", "),
-    );
-
-    final selectedArtists = useState(
-      track.metadata.artists.map((artist) => artist.id).toList(),
-    );
+    final artists = useState(track.artists);
 
     final trackNumberTextController = useTextEditingController(
-      text: track.metadata.trackNumber.toString(),
+      text: track.trackNumber.toString(),
     );
     final totalTracksTextController = useTextEditingController(
       text: track.metadata.totalTracks.toString(),
     );
     final discNumberTextController = useTextEditingController(
-      text: track.metadata.discNumber.toString(),
+      text: track.discNumber.toString(),
     );
     final totalDiscsTextController = useTextEditingController(
       text: track.metadata.totalDiscs.toString(),
@@ -152,31 +139,20 @@ class EditTrackModal extends HookConsumerWidget {
                               await ManageTrackAlbumsModal.showModal(
                             context,
                             track,
-                            selectedAlbums.value,
+                            albums.value.map((album) => album.id).toList(),
                           );
 
                           if (newAlbums != null) {
                             if (newAlbums.isEmpty) {
-                              albums.value = "";
-                              selectedAlbums.value = [];
+                              albums.value = [];
                             } else {
-                              albums.value = newAlbums
-                                  .map(
-                                    (album) => album.name,
-                                  )
-                                  .join(
-                                    ", ",
-                                  );
-                              selectedAlbums.value = newAlbums
-                                  .map(
-                                    (album) => album.id,
-                                  )
-                                  .toList();
+                              albums.value = newAlbums;
                             }
                           }
                         },
                         labelText: t.general.album,
-                        value: albums.value,
+                        value:
+                            albums.value.map((album) => album.name).join(", "),
                       ),
                       const SizedBox(height: 8),
                       AppButtonValueTextField(
@@ -185,31 +161,21 @@ class EditTrackModal extends HookConsumerWidget {
                               await ManageTrackArtistsModal.showModal(
                             context,
                             track,
-                            selectedArtists.value,
+                            artists.value.map((artist) => artist.id).toList(),
                           );
 
                           if (newArtists != null) {
                             if (newArtists.isEmpty) {
-                              artists.value = "";
-                              selectedArtists.value = [];
+                              artists.value = [];
                             } else {
-                              artists.value = newArtists
-                                  .map(
-                                    (artist) => artist.name,
-                                  )
-                                  .join(
-                                    ", ",
-                                  );
-                              selectedArtists.value = newArtists
-                                  .map(
-                                    (artist) => artist.id,
-                                  )
-                                  .toList();
+                              artists.value = newArtists;
                             }
                           }
                         },
                         labelText: t.general.artists,
-                        value: artists.value,
+                        value: artists.value
+                            .map((artist) => artist.name)
+                            .join(", "),
                       ),
                       const Divider(
                         height: 24,
@@ -652,8 +618,7 @@ class EditTrackModal extends HookConsumerWidget {
                                           .trim()
                                           .isEmpty) {
                                     trackNumberTextController.text =
-                                        scannedTrack.metadata.trackNumber
-                                            .toString();
+                                        scannedTrack.trackNumber.toString();
                                   }
 
                                   if (!configuration.onlyReplaceEmptyFields ||
@@ -669,9 +634,8 @@ class EditTrackModal extends HookConsumerWidget {
                                       discNumberTextController.text
                                           .trim()
                                           .isEmpty) {
-                                    discNumberTextController.text = scannedTrack
-                                        .metadata.discNumber
-                                        .toString();
+                                    discNumberTextController.text =
+                                        scannedTrack.discNumber.toString();
                                   }
 
                                   if (!configuration.onlyReplaceEmptyFields ||
@@ -821,23 +785,20 @@ class EditTrackModal extends HookConsumerWidget {
                                 isLoading.value = true;
 
                                 try {
-                                  ref
+                                  await ref
                                       .read(trackEditStreamProvider.notifier)
                                       .saveTrack(
                                         track.copyWith(
                                           title: titleTextController.text,
+                                          trackNumber: int.parse(
+                                            trackNumberTextController.text,
+                                          ),
+                                          discNumber: int.parse(
+                                            discNumberTextController.text,
+                                          ),
                                           metadata: track.metadata.copyWith(
-                                            album: "",
-                                            artists: [],
-                                            albumArtists: [],
-                                            trackNumber: int.parse(
-                                              trackNumberTextController.text,
-                                            ),
                                             totalTracks: int.parse(
                                               totalTracksTextController.text,
-                                            ),
-                                            discNumber: int.parse(
-                                              discNumberTextController.text,
                                             ),
                                             totalDiscs: int.parse(
                                               totalDiscsTextController.text,

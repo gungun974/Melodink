@@ -8,13 +8,13 @@ import 'package:melodink_client/core/hooks/use_list_controller.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/mobile_track.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 
 class TrackList extends HookConsumerWidget {
-  final List<MinimalTrack> tracks;
+  final List<Track> tracks;
   final List<Key>? orderKeys;
 
   final AppScreenTypeLayout size;
@@ -33,7 +33,7 @@ class TrackList extends HookConsumerWidget {
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
-    MinimalTrack track,
+    Track track,
     int index,
     VoidCallback unselect,
   )? singleCustomActionsBuilder;
@@ -41,7 +41,7 @@ class TrackList extends HookConsumerWidget {
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
-    List<MinimalTrack> tracks,
+    List<Track> tracks,
     Set<int> selectedIndexes,
     VoidCallback unselect,
   )? multiCustomActionsBuilder;
@@ -50,9 +50,9 @@ class TrackList extends HookConsumerWidget {
 
   final String? source;
 
-  final void Function(MinimalTrack track, int index)? playCallback;
+  final void Function(Track track, int index)? playCallback;
 
-  final void Function(MinimalTrack track, int index)? removeCallback;
+  final void Function(Track track, int index)? removeCallback;
 
   const TrackList({
     super.key,
@@ -231,7 +231,7 @@ class TrackList extends HookConsumerWidget {
 
           final selected = selectedElements.value.contains(index);
 
-          final List<MinimalTrack> selectedTracks = tracks.indexed
+          final List<Track> selectedTracks = tracks.indexed
               .where(
                 (entry) => selectedElements.value.contains(
                   entry.$1,
@@ -258,9 +258,10 @@ class TrackList extends HookConsumerWidget {
           }
 
           List<Widget> Function(
-              BuildContext context,
-              MenuController menuController,
-              MinimalTrack track)? localSingleCustomActionsBuilder;
+            BuildContext context,
+            MenuController menuController,
+            Track track,
+          )? localSingleCustomActionsBuilder;
 
           if (singleCustomActionsBuilder != null) {
             localSingleCustomActionsBuilder = (context, menuController, track) {
@@ -278,9 +279,10 @@ class TrackList extends HookConsumerWidget {
           }
 
           List<Widget> Function(
-              BuildContext context,
-              MenuController menuController,
-              List<MinimalTrack> tracks)? localMultiCustomActionsBuilder;
+            BuildContext context,
+            MenuController menuController,
+            List<Track> tracks,
+          )? localMultiCustomActionsBuilder;
 
           if (multiCustomActionsBuilder != null &&
               selectedElements.value.isNotEmpty) {

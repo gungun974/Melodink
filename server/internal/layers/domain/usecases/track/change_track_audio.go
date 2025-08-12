@@ -69,5 +69,5 @@ func (u *TrackUsecase) ChangeTrackAudio(
 	_ = u.TranscodeTrack(ctx, track.Id, AudioTranscodeMedium)
 	_ = u.TranscodeTrack(ctx, track.Id, AudioTranscodeHigh)
 
-	return u.trackPresenter.ShowDetailedTrack(ctx, *track), nil
+	return u.trackPresenter.ShowTrack(ctx, *track), nil
 }

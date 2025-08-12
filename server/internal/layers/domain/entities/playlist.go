@@ -10,5 +10,7 @@ type Playlist struct {
 	Name        string
 	Description string
 
+	CoverSignature string
+
 	Tracks []Track
 }

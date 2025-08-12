@@ -3,7 +3,6 @@ package track_usecase
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
@@ -18,8 +17,6 @@ type EditTrackParams struct {
 
 	Title string
 
-	Album string
-
 	TrackNumber int
 	TotalTracks int
 
@@ -33,9 +30,7 @@ type EditTrackParams struct {
 	Lyrics  string
 	Comment string
 
-	Artists      []string
-	AlbumArtists []string
-	Composer     string
+	Composer string
 
 	AcoustID string
 
@@ -69,8 +64,6 @@ func (u *TrackUsecase) EditTrack(
 
 	track.Title = params.Title
 
-	track.Metadata.Album = params.Album
-
 	track.Metadata.TrackNumber = params.TrackNumber
 	track.Metadata.TotalTracks = params.TotalTracks
 
@@ -84,19 +77,6 @@ func (u *TrackUsecase) EditTrack(
 	track.Metadata.Lyrics = params.Lyrics
 	track.Metadata.Comment = params.Comment
 
-	for i := range params.Artists {
-		params.Artists[i] = strings.TrimSpace(params.Artists[i])
-	}
-
-	for i := range params.AlbumArtists {
-		params.AlbumArtists[i] = strings.TrimSpace(params.AlbumArtists[i])
-	}
-
-	params.Artists = helpers.RemoveEmptyStrings(params.Artists)
-	params.AlbumArtists = helpers.RemoveEmptyStrings(params.AlbumArtists)
-
-	track.Metadata.Artists = params.Artists
-	track.Metadata.AlbumArtists = params.AlbumArtists
 	track.Metadata.Composer = params.Composer
 
 	track.Metadata.AcoustID = params.AcoustID
@@ -119,5 +99,5 @@ func (u *TrackUsecase) EditTrack(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.trackPresenter.ShowDetailedTrack(ctx, *track), nil
+	return u.trackPresenter.ShowTrack(ctx, *track), nil
 }

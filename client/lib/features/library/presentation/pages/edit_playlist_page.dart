@@ -25,7 +25,7 @@ import 'package:melodink_client/features/library/domain/providers/edit_playlist_
 import 'package:melodink_client/features/library/domain/providers/playlist_context_menu_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
 import 'package:melodink_client/features/library/presentation/hooks/use_dragable_tracks.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
@@ -47,7 +47,7 @@ class PlaylistPageEdit extends HookConsumerWidget {
 
     final playlist = asyncPlaylist.valueOrNull;
 
-    final rawTracks = useProviderAsync<List<MinimalTrack>>(
+    final rawTracks = useProviderAsync<List<Track>>(
       ref,
       playlistSortedTracksProvider(playlistId),
       [],
@@ -61,7 +61,7 @@ class PlaylistPageEdit extends HookConsumerWidget {
       dragCancelToken,
     ) = useDragableTracks(
       rawTracks,
-      (List<MinimalTrack> newTracks) async {},
+      (List<Track> newTracks) async {},
       [],
     );
 
@@ -155,6 +155,7 @@ class PlaylistPageEdit extends HookConsumerWidget {
                               name: nameTextController.text,
                               description: descriptionTextController.text,
                               tracks: tracks.value,
+                              coverSignature: "",
                             ));
 
                         await ref

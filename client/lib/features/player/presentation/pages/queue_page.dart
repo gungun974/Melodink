@@ -7,11 +7,11 @@ import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/queue_tracks_panel.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class QueueTrack {
-  final MinimalTrack track;
+  final Track track;
   final Key key;
 
   QueueTrack({required this.track, required this.key});

@@ -36,5 +36,5 @@ func (u *TrackUsecase) GetTrackById(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.trackPresenter.ShowDetailedTrack(ctx, *track), nil
+	return u.trackPresenter.ShowTrack(ctx, *track), nil
 }

@@ -6,14 +6,13 @@ import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
 import 'package:melodink_client/features/tracker/data/models/shared_played_track.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
-import 'package:sqflite/sqflite.dart';
 
 class SyncSharedPlayedTrackRepository {
   Future<int> _getLastSharedId() async {
     final db = await DatabaseService.getDatabase();
 
-    final List<Map<String, dynamic>> result = await db
-        .rawQuery('SELECT MAX(id) as last_id FROM shared_played_tracks');
+    final List<Map<String, dynamic>> result =
+        db.select('SELECT MAX(id) as last_id FROM shared_played_tracks');
 
     if (result.isNotEmpty && result.first['last_id'] != null) {
       return result.first['last_id'] as int;
@@ -37,26 +36,109 @@ class SyncSharedPlayedTrackRepository {
           )
           .toList();
 
-      for (var sharedPlayedTrack in sharedPlayedTracks) {
-        await db.insert(
-          "shared_played_tracks",
-          {
-            "id": sharedPlayedTrack.id,
-            "internal_device_id": sharedPlayedTrack.internalDeviceId,
-            "track_id": sharedPlayedTrack.trackId,
-            "device_id": sharedPlayedTrack.deviceId,
-            "start_at": sharedPlayedTrack.startAt.millisecondsSinceEpoch,
-            "finish_at": sharedPlayedTrack.finishAt.millisecondsSinceEpoch,
-            "begin_at": sharedPlayedTrack.beginAt.inMilliseconds,
-            "ended_at": sharedPlayedTrack.endedAt.inMilliseconds,
-            "shuffle": sharedPlayedTrack.shuffle ? 1 : 0,
-            "track_ended": sharedPlayedTrack.trackEnded ? 1 : 0,
-            "track_duration": sharedPlayedTrack.trackDuration.inMilliseconds,
-            "shared_at": sharedPlayedTrack.sharedAt.millisecondsSinceEpoch,
-          },
-          conflictAlgorithm: ConflictAlgorithm.replace,
-        );
+      if (sharedPlayedTracks.isEmpty) {
+        return;
       }
+
+      const chunkSize = 75;
+
+      final insertBatch = db.prepare(
+        '''
+    INSERT OR REPLACE INTO shared_played_tracks (
+      id,
+      internal_device_id,
+      track_id,
+      device_id,
+      start_at,
+      finish_at,
+      begin_at,
+      ended_at,
+      shuffle,
+      track_ended,
+      track_duration,
+      shared_at
+    ) VALUES ${List.filled(chunkSize, "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").join(', ')}
+    ''',
+      );
+
+      for (var i = 0; i < sharedPlayedTracks.length; i += chunkSize) {
+        if ((i + chunkSize < sharedPlayedTracks.length)) {
+          final chunk = sharedPlayedTracks.sublist(i, i + chunkSize);
+
+          insertBatch.execute(
+            chunk
+                .map(
+                  (sharedPlayedTrack) => [
+                    sharedPlayedTrack.id,
+                    sharedPlayedTrack.internalDeviceId,
+                    sharedPlayedTrack.trackId,
+                    sharedPlayedTrack.deviceId,
+                    sharedPlayedTrack.startAt.millisecondsSinceEpoch,
+                    sharedPlayedTrack.finishAt.millisecondsSinceEpoch,
+                    sharedPlayedTrack.beginAt.inMilliseconds,
+                    sharedPlayedTrack.endedAt.inMilliseconds,
+                    sharedPlayedTrack.shuffle ? 1 : 0,
+                    sharedPlayedTrack.trackEnded ? 1 : 0,
+                    sharedPlayedTrack.trackDuration.inMilliseconds,
+                    sharedPlayedTrack.sharedAt.millisecondsSinceEpoch,
+                  ],
+                )
+                .expand((x) => x)
+                .toList(),
+          );
+        } else {
+          final chunk =
+              sharedPlayedTracks.sublist(i, sharedPlayedTracks.length);
+
+          final insertBatchLast = db.prepare(
+            '''
+    INSERT OR REPLACE INTO shared_played_tracks (
+      id,
+      internal_device_id,
+      track_id,
+      device_id,
+      start_at,
+      finish_at,
+      begin_at,
+      ended_at,
+      shuffle,
+      track_ended,
+      track_duration,
+      shared_at
+    ) VALUES ${List.filled(chunk.length, "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").join(', ')}
+    ''',
+          );
+
+          insertBatchLast.execute(
+            chunk
+                .map(
+                  (sharedPlayedTrack) => [
+                    sharedPlayedTrack.id,
+                    sharedPlayedTrack.internalDeviceId,
+                    sharedPlayedTrack.trackId,
+                    sharedPlayedTrack.deviceId,
+                    sharedPlayedTrack.startAt.millisecondsSinceEpoch,
+                    sharedPlayedTrack.finishAt.millisecondsSinceEpoch,
+                    sharedPlayedTrack.beginAt.inMilliseconds,
+                    sharedPlayedTrack.endedAt.inMilliseconds,
+                    sharedPlayedTrack.shuffle ? 1 : 0,
+                    sharedPlayedTrack.trackEnded ? 1 : 0,
+                    sharedPlayedTrack.trackDuration.inMilliseconds,
+                    sharedPlayedTrack.sharedAt.millisecondsSinceEpoch,
+                  ],
+                )
+                .expand((x) => x)
+                .toList(),
+          );
+
+          insertBatchLast.dispose();
+        }
+        if (i % 100 == 0) {
+          await Future.delayed(Duration(milliseconds: 1));
+        }
+      }
+
+      insertBatch.dispose();
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -74,7 +156,7 @@ class SyncSharedPlayedTrackRepository {
 
     final deviceId = await SettingsRepository().getDeviceId();
 
-    final data = await db.rawQuery("""
+    final data = db.select("""
       SELECT *
       FROM played_tracks
       WHERE id NOT IN (

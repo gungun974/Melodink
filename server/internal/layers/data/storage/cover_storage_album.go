@@ -116,6 +116,24 @@ func (s *CoverStorage) GetAlbumCoverSignature(
 	return s.getCoverSignature(s.getAlbumStorageDirectoryPath(album))
 }
 
+func (s *CoverStorage) LoadAlbumCoverSignature(
+	album *entities.Album,
+) {
+	album.CoverSignature = s.GetAlbumCoverSignature(album)
+
+	if album.CoverSignature != "" {
+		return
+	}
+
+	for _, track := range album.Tracks {
+		album.CoverSignature = s.GetTrackCoverSignature(&track)
+
+		if album.CoverSignature != "" {
+			return
+		}
+	}
+}
+
 func (s *CoverStorage) RemoveAlbumCoverFiles(album *entities.Album) error {
 	directory := s.getAlbumStorageDirectoryPath(album)
 

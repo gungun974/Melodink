@@ -15,7 +15,7 @@ import 'package:melodink_client/features/player/presentation/widgets/player_cont
 import 'package:melodink_client/features/player/presentation/widgets/player_error_overlay.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
@@ -250,7 +250,7 @@ class _MobilePlayerInfo extends StatelessWidget {
 
   final GlobalKey<State<StatefulWidget>> trackContextMenuKey;
   final MenuController trackContextMenuController;
-  final AsyncSnapshot<MinimalTrack?> snapshot;
+  final AsyncSnapshot<Track?> snapshot;
 
   @override
   Widget build(BuildContext context) {
@@ -317,7 +317,7 @@ class _MobilePlayerInfo extends StatelessWidget {
                       children: [
                         AlbumLinkText(
                           text: currentTrack.title,
-                          albumId: currentTrack.albumId,
+                          albumId: currentTrack.albums.firstOrNull?.id,
                           style: const TextStyle(
                             fontWeight: FontWeight.w500,
                             fontSize: 16,
@@ -338,8 +338,12 @@ class _MobilePlayerInfo extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         AlbumLinkText(
-                          text: currentTrack.album,
-                          albumId: currentTrack.albumId,
+                          text: currentTrack.albums
+                              .map(
+                                (album) => album.name,
+                              )
+                              .join(", "),
+                          albumId: currentTrack.albums.firstOrNull?.id,
                           style: TextStyle(
                             fontSize: 12,
                             letterSpacing: 12 * 0.03,

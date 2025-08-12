@@ -1,0 +1,19 @@
+CREATE TABLE deleted_tracks (
+    id INTEGER PRIMARY KEY,
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE deleted_albums (
+    id INTEGER PRIMARY KEY,
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE deleted_artists (
+    id INTEGER PRIMARY KEY,
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE deleted_playlists (
+    id INTEGER PRIMARY KEY,
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

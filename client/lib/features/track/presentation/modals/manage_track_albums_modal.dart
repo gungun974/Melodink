@@ -278,12 +278,12 @@ class AlbumSelector extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Tooltip(
-                              message: album.albumArtists
+                              message: album.artists
                                   .map((artist) => artist.name)
                                   .join(", "),
                               waitDuration: const Duration(milliseconds: 800),
                               child: Text(
-                                album.albumArtists
+                                album.artists
                                     .map((artist) => artist.name)
                                     .join(", "),
                                 maxLines: 1,

@@ -178,7 +178,7 @@ class ShowTrackModal extends HookConsumerWidget {
                               ),
                               const SizedBox(height: 4),
                               Column(
-                                children: track.metadata.albumArtists
+                                children: track.artists
                                     .map(
                                       (artist) => AppValueTextField(
                                         labelText: t.general.albumArtist,
@@ -201,7 +201,7 @@ class ShowTrackModal extends HookConsumerWidget {
                               ),
                               const SizedBox(height: 4),
                               Column(
-                                children: track.metadata.artists
+                                children: track.artists
                                     .map(
                                       (artist) => AppValueTextField(
                                         labelText: t.general.artist,
@@ -224,7 +224,9 @@ class ShowTrackModal extends HookConsumerWidget {
                             children: [
                               AppValueTextField(
                                 labelText: t.general.album,
-                                value: track.metadata.album,
+                                value: track.albums
+                                    .map((album) => album.name)
+                                    .join(", "),
                                 readOnly: true,
                               ),
                               const Divider(
@@ -235,7 +237,7 @@ class ShowTrackModal extends HookConsumerWidget {
                                   Expanded(
                                     child: AppValueTextField(
                                       labelText: t.general.trackNumber,
-                                      value: "${track.metadata.trackNumber}",
+                                      value: "${track.trackNumber}",
                                       readOnly: true,
                                     ),
                                   ),
@@ -255,7 +257,7 @@ class ShowTrackModal extends HookConsumerWidget {
                                   Expanded(
                                     child: AppValueTextField(
                                       labelText: t.general.trackDisc,
-                                      value: "${track.metadata.discNumber}",
+                                      value: "${track.discNumber}",
                                       readOnly: true,
                                     ),
                                   ),

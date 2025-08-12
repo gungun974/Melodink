@@ -96,8 +96,9 @@ func (r *UserRepository) CreateUser(
     INSERT INTO users (
       name,
       email,
-      password
-    ) VALUES (?, ?, ?)
+      password,
+			created_at
+    ) VALUES (?, ?, ?, STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))
     RETURNING id, name, email, created_at, updated_at
   `,
 		name,
@@ -123,7 +124,7 @@ func (r *UserRepository) UpdateUser(user *entities.User) error {
     SET 
       name = ?, 
       email = ?,
-      updated_at = CURRENT_TIMESTAMP
+      updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')
     WHERE 
       id = ?
     RETURNING id, name, email, created_at, updated_at
@@ -153,7 +154,7 @@ func (r *UserRepository) SetUserPassword(
       users
     SET 
       password = ?, 
-      updated_at = CURRENT_TIMESTAMP
+      updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')
     WHERE 
       id = ?
     RETURNING id, name, email, created_at, updated_at

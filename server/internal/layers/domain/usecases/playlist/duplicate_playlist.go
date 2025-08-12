@@ -61,5 +61,7 @@ func (u *PlaylistUsecase) DuplicatePlaylist(
 		return nil, err
 	}
 
+	u.coverStorage.LoadPlaylistCoverSignature(&newPlaylist)
+
 	return u.playlistPresenter.ShowPlaylist(ctx, newPlaylist), nil
 }

@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 
 class Playlist extends Equatable {
@@ -10,12 +10,12 @@ class Playlist extends Equatable {
 
   final String description;
 
-  final List<MinimalTrack> tracks;
+  final List<Track> tracks;
 
   final bool isDownloaded;
 
   final String? localCover;
-  final String? coverSignature;
+  final String coverSignature;
 
   const Playlist({
     required this.id,
@@ -24,15 +24,16 @@ class Playlist extends Equatable {
     required this.tracks,
     this.isDownloaded = false,
     this.localCover,
-    this.coverSignature,
+    required this.coverSignature,
   });
 
   Playlist copyWith({
     int? id,
     String? name,
     String? description,
-    List<MinimalTrack>? tracks,
+    List<Track>? tracks,
     bool? isDownloaded,
+    String? coverSignature,
   }) {
     return Playlist(
       id: id ?? this.id,
@@ -40,7 +41,7 @@ class Playlist extends Equatable {
       description: description ?? this.description,
       tracks: tracks ?? this.tracks,
       isDownloaded: isDownloaded ?? this.isDownloaded,
-      coverSignature: coverSignature,
+      coverSignature: coverSignature ?? this.coverSignature,
     );
   }
 

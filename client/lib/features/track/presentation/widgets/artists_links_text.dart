@@ -18,7 +18,7 @@ class ArtistsLinksText extends StatelessWidget {
     this.noInteraction = false,
   });
 
-  final List<MinimalArtist> artists;
+  final List<Artist> artists;
 
   final TextStyle style;
 
@@ -77,7 +77,7 @@ class ArtistsLinksText extends StatelessWidget {
 @override
 List<InlineSpan> getArtistsLinksTextSpans(
   BuildContext context,
-  List<MinimalArtist> artists,
+  List<Artist> artists,
   TextStyle style,
   bool noInteraction,
   int? maxLines,

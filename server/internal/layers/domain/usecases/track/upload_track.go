@@ -98,5 +98,5 @@ func (u *TrackUsecase) UploadTrack(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.trackPresenter.ShowDetailedTrack(ctx, *newTrack), nil
+	return u.trackPresenter.ShowTrack(ctx, *newTrack), nil
 }

@@ -1,12 +1,12 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:melodink_client/features/library/data/repository/album_repository.dart';
+import 'package:melodink_client/features/library/data/repository/download_playlist_repository.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/delete_playlist_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/edit_playlist_provider.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
@@ -106,7 +106,7 @@ class PlaylistById extends _$PlaylistById {
 
       final updatedTracks = playlist.tracks.map((track) {
         return track.id == newTrack.id
-            ? newTrack.toMinimalTrack().copyWith(historyInfo: () => info)
+            ? newTrack.copyWith(historyInfo: () => info)
             : track;
       }).toList();
 
@@ -233,7 +233,7 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
     required bool shouldCheckDownload,
   }) {
     ref
-        .read(playlistRepositoryProvider)
+        .read(downloadPlaylistRepositoryProvider)
         .isPlaylistDownloaded(playlistId)
         .then((downloaded) {
       state = state.copyWith(downloaded: downloaded);
@@ -251,13 +251,15 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
       return;
     }
 
+    final downloadPlaylistRepository =
+        ref.read(downloadPlaylistRepositoryProvider);
     final playlistRepository = ref.read(playlistRepositoryProvider);
-    final albumRepository = ref.read(albumRepositoryProvider);
 
     state = state.copyWith(isLoading: true);
+
     try {
-      final newPlaylist =
-          await playlistRepository.updateAndStorePlaylist(playlistId);
+      await downloadPlaylistRepository.downloadPlaylist(playlistId);
+      final playlist = await playlistRepository.getPlaylistById(playlistId);
 
       state = state.copyWith(
         isLoading: false,
@@ -269,17 +271,11 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
             ref.read(downloadManagerNotifierProvider.notifier);
 
         downloadManagerNotifier.addTracksToDownloadTodo(
-          newPlaylist.tracks,
+          playlist.tracks,
         );
-
-        for (final albumId
-            in newPlaylist.tracks.map((track) => track.albumId).toSet()) {
-          await albumRepository.updateAndStoreAlbum(albumId, false);
-        }
       }
 
       ref.invalidate(allPlaylistsProvider);
-      ref.invalidate(playlistByIdProvider(playlistId));
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,
@@ -294,13 +290,13 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
       return;
     }
 
-    final playlistRepository = ref.read(playlistRepositoryProvider);
-    final albumRepository = ref.read(albumRepositoryProvider);
+    final downloadPlaylistRepository =
+        ref.read(downloadPlaylistRepositoryProvider);
 
     state = state.copyWith(isLoading: true);
+
     try {
-      await playlistRepository.deleteStoredPlaylist(playlistId);
-      await albumRepository.deleteOrphanAlbums();
+      await downloadPlaylistRepository.freePlaylist(playlistId);
 
       final downloadManagerNotifier =
           ref.read(downloadManagerNotifierProvider.notifier);
@@ -311,8 +307,6 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
         isLoading: false,
         downloaded: false,
       );
-
-      ref.invalidate(allPlaylistsProvider);
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,
@@ -324,7 +318,7 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
 }
 
 @riverpod
-Future<List<MinimalTrack>> playlistSortedTracks(Ref ref, int playlistId) async {
+Future<List<Track>> playlistSortedTracks(Ref ref, int playlistId) async {
   final playlist = await ref.watch(playlistByIdProvider(playlistId).future);
 
   final tracks = [...playlist.tracks];

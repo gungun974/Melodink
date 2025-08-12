@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 
 class Album extends Equatable {
@@ -9,48 +9,44 @@ class Album extends Equatable {
 
   final String name;
 
-  final List<MinimalArtist> albumArtists;
+  final List<Artist> artists;
 
-  final List<MinimalTrack> tracks;
-
-  final DateTime lastTrackDateAdded;
+  final List<Track> tracks;
 
   final bool isDownloaded;
   final bool downloadTracks;
 
   final String? localCover;
-  final String? coverSignature;
+  final String coverSignature;
 
   const Album({
     required this.id,
     required this.name,
-    required this.albumArtists,
+    required this.artists,
     required this.tracks,
-    required this.lastTrackDateAdded,
     this.isDownloaded = false,
     this.downloadTracks = false,
     this.localCover,
-    this.coverSignature,
+    required this.coverSignature,
   });
 
   Album copyWith({
     int? id,
     String? name,
-    List<MinimalArtist>? albumArtists,
-    List<MinimalTrack>? tracks,
-    DateTime? lastTrackDateAdded,
+    List<Artist>? artists,
+    List<Track>? tracks,
     bool? isDownloaded,
     bool? downloadTracks,
+    String? coverSignature,
   }) {
     return Album(
       id: id ?? this.id,
       name: name ?? this.name,
-      albumArtists: albumArtists ?? this.albumArtists,
+      artists: artists ?? this.artists,
       tracks: tracks ?? this.tracks,
-      lastTrackDateAdded: lastTrackDateAdded ?? this.lastTrackDateAdded,
       isDownloaded: isDownloaded ?? this.isDownloaded,
       downloadTracks: downloadTracks ?? this.downloadTracks,
-      coverSignature: coverSignature,
+      coverSignature: coverSignature ?? this.coverSignature,
     );
   }
 
@@ -58,9 +54,8 @@ class Album extends Equatable {
   List<Object?> get props => [
         id,
         name,
-        albumArtists,
+        artists,
         tracks,
-        lastTrackDateAdded,
         isDownloaded,
         downloadTracks,
         localCover,
@@ -116,7 +111,7 @@ class Album extends Equatable {
     final years = <int>{};
 
     for (var i = 0; i < tracks.length; i++) {
-      years.add(tracks[i].year);
+      years.add(tracks[i].metadata.year);
     }
 
     final yearsList = years.toList()..sort();

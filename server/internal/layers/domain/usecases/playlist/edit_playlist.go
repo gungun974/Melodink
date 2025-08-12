@@ -52,5 +52,7 @@ func (u *PlaylistUsecase) EditPlaylist(
 		return nil, entities.NewInternalError(errors.New("Failed to update playlist"))
 	}
 
+	u.coverStorage.LoadPlaylistCoverSignature(playlist)
+
 	return u.playlistPresenter.ShowPlaylist(ctx, *playlist), nil
 }

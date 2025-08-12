@@ -18,14 +18,8 @@ func (p *PlaylistPresenter) ShowPlaylists(
 	ctx context.Context,
 	playlists []entities.Playlist,
 ) models.APIResponse {
-	playlistsViewModels := make([]view_models.PlaylistViewModel, len(playlists))
-
-	for i, playlist := range playlists {
-		playlistsViewModels[i] = view_models.ConvertToPlaylistViewModel(ctx, playlist)
-	}
-
 	return models.JsonAPIResponse{
-		Data: playlistsViewModels,
+		Data: view_models.ConvertToPlaylistViewModels(ctx, playlists),
 	}
 }
 

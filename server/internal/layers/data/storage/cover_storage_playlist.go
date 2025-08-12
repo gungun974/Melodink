@@ -126,6 +126,24 @@ func (s *CoverStorage) GetPlaylistCoverSignature(
 	return s.getCoverSignature(s.getPlaylistStorageDirectoryPath(playlist))
 }
 
+func (s *CoverStorage) LoadPlaylistCoverSignature(
+	playlist *entities.Playlist,
+) {
+	playlist.CoverSignature = s.GetPlaylistCoverSignature(playlist)
+
+	if playlist.CoverSignature != "" {
+		return
+	}
+
+	for _, track := range playlist.Tracks {
+		playlist.CoverSignature = s.GetTrackCoverSignature(&track)
+
+		if playlist.CoverSignature != "" {
+			return
+		}
+	}
+}
+
 func (s *CoverStorage) RemovePlaylistCoverFiles(playlist *entities.Playlist) error {
 	directory := s.getPlaylistStorageDirectoryPath(playlist)
 

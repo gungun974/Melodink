@@ -20,48 +20,48 @@ class SharedPlayedTrackerManager {
     _scheduleSync();
   }
 
-  _scheduleSync() {
-    // Note: Later I should trigger the fetch from server when the server notify of a new shared played track
+  _scheduleSync() async {
+    await _execute();
+
     _timer = Timer(const Duration(seconds: 45), () async {
       if (_shouldStop) {
         return;
       }
 
-      bool isReadyToSync = false;
-
-      try {
-        await getMelodinkInstanceSupportDirectory();
-        isReadyToSync = true;
-      } catch (_) {}
-
-      if (!isReadyToSync) {
-        return _scheduleSync();
-      }
-
-      try {
-        await syncSharedPlayedTrackRepository.fetchSharedPlayedTracks();
-      } catch (e) {
-        mainLogger.e(e);
-      }
-
-      try {
-        await playedTrackRepository.checkAndUpdateAllTrackHistoryCache();
-      } catch (e) {
-        mainLogger.e(e);
-      }
-
-      try {
-        final settings = await SettingsRepository().getSettings();
-
-        if (settings.shareAllHistoryTrackingToServer) {
-          await syncSharedPlayedTrackRepository.uploadNotSharedTracks();
-        }
-      } catch (e) {
-        mainLogger.e(e);
-      }
+      await _execute();
 
       _scheduleSync();
     });
+  }
+
+  _execute() async {
+    try {
+      await getMelodinkInstanceSupportDirectory();
+    } catch (_) {
+      return await _scheduleSync();
+    }
+
+    try {
+      await syncSharedPlayedTrackRepository.fetchSharedPlayedTracks();
+    } catch (e) {
+      mainLogger.e(e);
+    }
+
+    try {
+      await playedTrackRepository.checkAndUpdateAllTrackHistoryCache();
+    } catch (e) {
+      mainLogger.e(e);
+    }
+
+    try {
+      final settings = await SettingsRepository().getSettings();
+
+      if (settings.shareAllHistoryTrackingToServer) {
+        await syncSharedPlayedTrackRepository.uploadNotSharedTracks();
+      }
+    } catch (e) {
+      mainLogger.e(e);
+    }
   }
 
   void dispose() {

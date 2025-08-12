@@ -16,7 +16,7 @@ import 'package:melodink_client/features/player/domain/audio/audio_controller.da
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
@@ -120,7 +120,7 @@ class DesktopTrackModuleLayout extends ConsumerWidget {
 }
 
 class DesktopTrack extends HookConsumerWidget {
-  final MinimalTrack track;
+  final Track track;
 
   final int trackNumber;
   final bool showImage;
@@ -128,28 +128,28 @@ class DesktopTrack extends HookConsumerWidget {
 
   final List<DesktopTrackModule> modules;
 
-  final void Function(MinimalTrack track) playCallback;
+  final void Function(Track track) playCallback;
 
-  final void Function(MinimalTrack track)? selectCallback;
+  final void Function(Track track)? selectCallback;
 
-  final void Function(MinimalTrack track)? removeCallback;
+  final void Function(Track track)? removeCallback;
 
   final bool selected;
   final bool selectedTop;
   final bool selectedBottom;
 
-  final List<MinimalTrack> selectedTracks;
+  final List<Track> selectedTracks;
 
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
-    MinimalTrack track,
+    Track track,
   )? singleCustomActionsBuilder;
 
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
-    List<MinimalTrack> tracks,
+    List<Track> tracks,
   )? multiCustomActionsBuilder;
 
   final bool showDefaultActions;
@@ -435,8 +435,12 @@ class DesktopTrack extends HookConsumerWidget {
                           yield Expanded(
                             child: IntrinsicWidth(
                               child: AlbumLinkText(
-                                text: track.album,
-                                albumId: track.albumId,
+                                text: track.albums
+                                    .map(
+                                      (album) => album.name,
+                                    )
+                                    .join(", "),
+                                albumId: track.albums.firstOrNull?.id,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -448,46 +452,70 @@ class DesktopTrack extends HookConsumerWidget {
                             ),
                           );
                         case DesktopTrackModule.lastPlayed:
-                          yield SizedBox(
-                            width: module.width,
-                            child: track.historyInfo?.lastPlayedDate == null
-                                ? Text(
-                                    t.general.never,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      letterSpacing: 14 * 0.03,
-                                      color: Colors.grey[350],
+                          if (track.historyInfo?.computed == false) {
+                            yield SizedBox(
+                              width: module.width,
+                              child: Text("N/A",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    letterSpacing: 14 * 0.03,
+                                    color: Colors.grey[350],
+                                  )),
+                            );
+                          } else {
+                            yield SizedBox(
+                              width: module.width,
+                              child: track.historyInfo?.lastPlayedDate == null
+                                  ? Text(
+                                      t.general.never,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        letterSpacing: 14 * 0.03,
+                                        color: Colors.grey[350],
+                                      ),
+                                    )
+                                  : FormatTimeago(
+                                      date: track.historyInfo!.lastPlayedDate!,
+                                      builder: (context, value) {
+                                        return Text(
+                                          value,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            letterSpacing: 14 * 0.03,
+                                            color: Colors.grey[350],
+                                          ),
+                                        );
+                                      },
                                     ),
-                                  )
-                                : FormatTimeago(
-                                    date: track.historyInfo!.lastPlayedDate!,
-                                    builder: (context, value) {
-                                      return Text(
-                                        value,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          letterSpacing: 14 * 0.03,
-                                          color: Colors.grey[350],
-                                        ),
-                                      );
-                                    },
-                                  ),
-                          );
+                            );
+                          }
                         case DesktopTrackModule.playedCount:
-                          yield SizedBox(
-                            width: module.width,
-                            child: Text(
-                              track.historyInfo?.playedCount == 0
-                                  ? t.general.never
-                                  : "${track.historyInfo?.playedCount}",
-                              style: TextStyle(
-                                fontSize: 12,
-                                letterSpacing: 14 * 0.03,
-                                color: Colors.grey[350],
+                          if (track.historyInfo?.computed == false) {
+                            yield SizedBox(
+                              width: module.width,
+                              child: Text("N/A",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    letterSpacing: 14 * 0.03,
+                                    color: Colors.grey[350],
+                                  )),
+                            );
+                          } else {
+                            yield SizedBox(
+                              width: module.width,
+                              child: Text(
+                                (track.historyInfo?.playedCount ?? 0) == 0
+                                    ? t.general.never
+                                    : "${track.historyInfo?.playedCount}",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  letterSpacing: 14 * 0.03,
+                                  color: Colors.grey[350],
+                                ),
+                                textAlign: TextAlign.right,
                               ),
-                              textAlign: TextAlign.right,
-                            ),
-                          );
+                            );
+                          }
                         case DesktopTrackModule.dateAdded:
                           yield SizedBox(
                             width: module.width,

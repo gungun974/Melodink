@@ -40,5 +40,7 @@ func (u *PlaylistUsecase) ChangePlaylistCover(
 		return nil, err
 	}
 
+	u.coverStorage.LoadPlaylistCoverSignature(playlist)
+
 	return u.playlistPresenter.ShowPlaylist(ctx, *playlist), nil
 }

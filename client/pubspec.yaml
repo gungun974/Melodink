@@ -40,8 +40,6 @@ dependencies:
   dio_cookie_manager: ^3.1.1
   path_provider: ^2.1.4
   flutter_reorderable_list: ^1.3.1
-  sqflite: ^2.3.3+1
-  sqflite_common_ffi: ^2.3.3
   path: ^1.9.0
   connectivity_plus: ^6.0.5
   crypto: ^3.0.5
@@ -69,9 +67,9 @@ dependencies:
       url: https://github.com/gungun974/flutter_rating_bar
       ref: 098aad19d9147e2fa4b36ce6f9671a9b5d89d283
   audio_session: ^0.1.23
-  sqlite3_flutter_libs: ^0.5.28
   diacritic: ^0.1.6
   flutter_cache_manager: ^3.4.1
+  sqlite3: ^2.9.0
 
 dev_dependencies:
   flutter_test:

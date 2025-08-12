@@ -6,7 +6,6 @@ import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
@@ -21,7 +20,7 @@ class AllTracks extends _$AllTracks {
   late PlayedTrackRepository _playedTrackRepository;
 
   @override
-  Future<List<MinimalTrack>> build() async {
+  Future<List<Track>> build() async {
     final trackRepository = ref.watch(trackRepositoryProvider);
     _playedTrackRepository = ref.watch(playedTrackRepositoryProvider);
 
@@ -63,7 +62,16 @@ class AllTracks extends _$AllTracks {
       state = AsyncData(updatedTracks);
     });
 
-    return await trackRepository.getAllTracks();
+    final stream = trackRepository.getAllTracks();
+
+    final List<Track> loadedTracks = [];
+
+    stream.listen((newTracks) async {
+      loadedTracks.addAll(newTracks);
+      state = AsyncData(loadedTracks);
+    });
+
+    return loadedTracks;
   }
 
   reloadTrackHistoryInfo(int trackId) async {
@@ -87,7 +95,7 @@ class AllTracks extends _$AllTracks {
 
     final updatedTracks = tracks.map((track) {
       return track.id == newTrack.id
-          ? newTrack.toMinimalTrack().copyWith(historyInfo: () => info)
+          ? newTrack.copyWith(historyInfo: () => info)
           : track;
     }).toList();
 
@@ -110,7 +118,7 @@ Future<String> trackLyricsById(Ref ref, int id) async {
 }
 
 @riverpod
-Future<List<MinimalTrack>> allSortedTracks(Ref ref) async {
+Future<List<Track>> allSortedTracks(Ref ref) async {
   final allTracks = await ref.watch(allTracksProvider.future);
 
   final tracks = [...allTracks];
@@ -121,8 +129,12 @@ Future<List<MinimalTrack>> allSortedTracks(Ref ref) async {
       return dateCompare;
     }
 
-    int albumCompare = (a.album + a.albumId.toString())
-        .compareTo(b.album + b.albumId.toString());
+    int albumCompare = a.albums
+        .map((album) => album.name + album.id.toString())
+        .join(",")
+        .compareTo(
+          b.albums.map((album) => album.name + album.id.toString()).join(","),
+        );
     if (albumCompare != 0) {
       return albumCompare;
     }
@@ -149,7 +161,7 @@ final allTracksSearchInputProvider =
     StateProvider.autoDispose<String>((ref) => '');
 
 @riverpod
-Future<List<MinimalTrack>> allSearchTracks(Ref ref) async {
+Future<List<Track>> allSearchTracks(Ref ref) async {
   final allTracks = await ref.watch(allSortedTracksProvider.future);
 
   final allTracksSearchInput = ref.watch(allTracksSearchInputProvider).trim();
@@ -163,10 +175,12 @@ Future<List<MinimalTrack>> allSearchTracks(Ref ref) async {
 
     buffer.write(track.title);
 
-    buffer.write(track.album);
+    for (final album in track.albums) {
+      buffer.write(album.name);
 
-    for (final artist in track.albumArtists) {
-      buffer.write(artist.name);
+      for (final artist in album.artists) {
+        buffer.write(artist.name);
+      }
     }
 
     for (final artist in track.artists) {
@@ -183,12 +197,12 @@ final allTracksArtistsSelectedOptionsProvider =
     StateProvider.autoDispose<List<int>>((ref) => []);
 
 @riverpod
-Future<List<MinimalArtist>> allTracksArtistFiltersOptions(Ref ref) async {
+Future<List<Artist>> allTracksArtistFiltersOptions(Ref ref) async {
   final allSearchTracks = await ref.watch(allSearchTracksProvider.future);
 
-  final List<MinimalArtist> artists = [];
+  final List<Artist> artists = [];
 
-  void addArtist(MinimalArtist newArtist) {
+  void addArtist(Artist newArtist) {
     for (final artist in artists) {
       if (artist.id == newArtist.id) {
         return;
@@ -199,7 +213,12 @@ Future<List<MinimalArtist>> allTracksArtistFiltersOptions(Ref ref) async {
   }
 
   for (final track in allSearchTracks) {
-    for (final artist in [...track.artists, ...track.albumArtists]) {
+    for (final artist in [
+      ...track.artists,
+      ...track.albums.fold([], (acc, value) {
+        return [...acc, ...value.artists];
+      }),
+    ]) {
       addArtist(artist);
     }
   }
@@ -208,7 +227,7 @@ Future<List<MinimalArtist>> allTracksArtistFiltersOptions(Ref ref) async {
 }
 
 @riverpod
-Future<List<MinimalTrack>> allFilteredArtistsTracks(Ref ref) async {
+Future<List<Track>> allFilteredArtistsTracks(Ref ref) async {
   final allSearchTracks = await ref.watch(allSearchTracksProvider.future);
 
   final allTracksArtistsSelectedOptions =
@@ -218,9 +237,9 @@ Future<List<MinimalTrack>> allFilteredArtistsTracks(Ref ref) async {
     return allSearchTracks;
   }
 
-  final List<MinimalTrack> tracks = [];
+  final List<Track> tracks = [];
 
-  void addTrack(MinimalTrack newTrack) {
+  void addTrack(Track newTrack) {
     for (final track in tracks) {
       if (track.id == newTrack.id) {
         return;
@@ -231,7 +250,12 @@ Future<List<MinimalTrack>> allFilteredArtistsTracks(Ref ref) async {
   }
 
   for (final track in allSearchTracks) {
-    for (final artist in [...track.artists, ...track.albumArtists]) {
+    for (final artist in [
+      ...track.artists,
+      ...track.albums.fold([], (acc, value) {
+        return [...acc, ...value.artists];
+      })
+    ]) {
       if (allTracksArtistsSelectedOptions.contains(artist.id)) {
         addTrack(track);
         break;
@@ -269,14 +293,16 @@ Future<List<(int, String)>> allTracksAlbumFiltersOptions(Ref ref) async {
   }
 
   for (final track in allFilteredArtistsTracks) {
-    addAlbum((track.albumId, track.album));
+    for (final album in track.albums) {
+      addAlbum((album.id, album.name));
+    }
   }
 
   return albums;
 }
 
 @riverpod
-Future<List<MinimalTrack>> allFilteredAlbumsTracks(Ref ref) async {
+Future<List<Track>> allFilteredAlbumsTracks(Ref ref) async {
   final allFilteredArtistsTracks =
       await ref.watch(allFilteredArtistsTracksProvider.future);
 
@@ -287,9 +313,9 @@ Future<List<MinimalTrack>> allFilteredAlbumsTracks(Ref ref) async {
     return allFilteredArtistsTracks;
   }
 
-  final List<MinimalTrack> tracks = [];
+  final List<Track> tracks = [];
 
-  void addTrack(MinimalTrack newTrack) {
+  void addTrack(Track newTrack) {
     for (final track in tracks) {
       if (track.id == newTrack.id) {
         return;
@@ -300,8 +326,10 @@ Future<List<MinimalTrack>> allFilteredAlbumsTracks(Ref ref) async {
   }
 
   for (final track in allFilteredArtistsTracks) {
-    if (allTracksAlbumsSelectedOptions.contains(track.albumId)) {
-      addTrack(track);
+    for (final album in track.albums) {
+      if (allTracksAlbumsSelectedOptions.contains(album.id)) {
+        addTrack(track);
+      }
     }
   }
 

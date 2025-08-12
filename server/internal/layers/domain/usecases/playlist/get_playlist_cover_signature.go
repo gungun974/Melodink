@@ -31,22 +31,12 @@ func (u *PlaylistUsecase) GetPlaylistCoverSignature(
 		return nil, entities.NewUnauthorizedError()
 	}
 
-	signature := u.coverStorage.GetPlaylistCoverSignature(playlist)
+	u.coverStorage.LoadPlaylistCoverSignature(playlist)
 
-	if signature != "" {
+	if playlist.CoverSignature != "" {
 		return models.PlainAPIResponse{
-			Text: signature,
+			Text: playlist.CoverSignature,
 		}, nil
-	}
-
-	for _, track := range playlist.Tracks {
-		signature := u.coverStorage.GetTrackCoverSignature(&track)
-
-		if signature != "" {
-			return models.PlainAPIResponse{
-				Text: signature,
-			}, nil
-		}
 	}
 
 	return models.PlainAPIResponse{

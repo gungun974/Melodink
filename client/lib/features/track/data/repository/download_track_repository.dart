@@ -12,9 +12,9 @@ import 'package:melodink_client/core/helpers/split_id_to_path.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/track/data/models/minimal_track_model.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 
 class DownloadTrackRepository {
   static DownloadTrack decodeDownloadTrack(
@@ -38,8 +38,8 @@ class DownloadTrackRepository {
     final db = await DatabaseService.getDatabase();
 
     try {
-      final data = await db.rawQuery(
-          "SELECT * FROM track_download WHERE track_id = ?", [trackId]);
+      final data = db
+          .select("SELECT * FROM track_download WHERE track_id = ?", [trackId]);
 
       final rawDownloadTrack = data.firstOrNull;
 
@@ -74,7 +74,7 @@ class DownloadTrackRepository {
     final db = await DatabaseService.getDatabase();
 
     try {
-      final data = await db.rawQuery(
+      final data = db.select(
           "SELECT track_id FROM track_download WHERE track_id = ?", [trackId]);
 
       final rawDownloadTrack = data.firstOrNull;
@@ -90,63 +90,33 @@ class DownloadTrackRepository {
         bool shouldDownload,
         String signature,
         String coverSignature,
-        AppSettingAudioQuality audioQuality
-      })> shouldDownloadOrUpdateTrack(int trackId) async {
-    try {
-      final config = await SettingsRepository().getSettings();
+        AppSettingAudioQuality audioQuality,
+      })> shouldDownloadOrUpdateTrack(Track track) async {
+    final config = await SettingsRepository().getSettings();
 
-      final signatureResponse =
-          await AppApi().dio.get<String>("/track/$trackId/signature");
+    final signature = track.fileSignature;
+    final coverSignature = track.coverSignature;
 
-      final coverSignatureResponse =
-          await AppApi().dio.get<String>("/track/$trackId/cover/signature");
+    final downloadTrack = await getDownloadedTrackByTrackId(track.id);
 
-      final signature = signatureResponse.data;
-      final coverSignature = coverSignatureResponse.data;
-
-      if (signature == null) {
-        throw ServerTimeoutException();
-      }
-
-      if (coverSignature == null) {
-        throw ServerTimeoutException();
-      }
-
-      final downloadTrack = await getDownloadedTrackByTrackId(trackId);
-
-      if (downloadTrack != null &&
-          downloadTrack.fileSignature ==
-              "$signature-${config.downloadAudioQuality.name}" &&
-          downloadTrack.coverSignature == coverSignature) {
-        return (
-          shouldDownload: false,
-          signature: "$signature-${config.downloadAudioQuality.name}",
-          coverSignature: coverSignature,
-          audioQuality: config.downloadAudioQuality,
-        );
-      }
-
+    if (downloadTrack != null &&
+        downloadTrack.fileSignature ==
+            "$signature-${config.downloadAudioQuality.name}" &&
+        downloadTrack.coverSignature == coverSignature) {
       return (
-        shouldDownload: true,
+        shouldDownload: false,
         signature: "$signature-${config.downloadAudioQuality.name}",
         coverSignature: coverSignature,
         audioQuality: config.downloadAudioQuality,
       );
-    } on DioException catch (e) {
-      final response = e.response;
-      if (response == null) {
-        throw ServerTimeoutException();
-      }
-
-      if (response.statusCode == 404) {
-        throw TrackNotFoundException();
-      }
-
-      throw ServerUnknownException();
-    } catch (e) {
-      mainLogger.e(e);
-      throw ServerUnknownException();
     }
+
+    return (
+      shouldDownload: true,
+      signature: "$signature-${config.downloadAudioQuality.name}",
+      coverSignature: coverSignature,
+      audioQuality: config.downloadAudioQuality,
+    );
   }
 
   Future<void> downloadOrUpdateTrack(
@@ -229,17 +199,28 @@ class DownloadTrackRepository {
       }
 
       if (downloadTrack == null) {
-        await db.insert("track_download", {
-          "track_id": trackId,
-          "audio_file": downloadAudioPath,
-          "image_file": downloadImagePath,
-          "file_signature": signature,
-          "cover_signature": coverSignature,
-        });
+        db.execute(
+          '''
+    INSERT INTO track_download (
+      track_id,
+      audio_file,
+      image_file,
+      file_signature,
+      cover_signature
+    ) VALUES (?, ?, ?, ?, ?)
+    ''',
+          [
+            trackId,
+            downloadAudioPath,
+            downloadImagePath,
+            signature,
+            coverSignature,
+          ],
+        );
         return;
       }
 
-      await db.rawUpdate(
+      db.execute(
           "UPDATE track_download SET file_signature = ?, cover_signature = ?, audio_file = ?, image_file = ? WHERE track_id = ?",
           [
             signature,
@@ -284,31 +265,19 @@ class DownloadTrackRepository {
         (await getMelodinkInstanceSupportDirectory()).path;
 
     try {
-      final albumTracksData = await db.rawQuery(
-          "SELECT tracks FROM album_download WHERE download_tracks = 1");
-
-      final playlistTracksData =
-          await db.rawQuery("SELECT tracks FROM playlist_download");
-
-      final trackIds = [
-        ...albumTracksData
-            .map((data) => (json.decode(data["tracks"] as String) as List)
-                .map(
-                  (rawModel) => MinimalTrackModel.fromJson(rawModel).id,
-                )
-                .toList())
-            .expand((i) => i),
-        ...playlistTracksData
-            .map((data) => (json.decode(data["tracks"] as String) as List)
-                .map(
-                  (rawModel) => MinimalTrackModel.fromJson(rawModel).id,
-                )
-                .toList())
-            .expand((i) => i)
-      ];
-
-      final orphansData = await db.rawQuery(
-        "SELECT * FROM track_download WHERE track_id NOT IN (${trackIds.join(",")})",
+      final orphansData = db.select(
+        """
+SELECT track_download.*
+FROM track_download
+WHERE (track_download.track_id NOT IN (SELECT je.value
+                                       FROM playlist_downloads
+                                                JOIN playlists ON playlist_downloads.playlist_id = playlists.id
+                                                JOIN json_each(playlists.tracks) AS je ON TRUE))
+  AND (track_download.track_id NOT IN (SELECT track_album.track_id
+                                       FROM album_downloads
+                                                JOIN albums ON album_downloads.album_id = albums.id
+                                                JOIN track_album ON albums.id = track_album.album_id));
+        """,
       );
 
       final orphans = orphansData
@@ -345,10 +314,9 @@ class DownloadTrackRepository {
           } catch (_) {}
         }
 
-        await db.delete(
-          "track_download",
-          where: "track_id = ?",
-          whereArgs: [orphan.trackId],
+        db.execute(
+          "DELETE FROM track_download WHERE track_id = ?",
+          [orphan.trackId],
         );
       }
     } catch (e) {
@@ -361,10 +329,9 @@ class DownloadTrackRepository {
     final db = await DatabaseService.getDatabase();
 
     try {
-      await db.delete(
-        "track_download",
-        where: "track_id = ?",
-        whereArgs: [trackId],
+      db.execute(
+        "DELETE FROM track_download WHERE track_id = ?",
+        [trackId],
       );
     } catch (e) {
       mainLogger.e(e);

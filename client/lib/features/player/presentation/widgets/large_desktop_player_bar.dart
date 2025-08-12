@@ -163,7 +163,7 @@ class DesktopCurrentTrack2 extends ConsumerWidget {
                       children: [
                         AlbumLinkText(
                           text: currentTrack.title,
-                          albumId: currentTrack.albumId,
+                          albumId: currentTrack.albums.firstOrNull?.id,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,

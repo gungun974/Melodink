@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"sync"
+	"time"
 
 	data_models "github.com/gungun974/Melodink/server/internal/layers/data/models"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
@@ -42,10 +43,29 @@ func (r *AlbumRepository) GetAllAlbumsFromUser(userId int) ([]entities.Album, er
 
 	albums := m.ToAlbums()
 
-	err = r.LoadTracksInAlbums(albums)
+	err = r.LoadArtistsInAlbums(albums)
 	if err != nil {
-		return nil, entities.NewInternalError(err)
+		return nil, err
 	}
+
+	return albums, nil
+}
+
+func (r *AlbumRepository) GetAllAlbumsFromUserSince(
+	userId int,
+	since time.Time,
+) ([]entities.Album, error) {
+	m := data_models.AlbumModels{}
+
+	err := r.Database.Select(&m, `
+    SELECT * FROM albums WHERE user_id = ? AND (COALESCE(updated_at, created_at) >= ?)
+  `, userId, since.UTC())
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return nil, err
+	}
+
+	albums := m.ToAlbums()
 
 	err = r.LoadArtistsInAlbums(albums)
 	if err != nil {
@@ -209,12 +229,14 @@ func (r *AlbumRepository) CreateAlbum(album *entities.Album) error {
       (
         user_id,
 
-        name
+        name,
+				created_at
       )
     VALUES
       (
         ?,
-        ?
+        ?,
+				STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')
       )
     RETURNING *
   `,
@@ -278,7 +300,7 @@ func (r *AlbumRepository) UpdateAlbum(album *entities.Album) error {
         user_id = ?,
 
         name = ?,
-      	updated_at = CURRENT_TIMESTAMP
+      	updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')
     WHERE
       id = ?
     RETURNING *
@@ -286,32 +308,6 @@ func (r *AlbumRepository) UpdateAlbum(album *entities.Album) error {
 		album.UserId,
 
 		album.Name,
-		album.Id,
-	)
-	if err != nil {
-		logger.DatabaseLogger.Error(err)
-		return err
-	}
-
-	*album = m.ToAlbum()
-
-	return nil
-}
-
-func (r *AlbumRepository) DeleteAlbum(album *entities.Album) error {
-	if len(album.Tracks) == 0 {
-		return nil
-	}
-
-	m := data_models.AlbumModel{}
-
-	err := r.Database.Get(&m, `
-    DELETE FROM
-      albums
-    WHERE 
-      id = ?
-    RETURNING *
-  `,
 		album.Id,
 	)
 	if err != nil {
@@ -351,7 +347,7 @@ func (r AlbumRepository) AddAlbumTracks(album *entities.Album) error {
 			trackId,
 		).Scan(&maxPos)
 		if err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return err
 		}
 
@@ -366,7 +362,22 @@ func (r AlbumRepository) AddAlbumTracks(album *entities.Album) error {
 
 	_, err = tx.Exec(insertQuery, args...)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
+		return err
+	}
+
+	updateQuery, updateArgs, err := sqlx.In(`
+		UPDATE tracks SET updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW') WHERE id IN (?)
+	`, trackIds)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	updateQuery = tx.Rebind(updateQuery)
+
+	_, err = tx.Exec(updateQuery, updateArgs...)
+	if err != nil {
+		_ = tx.Rollback()
 		return err
 	}
 
@@ -378,6 +389,15 @@ func (r AlbumRepository) AddAlbumTracks(album *entities.Album) error {
 }
 
 func (r AlbumRepository) RemoveAlbumTracks(album *entities.Album) error {
+	if len(album.Tracks) == 0 {
+		return nil
+	}
+
+	tx, err := r.Database.Beginx()
+	if err != nil {
+		return err
+	}
+
 	trackIds := make([]int, len(album.Tracks))
 
 	for i, track := range album.Tracks {
@@ -387,14 +407,46 @@ func (r AlbumRepository) RemoveAlbumTracks(album *entities.Album) error {
 	delQuery, delArgs, err := sqlx.In(`
 		DELETE FROM track_album
 		WHERE album_id = ? AND track_id IN (?)
+		RETURNING track_id
 	`, album.Id, trackIds)
 	if err != nil {
 		return err
 	}
-	delQuery = r.Database.Rebind(delQuery)
+	delQuery = tx.Rebind(delQuery)
 
-	_, err = r.Database.Exec(delQuery, delArgs...)
+	removedTracks, err := tx.Query(delQuery, delArgs...)
 	if err != nil {
+		return err
+	}
+	defer removedTracks.Close()
+
+	updatedTracks := []int{}
+
+	for removedTracks.Next() {
+		var id int
+		if err := removedTracks.Scan(&id); err != nil {
+			_ = tx.Rollback()
+			return err
+		}
+		updatedTracks = append(updatedTracks, id)
+	}
+
+	updateQuery, updateArgs, err := sqlx.In(`
+		UPDATE tracks SET updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW') WHERE id IN (?)
+	`, updatedTracks)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	updateQuery = tx.Rebind(updateQuery)
+
+	_, err = tx.Exec(updateQuery, updateArgs...)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 
@@ -432,14 +484,14 @@ func (r AlbumRepository) SetAlbumArtists(album *entities.Album) error {
 		WHERE album_id = ? AND artist_id NOT IN (?)
 	`, album.Id, artistIds)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 	delQuery = tx.Rebind(delQuery)
 
 	_, err = tx.Exec(delQuery, delArgs...)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 
@@ -461,7 +513,7 @@ func (r AlbumRepository) SetAlbumArtists(album *entities.Album) error {
 
 	_, err = tx.Exec(insertQuery, args...)
 	if err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 
@@ -475,9 +527,20 @@ func (r AlbumRepository) SetAlbumArtists(album *entities.Album) error {
 			artistId,
 		)
 		if err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return err
 		}
+	}
+
+	// Update
+
+	_, err = tx.Exec(
+		"UPDATE albums SET updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW') WHERE id = ?",
+		album.Id,
+	)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -485,4 +548,66 @@ func (r AlbumRepository) SetAlbumArtists(album *entities.Album) error {
 	}
 
 	return nil
+}
+
+func (r *AlbumRepository) DeleteAlbum(album *entities.Album) error {
+	m := data_models.AlbumModel{}
+
+	tx, err := r.Database.Beginx()
+	if err != nil {
+		return err
+	}
+
+	err = tx.Get(&m, `
+    DELETE FROM
+      albums
+    WHERE 
+      id = ?
+    RETURNING *
+  `,
+		album.Id,
+	)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		_ = tx.Rollback()
+		return err
+	}
+
+	_, err = tx.Exec("INSERT INTO deleted_albums (id) VALUES (?)", album.Id)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		_ = tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	*album = m.ToAlbum()
+
+	return nil
+}
+
+func (r *AlbumRepository) GetAllDeletedAlbumsSince(since time.Time) ([]int, error) {
+	rows, err := r.Database.Query(`
+    SELECT id FROM deleted_albums WHERE deleted_at >= ?
+  `, since.UTC())
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	ids := []int{}
+
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
 }

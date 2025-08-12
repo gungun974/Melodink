@@ -10,4 +10,6 @@ type Album struct {
 	Artists []Artist
 
 	Tracks []Track
+
+	CoverSignature string
 }

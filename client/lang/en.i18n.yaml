@@ -208,6 +208,8 @@ actions:
   createAccount: "Create account"
   changeServer: "Change server"
 
+  performFullSync: "Perform a full sync"
+
 notifications:
   offline:
     title: "@:general.offline"
@@ -292,6 +294,12 @@ notifications:
 
   trackCoverHaveBeenChanged:
     message: "The cover for track \"{title}\" have been changed."
+
+  syncStarted:
+    message: "Full synchronization has begun"
+
+  syncEnded:
+    message: "Full synchronization has ended"
 
 confirms:
   title: "Confirm"

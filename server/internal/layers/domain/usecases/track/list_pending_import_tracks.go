@@ -21,5 +21,5 @@ func (u *TrackUsecase) ListPendingImportTracks(
 		return nil, entities.NewInternalError(err)
 	}
 
-	return u.trackPresenter.ShowMinimalTracks(ctx, tracks), nil
+	return u.trackPresenter.ShowTracks(ctx, tracks), nil
 }

@@ -28,12 +28,6 @@ func (c *AlbumController) ListUserAlbums(
 	return c.albumUsecase.ListUserAlbums(ctx)
 }
 
-func (c *AlbumController) ListUserAlbumsWithTracks(
-	ctx context.Context,
-) (models.APIResponse, error) {
-	return c.albumUsecase.ListUserAlbumsWithTracks(ctx)
-}
-
 func (c *AlbumController) GetUserAlbum(
 	ctx context.Context,
 	rawId string,

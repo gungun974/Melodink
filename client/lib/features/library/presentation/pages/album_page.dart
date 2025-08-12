@@ -105,7 +105,7 @@ class AlbumPage extends HookConsumerWidget {
                                   year: album.getYear(),
                                   description: "",
                                   tracks: tracks,
-                                  artists: album.albumArtists,
+                                  artists: album.artists,
                                   playCallback: () async {
                                     if (!isSameSource) {
                                       await audioController.loadTracks(
@@ -150,7 +150,7 @@ class AlbumPage extends HookConsumerWidget {
                                   ),
                                   year: album.getYear(),
                                   tracks: tracks,
-                                  artists: album.albumArtists,
+                                  artists: album.artists,
                                   playCallback: () async {
                                     if (!isSameSource) {
                                       await audioController.loadTracks(

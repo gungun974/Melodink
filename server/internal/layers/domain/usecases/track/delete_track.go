@@ -50,5 +50,5 @@ func (u *TrackUsecase) DeleteTrack(
 		logger.MainLogger.Warn("Couldn't delete transcode files from storage", err, *track)
 	}
 
-	return u.trackPresenter.ShowDetailedTrack(ctx, *track), nil
+	return u.trackPresenter.ShowTrack(ctx, *track), nil
 }

@@ -19,16 +19,7 @@ func (p *AlbumPresenter) ShowAlbums(
 	albums []entities.Album,
 ) models.APIResponse {
 	return models.JsonAPIResponse{
-		Data: view_models.ConvertToAlbumsViewModel(ctx, albums, false),
-	}
-}
-
-func (p *AlbumPresenter) ShowAlbumsWithTracks(
-	ctx context.Context,
-	albums []entities.Album,
-) models.APIResponse {
-	return models.JsonAPIResponse{
-		Data: view_models.ConvertToAlbumsViewModel(ctx, albums, true),
+		Data: view_models.ConvertToAlbumsViewModel(ctx, albums),
 	}
 }
 

@@ -1,187 +1,375 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/database/database.dart';
+import 'package:melodink_client/core/error/exceptions.dart';
+import 'package:melodink_client/core/helpers/app_path_provider.dart';
+import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/core/network/network_info.dart';
-import 'package:melodink_client/features/library/data/datasource/album_local_data_source.dart';
-import 'package:melodink_client/features/library/data/datasource/playlist_local_data_source.dart';
-import 'package:melodink_client/features/library/data/datasource/playlist_remote_data_source.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/sync/data/models/playlist_model.dart';
+import 'package:melodink_client/features/sync/data/repository/sync_repository.dart';
+import 'package:melodink_client/features/track/data/repository/track_repository.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
+import 'package:sqlite3/sqlite3.dart';
 
 class PlaylistNotFoundException implements Exception {}
 
 class PlaylistRepository {
-  final PlaylistRemoteDataSource playlistRemoteDataSource;
-  final PlaylistLocalDataSource playlistLocalDataSource;
-
-  final AlbumLocalDataSource albumLocalDataSource;
-
   final PlayedTrackRepository playedTrackRepository;
+  final SyncRepository syncRepository;
 
   final NetworkInfo networkInfo;
 
   PlaylistRepository({
-    required this.playlistRemoteDataSource,
-    required this.playlistLocalDataSource,
-    required this.albumLocalDataSource,
     required this.playedTrackRepository,
+    required this.syncRepository,
     required this.networkInfo,
   });
 
-  Future<List<Playlist>> getAllPlaylists() async {
-    final localPlaylists = await playlistLocalDataSource.getAllPlaylists();
+  static Playlist decodePlaylist(
+    String applicationSupportDirectory,
+    Map<String, Object?> data,
+  ) {
+    var coverFile = data["cover_file"] as String?;
 
-    if (networkInfo.isServerRecheable()) {
-      try {
-        final remotePlaylists =
-            await playlistRemoteDataSource.getAllPlaylists();
-
-        for (var i = 0; i < remotePlaylists.length; i++) {
-          if (localPlaylists
-              .any((playlist) => playlist.id == remotePlaylists[i].id)) {
-            remotePlaylists[i] =
-                remotePlaylists[i].copyWith(isDownloaded: true);
-          }
-        }
-
-        final remoteIds =
-            remotePlaylists.map((playlist) => playlist.id).toSet();
-
-        final extraLocalPlaylists = localPlaylists
-            .where((playlist) => !remoteIds.contains(playlist.id))
-            .toList();
-
-        for (final playlist in extraLocalPlaylists) {
-          await playlistLocalDataSource.deleteStoredPlaylist(playlist.id);
-        }
-
-        await albumLocalDataSource.deleteOrphanAlbums();
-
-        return remotePlaylists;
-      } catch (_) {
-        return localPlaylists;
-      }
+    if (coverFile != null) {
+      coverFile = "$applicationSupportDirectory/$coverFile";
     }
 
-    return await playlistLocalDataSource.getAllPlaylists();
+    return Playlist(
+      id: data["id"] as int,
+      name: data["name"] as String,
+      description: data["description"] as String,
+      tracks: [],
+      coverSignature: data["cover_signature"] as String,
+      localCover: coverFile,
+      isDownloaded: data["download_id"] != null,
+    );
+  }
+
+  static loadPlaylistTracks(
+    Database db,
+    String applicationSupportDirectory,
+    Playlist playlist,
+  ) {
+    final trackIds = List<int>.from(
+      jsonDecode(
+        (db.select('''
+        SELECT tracks FROM playlists
+        WHERE id = ?
+      ''', [playlist.id])).first["tracks"] as String,
+      ),
+    );
+
+    if (trackIds.isEmpty) {
+      return;
+    }
+
+    final placeholders = List.filled(trackIds.length, '?').join(', ');
+
+    final tracks = db.select('''
+        SELECT * FROM tracks
+        WHERE id IN ($placeholders)
+        ORDER BY CASE id
+            ${trackIds.indexed.map((entry) => "WHEN ${entry.$2} THEN ${entry.$1}").join(" ")}
+        END;
+      ''', trackIds).map(TrackRepository.decodeTrack).toList();
+
+    playlist.tracks
+      ..clear
+      ..addAll(tracks);
+
+    for (final track in playlist.tracks) {
+      TrackRepository.loadTrackAlbums(db, applicationSupportDirectory, track);
+      TrackRepository.loadTrackArtists(db, track);
+    }
+  }
+
+  Future<List<Playlist>> getAllPlaylists() async {
+    try {
+      final db = await DatabaseService.getDatabase();
+
+      final applicationSupportDirectory =
+          (await getMelodinkInstanceSupportDirectory()).path;
+
+      final playlists = (db.select("""
+        SELECT playlists.*, playlist_downloads.cover_file, playlist_downloads.playlist_id as download_id
+        FROM playlists
+        LEFT JOIN playlist_downloads
+          ON playlist_downloads.playlist_id = playlists.id
+        """))
+          .map(
+            (playlist) => decodePlaylist(applicationSupportDirectory, playlist),
+          )
+          .toList();
+
+      return playlists;
+    } catch (e) {
+      mainLogger.e(e);
+      rethrow;
+    }
   }
 
   Future<Playlist> getPlaylistById(int id) async {
-    Playlist? playlist = await playlistLocalDataSource.getPlaylistById(id);
+    try {
+      final db = await DatabaseService.getDatabase();
 
-    playlist ??= await playlistRemoteDataSource.getPlaylistById(id);
+      final applicationSupportDirectory =
+          (await getMelodinkInstanceSupportDirectory()).path;
 
-    await playedTrackRepository.loadTrackHistoryIntoMinimalTracks(
-      playlist.tracks,
-    );
+      final playlist = (db.select("""
+        SELECT playlists.*, playlist_downloads.cover_file, playlist_downloads.playlist_id as download_id
+        FROM playlists
+        LEFT JOIN playlist_downloads
+          ON playlist_downloads.playlist_id = playlists.id
+        WHERE id = ?
+        """, [id]))
+          .map(
+            (playlist) => decodePlaylist(applicationSupportDirectory, playlist),
+          )
+          .firstOrNull;
 
-    return playlist;
+      if (playlist == null) {
+        throw PlaylistNotFoundException();
+      }
+
+      await playedTrackRepository.loadTrackHistoryIntoTracks(playlist.tracks);
+
+      loadPlaylistTracks(db, applicationSupportDirectory, playlist);
+
+      return playlist;
+    } catch (e) {
+      mainLogger.e(e);
+      rethrow;
+    }
   }
 
-  Future<void> addPlaylistTracks(
+  Future<Playlist> addPlaylistTracks(
     int playlistId,
-    List<MinimalTrack> tracks,
+    List<Track> tracks,
   ) async {
-    final playlist = await playlistRemoteDataSource.getPlaylistById(playlistId);
+    final playlist = await getPlaylistById(playlistId);
 
-    await playlistRemoteDataSource.setPlaylistTracks(
+    return await setPlaylistTracks(
       playlist.id,
       [...playlist.tracks, ...tracks],
     );
-
-    if (await playlistLocalDataSource.getPlaylistById(playlist.id) != null) {
-      await updateAndStorePlaylist(playlist.id);
-    }
   }
 
   Future<Playlist> setPlaylistTracks(
     int playlistId,
-    List<MinimalTrack> tracks,
+    List<Track> tracks,
   ) async {
-    final playlist = await playlistRemoteDataSource.getPlaylistById(playlistId);
+    try {
+      final response = await AppApi().dio.put(
+        "/playlist/$playlistId/tracks",
+        data: {
+          "track_ids": tracks.map((track) => track.id).toList(),
+        },
+      );
 
-    final newPlaylist = await playlistRemoteDataSource.setPlaylistTracks(
-      playlist.id,
-      tracks,
-    );
+      await syncRepository.performSync();
 
-    if (await playlistLocalDataSource.getPlaylistById(playlist.id) != null) {
-      await updateAndStorePlaylist(playlist.id);
+      return getPlaylistById(PlaylistModel.fromJson(response.data).id);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw PlaylistNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
     }
-
-    return newPlaylist;
-  }
-
-  Future<Playlist> updateAndStorePlaylist(int id) async {
-    final playlist = await playlistRemoteDataSource.getPlaylistById(id);
-    await playlistLocalDataSource.storePlaylist(playlist);
-
-    await playedTrackRepository.loadTrackHistoryIntoMinimalTracks(
-      playlist.tracks,
-    );
-
-    return playlist;
-  }
-
-  Future<void> deleteStoredPlaylist(int id) async {
-    await playlistLocalDataSource.deleteStoredPlaylist(id);
   }
 
   Future<Playlist> createPlaylist(Playlist playlist) async {
-    return playlistRemoteDataSource.createPlaylist(playlist);
+    try {
+      final response = await AppApi().dio.post(
+        "/playlist",
+        data: {
+          "name": playlist.name,
+          "description": playlist.description,
+        },
+      );
+
+      await syncRepository.performSync();
+
+      return getPlaylistById(PlaylistModel.fromJson(response.data).id);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
   }
 
-  Future<Playlist> duplicatePlaylist(int playlistId) {
-    return playlistRemoteDataSource.duplicatePlaylist(playlistId);
+  Future<Playlist> duplicatePlaylist(int playlistId) async {
+    try {
+      final response = await AppApi().dio.post(
+            "/playlist/$playlistId/duplicate",
+          );
+
+      await syncRepository.performSync();
+
+      return getPlaylistById(PlaylistModel.fromJson(response.data).id);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw PlaylistNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
   }
 
   Future<Playlist> savePlaylist(Playlist playlist) async {
-    return playlistRemoteDataSource.savePlaylist(playlist);
-  }
+    try {
+      final response = await AppApi().dio.put(
+        "/playlist/${playlist.id}",
+        data: {
+          "name": playlist.name,
+          "description": playlist.description,
+        },
+      );
 
-  Future<bool> isPlaylistDownloaded(int id) async {
-    final playlist = await playlistLocalDataSource.getPlaylistById(id);
+      await syncRepository.performSync();
 
-    return playlist != null;
+      return getPlaylistById(PlaylistModel.fromJson(response.data).id);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw PlaylistNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
   }
 
   Future<Playlist> changePlaylistCover(int id, File file) async {
-    return await playlistRemoteDataSource.changePlaylistCover(id, file);
+    final fileName = file.path.split('/').last;
+
+    final formData = FormData.fromMap({
+      "image": await MultipartFile.fromFile(file.path, filename: fileName),
+    });
+
+    try {
+      final response = await AppApi().dio.put(
+            "/playlist/$id/cover",
+            data: formData,
+          );
+
+      await syncRepository.performSync();
+
+      return getPlaylistById(PlaylistModel.fromJson(response.data).id);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw PlaylistNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
   }
 
   Future<Playlist> removePlaylistCover(int id) async {
-    return await playlistRemoteDataSource.removePlaylistCover(id);
+    try {
+      final response = await AppApi().dio.delete(
+            "/playlist/$id/cover",
+          );
+
+      await syncRepository.performSync();
+
+      return getPlaylistById(PlaylistModel.fromJson(response.data).id);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw PlaylistNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
   }
 
   Future<Playlist> deletePlaylistById(int playlistId) async {
-    final playlist =
-        await playlistRemoteDataSource.deletePlaylistById(playlistId);
+    try {
+      final old = await getPlaylistById(playlistId);
 
-    final savedPlaylist =
-        await playlistLocalDataSource.getPlaylistById(playlist.id);
+      await AppApi().dio.delete(
+            "/playlist/$playlistId",
+          );
 
-    if (savedPlaylist != null) {
-      await playlistLocalDataSource.deleteStoredPlaylist(playlist.id);
+      await syncRepository.performSync();
+
+      return old;
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw PlaylistNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
     }
-
-    return playlist;
   }
 }
 
 final playlistRepositoryProvider = Provider(
   (ref) => PlaylistRepository(
-    playlistRemoteDataSource: ref.watch(
-      playlistRemoteDataSourceProvider,
-    ),
-    playlistLocalDataSource: ref.watch(
-      playlistLocalDataSourceProvider,
-    ),
-    albumLocalDataSource: ref.watch(
-      albumLocalDataSourceProvider,
-    ),
     playedTrackRepository: ref.watch(
       playedTrackRepositoryProvider,
+    ),
+    syncRepository: ref.watch(
+      syncRepositoryProvider,
     ),
     networkInfo: ref.watch(
       networkInfoProvider,

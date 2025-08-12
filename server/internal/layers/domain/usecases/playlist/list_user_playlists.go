@@ -21,5 +21,9 @@ func (u *PlaylistUsecase) ListUserPlaylists(
 		return nil, entities.NewInternalError(err)
 	}
 
+	for i := range playlists {
+		u.coverStorage.LoadPlaylistCoverSignature(&playlists[i])
+	}
+
 	return u.playlistPresenter.ShowPlaylists(ctx, playlists), nil
 }

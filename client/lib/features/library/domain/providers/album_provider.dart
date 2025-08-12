@@ -2,10 +2,11 @@ import 'package:equatable/equatable.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/fuzzy_search.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
+import 'package:melodink_client/features/library/data/repository/download_album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/library/domain/providers/edit_album_provider.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
@@ -40,7 +41,7 @@ final allAlbumsSortedModeProvider =
 final allAlbumsSearchInputProvider =
     StateProvider.autoDispose<String>((ref) => '');
 
-int compareArtists(List<MinimalArtist> a, List<MinimalArtist> b) {
+int compareArtists(List<Artist> a, List<Artist> b) {
   int minLength = a.length < b.length ? a.length : b.length;
 
   for (int i = 0; i < minLength; i++) {
@@ -67,25 +68,24 @@ Future<List<Album>> allAlbumsSorted(Ref ref) async {
 
   final sortedMode = ref.watch(allAlbumsSortedModeProvider);
 
-  return allAlbums.toList(growable: false)
-    ..sort(
-      (a, b) {
-        return switch (sortedMode) {
-          // Artist Z-A
-          "artist-za" => compareArtists(b.albumArtists, a.albumArtists),
-          // Artist A-Z
-          "artist-az" => compareArtists(a.albumArtists, b.albumArtists),
-          // Name Z-A
-          "name-za" => b.name.toLowerCase().compareTo(a.name.toLowerCase()),
-          // Name A-Z
-          "name-az" => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-          // Oldest
-          "oldest" => a.lastTrackDateAdded.compareTo(b.lastTrackDateAdded),
-          // Newest
-          _ => b.lastTrackDateAdded.compareTo(a.lastTrackDateAdded),
-        };
-      },
-    );
+  return switch (sortedMode) {
+    // Artist Z-A
+    "artist-za" => allAlbums.toList(growable: false)
+      ..sort((a, b) => compareArtists(b.artists, a.artists)),
+    // Artist A-Z
+    "artist-az" => allAlbums.toList(growable: false)
+      ..sort((a, b) => compareArtists(a.artists, b.artists)),
+    // Name Z-A
+    "name-za" => allAlbums.toList(growable: false)
+      ..sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase())),
+    // Name A-Z
+    "name-az" => allAlbums.toList(growable: false)
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())),
+    // Oldest
+    "oldest" => allAlbums.reversed.toList(growable: false),
+    // Newest
+    _ => allAlbums,
+  };
 }
 
 @riverpod
@@ -103,7 +103,7 @@ Future<List<Album>> allSearchAlbums(Ref ref) async {
 
     buffer.write(album.name);
 
-    for (final artist in album.albumArtists) {
+    for (final artist in album.artists) {
       buffer.write(artist.name);
     }
 
@@ -166,7 +166,7 @@ class AlbumById extends _$AlbumById {
 
       final updatedTracks = album.tracks.map((track) {
         return track.id == newTrack.id
-            ? newTrack.toMinimalTrack().copyWith(historyInfo: () => info)
+            ? newTrack.copyWith(historyInfo: () => info)
             : track;
       }).toList();
 
@@ -295,7 +295,7 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
     required bool shouldCheckDownload,
   }) {
     ref
-        .read(albumRepositoryProvider)
+        .read(downloadAlbumRepositoryProvider)
         .isAlbumDownloaded(albumId)
         .then((downloaded) {
       state = state.copyWith(downloaded: downloaded);
@@ -313,11 +313,14 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
       return;
     }
 
+    final downloadAlbumRepository = ref.read(downloadAlbumRepositoryProvider);
     final albumRepository = ref.read(albumRepositoryProvider);
 
     state = state.copyWith(isLoading: true);
+
     try {
-      final newAlbum = await albumRepository.updateAndStoreAlbum(albumId, true);
+      await downloadAlbumRepository.downloadAlbum(albumId);
+      final album = await albumRepository.getAlbumById(albumId);
 
       state = state.copyWith(
         isLoading: false,
@@ -329,12 +332,11 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
             ref.read(downloadManagerNotifierProvider.notifier);
 
         downloadManagerNotifier.addTracksToDownloadTodo(
-          newAlbum.tracks,
+          album.tracks,
         );
       }
 
       ref.invalidate(allAlbumsProvider);
-      ref.invalidate(albumByIdProvider(albumId));
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,
@@ -348,11 +350,12 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
       return;
     }
 
-    final albumRepository = ref.read(albumRepositoryProvider);
+    final downloadAlbumRepository = ref.read(downloadAlbumRepositoryProvider);
 
     state = state.copyWith(isLoading: true);
+
     try {
-      await albumRepository.deleteStoredAlbum(albumId);
+      await downloadAlbumRepository.freeAlbum(albumId);
 
       final downloadManagerNotifier =
           ref.read(downloadManagerNotifierProvider.notifier);
@@ -363,8 +366,6 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
         isLoading: false,
         downloaded: false,
       );
-
-      ref.invalidate(allAlbumsProvider);
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,
@@ -375,7 +376,7 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
 }
 
 @riverpod
-Future<List<MinimalTrack>> albumSortedTracks(Ref ref, int albumId) async {
+Future<List<Track>> albumSortedTracks(Ref ref, int albumId) async {
   final album = await ref.watch(albumByIdProvider(albumId).future);
 
   final tracks = [...album.tracks];

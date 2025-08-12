@@ -16,7 +16,6 @@ import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/import_tracks_provider.dart';
@@ -104,7 +103,7 @@ class ImportTracksModal extends HookConsumerWidget {
 
                                 try {
                                   detailedTrack = await trackRepository
-                                      .getTrackById(track.id);
+                                      .getTrackByIdOnline(track.id);
                                 } catch (_) {
                                   isLoading.value = false;
                                   return;
@@ -424,7 +423,7 @@ class UploadTrack extends HookWidget {
 }
 
 class ImportTrack extends HookWidget {
-  final MinimalTrack track;
+  final Track track;
 
   final VoidCallback onTap;
   final VoidCallback removeOnTap;
@@ -540,7 +539,7 @@ class ImportTrack extends HookWidget {
               Expanded(
                 child: IntrinsicWidth(
                   child: Text(
-                    track.album,
+                    track.albums.map((album) => album.name).join(", "),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

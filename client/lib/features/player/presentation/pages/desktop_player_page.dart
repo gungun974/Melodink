@@ -237,7 +237,9 @@ class DesktopPlayerPage extends HookConsumerWidget {
                                                         text:
                                                             currentTrack.title,
                                                         albumId: currentTrack
-                                                            .albumId,
+                                                            .albums
+                                                            .firstOrNull
+                                                            ?.id,
                                                         style: const TextStyle(
                                                           fontWeight:
                                                               FontWeight.w500,
@@ -265,10 +267,17 @@ class DesktopPlayerPage extends HookConsumerWidget {
                                                       ),
                                                       const SizedBox(height: 4),
                                                       AlbumLinkText(
-                                                        text:
-                                                            currentTrack.album,
+                                                        text: currentTrack
+                                                            .albums
+                                                            .map(
+                                                              (album) =>
+                                                                  album.name,
+                                                            )
+                                                            .join(", "),
                                                         albumId: currentTrack
-                                                            .albumId,
+                                                            .albums
+                                                            .firstOrNull
+                                                            ?.id,
                                                         style: TextStyle(
                                                           fontSize: 16,
                                                           letterSpacing:

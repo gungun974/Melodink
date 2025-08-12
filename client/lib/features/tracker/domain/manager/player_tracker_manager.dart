@@ -1,9 +1,9 @@
 import 'dart:math';
 
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/entities/played_track.dart';
 
@@ -22,7 +22,7 @@ class PlayerTrackerManager {
   watchState(
     PlaybackState lastState,
     PlaybackState currentState,
-    MinimalTrack? currentTrack,
+    Track? currentTrack,
   ) {
     final currentPosition = currentState.position;
     final lastPosition = lastState.position;
@@ -64,7 +64,7 @@ class PlayerTrackerManager {
   Duration? _trackedEndedAt;
 
   bool _startTrackingTrack = false;
-  MinimalTrack? _lastTrackingTrack;
+  Track? _lastTrackingTrack;
 
   bool _resetAntiEndSpam = false;
 

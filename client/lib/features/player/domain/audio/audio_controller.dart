@@ -15,7 +15,6 @@ import 'package:melodink_client/features/settings/data/repository/settings_repos
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
@@ -79,13 +78,13 @@ class AudioController extends BaseAudioHandler {
   final playlistTracksMutex = Mutex();
   final playerTracksMutex = Mutex();
 
-  List<MinimalTrack> _originalTracksPlaylist = [];
+  List<Track> _originalTracksPlaylist = [];
 
-  final List<MinimalTrack> _previousTracks = [];
+  final List<Track> _previousTracks = [];
 
-  final List<MinimalTrack> _queueTracks = [];
+  final List<Track> _queueTracks = [];
 
-  final List<MinimalTrack> _nextTracks = [];
+  final List<Track> _nextTracks = [];
 
   bool isShuffled = false;
 
@@ -319,7 +318,7 @@ class AudioController extends BaseAudioHandler {
   }
 
   Future<void> loadTracks(
-    List<MinimalTrack> tracks, {
+    List<Track> tracks, {
     int startAt = -1,
     bool restart = true,
     String? source,
@@ -331,11 +330,11 @@ class AudioController extends BaseAudioHandler {
       final isTrackDownloaded = downloadTrackRepository?.isTrackDownloaded;
 
       if (skipOffline && !isServerRecheable && isTrackDownloaded != null) {
-        List<MinimalTrack> filteredTracks = [];
+        List<Track> filteredTracks = [];
         int newStartAt = -1;
 
         for (int i = 0; i < tracks.length; i++) {
-          MinimalTrack track = tracks[i];
+          Track track = tracks[i];
 
           final isDownloaded = await isTrackDownloaded(track.id);
 
@@ -395,7 +394,7 @@ class AudioController extends BaseAudioHandler {
     });
   }
 
-  Future<void> addTrackToQueue(MinimalTrack track) async {
+  Future<void> addTrackToQueue(Track track) async {
     await playlistTracksMutex.protect(() async {
       if (!(playbackState.valueOrNull?.playing ?? false)) {
         pause();
@@ -413,7 +412,7 @@ class AudioController extends BaseAudioHandler {
     });
   }
 
-  Future<void> addTracksToQueue(List<MinimalTrack> tracks) async {
+  Future<void> addTracksToQueue(List<Track> tracks) async {
     await playlistTracksMutex.protect(() async {
       if (!(playbackState.valueOrNull?.playing ?? false)) {
         pause();
@@ -432,8 +431,8 @@ class AudioController extends BaseAudioHandler {
   }
 
   Future<void> setQueueAndNext(
-    List<MinimalTrack> queueTracks,
-    List<MinimalTrack> nextTracks,
+    List<Track> queueTracks,
+    List<Track> nextTracks,
   ) async {
     await playlistTracksMutex.protect(() async {
       if (!(playbackState.valueOrNull?.playing ?? false)) {
@@ -849,7 +848,7 @@ class AudioController extends BaseAudioHandler {
     mediaItem.add(track != null
         ? MediaItem(
             id: "${track.id}",
-            album: track.album,
+            album: track.albums.map((album) => album.name).join(", "),
             title: track.title,
             artist: track.artists.map((artist) => artist.name).join(", "),
             duration: track.duration,
@@ -871,17 +870,14 @@ class AudioController extends BaseAudioHandler {
     }
   }
 
-  final BehaviorSubject<List<MinimalTrack>> previousTracks =
+  final BehaviorSubject<List<Track>> previousTracks =
       BehaviorSubject.seeded([]);
 
-  final BehaviorSubject<List<MinimalTrack>> queueTracks =
-      BehaviorSubject.seeded([]);
+  final BehaviorSubject<List<Track>> queueTracks = BehaviorSubject.seeded([]);
 
-  final BehaviorSubject<List<MinimalTrack>> nextTracks =
-      BehaviorSubject.seeded([]);
+  final BehaviorSubject<List<Track>> nextTracks = BehaviorSubject.seeded([]);
 
-  final BehaviorSubject<MinimalTrack?> currentTrack =
-      BehaviorSubject.seeded(null);
+  final BehaviorSubject<Track?> currentTrack = BehaviorSubject.seeded(null);
 
   final BehaviorSubject<String?> playerTracksFrom =
       BehaviorSubject.seeded(null);
@@ -900,19 +896,19 @@ class AudioController extends BaseAudioHandler {
     await playlistTracksMutex.protect(() async {
       for (final entry in _previousTracks.indexed) {
         if (entry.$2.id == newTrack.id) {
-          _previousTracks[entry.$1] = newTrack.toMinimalTrack();
+          _previousTracks[entry.$1] = newTrack;
         }
       }
 
       for (final entry in _queueTracks.indexed) {
         if (entry.$2.id == newTrack.id) {
-          _queueTracks[entry.$1] = newTrack.toMinimalTrack();
+          _queueTracks[entry.$1] = newTrack;
         }
       }
 
       for (final entry in _nextTracks.indexed) {
         if (entry.$2.id == newTrack.id) {
-          _nextTracks[entry.$1] = newTrack.toMinimalTrack();
+          _nextTracks[entry.$1] = newTrack;
         }
       }
 

@@ -19,6 +19,7 @@ import 'package:melodink_client/features/settings/presentation/widgets/setting_d
 import 'package:melodink_client/features/settings/presentation/widgets/setting_equalizer.dart';
 import 'package:melodink_client/features/settings/presentation/widgets/setting_pannel.dart';
 import 'package:melodink_client/features/settings/presentation/widgets/setting_toggle_option.dart';
+import 'package:melodink_client/features/sync/data/repository/sync_repository.dart';
 import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:melodink_client/features/track/presentation/modals/import_tracks_modal.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
@@ -33,6 +34,8 @@ class SettingsPage extends ConsumerWidget {
     final settings = ref.watch(appSettingsNotifierProvider).valueOrNull;
 
     final forceOffline = ref.watch(isForceOfflineProvider);
+
+    final isServerReachable = ref.watch(isServerReachableProvider);
 
     if (settings == null) {
       return const AppPageLoader();
@@ -118,6 +121,60 @@ class SettingsPage extends ConsumerWidget {
                                     },
                                   ),
                                 ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AppButton(
+                                  text: t.actions.performFullSync,
+                                  type: AppButtonType.primary,
+                                  onPressed: !isServerReachable
+                                      ? null
+                                      : () async {
+                                          AppNotificationManager.of(context)
+                                              .notify(
+                                            context,
+                                            message: t.notifications.syncStarted
+                                                .message,
+                                            type: AppNotificationType.info,
+                                          );
+
+                                          try {
+                                            await ref
+                                                .read(syncRepositoryProvider)
+                                                .performSync(fullSync: true);
+
+                                            if (!context.mounted) {
+                                              return;
+                                            }
+
+                                            AppNotificationManager.of(context)
+                                                .notify(
+                                              context,
+                                              message: t.notifications.syncEnded
+                                                  .message,
+                                              type: AppNotificationType.info,
+                                            );
+                                          } catch (_) {
+                                            if (!context.mounted) {
+                                              return;
+                                            }
+
+                                            AppNotificationManager.of(context)
+                                                .notify(
+                                              context,
+                                              title: t.notifications
+                                                  .somethingWentWrong.title,
+                                              message: t.notifications.syncEnded
+                                                  .message,
+                                              type: AppNotificationType.danger,
+                                            );
+                                          }
+                                        },
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 4),

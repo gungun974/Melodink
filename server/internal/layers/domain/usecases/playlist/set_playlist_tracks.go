@@ -68,5 +68,7 @@ func (u *PlaylistUsecase) SetPlaylistTracks(
 		return nil, entities.NewInternalError(err)
 	}
 
+	u.coverStorage.LoadPlaylistCoverSignature(playlist)
+
 	return u.playlistPresenter.ShowPlaylist(ctx, *playlist), nil
 }

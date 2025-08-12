@@ -12,16 +12,16 @@ import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 
 class MobileTrack extends HookConsumerWidget {
-  final MinimalTrack track;
+  final Track track;
 
-  final void Function(MinimalTrack track) playCallback;
+  final void Function(Track track) playCallback;
 
   final bool showImage;
 
@@ -29,26 +29,26 @@ class MobileTrack extends HookConsumerWidget {
   final bool displayMoreActions;
   final bool displayReorderable;
 
-  final void Function(MinimalTrack track)? selectCallback;
+  final void Function(Track track)? selectCallback;
 
   final bool selected;
   final bool selectedTop;
   final bool selectedBottom;
 
-  final List<MinimalTrack> selectedTracks;
+  final List<Track> selectedTracks;
 
-  final void Function(MinimalTrack track)? removeCallback;
+  final void Function(Track track)? removeCallback;
 
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
-    MinimalTrack track,
+    Track track,
   )? singleCustomActionsBuilder;
 
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
-    List<MinimalTrack> tracks,
+    List<Track> tracks,
   )? multiCustomActionsBuilder;
 
   final bool showDefaultActions;

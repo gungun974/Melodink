@@ -27,21 +27,18 @@ Future<List<Artist>> allArtistsSorted(Ref ref) async {
 
   final sortedMode = ref.watch(allArtistsSortedModeProvider);
 
-  return allArtists.toList(growable: false)
-    ..sort(
-      (a, b) {
-        return switch (sortedMode) {
-          // Name Z-A
-          "name-za" => b.name.toLowerCase().compareTo(a.name.toLowerCase()),
-          // Name A-Z
-          "name-az" => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-          // Oldest
-          "oldest" => a.lastTrackDateAdded.compareTo(b.lastTrackDateAdded),
-          // Newest
-          _ => b.lastTrackDateAdded.compareTo(a.lastTrackDateAdded),
-        };
-      },
-    );
+  return switch (sortedMode) {
+    // Name Z-A
+    "name-za" => allArtists.toList(growable: false)
+      ..sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase())),
+    // Name A-Z
+    "name-az" => allArtists.toList(growable: false)
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())),
+    // Oldest
+    "oldest" => allArtists.reversed.toList(growable: false),
+    // Newest
+    _ => allArtists,
+  };
 }
 
 @riverpod

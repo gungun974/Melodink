@@ -37,22 +37,12 @@ func (u *AlbumUsecase) GetAlbumCoverSignature(
 		)
 	}
 
-	signature := u.coverStorage.GetAlbumCoverSignature(album)
+	u.coverStorage.LoadAlbumCoverSignature(album)
 
-	if signature != "" {
+	if album.CoverSignature != "" {
 		return models.PlainAPIResponse{
-			Text: signature,
+			Text: album.CoverSignature,
 		}, nil
-	}
-
-	for _, track := range album.Tracks {
-		signature := u.coverStorage.GetTrackCoverSignature(&track)
-
-		if signature != "" {
-			return models.PlainAPIResponse{
-				Text: signature,
-			}, nil
-		}
 	}
 
 	return models.PlainAPIResponse{

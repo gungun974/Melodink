@@ -12,11 +12,11 @@ import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class CreatePlaylistModal extends HookConsumerWidget {
-  final List<MinimalTrack> tracks;
+  final List<Track> tracks;
 
   final bool pushRouteToNewPlaylist;
 
@@ -107,6 +107,7 @@ class CreatePlaylistModal extends HookConsumerWidget {
                                   name: nameTextController.text,
                                   description: descriptionTextController.text,
                                   tracks: tracks,
+                                  coverSignature: "",
                                 ));
 
                             isLoading.value = false;
@@ -152,7 +153,7 @@ class CreatePlaylistModal extends HookConsumerWidget {
 
   static showModal(
     BuildContext context, {
-    List<MinimalTrack> tracks = const [],
+    List<Track> tracks = const [],
     bool pushRouteToNewPlaylist = false,
   }) {
     showGeneralDialog(

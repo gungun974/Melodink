@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
@@ -51,7 +50,7 @@ class TrackUploadProgress extends Equatable {
 
 class ImportTracksState extends Equatable {
   final List<TrackUploadProgress> uploads;
-  final List<MinimalTrack> uploadedTracks;
+  final List<Track> uploadedTracks;
 
   final bool isLoading;
 
@@ -63,7 +62,7 @@ class ImportTracksState extends Equatable {
 
   ImportTracksState copyWith({
     List<TrackUploadProgress>? uploads,
-    List<MinimalTrack>? uploadedTracks,
+    List<Track>? uploadedTracks,
     bool? isLoading,
   }) {
     return ImportTracksState(
@@ -130,7 +129,7 @@ class ImportTracks extends _$ImportTracks {
     state = state.copyWith(
       uploadedTracks: state.uploadedTracks.map(
         (track) {
-          return track.id == newTrack.id ? newTrack.toMinimalTrack() : track;
+          return track.id == newTrack.id ? newTrack : track;
         },
       ).toList(),
     );
@@ -173,7 +172,7 @@ class ImportTracks extends _$ImportTracks {
             .toList(),
         uploadedTracks: [
           ...state.uploadedTracks,
-          newTrack.toMinimalTrack(),
+          newTrack,
         ],
       );
     } catch (_) {
@@ -202,7 +201,7 @@ class ImportTracks extends _$ImportTracks {
     );
   }
 
-  removeTrack(MinimalTrack targetTrack) async {
+  removeTrack(Track targetTrack) async {
     state = state.copyWith(
       isLoading: true,
     );
@@ -264,33 +263,10 @@ class ImportTracks extends _$ImportTracks {
       if (!onlyReplaceEmptyFields) {
         await _trackRepository.saveTrack(scannedTrack);
       } else {
-        final newArtists = track.metadata.artists.toList();
-        final newAlbumArtists = track.metadata.albumArtists.toList();
         final newGenres = track.metadata.genres.toList();
-
-        while (newArtists.length < scannedTrack.metadata.artists.length) {
-          newArtists.add(const MinimalArtist(id: 0, name: ""));
-        }
-
-        while (newAlbumArtists.length <
-            scannedTrack.metadata.albumArtists.length) {
-          newAlbumArtists.add(const MinimalArtist(id: 0, name: ""));
-        }
 
         while (newGenres.length < scannedTrack.metadata.genres.length) {
           newGenres.add("");
-        }
-
-        for (final entry in scannedTrack.metadata.artists.indexed) {
-          if (newArtists[entry.$1].name.trim().isEmpty) {
-            newArtists[entry.$1] = entry.$2;
-          }
-        }
-
-        for (final entry in scannedTrack.metadata.albumArtists.indexed) {
-          if (newAlbumArtists[entry.$1].name.trim().isEmpty) {
-            newAlbumArtists[entry.$1] = entry.$2;
-          }
         }
 
         for (final entry in scannedTrack.metadata.genres.indexed) {
@@ -302,18 +278,12 @@ class ImportTracks extends _$ImportTracks {
         await _trackRepository.saveTrack(
           track.copyWith(
             title: track.title.trim().isEmpty ? scannedTrack.title : null,
+            trackNumber:
+                track.trackNumber == 0 ? scannedTrack.trackNumber : null,
+            discNumber: track.discNumber == 0 ? scannedTrack.discNumber : null,
             metadata: track.metadata.copyWith(
-              album: track.metadata.album.trim().isEmpty
-                  ? scannedTrack.metadata.album
-                  : null,
-              trackNumber: track.metadata.trackNumber == 0
-                  ? scannedTrack.metadata.trackNumber
-                  : null,
               totalTracks: track.metadata.totalTracks == 0
                   ? scannedTrack.metadata.totalTracks
-                  : null,
-              discNumber: track.metadata.discNumber == 0
-                  ? scannedTrack.metadata.discNumber
                   : null,
               totalDiscs: track.metadata.totalTracks == 0
                   ? scannedTrack.metadata.totalDiscs
@@ -345,8 +315,6 @@ class ImportTracks extends _$ImportTracks {
                   track.metadata.musicBrainzRecordingId.trim().isEmpty
                       ? scannedTrack.metadata.musicBrainzRecordingId
                       : null,
-              artists: newArtists,
-              albumArtists: newAlbumArtists,
               composer: track.metadata.composer.trim().isEmpty
                   ? scannedTrack.metadata.composer
                   : null,

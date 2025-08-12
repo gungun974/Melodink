@@ -3,10 +3,10 @@ import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/tracker/domain/entities/played_track.dart';
 import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:mutex/mutex.dart';
 
 class PlayedTrackRepository {
   static PlayedTrack decodePlayedTrack(Map<String, Object?> data) {
@@ -32,6 +32,7 @@ class PlayedTrackRepository {
           ? DateTime.fromMillisecondsSinceEpoch(lastFinishedRaw)
           : null,
       playedCount: data["played_count"] as int,
+      computed: true,
     );
   }
 
@@ -41,7 +42,7 @@ class PlayedTrackRepository {
     final deviceId = await SettingsRepository().getDeviceId();
 
     try {
-      final data = await db.rawQuery("""
+      final data = db.select("""
         SELECT *
         FROM (
           SELECT *,
@@ -79,7 +80,7 @@ class PlayedTrackRepository {
     final deviceId = await SettingsRepository().getDeviceId();
 
     try {
-      final data = await db.rawQuery("""
+      final data = db.select("""
         WITH SegmentedTracks AS (SELECT *,
                                         CASE
                                             WHEN LEAD(begin_at, 1, begin_at)
@@ -153,7 +154,7 @@ class PlayedTrackRepository {
     final deviceId = await SettingsRepository().getDeviceId();
 
     try {
-      final data = await db.rawQuery("""
+      final data = db.select("""
         WITH SegmentedTracks AS (SELECT *,
                                         CASE
                                             WHEN LEAD(begin_at, 1, begin_at)
@@ -210,7 +211,7 @@ class PlayedTrackRepository {
         return 0;
       }
 
-      return Sqflite.firstIntValue(data)!;
+      return data.first["COUNT(*)"] as int;
     } catch (e) {
       databaseLogger.e(e);
       throw ServerUnknownException();
@@ -220,8 +221,7 @@ class PlayedTrackRepository {
   Future<PlayedTrack> getPlayedTrackById(int id) async {
     final db = await DatabaseService.getDatabase();
 
-    final data =
-        await db.rawQuery("SELECT * FROM played_tracks WHERE id = ?", [id]);
+    final data = db.select("SELECT * FROM played_tracks WHERE id = ?", [id]);
 
     try {
       return PlayedTrackRepository.decodePlayedTrack(data.first);
@@ -243,16 +243,32 @@ class PlayedTrackRepository {
   }) async {
     final db = await DatabaseService.getDatabase();
 
-    final id = await db.insert("played_tracks", {
-      "track_id": trackId,
-      "start_at": startAt.millisecondsSinceEpoch,
-      "finish_at": finishAt.millisecondsSinceEpoch,
-      "begin_at": beginAt.inMilliseconds,
-      "ended_at": endedAt.inMilliseconds,
-      "shuffle": shuffle ? 1 : 0,
-      "track_ended": trackEnded ? 1 : 0,
-      "track_duration": trackDuration.inMilliseconds,
-    });
+    db.execute(
+      '''
+    INSERT INTO played_tracks (
+      track_id,
+      start_at,
+      finish_at,
+      begin_at,
+      ended_at,
+      shuffle,
+      track_ended,
+      track_duration
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    ''',
+      [
+        trackId,
+        startAt.millisecondsSinceEpoch,
+        finishAt.millisecondsSinceEpoch,
+        beginAt.inMilliseconds,
+        endedAt.inMilliseconds,
+        shuffle ? 1 : 0,
+        trackEnded ? 1 : 0,
+        trackDuration.inMilliseconds,
+      ],
+    );
+
+    final id = db.lastInsertRowId;
 
     await updateTrackHistoryInfoCache(trackId);
 
@@ -264,10 +280,10 @@ class PlayedTrackRepository {
   ) async {
     final db = await DatabaseService.getDatabase();
 
-    final data = await db.query(
-      'track_history_info_cache',
-      where: 'track_id IN (${List.filled(trackIds.length, '?').join(',')})',
-      whereArgs: trackIds,
+    final data = db.select(
+      'SELECT * FROM track_history_info_cache '
+      'WHERE track_id IN (${List.filled(trackIds.length, '?').join(',')})',
+      trackIds,
     );
 
     final List<TrackHistoryInfo> results = [];
@@ -291,8 +307,25 @@ class PlayedTrackRepository {
 
         if (isResultMissing) {
           results.add(
-            await updateTrackHistoryInfoCache(trackId),
+            TrackHistoryInfo(
+              trackId: trackId,
+              lastPlayedDate: null,
+              playedCount: -1,
+              computed: false,
+            ),
           );
+
+          updateTrackHistoryInfoCacheMutex.protect(() async {
+            final data2 = db.select(
+              'SELECT * FROM track_history_info_cache '
+              'WHERE track_id = ?',
+              [trackId],
+            );
+
+            if (data2.isEmpty) {
+              await updateTrackHistoryInfoCache(trackId);
+            }
+          });
         }
       }
     }
@@ -300,10 +333,12 @@ class PlayedTrackRepository {
     return results;
   }
 
+  final updateTrackHistoryInfoCacheMutex = Mutex();
+
   Future<TrackHistoryInfo> getTrackHistoryInfo(int trackId) async {
     final db = await DatabaseService.getDatabase();
 
-    final data = await db.rawQuery(
+    final data = db.select(
         "SELECT * FROM track_history_info_cache WHERE track_id = ?", [trackId]);
 
     if (data.isEmpty) {
@@ -326,23 +361,33 @@ class PlayedTrackRepository {
       lastPlayedDate:
           (await getLastFinishedPlayedTrackByTrackId(trackId))?.finishAt,
       playedCount: await getTrackPlayedCountByTrackId(trackId),
+      computed: true,
     );
 
     try {
-      await db.insert(
-        "track_history_info_cache",
-        {
-          "track_id": trackId,
-          "last_finished": info.lastPlayedDate?.millisecondsSinceEpoch,
-          "played_count": info.playedCount,
-          "updated_at": DateTime.now().millisecondsSinceEpoch
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
+      db.execute(
+        '''
+    INSERT OR REPLACE INTO track_history_info_cache (
+      track_id,
+      last_finished,
+      played_count,
+      updated_at
+    ) VALUES (?, ?, ?, ?)
+    ''',
+        [
+          trackId,
+          info.lastPlayedDate?.millisecondsSinceEpoch,
+          info.playedCount,
+          DateTime.now().millisecondsSinceEpoch,
+        ],
       );
     } catch (e) {
       databaseLogger.e(e);
       throw ServerUnknownException();
     }
+
+    // Should find a way to speed up computation. For now we tiny sleep to unstress async
+    await Future.delayed(Duration(milliseconds: 1));
 
     return info;
   }
@@ -350,7 +395,7 @@ class PlayedTrackRepository {
   Future<void> checkAndUpdateAllTrackHistoryCache() async {
     final db = await DatabaseService.getDatabase();
 
-    final data = await db.rawQuery("""
+    final data = db.select("""
       SELECT track_history_info_cache.track_id
       FROM track_history_info_cache
               INNER JOIN (
@@ -372,7 +417,7 @@ class PlayedTrackRepository {
     }
   }
 
-  loadTrackHistoryIntoMinimalTracks(List<MinimalTrack> tracks) async {
+  loadTrackHistoryIntoTracks(List<Track> tracks) async {
     final infos = await getMultipleTracksHistoryInfo(
       tracks.map((track) => track.id).toList(),
     );

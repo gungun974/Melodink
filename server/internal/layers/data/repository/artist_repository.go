@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"sync"
+	"time"
 
 	data_models "github.com/gungun974/Melodink/server/internal/layers/data/models"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
@@ -45,14 +46,24 @@ func (r *ArtistRepository) GetAllArtistsFromUser(userId int) ([]entities.Artist,
 		return nil, err
 	}
 
-	artists := m.ToArtists()
+	return m.ToArtists(), nil
+}
 
-	err = r.loadArtistsSubData(artists)
+func (r *ArtistRepository) GetAllArtistsFromUserSince(
+	userId int,
+	since time.Time,
+) ([]entities.Artist, error) {
+	m := data_models.ArtistModels{}
+
+	err := r.Database.Select(&m, `
+    SELECT * FROM artists WHERE user_id = ? AND (COALESCE(updated_at, created_at) >= ?)
+  `, userId, since.UTC())
 	if err != nil {
+		logger.DatabaseLogger.Error(err)
 		return nil, err
 	}
 
-	return artists, nil
+	return m.ToArtists(), nil
 }
 
 func (r *ArtistRepository) GetArtistById(
@@ -169,17 +180,6 @@ func (r *ArtistRepository) loadArtistSubData(artist *entities.Artist) error {
 	return nil
 }
 
-func (r *ArtistRepository) loadArtistsSubData(artists []entities.Artist) error {
-	for i := range artists {
-		err := r.loadArtistSubData(&artists[i])
-		if err != nil {
-			return nil
-		}
-	}
-
-	return nil
-}
-
 func (r *ArtistRepository) CreateArtist(artist *entities.Artist) error {
 	m := data_models.ArtistModel{}
 
@@ -250,7 +250,7 @@ func (r *ArtistRepository) UpdateArtist(artist *entities.Artist) error {
         user_id = ?,
 
         name = ?,
-      	updated_at = CURRENT_TIMESTAMP
+      	updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW')
     WHERE
       id = ?
     RETURNING *
@@ -273,7 +273,12 @@ func (r *ArtistRepository) UpdateArtist(artist *entities.Artist) error {
 func (r *ArtistRepository) DeleteArtist(artist *entities.Artist) error {
 	m := data_models.ArtistModel{}
 
-	err := r.Database.Get(&m, `
+	tx, err := r.Database.Beginx()
+	if err != nil {
+		return err
+	}
+
+	err = tx.Get(&m, `
     DELETE FROM
       artists
     WHERE 
@@ -284,10 +289,45 @@ func (r *ArtistRepository) DeleteArtist(artist *entities.Artist) error {
 	)
 	if err != nil {
 		logger.DatabaseLogger.Error(err)
+		_ = tx.Rollback()
+		return err
+	}
+
+	_, err = tx.Exec("INSERT INTO deleted_artists (id) VALUES (?)", artist.Id)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		_ = tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
 		return err
 	}
 
 	*artist = m.ToArtist()
 
 	return nil
+}
+
+func (r *ArtistRepository) GetAllDeletedArtistsSince(since time.Time) ([]int, error) {
+	rows, err := r.Database.Query(`
+    SELECT id FROM deleted_artists WHERE deleted_at >= ?
+  `, since.UTC())
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	ids := []int{}
+
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
 }

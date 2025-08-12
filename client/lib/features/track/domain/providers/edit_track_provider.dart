@@ -44,7 +44,7 @@ class TrackEditStream extends _$TrackEditStream {
     return _controller.stream;
   }
 
-  void saveTrack(Track track) async {
+  Future<void> saveTrack(Track track) async {
     final newTrack = await _trackRepository.saveTrack(track);
 
     if (!_controller.isClosed) {

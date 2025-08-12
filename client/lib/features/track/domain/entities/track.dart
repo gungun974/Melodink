@@ -1,7 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/helpers/double_to_string_without_zero.dart';
+import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
 
@@ -16,6 +18,12 @@ class Track extends Equatable {
 
   final String fileSignature;
   final String coverSignature;
+
+  final List<Album> albums;
+  final List<Artist> artists;
+
+  final int trackNumber;
+  final int discNumber;
 
   final TrackMetadata metadata;
 
@@ -37,6 +45,10 @@ class Track extends Equatable {
     required this.fileType,
     required this.fileSignature,
     required this.coverSignature,
+    required this.albums,
+    required this.artists,
+    required this.trackNumber,
+    required this.discNumber,
     required this.metadata,
     required this.sampleRate,
     required this.bitRate,
@@ -54,6 +66,10 @@ class Track extends Equatable {
     String? fileType,
     String? fileSignature,
     String? coverSignature,
+    List<Album>? albums,
+    List<Artist>? artists,
+    int? trackNumber,
+    int? discNumber,
     TrackMetadata? metadata,
     int? sampleRate,
     int? bitRate,
@@ -70,6 +86,10 @@ class Track extends Equatable {
       fileType: fileType ?? this.fileType,
       fileSignature: fileSignature ?? this.fileSignature,
       coverSignature: coverSignature ?? this.coverSignature,
+      albums: albums ?? this.albums,
+      artists: artists ?? this.artists,
+      trackNumber: trackNumber ?? this.trackNumber,
+      discNumber: discNumber ?? this.discNumber,
       metadata: metadata ?? this.metadata,
       sampleRate: sampleRate ?? this.sampleRate,
       bitRate: bitRate ?? this.bitRate,
@@ -89,6 +109,10 @@ class Track extends Equatable {
         fileType,
         fileSignature,
         coverSignature,
+        albums,
+        artists,
+        trackNumber,
+        discNumber,
         metadata,
         sampleRate,
         bitRate,
@@ -97,6 +121,19 @@ class Track extends Equatable {
         score,
         historyInfo,
       ];
+
+  String getUrl(AppSettingAudioQuality quality) {
+    switch (quality) {
+      case AppSettingAudioQuality.low:
+        return "${AppApi().getServerUrl()}track/$id/audio/low/transcode";
+      case AppSettingAudioQuality.medium:
+        return "${AppApi().getServerUrl()}track/$id/audio/medium/transcode";
+      case AppSettingAudioQuality.high:
+        return "${AppApi().getServerUrl()}track/$id/audio/high/transcode";
+      default:
+        return "${AppApi().getServerUrl()}track/$id/audio";
+    }
+  }
 
   String getOriginalCoverUrl() {
     return "${AppApi().getServerUrl()}track/$id/cover";
@@ -133,40 +170,21 @@ class Track extends Equatable {
     return Uri.parse("file://$url");
   }
 
-  MinimalTrack toMinimalTrack() {
-    return MinimalTrack(
-      id: id,
-      title: title,
-      duration: duration,
-      album: metadata.album,
-      albumId: metadata.albumId,
-      trackNumber: metadata.trackNumber,
-      discNumber: metadata.discNumber,
-      date: metadata.date,
-      year: metadata.year,
-      genres: metadata.genres,
-      artists: metadata.artists,
-      albumArtists: metadata.albumArtists,
-      composer: metadata.composer,
-      fileType: fileType,
-      fileSignature: fileSignature,
-      sampleRate: sampleRate,
-      bitRate: bitRate,
-      bitsPerRawSample: bitsPerRawSample,
-      dateAdded: dateAdded,
-      score: score,
-    );
+  String getQualityText() {
+    if (bitsPerRawSample != null) {
+      return "$bitsPerRawSample-Bit ${doubleToStringWithoutZero(sampleRate / 1000)}KHz $fileType";
+    }
+
+    if (bitRate != null) {
+      return "${doubleToStringWithoutZero(bitRate! / 1000)} kbps $fileType";
+    }
+
+    return "Unknown $fileType";
   }
 }
 
 class TrackMetadata extends Equatable {
-  final String album;
-  final int albumId;
-
-  final int trackNumber;
   final int totalTracks;
-
-  final int discNumber;
   final int totalDiscs;
 
   final String date;
@@ -182,17 +200,10 @@ class TrackMetadata extends Equatable {
   final String musicBrainzTrackId;
   final String musicBrainzRecordingId;
 
-  final List<MinimalArtist> artists;
-  final List<MinimalArtist> albumArtists;
-
   final String composer;
 
   const TrackMetadata({
-    required this.album,
-    required this.albumId,
-    required this.trackNumber,
     required this.totalTracks,
-    required this.discNumber,
     required this.totalDiscs,
     required this.date,
     required this.year,
@@ -203,17 +214,11 @@ class TrackMetadata extends Equatable {
     required this.musicBrainzReleaseId,
     required this.musicBrainzTrackId,
     required this.musicBrainzRecordingId,
-    required this.artists,
-    required this.albumArtists,
     required this.composer,
   });
 
   TrackMetadata copyWith({
-    String? album,
-    int? albumId,
-    int? trackNumber,
     int? totalTracks,
-    int? discNumber,
     int? totalDiscs,
     String? date,
     int? year,
@@ -224,16 +229,10 @@ class TrackMetadata extends Equatable {
     String? musicBrainzReleaseId,
     String? musicBrainzTrackId,
     String? musicBrainzRecordingId,
-    List<MinimalArtist>? artists,
-    List<MinimalArtist>? albumArtists,
     String? composer,
   }) {
     return TrackMetadata(
-      album: album ?? this.album,
-      albumId: albumId ?? this.albumId,
-      trackNumber: trackNumber ?? this.trackNumber,
       totalTracks: totalTracks ?? this.totalTracks,
-      discNumber: discNumber ?? this.discNumber,
       totalDiscs: totalDiscs ?? this.totalDiscs,
       date: date ?? this.date,
       year: year ?? this.year,
@@ -245,19 +244,13 @@ class TrackMetadata extends Equatable {
       musicBrainzTrackId: musicBrainzTrackId ?? this.musicBrainzTrackId,
       musicBrainzRecordingId:
           musicBrainzRecordingId ?? this.musicBrainzRecordingId,
-      artists: artists ?? this.artists,
-      albumArtists: albumArtists ?? this.albumArtists,
       composer: composer ?? this.composer,
     );
   }
 
   @override
   List<Object?> get props => [
-        album,
-        albumId,
-        trackNumber,
         totalTracks,
-        discNumber,
         totalDiscs,
         date,
         year,
@@ -268,8 +261,6 @@ class TrackMetadata extends Equatable {
         musicBrainzReleaseId,
         musicBrainzTrackId,
         musicBrainzRecordingId,
-        artists,
-        albumArtists,
         composer,
       ];
 }

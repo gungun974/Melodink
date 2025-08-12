@@ -14,41 +14,20 @@ func NewTrackPresenter() TrackPresenter {
 
 type TrackPresenter struct{}
 
-func (p *TrackPresenter) ShowDetailedTracks(
+func (p *TrackPresenter) ShowTracks(
 	ctx context.Context,
 	tracks []entities.Track,
 ) models.APIResponse {
-	tracksViewModels := make([]view_models.TrackViewModel, len(tracks))
-
-	for i, track := range tracks {
-		tracksViewModels[i] = view_models.ConvertToTrackViewModel(ctx, track)
-	}
-
 	return models.JsonAPIResponse{
-		Data: tracksViewModels,
+		Data: view_models.ConvertToTrackViewModels(ctx, tracks),
 	}
 }
 
-func (p *TrackPresenter) ShowDetailedTrack(
+func (p *TrackPresenter) ShowTrack(
 	ctx context.Context,
 	track entities.Track,
 ) models.APIResponse {
 	return models.JsonAPIResponse{
 		Data: view_models.ConvertToTrackViewModel(ctx, track),
-	}
-}
-
-func (p *TrackPresenter) ShowMinimalTracks(
-	ctx context.Context,
-	tracks []entities.Track,
-) models.APIResponse {
-	tracksViewModels := make([]view_models.MinimalTrackViewModel, len(tracks))
-
-	for i, track := range tracks {
-		tracksViewModels[i] = view_models.ConvertToMinimalTrackViewModel(ctx, track)
-	}
-
-	return models.JsonAPIResponse{
-		Data: tracksViewModels,
 	}
 }

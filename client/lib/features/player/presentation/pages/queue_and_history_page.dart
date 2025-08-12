@@ -45,7 +45,10 @@ class QueueAndHistoryPage extends HookConsumerWidget {
                         "assets/icons/arrow-down.svg",
                         width: 24,
                         height: 24,
-                        color: Colors.white,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),

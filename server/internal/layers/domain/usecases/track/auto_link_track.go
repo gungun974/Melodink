@@ -100,5 +100,5 @@ func (u *TrackUsecase) AutoLinkTrack(
 		return nil, entities.NewInternalError(errors.New("Failed to set track albums"))
 	}
 
-	return u.trackPresenter.ShowDetailedTrack(ctx, *track), nil
+	return u.trackPresenter.ShowTrack(ctx, *track), nil
 }

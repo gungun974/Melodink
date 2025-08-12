@@ -3,7 +3,7 @@ import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/player/presentation/pages/queue_page.dart';
-import 'package:melodink_client/features/track/domain/entities/minimal_track.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/mobile_track.dart';
@@ -22,7 +22,7 @@ class QueueTracksPanel extends StatelessWidget {
   final AppScreenTypeLayout size;
 
   final List<QueueTrack> tracks;
-  final void Function(MinimalTrack track, int index) playCallback;
+  final void Function(Track track, int index) playCallback;
   final void Function()? clearQueueCallback;
 
   final bool useQueueTrack;
