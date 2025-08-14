@@ -150,10 +150,10 @@ class AlbumRepository {
         throw AlbumNotFoundException();
       }
 
-      await playedTrackRepository.loadTrackHistoryIntoTracks(album.tracks);
-
       loadAlbumTracks(db, applicationSupportDirectory, album);
       loadAlbumArtists(db, album);
+
+      await playedTrackRepository.loadTrackHistoryIntoTracks(album.tracks);
 
       return album;
     } catch (e) {

@@ -138,9 +138,9 @@ class PlaylistRepository {
         throw PlaylistNotFoundException();
       }
 
-      await playedTrackRepository.loadTrackHistoryIntoTracks(playlist.tracks);
-
       loadPlaylistTracks(db, applicationSupportDirectory, playlist);
+
+      await playedTrackRepository.loadTrackHistoryIntoTracks(playlist.tracks);
 
       return playlist;
     } catch (e) {
