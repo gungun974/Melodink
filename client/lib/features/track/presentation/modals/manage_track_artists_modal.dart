@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/helpers/fuzzy_search.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
@@ -39,9 +40,28 @@ class ManageTrackArtistsModal extends HookConsumerWidget {
 
     final artists = useState<List<Artist>>([]);
 
+    final filteredArtists = useState<List<Artist>>([]);
+
     final selectedIds = useState<List<int>>(
       [...currentIds],
     );
+
+    applySearch() {
+      if (searchTextController.text.isEmpty) {
+        filteredArtists.value = artists.value;
+      }
+      filteredArtists.value = artists.value.where((artist) {
+        if (selectedIds.value.contains(artist.id)) {
+          return true;
+        }
+        return compareFuzzySearch(searchTextController.text, artist.name);
+      }).toList()
+        ..sort(
+          (a, b) =>
+              (currentIds.contains(b.id) ? 1 : 0) -
+              (currentIds.contains(a.id) ? 1 : 0),
+        );
+    }
 
     useEffect(() {
       isLoading.value = true;
@@ -54,6 +74,11 @@ class ManageTrackArtistsModal extends HookConsumerWidget {
 
       return null;
     }, []);
+
+    useEffect(() {
+      applySearch();
+      return null;
+    }, [artists.value]);
 
     return MaxContainer(
       maxWidth: 440,
@@ -76,7 +101,7 @@ class ManageTrackArtistsModal extends HookConsumerWidget {
                     AppModal(
                       preventUserClose: true,
                       title: Text(
-                        "Manage track artists",
+                        t.general.editTrackArtists,
                       ),
                       body: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -88,7 +113,9 @@ class ManageTrackArtistsModal extends HookConsumerWidget {
                           children: [
                             AppSearchFormField(
                               controller: searchTextController,
-                              onChanged: (value) {},
+                              onChanged: (value) {
+                                applySearch();
+                              },
                             ),
                             SizedBox(height: 8),
                             SizedBox(
@@ -98,7 +125,7 @@ class ManageTrackArtistsModal extends HookConsumerWidget {
                                 child: ListView.separated(
                                   itemBuilder:
                                       (BuildContext context, int index) {
-                                    final artist = artists.value[index];
+                                    final artist = filteredArtists.value[index];
 
                                     final selected = selectedIds.value.contains(
                                       artist.id,
@@ -121,7 +148,7 @@ class ManageTrackArtistsModal extends HookConsumerWidget {
                                       },
                                     );
                                   },
-                                  itemCount: artists.value.length,
+                                  itemCount: filteredArtists.value.length,
                                   separatorBuilder:
                                       (BuildContext context, int index) {
                                     return SizedBox(

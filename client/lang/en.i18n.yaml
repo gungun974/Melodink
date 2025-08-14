@@ -96,6 +96,8 @@ general:
   artistHasRole: "Has role in"
 
   editTrack: "Edit \"{title}\""
+  editTrackArtists: "Edit artists"
+  editTrackAlbum: "Edit album"
 
   trackNb:
     one: "{n} Track"

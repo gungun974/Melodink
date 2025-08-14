@@ -96,6 +96,8 @@ general:
   artistHasRole: "A un rôle dans"
 
   editTrack: "Modifier \"{title}\""
+  editTrackArtists: "Modification d'artistes"
+  editTrackAlbum: "Modification d'album"
 
   trackNb:
     one: "{n} Morceau"

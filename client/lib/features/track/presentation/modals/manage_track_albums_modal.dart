@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/helpers/fuzzy_search.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
@@ -39,7 +40,35 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
 
     final albums = useState<List<Album>>([]);
 
+    final filteredAlbums = useState<List<Album>>([]);
+
     final selectedIds = useState<List<int>>([...currentIds]);
+
+    applySearch() {
+      if (searchTextController.text.isEmpty) {
+        filteredAlbums.value = albums.value;
+      }
+      filteredAlbums.value = albums.value.where((album) {
+        if (selectedIds.value.contains(album.id)) {
+          return true;
+        }
+
+        final buffer = StringBuffer();
+
+        buffer.write(album.name);
+
+        for (final artist in album.artists) {
+          buffer.write(artist.name);
+        }
+
+        return compareFuzzySearch(searchTextController.text, buffer.toString());
+      }).toList()
+        ..sort(
+          (a, b) =>
+              (currentIds.contains(b.id) ? 1 : 0) -
+              (currentIds.contains(a.id) ? 1 : 0),
+        );
+    }
 
     useEffect(() {
       isLoading.value = true;
@@ -52,6 +81,11 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
 
       return null;
     }, []);
+
+    useEffect(() {
+      applySearch();
+      return null;
+    }, [albums.value]);
 
     return MaxContainer(
       maxWidth: 440,
@@ -74,7 +108,7 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
                     AppModal(
                       preventUserClose: true,
                       title: Text(
-                        "Manage track album",
+                        t.general.editTrackAlbum,
                       ),
                       body: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -86,7 +120,9 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
                           children: [
                             AppSearchFormField(
                               controller: searchTextController,
-                              onChanged: (value) {},
+                              onChanged: (value) {
+                                applySearch();
+                              },
                             ),
                             SizedBox(height: 8),
                             SizedBox(
@@ -96,7 +132,7 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
                                 child: ListView.separated(
                                   itemBuilder:
                                       (BuildContext context, int index) {
-                                    final album = albums.value[index];
+                                    final album = filteredAlbums.value[index];
 
                                     final selected = selectedIds.value.contains(
                                       album.id,
@@ -114,7 +150,7 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
                                       },
                                     );
                                   },
-                                  itemCount: albums.value.length,
+                                  itemCount: filteredAlbums.value.length,
                                   separatorBuilder:
                                       (BuildContext context, int index) {
                                     return SizedBox(
