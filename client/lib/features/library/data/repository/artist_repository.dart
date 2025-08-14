@@ -1,10 +1,14 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
+import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
+import 'package:melodink_client/features/sync/data/models/artist_model.dart';
 import 'package:melodink_client/features/sync/data/repository/sync_repository.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -144,6 +148,31 @@ class ArtistRepository {
     } catch (e) {
       mainLogger.e(e);
       rethrow;
+    }
+  }
+
+  Future<Artist> createArtist(Artist artist) async {
+    try {
+      final response = await AppApi().dio.post(
+        "/artist",
+        data: {
+          "name": artist.name,
+        },
+      );
+
+      await syncRepository.performSync();
+
+      return getArtistById(ArtistModel.fromJson(response.data).id);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
     }
   }
 }

@@ -79,6 +79,9 @@ general:
   newPlaylist: "New playlist"
   editPlaylist: "Edit playlist \"{name}\""
 
+  newAlbum: "New album"
+  newArtist: "New artist"
+
   tracks: "Tracks"
 
   genre: "Genre"
@@ -98,6 +101,8 @@ general:
   editTrack: "Edit \"{title}\""
   editTrackArtists: "Edit artists"
   editTrackAlbum: "Edit album"
+
+  editAlbumArtists: "Edit artists"
 
   trackNb:
     one: "{n} Track"
@@ -209,6 +214,7 @@ actions:
 
   createAccount: "Create account"
   changeServer: "Change server"
+  changeArtists: "Change Artists"
 
   performFullSync: "Perform a full sync"
 
@@ -254,14 +260,26 @@ notifications:
       one: "{n} track have been removed from playlist \"{name}\"."
       other: "{n} tracks have been removed from playlist \"{name}\"."
 
+  albumHaveBeenCreated:
+    message: "Album \"{name}\" have been created."
+
   albumHaveBeenSaved:
     message: "Album \"{name}\" have been saved."
+
+  albumHaveBeenDeleted:
+    message: "The album \"{name}\" has been successfully deleted."
 
   albumCoverHaveBeenChanged:
     message: "The cover for album \"{name}\" have been changed."
 
   albumCoverHaveBeenRemoved:
     message: "The custom cover for album \"{name}\" have been removed."
+
+  artistHaveBeenCreated:
+    message: "Artist \"{name}\" have been created."
+
+  artistHaveBeenSaved:
+    message: "Artist \"{name}\" have been saved."
 
   exportingTrackStart:
     message: "Start exporting track \"{title}\"."
@@ -311,6 +329,8 @@ confirms:
 
   duplicatePlaylist: "Would you like to duplicate this playlist ?"
   deletePlaylist: "Would you like to delete this playlist ?"
+
+  deleteAlbum: "Would you like to delete this album ?"
 
   downloadAllAlbums: |
     Would you like to download all tracks ?\n

@@ -11,29 +11,29 @@ import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
+import 'package:melodink_client/features/library/data/repository/artist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
-import 'package:melodink_client/features/library/presentation/modals/create_album_modal.dart';
-import 'package:melodink_client/features/track/data/repository/track_repository.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/library/domain/entities/artist.dart';
+import 'package:melodink_client/features/library/domain/providers/album_provider.dart';
+import 'package:melodink_client/features/library/presentation/modals/create_artist_modal.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
-import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
-class ManageTrackAlbumsModal extends HookConsumerWidget {
-  final Track track;
+class ManageAlbumArtistsModal extends HookConsumerWidget {
+  final Album album;
 
   final List<int> currentIds;
 
-  const ManageTrackAlbumsModal({
+  const ManageAlbumArtistsModal({
     super.key,
-    required this.track,
+    required this.album,
     required this.currentIds,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final trackRepository = ref.read(trackRepositoryProvider);
     final albumRepository = ref.read(albumRepositoryProvider);
+    final artistRepository = ref.read(artistRepositoryProvider);
 
     final isLoading = useState(false);
 
@@ -41,30 +41,23 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
       text: "",
     );
 
-    final albums = useState<List<Album>>([]);
+    final artists = useState<List<Artist>>([]);
 
-    final filteredAlbums = useState<List<Album>>([]);
+    final filteredArtists = useState<List<Artist>>([]);
 
-    final selectedIds = useState<List<int>>([...currentIds]);
+    final selectedIds = useState<List<int>>(
+      [...currentIds],
+    );
 
     applySearch() {
       if (searchTextController.text.isEmpty) {
-        filteredAlbums.value = albums.value;
+        filteredArtists.value = artists.value;
       }
-      filteredAlbums.value = albums.value.where((album) {
-        if (selectedIds.value.contains(album.id)) {
+      filteredArtists.value = artists.value.where((artist) {
+        if (selectedIds.value.contains(artist.id)) {
           return true;
         }
-
-        final buffer = StringBuffer();
-
-        buffer.write(album.name);
-
-        for (final artist in album.artists) {
-          buffer.write(artist.name);
-        }
-
-        return compareFuzzySearch(searchTextController.text, buffer.toString());
+        return compareFuzzySearch(searchTextController.text, artist.name);
       }).toList()
         ..sort(
           (a, b) =>
@@ -73,18 +66,18 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
         );
     }
 
-    loadAlbums() async {
+    loadArtists() async {
       isLoading.value = true;
       try {
-        final newAlbums = await albumRepository.getAllAlbums();
-        albums.value = newAlbums;
+        final newArtists = await artistRepository.getAllArtists();
+        artists.value = newArtists;
       } finally {
         isLoading.value = false;
       }
     }
 
     useEffect(() {
-      loadAlbums();
+      loadArtists();
 
       return null;
     }, []);
@@ -92,7 +85,7 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
     useEffect(() {
       applySearch();
       return null;
-    }, [albums.value]);
+    }, [artists.value]);
 
     return MaxContainer(
       maxWidth: 440,
@@ -115,7 +108,7 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
                     AppModal(
                       preventUserClose: true,
                       title: Text(
-                        t.general.editTrackAlbum,
+                        t.general.editAlbumArtists,
                       ),
                       body: Padding(
                         padding: const EdgeInsets.symmetric(
@@ -157,18 +150,21 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
                                   ),
                                   padding: EdgeInsets.zero,
                                   onPressed: () async {
-                                    final album =
-                                        await CreateAlbumModal.showModal(
+                                    final artist =
+                                        await CreateArtistModal.showModal(
                                       context,
                                     );
 
-                                    if (album == null) {
+                                    if (artist == null) {
                                       return;
                                     }
 
-                                    await loadAlbums();
+                                    await loadArtists();
 
-                                    selectedIds.value = [album.id];
+                                    selectedIds.value = [
+                                      ...selectedIds.value,
+                                      artist.id
+                                    ];
 
                                     applySearch();
                                   },
@@ -183,25 +179,30 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
                                 child: ListView.separated(
                                   itemBuilder:
                                       (BuildContext context, int index) {
-                                    final album = filteredAlbums.value[index];
+                                    final artist = filteredArtists.value[index];
 
                                     final selected = selectedIds.value.contains(
-                                      album.id,
+                                      artist.id,
                                     );
 
-                                    return AlbumSelector(
-                                      album: album,
+                                    return ArtistSelector(
+                                      artist: artist,
                                       selected: selected,
                                       onSelect: () {
                                         if (selected) {
-                                          selectedIds.value = [];
+                                          selectedIds.value = selectedIds.value
+                                              .where((id) => id != artist.id)
+                                              .toList();
                                           return;
                                         }
-                                        selectedIds.value = [album.id];
+                                        selectedIds.value = [
+                                          ...selectedIds.value,
+                                          artist.id
+                                        ];
                                       },
                                     );
                                   },
-                                  itemCount: filteredAlbums.value.length,
+                                  itemCount: filteredArtists.value.length,
                                   separatorBuilder:
                                       (BuildContext context, int index) {
                                     return SizedBox(
@@ -219,17 +220,17 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
                                 isLoading.value = true;
 
                                 try {
-                                  final savedAlbums = albums.value
+                                  final savedArtists = artists.value
                                       .where((album) =>
                                           selectedIds.value.contains(album.id))
                                       .toList();
 
-                                  await trackRepository.setTrackAlbums(
-                                    track.id,
-                                    savedAlbums,
+                                  await albumRepository.setAlbumArtists(
+                                    album.id,
+                                    savedArtists,
                                   );
 
-                                  ref.invalidate(trackByIdProvider(track.id));
+                                  ref.invalidate(albumByIdProvider(album.id));
 
                                   isLoading.value = false;
 
@@ -240,7 +241,7 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
                                   Navigator.of(
                                     context,
                                     rootNavigator: true,
-                                  ).pop(savedAlbums);
+                                  ).pop(savedArtists);
                                 } catch (_) {
                                   isLoading.value = false;
                                 }
@@ -261,15 +262,15 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
     );
   }
 
-  static Future<List<Album>?> showModal(
+  static Future<List<Artist>?> showModal(
     BuildContext context,
-    Track track,
+    Album album,
     List<int> currentIds,
   ) async {
     final result = await showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "ManageTrackAlbumsModal",
+      barrierLabel: "ManageAlbumArtistsModal",
       pageBuilder: (_, __, ___) {
         return Center(
           child: MaxContainer(
@@ -278,8 +279,8 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
               horizontal: 16,
               vertical: 64,
             ),
-            child: ManageTrackAlbumsModal(
-              track: track,
+            child: ManageAlbumArtistsModal(
+              album: album,
               currentIds: currentIds,
             ),
           ),
@@ -287,7 +288,7 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
       },
     );
 
-    if (result is List<Album>) {
+    if (result is List<Artist>) {
       return result;
     }
 
@@ -295,16 +296,16 @@ class ManageTrackAlbumsModal extends HookConsumerWidget {
   }
 }
 
-class AlbumSelector extends StatelessWidget {
-  final Album album;
+class ArtistSelector extends StatelessWidget {
+  final Artist artist;
 
   final bool selected;
 
   final void Function() onSelect;
 
-  const AlbumSelector({
+  const ArtistSelector({
     super.key,
-    required this.album,
+    required this.artist,
     required this.selected,
     required this.onSelect,
   });
@@ -325,7 +326,7 @@ class AlbumSelector extends StatelessWidget {
                   aspectRatio: 1,
                   child: AuthCachedNetworkImage(
                     fit: BoxFit.contain,
-                    imageUrl: album.getCompressedCoverUrl(
+                    imageUrl: artist.getCompressedCoverUrl(
                       TrackCompressedCoverQuality.small,
                     ),
                     placeholder: (context, url) => Image.asset(
@@ -340,52 +341,19 @@ class AlbumSelector extends StatelessWidget {
                 ),
                 SizedBox(width: 8),
                 Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Tooltip(
-                        message: album.name,
-                        waitDuration: const Duration(milliseconds: 800),
-                        child: Text(
-                          album.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            letterSpacing: 14 * 0.03,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
+                  child: Tooltip(
+                    message: artist.name,
+                    waitDuration: const Duration(milliseconds: 800),
+                    child: Text(
+                      artist.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        letterSpacing: 14 * 0.03,
+                        fontWeight: FontWeight.w400,
                       ),
-                      SizedBox(height: 2),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Tooltip(
-                              message: album.artists
-                                  .map((artist) => artist.name)
-                                  .join(", "),
-                              waitDuration: const Duration(milliseconds: 800),
-                              child: Text(
-                                album.artists
-                                    .map((artist) => artist.name)
-                                    .join(", "),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  letterSpacing: 14 * 0.03,
-                                  color: Colors.grey[350],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    ],
+                    ),
                   ),
                 ),
                 Radio(

@@ -1,8 +1,10 @@
+import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/fuzzy_search.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
+import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
@@ -10,6 +12,7 @@ import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/data/repository/artist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
+import 'package:melodink_client/features/library/presentation/modals/create_artist_modal.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
@@ -63,14 +66,18 @@ class ManageTrackArtistsModal extends HookConsumerWidget {
         );
     }
 
-    useEffect(() {
+    loadArtists() async {
       isLoading.value = true;
-      artistRepository.getAllArtists().then((newArtists) {
+      try {
+        final newArtists = await artistRepository.getAllArtists();
         artists.value = newArtists;
+      } finally {
         isLoading.value = false;
-      }).catchError((_) {
-        isLoading.value = false;
-      });
+      }
+    }
+
+    useEffect(() {
+      loadArtists();
 
       return null;
     }, []);
@@ -111,11 +118,58 @@ class ManageTrackArtistsModal extends HookConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            AppSearchFormField(
-                              controller: searchTextController,
-                              onChanged: (value) {
-                                applySearch();
-                              },
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: AppSearchFormField(
+                                    controller: searchTextController,
+                                    onChanged: (value) {
+                                      applySearch();
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                AppIconButton(
+                                  iconSize: 40,
+                                  icon: Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromRGBO(
+                                        196,
+                                        126,
+                                        208,
+                                        1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    ),
+                                    child: Center(
+                                      child: AdwaitaIcon(
+                                        size: 20,
+                                        AdwaitaIcons.list_add,
+                                      ),
+                                    ),
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () async {
+                                    final artist =
+                                        await CreateArtistModal.showModal(
+                                      context,
+                                    );
+
+                                    if (artist == null) {
+                                      return;
+                                    }
+
+                                    await loadArtists();
+
+                                    selectedIds.value = [
+                                      ...selectedIds.value,
+                                      artist.id
+                                    ];
+
+                                    applySearch();
+                                  },
+                                ),
+                              ],
                             ),
                             SizedBox(height: 8),
                             SizedBox(
@@ -216,7 +270,7 @@ class ManageTrackArtistsModal extends HookConsumerWidget {
     final result = await showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "ManageTrackAlbumsModal",
+      barrierLabel: "ManageTrackArtistsModal",
       pageBuilder: (_, __, ___) {
         return Center(
           child: MaxContainer(

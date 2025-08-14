@@ -11,6 +11,7 @@ import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/repository/artist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
+import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/sync/data/models/album_model.dart';
 import 'package:melodink_client/features/sync/data/repository/sync_repository.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
@@ -106,7 +107,9 @@ class AlbumRepository {
         FROM albums
         LEFT JOIN album_downloads
           ON album_downloads.album_id = albums.id
-        ORDER BY latest_track_created_at DESC
+        ORDER BY
+          latest_track_created_at IS NOT NULL,
+          latest_track_created_at DESC
         """))
           .map(
             (album) => decodeAlbum(applicationSupportDirectory, album),
@@ -201,6 +204,91 @@ class AlbumRepository {
       await syncRepository.performSync();
 
       return getAlbumById(AlbumModel.fromJson(response.data).id);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw AlbumNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<Album> createAlbum(Album album) async {
+    try {
+      final response = await AppApi().dio.post(
+        "/album",
+        data: {
+          "name": album.name,
+        },
+      );
+
+      await syncRepository.performSync();
+
+      return getAlbumById(AlbumModel.fromJson(response.data).id);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  setAlbumArtists(
+    int albumId,
+    List<Artist> artists,
+  ) async {
+    try {
+      final response = await AppApi().dio.put(
+        "/album/$albumId/artists",
+        data: {
+          "artist_ids": artists.map((artist) => artist.id).toList(),
+        },
+      );
+
+      await syncRepository.performSync();
+
+      return getAlbumById(AlbumModel.fromJson(response.data).id);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw AlbumNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<Album> deleteAlbumById(int albumId) async {
+    try {
+      final old = await getAlbumById(albumId);
+
+      await AppApi().dio.delete(
+            "/album/$albumId",
+          );
+
+      await syncRepository.performSync();
+
+      return old;
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {

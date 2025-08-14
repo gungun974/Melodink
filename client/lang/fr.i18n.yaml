@@ -79,6 +79,9 @@ general:
   newPlaylist: "Nouvelle playlist"
   editPlaylist: "Modifier la playlist \"{name}\""
 
+  newAlbum: "Nouvel album"
+  newArtist: "Nouvel artiste"
+
   tracks: "Morceaux"
 
   genre: "Genre"
@@ -98,6 +101,8 @@ general:
   editTrack: "Modifier \"{title}\""
   editTrackArtists: "Modification d'artistes"
   editTrackAlbum: "Modification d'album"
+
+  editAlbumArtists: "Modification d'artistes"
 
   trackNb:
     one: "{n} Morceau"
@@ -207,6 +212,7 @@ actions:
 
   createAccount: "Créer un compte"
   changeServer: "Changer de serveur"
+  changeArtists: "Changer les artistes"
 
   performFullSync: "Faire une synchronisation complète"
 
@@ -252,14 +258,26 @@ notifications:
       one: "{n} morceau a été retiré de la playlist \"{name}\"."
       other: "{n} morceaux ont été retirés de la playlist \"{name}\"."
 
+  albumHaveBeenCreated:
+    message: "L'album \"{name}\" a été créé."
+
   albumHaveBeenSaved:
     message: "L'album \"{name}\" a été enregistré."
+
+  albumHaveBeenDeleted:
+    message: "L'album \"{name}\" a été supprimé avec succès."
 
   albumCoverHaveBeenChanged:
     message: "La couverture de l'album \"{name}\" a été modifiée."
 
   albumCoverHaveBeenRemoved:
     message: "La couverture personnalisée de l'album \"{name}\" a été supprimée."
+
+  artistHaveBeenCreated:
+    message: "L'artiste \"{name}\" a été créé."
+
+  artistHaveBeenSaved:
+    message: "L'artiste \"{name}\" a été enregistré."
 
   exportingTrackStart:
     message: "Exportation du morceau \"{title}\" commencée."
@@ -309,6 +327,8 @@ confirms:
 
   duplicatePlaylist: "Souhaitez-vous dupliquer cette playlist ?"
   deletePlaylist: "Souhaitez-vous supprimer cette playlist ?"
+
+  deleteAlbum: "Souhaitez-vous supprimer cet album ?"
 
   downloadAllAlbums: |
     Souhaitez-vous télécharger tous les morceaux ?\n

@@ -746,9 +746,7 @@ class TrackRepository {
         },
       );
 
-      print("E");
       await syncRepository.performSync();
-      print("ABCD");
 
       final db = await DatabaseService.getDatabase();
 

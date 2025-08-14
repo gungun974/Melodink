@@ -11,6 +11,7 @@ import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/domain/providers/edit_album_provider.dart';
+import 'package:melodink_client/features/library/presentation/modals/manage_album_artists_modal.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class EditAlbumModal extends HookConsumerWidget {
@@ -37,6 +38,8 @@ class EditAlbumModal extends HookConsumerWidget {
 
     final coverSignature = useFuture(fetchSignature, preserveState: false).data;
 
+    final currentArtists = useState(album.artists);
+
     return IntrinsicHeight(
       child: Stack(
         children: [
@@ -52,6 +55,29 @@ class EditAlbumModal extends HookConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      AppButton(
+                        text: t.actions.changeArtists,
+                        type: AppButtonType.secondary,
+                        onPressed: () async {
+                          final artists =
+                              await ManageAlbumArtistsModal.showModal(
+                            context,
+                            album,
+                            currentArtists.value
+                                .map(
+                                  (artist) => artist.id,
+                                )
+                                .toList(),
+                          );
+
+                          if (artists == null) {
+                            return;
+                          }
+
+                          currentArtists.value = artists;
+                        },
+                      ),
+                      const SizedBox(height: 16),
                       if (coverSignature?.data?.trim() == "")
                         AppButton(
                           text: t.actions.changeCover,

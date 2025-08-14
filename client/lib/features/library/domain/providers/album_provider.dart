@@ -5,6 +5,8 @@ import 'package:melodink_client/features/library/data/repository/album_repositor
 import 'package:melodink_client/features/library/data/repository/download_album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
+import 'package:melodink_client/features/library/domain/providers/create_album_provider.dart';
+import 'package:melodink_client/features/library/domain/providers/delete_album_provider.dart';
 import 'package:melodink_client/features/library/domain/providers/edit_album_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
@@ -22,7 +24,27 @@ part 'album_provider.g.dart';
 Future<List<Album>> allAlbums(Ref ref) async {
   final albumRepository = ref.read(albumRepositoryProvider);
 
+  ref.listen(createAlbumStreamProvider, (_, rawNewAlbum) async {
+    final newAlbum = rawNewAlbum.valueOrNull;
+
+    if (newAlbum == null) {
+      return;
+    }
+
+    ref.invalidateSelf();
+  });
+
   ref.listen(editAlbumStreamProvider, (_, rawNewAlbum) async {
+    final newAlbum = rawNewAlbum.valueOrNull;
+
+    if (newAlbum == null) {
+      return;
+    }
+
+    ref.invalidateSelf();
+  });
+
+  ref.listen(deleteAlbumStreamProvider, (_, rawNewAlbum) async {
     final newAlbum = rawNewAlbum.valueOrNull;
 
     if (newAlbum == null) {
