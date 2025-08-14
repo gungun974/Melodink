@@ -113,13 +113,32 @@ func (r *AlbumRepository) GetAlbumByName(
 ) (*entities.Album, error) {
 	m := data_models.AlbumModel{}
 
-	artistIds := make([]int, len(albumArtists))
+	if len(albumArtists) == 0 {
+		err := r.Database.Get(&m,
+			`
+		SELECT albums.*
+		FROM albums
+		JOIN album_artist ON album_artist.album_id = albums.id
+		WHERE LOWER(albums.name) = LOWER(?) 
+			AND albums.user_id = ?
+		GROUP BY albums.id
+		HAVING COUNT(DISTINCT album_artist.artist_id) = 0;
+	`, name, userId)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, AlbumNotFoundError
+			}
+			logger.DatabaseLogger.Error(err)
+			return nil, err
+		}
+	} else {
+		artistIds := make([]int, len(albumArtists))
 
-	for i, artist := range albumArtists {
-		artistIds[i] = artist.Id
-	}
+		for i, artist := range albumArtists {
+			artistIds[i] = artist.Id
+		}
 
-	reqQuery, reqArgs, err := sqlx.In(`
+		reqQuery, reqArgs, err := sqlx.In(`
 		SELECT albums.*
 		FROM albums
 		JOIN album_artist ON album_artist.album_id = albums.id
@@ -129,23 +148,24 @@ func (r *AlbumRepository) GetAlbumByName(
 		HAVING COUNT(DISTINCT album_artist.artist_id) = ?
 			AND COUNT(DISTINCT CASE WHEN album_artist.artist_id IN (?) THEN album_artist.artist_id END) = ?;
 	`, name, userId, len(artistIds), artistIds, len(artistIds))
-	if err != nil {
-		return nil, err
-	}
-	reqQuery = r.Database.Rebind(reqQuery)
-
-	err = r.Database.Get(&m, reqQuery, reqArgs...)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, AlbumNotFoundError
+		if err != nil {
+			return nil, err
 		}
-		logger.DatabaseLogger.Error(err)
-		return nil, err
+		reqQuery = r.Database.Rebind(reqQuery)
+
+		err = r.Database.Get(&m, reqQuery, reqArgs...)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, AlbumNotFoundError
+			}
+			logger.DatabaseLogger.Error(err)
+			return nil, err
+		}
 	}
 
 	album := m.ToAlbum()
 
-	err = r.LoadTracksInAlbum(&album)
+	err := r.LoadTracksInAlbum(&album)
 	if err != nil {
 		return nil, entities.NewInternalError(err)
 	}

@@ -75,6 +75,10 @@ func (u *TrackUsecase) AutoLinkTrack(
 			albumArtists[i] = *artist
 		}
 
+		if len(albumArtists) == 0 {
+			albumArtists = track.Artists
+		}
+
 		album, err := u.albumRepository.GetAlbumByNameOrCreate(
 			track.Metadata.Album,
 			albumArtists,
