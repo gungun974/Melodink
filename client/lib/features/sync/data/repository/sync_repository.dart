@@ -579,11 +579,21 @@ class SyncRepository {
       final date = _getLastSyncDate(db);
 
       if (date == null || fullSync) {
+        final start = DateTime.now();
+        syncLogger.i("Start full sync");
         await _performFullSync(db);
+        syncLogger.i(
+          "Finish full sync in ${DateTime.now().difference(start)}",
+        );
         return;
       }
 
-      return await _performPartialSync(db, date);
+      final start = DateTime.now();
+      syncLogger.i("Start partial sync");
+      await _performPartialSync(db, date);
+      syncLogger.i(
+        "Finish partial sync in ${DateTime.now().difference(start)}",
+      );
     });
   }
 }

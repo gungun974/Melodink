@@ -66,3 +66,7 @@ final audioControllerLogger = Logger(
 final databaseLogger = Logger(
   printer: CustomPrinter(loggerName: "DatabaseLogger"),
 );
+
+final syncLogger = Logger(
+  printer: CustomPrinter(loggerName: "SyncLogger"),
+);
