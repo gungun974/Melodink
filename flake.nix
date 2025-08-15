@@ -7,8 +7,6 @@
 
     air-nixpkgs.url = "github:nixos/nixpkgs?rev=c1ce56e9c606b4cd31f0950768911b1171b8db51";
 
-    flutter-nixpkgs.url = "github:nixos/nixpkgs?rev=c09c37319f1c931e17de74fc67aecfd1a6e95092";
-
     flake-utils.url = "github:numtide/flake-utils";
 
     gitignore = {
@@ -28,7 +26,6 @@
   outputs = {
     nixpkgs,
     air-nixpkgs,
-    flutter-nixpkgs,
     gitignore,
     flake-utils,
     android-nixpkgs,
@@ -54,14 +51,6 @@
         nativeBuildInputs = [zig];
       });
 
-      flutter-pkgs = import flutter-nixpkgs {
-        inherit system;
-        config = {
-          android_sdk.accept_license = true;
-          allowUnfree = true;
-        };
-      };
-
       air-pkgs = import air-nixpkgs {
         inherit system;
       };
@@ -76,7 +65,7 @@
           ];
       });
 
-      flutter-sdk = (import ./nix/flutter) flutter-pkgs;
+      flutter-sdk = pkgs.flutter;
       sdk = android-nixpkgs.sdk.${system} (sdkPkgs:
         with sdkPkgs; [
           build-tools-33-0-1
@@ -92,12 +81,12 @@
           system-images-android-34-google-apis-playstore-x86-64
           ndk-23-1-7779620
         ]);
-      pinnedJDK = flutter-pkgs.jdk17;
+      pinnedJDK = pkgs.jdk17;
 
       mkMinShell = (import ./nix/minshell) pkgs;
     in {
       packages = rec {
-        melodink-server = pkgs.buildGo122Module rec {
+        melodink-server = pkgs.buildGo125Module rec {
           name = "melodink-server";
           src = gitignore.lib.gitignoreSource ./.;
           subPackages = ["cmd/api"];
@@ -152,7 +141,7 @@
           '';
         };
 
-        melodink-client = flutter-pkgs.flutter.buildFlutterApplication rec {
+        melodink-client = pkgs.flutter.buildFlutterApplication rec {
           pname = "melodink-client";
           version = "1.0.0";
 
@@ -238,15 +227,15 @@
             FLUTTER_SDK = "${flutter-sdk}";
             GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/share/android-sdk/build-tools/34.0.0/aapt2";
 
-            GOROOT = "${pkgs.go_1_22}/share/go";
+            GOROOT = "${pkgs.go_1_25}/share/go";
 
             shellHook = ''
               export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${pkgs.lib.makeLibraryPath [pkgs.sqlite pkgs.chromaprint]}
             '';
 
             buildInputs = [
-              (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo122Module;})
-              pkgs.go_1_22
+              (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo125Module;})
+              pkgs.go_1_25
               air-pkgs.air
               flutter-sdk
               pinnedJDK
@@ -288,8 +277,8 @@
             '';
 
             packages = [
-              (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo122Module;})
-              pkgs.go_1_22
+              (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo125Module;})
+              pkgs.go_1_25
               air-pkgs.air
               pkgs.cocoapods
               (pkgs.go-migrate.overrideAttrs (finalAttrs: previousAttrs: {

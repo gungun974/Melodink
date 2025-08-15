@@ -1,6 +1,6 @@
 module github.com/gungun974/Melodink/server
 
-go 1.22.5
+go 1.25.0
 
 require (
 	github.com/dhowden/tag v0.0.0-20240417053706-3d75831295e8

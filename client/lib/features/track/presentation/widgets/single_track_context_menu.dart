@@ -337,7 +337,7 @@ class SingleTrackContextMenu extends ConsumerWidget {
                       headers: {"Cookie": AppApi().generateCookieHeader()},
                       method: "GET",
                     ),
-                    ext: extension,
+                    fileExtension: extension,
                   );
 
                   if (!context.mounted) {

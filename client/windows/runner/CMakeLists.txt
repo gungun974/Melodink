@@ -83,16 +83,6 @@ if(NOT FFMPEG_SRC_VALID)
   )
 endif()
 
-# sqlite3.dll
-
-set(SQLITE_DLL "${CMAKE_BINARY_DIR}/sqlite3.dll")
-
-download_and_verify(
-  "https://raw.githubusercontent.com/tekartik/sqflite/master/sqflite_common_ffi/lib/src/windows/sqlite3.dll"
-  "41cdb8f49cbb65bc9b3e41e4d8abd9c9"
-  ${SQLITE_DLL}
-)
-
 # ------------------------------------------------------------------------------
 
 set(MELODINK_DIR "${CMAKE_SOURCE_DIR}/../melodink_player")
