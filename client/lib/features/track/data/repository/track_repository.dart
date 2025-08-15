@@ -34,9 +34,7 @@ class TrackRepository {
     required this.networkInfo,
   });
 
-  static Track decodeTrack(
-    Map<String, Object?> data,
-  ) {
+  static Track decodeTrack(Map<String, Object?> data) {
     return Track(
       id: data["id"] as int,
       title: data["title"] as String,
@@ -86,10 +84,8 @@ class TrackRepository {
           track.albums,
         )
         .map(
-          (album) => AlbumRepository.decodeAlbum(
-            applicationSupportDirectory,
-            album,
-          ),
+          (album) =>
+              AlbumRepository.decodeAlbum(applicationSupportDirectory, album),
         )
         .toList();
 
@@ -147,18 +143,19 @@ class TrackRepository {
     track.albums
       ..clear()
       ..addAll(
-        (db.select('''
+        (db.select(
+          '''
         SELECT albums.*, album_downloads.cover_file, album_downloads.album_id as download_id, album_downloads.partial_download
         FROM albums
         LEFT JOIN album_downloads ON album_downloads.album_id = albums.id
         JOIN track_album ON albums.id = track_album.album_id
         WHERE track_album.track_id = ?
 	    	ORDER BY track_album.album_pos ASC
-      ''', [track.id])).map(
-          (album) => AlbumRepository.decodeAlbum(
-            applicationSupportDirectory,
-            album,
-          ),
+      ''',
+          [track.id],
+        )).map(
+          (album) =>
+              AlbumRepository.decodeAlbum(applicationSupportDirectory, album),
         ),
       );
 
@@ -171,12 +168,15 @@ class TrackRepository {
     track.artists
       ..clear()
       ..addAll(
-        (db.select('''
+        (db.select(
+          '''
         SELECT * FROM artists
         JOIN track_artist ON artists.id = track_artist.artist_id
         WHERE track_artist.track_id = ?
 	    	ORDER BY track_artist.artist_pos ASC
-      ''', [track.id])).map(ArtistRepository.decodeArtist),
+      ''',
+          [track.id],
+        )).map(ArtistRepository.decodeArtist),
       );
   }
 
@@ -187,23 +187,34 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final tracks =
-          (db.select("SELECT * FROM tracks")).map(decodeTrack).toList();
+      const chunkSize = 500;
 
-      await playedTrackRepository.loadTrackHistoryIntoTracks(tracks);
+      List<Track>? tracks;
 
-      const chunkSize = 1000;
+      while (tracks == null || tracks.isNotEmpty) {
+        if (tracks == null) {
+          tracks = db
+              .select("SELECT * FROM tracks ORDER BY id DESC LIMIT $chunkSize")
+              .map(decodeTrack)
+              .toList();
+        } else {
+          tracks = db
+              .select(
+                "SELECT * FROM tracks WHERE id < ? ORDER BY id DESC LIMIT $chunkSize",
+                [tracks.last.id],
+              )
+              .map(decodeTrack)
+              .toList();
+        }
 
-      for (var i = tracks.length; i > 0; i -= chunkSize) {
-        final start = (i - chunkSize < 0) ? 0 : i - chunkSize;
-        var chunk = tracks.sublist(start, i);
+        await playedTrackRepository.loadTrackHistoryIntoTracks(tracks);
 
-        for (final track in chunk) {
+        for (final track in tracks) {
           loadTrackAlbums(db, applicationSupportDirectory, track);
           loadTrackArtists(db, track);
         }
 
-        yield chunk;
+        yield tracks;
         await Future.delayed(Duration(milliseconds: 1));
       }
     } catch (e) {
@@ -222,8 +233,10 @@ class TrackRepository {
           (await getMelodinkInstanceSupportDirectory()).path;
 
       return (response.data as List)
-          .map((rawModel) =>
-              decodeOnlineTrack(db, applicationSupportDirectory, rawModel))
+          .map(
+            (rawModel) =>
+                decodeOnlineTrack(db, applicationSupportDirectory, rawModel),
+          )
           .toList();
     } on DioException catch (e) {
       final response = e.response;
@@ -245,9 +258,9 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final track = (db.select("SELECT * FROM tracks WHERE id = ?", [id]))
-          .map(decodeTrack)
-          .firstOrNull;
+      final track = (db.select("SELECT * FROM tracks WHERE id = ?", [
+        id,
+      ])).map(decodeTrack).firstOrNull;
 
       if (track == null) {
         throw TrackNotFoundException();
@@ -258,9 +271,7 @@ class TrackRepository {
       loadTrackAlbums(db, applicationSupportDirectory, track);
       loadTrackArtists(db, track);
 
-      return track.copyWith(
-        historyInfo: () => info,
-      );
+      return track.copyWith(historyInfo: () => info);
     } catch (e) {
       mainLogger.e(e);
       rethrow;
@@ -276,11 +287,7 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      return decodeOnlineTrack(
-        db,
-        applicationSupportDirectory,
-        response.data,
-      );
+      return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -298,9 +305,10 @@ class TrackRepository {
     try {
       final db = await DatabaseService.getDatabase();
 
-      final track =
-          (db.select("SELECT metadata_lyrics FROM tracks WHERE id = ?", [id]))
-              .firstOrNull;
+      final track = (db.select(
+        "SELECT metadata_lyrics FROM tracks WHERE id = ?",
+        [id],
+      )).firstOrNull;
 
       if (track == null) {
         throw TrackNotFoundException();
@@ -345,16 +353,17 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final updatedTrack =
-          decodeOnlineTrack(db, applicationSupportDirectory, response.data);
+      final updatedTrack = decodeOnlineTrack(
+        db,
+        applicationSupportDirectory,
+        response.data,
+      );
 
       final info = await playedTrackRepository.getTrackHistoryInfo(
         updatedTrack.id,
       );
 
-      return updatedTrack.copyWith(
-        historyInfo: () => info,
-      );
+      return updatedTrack.copyWith(historyInfo: () => info);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -395,28 +404,22 @@ class TrackRepository {
       });
 
       final response = await AppApi().dio.post(
-            "/track/upload",
-            data: formData,
-            onSendProgress: progress != null
-                ? (int sent, int total) {
-                    progress.add(sent / total);
-                  }
-                : null,
-            options: Options(
-              receiveTimeout: const Duration(hours: 3),
-            ),
-          );
+        "/track/upload",
+        data: formData,
+        onSendProgress: progress != null
+            ? (int sent, int total) {
+                progress.add(sent / total);
+              }
+            : null,
+        options: Options(receiveTimeout: const Duration(hours: 3)),
+      );
 
       final db = await DatabaseService.getDatabase();
 
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      return decodeOnlineTrack(
-        db,
-        applicationSupportDirectory,
-        response.data,
-      );
+      return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -450,12 +453,10 @@ class TrackRepository {
 
     try {
       final response = await AppApi().dio.put(
-            "/track/$id/audio",
-            data: formData,
-            options: Options(
-              receiveTimeout: const Duration(hours: 3),
-            ),
-          );
+        "/track/$id/audio",
+        data: formData,
+        options: Options(receiveTimeout: const Duration(hours: 3)),
+      );
 
       await syncRepository.performSync();
 
@@ -464,11 +465,7 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      return decodeOnlineTrack(
-        db,
-        applicationSupportDirectory,
-        response.data,
-      );
+      return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -495,9 +492,9 @@ class TrackRepository {
 
     try {
       final response = await AppApi().dio.put(
-            "/track/$id/cover",
-            data: formData,
-          );
+        "/track/$id/cover",
+        data: formData,
+      );
 
       await syncRepository.performSync();
 
@@ -506,11 +503,7 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      return decodeOnlineTrack(
-        db,
-        applicationSupportDirectory,
-        response.data,
-      );
+      return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -539,11 +532,7 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      return decodeOnlineTrack(
-        db,
-        applicationSupportDirectory,
-        response.data,
-      );
+      return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -582,11 +571,9 @@ class TrackRepository {
   Future<Track> scanAudio(int id) async {
     try {
       final response = await AppApi().dio.get(
-            "/track/$id/scan",
-            options: Options(
-              receiveTimeout: const Duration(seconds: 120),
-            ),
-          );
+        "/track/$id/scan",
+        options: Options(receiveTimeout: const Duration(seconds: 120)),
+      );
 
       await syncRepository.performSync();
 
@@ -595,11 +582,7 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      return decodeOnlineTrack(
-        db,
-        applicationSupportDirectory,
-        response.data,
-      );
+      return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -620,11 +603,9 @@ class TrackRepository {
   Future<Track> advancedAudioScan(int id) async {
     try {
       final response = await AppApi().dio.get(
-            "/track/$id/scan?advanced_scan=true",
-            options: Options(
-              receiveTimeout: const Duration(seconds: 120),
-            ),
-          );
+        "/track/$id/scan?advanced_scan=true",
+        options: Options(receiveTimeout: const Duration(seconds: 120)),
+      );
 
       await syncRepository.performSync();
 
@@ -633,11 +614,7 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      return decodeOnlineTrack(
-        db,
-        applicationSupportDirectory,
-        response.data,
-      );
+      return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -659,9 +636,7 @@ class TrackRepository {
     try {
       final response = await AppApi().dio.put(
         "/track/$id/score",
-        data: {
-          "score": score,
-        },
+        data: {"score": score},
       );
 
       await syncRepository.performSync();
@@ -671,11 +646,7 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      return decodeOnlineTrack(
-        db,
-        applicationSupportDirectory,
-        response.data,
-      );
+      return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -693,16 +664,11 @@ class TrackRepository {
     }
   }
 
-  Future<Track> setTrackAlbums(
-    int trackId,
-    List<Album> albums,
-  ) async {
+  Future<Track> setTrackAlbums(int trackId, List<Album> albums) async {
     try {
       final response = await AppApi().dio.put(
         "/track/$trackId/albums",
-        data: {
-          "album_ids": albums.map((album) => album.id).toList(),
-        },
+        data: {"album_ids": albums.map((album) => album.id).toList()},
       );
 
       await syncRepository.performSync();
@@ -712,11 +678,7 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      return decodeOnlineTrack(
-        db,
-        applicationSupportDirectory,
-        response.data,
-      );
+      return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -734,16 +696,11 @@ class TrackRepository {
     }
   }
 
-  Future<Track> setTrackArtists(
-    int trackId,
-    List<Artist> artists,
-  ) async {
+  Future<Track> setTrackArtists(int trackId, List<Artist> artists) async {
     try {
       final response = await AppApi().dio.put(
         "/track/$trackId/artists",
-        data: {
-          "artist_ids": artists.map((artist) => artist.id).toList(),
-        },
+        data: {"artist_ids": artists.map((artist) => artist.id).toList()},
       );
 
       await syncRepository.performSync();
@@ -753,11 +710,7 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      return decodeOnlineTrack(
-        db,
-        applicationSupportDirectory,
-        response.data,
-      );
+      return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
@@ -778,14 +731,8 @@ class TrackRepository {
 
 final trackRepositoryProvider = Provider(
   (ref) => TrackRepository(
-    playedTrackRepository: ref.watch(
-      playedTrackRepositoryProvider,
-    ),
-    syncRepository: ref.watch(
-      syncRepositoryProvider,
-    ),
-    networkInfo: ref.watch(
-      networkInfoProvider,
-    ),
+    playedTrackRepository: ref.watch(playedTrackRepositoryProvider),
+    syncRepository: ref.watch(syncRepositoryProvider),
+    networkInfo: ref.watch(networkInfoProvider),
   ),
 );

@@ -18,7 +18,9 @@ import 'package:melodink_client/features/track/domain/entities/track.dart';
 
 class DownloadTrackRepository {
   static DownloadTrack decodeDownloadTrack(
-      Map<String, Object?> data, String applicationSupportDirectory) {
+    Map<String, Object?> data,
+    String applicationSupportDirectory,
+  ) {
     final rawAudioFile = data["audio_file"] as String;
     final rawImageFile = data["image_file"] as String?;
 
@@ -33,13 +35,17 @@ class DownloadTrackRepository {
     );
   }
 
-  Future<DownloadTrack?> getDownloadedTrackByTrackId(int trackId,
-      {bool shouldVerifyIfFileExist = false}) async {
+  Future<DownloadTrack?> getDownloadedTrackByTrackId(
+    int trackId, {
+    bool shouldVerifyIfFileExist = false,
+  }) async {
     final db = await DatabaseService.getDatabase();
 
     try {
-      final data = db
-          .select("SELECT * FROM track_download WHERE track_id = ?", [trackId]);
+      final data = db.select(
+        "SELECT * FROM track_download WHERE track_id = ?",
+        [trackId],
+      );
 
       final rawDownloadTrack = data.firstOrNull;
 
@@ -50,8 +56,10 @@ class DownloadTrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final downloadTrack =
-          decodeDownloadTrack(rawDownloadTrack, applicationSupportDirectory);
+      final downloadTrack = decodeDownloadTrack(
+        rawDownloadTrack,
+        applicationSupportDirectory,
+      );
 
       final audioFile = File(downloadTrack.audioFile);
 
@@ -75,7 +83,9 @@ class DownloadTrackRepository {
 
     try {
       final data = db.select(
-          "SELECT track_id FROM track_download WHERE track_id = ?", [trackId]);
+        "SELECT 1 FROM track_download WHERE track_id = ? LIMIT 1;",
+        [trackId],
+      );
 
       final rawDownloadTrack = data.firstOrNull;
 
@@ -86,12 +96,14 @@ class DownloadTrackRepository {
   }
 
   Future<
-      ({
-        bool shouldDownload,
-        String signature,
-        String coverSignature,
-        AppSettingAudioQuality audioQuality,
-      })> shouldDownloadOrUpdateTrack(Track track) async {
+    ({
+      bool shouldDownload,
+      String signature,
+      String coverSignature,
+      AppSettingAudioQuality audioQuality,
+    })
+  >
+  shouldDownloadOrUpdateTrack(Track track) async {
     final config = await SettingsRepository().getSettings();
 
     final signature = track.fileSignature;
@@ -150,24 +162,23 @@ class DownloadTrackRepository {
 
       if (downloadTrack?.fileSignature != signature) {
         await AppApi().dio.download(
-              switch (audioQuality) {
-                AppSettingAudioQuality.low =>
-                  "/track/$trackId/audio/low/transcode",
-                AppSettingAudioQuality.medium =>
-                  "/track/$trackId/audio/medium/transcode",
-                AppSettingAudioQuality.high =>
-                  "/track/$trackId/audio/high/transcode",
-                _ => "/track/$trackId/audio",
-              },
-              "$applicationSupportDirectory/$downloadAudioPath",
-              onReceiveProgress: progress != null
-                  ? (int sent, int total) {
-                      if (total != -1) {
-                        progress.add(sent / total);
-                      }
-                    }
-                  : null,
-            );
+          switch (audioQuality) {
+            AppSettingAudioQuality.low => "/track/$trackId/audio/low/transcode",
+            AppSettingAudioQuality.medium =>
+              "/track/$trackId/audio/medium/transcode",
+            AppSettingAudioQuality.high =>
+              "/track/$trackId/audio/high/transcode",
+            _ => "/track/$trackId/audio",
+          },
+          "$applicationSupportDirectory/$downloadAudioPath",
+          onReceiveProgress: progress != null
+              ? (int sent, int total) {
+                  if (total != -1) {
+                    progress.add(sent / total);
+                  }
+                }
+              : null,
+        );
         if (downloadTrack?.audioFile !=
             "$applicationSupportDirectory/$downloadAudioPath") {
           shouldDeleteOldAudio = true;
@@ -177,9 +188,9 @@ class DownloadTrackRepository {
       if (downloadTrack?.coverSignature != coverSignature) {
         try {
           await AppApi().dio.download(
-                "/track/$trackId/cover",
-                "$applicationSupportDirectory/$downloadImagePath",
-              );
+            "/track/$trackId/cover",
+            "$applicationSupportDirectory/$downloadImagePath",
+          );
         } on DioException catch (e) {
           final response = e.response;
           if (response == null) {
@@ -221,14 +232,15 @@ class DownloadTrackRepository {
       }
 
       db.execute(
-          "UPDATE track_download SET file_signature = ?, cover_signature = ?, audio_file = ?, image_file = ? WHERE track_id = ?",
-          [
-            signature,
-            coverSignature,
-            downloadAudioPath,
-            downloadImagePath,
-            trackId
-          ]);
+        "UPDATE track_download SET file_signature = ?, cover_signature = ?, audio_file = ?, image_file = ? WHERE track_id = ?",
+        [
+          signature,
+          coverSignature,
+          downloadAudioPath,
+          downloadImagePath,
+          trackId,
+        ],
+      );
 
       if (shouldDeleteOldAudio) {
         try {
@@ -265,8 +277,7 @@ class DownloadTrackRepository {
         (await getMelodinkInstanceSupportDirectory()).path;
 
     try {
-      final orphansData = db.select(
-        """
+      final orphansData = db.select("""
 SELECT track_download.*
 FROM track_download
 WHERE (track_download.track_id NOT IN (SELECT je.value
@@ -277,8 +288,7 @@ WHERE (track_download.track_id NOT IN (SELECT je.value
                                        FROM album_downloads
                                                 JOIN albums ON album_downloads.album_id = albums.id
                                                 JOIN track_album ON albums.id = track_album.album_id));
-        """,
-      );
+        """);
 
       final orphans = orphansData
           .map((data) => decodeDownloadTrack(data, applicationSupportDirectory))
@@ -314,10 +324,9 @@ WHERE (track_download.track_id NOT IN (SELECT je.value
           } catch (_) {}
         }
 
-        db.execute(
-          "DELETE FROM track_download WHERE track_id = ?",
-          [orphan.trackId],
-        );
+        db.execute("DELETE FROM track_download WHERE track_id = ?", [
+          orphan.trackId,
+        ]);
       }
     } catch (e) {
       mainLogger.e(e);
@@ -329,10 +338,7 @@ WHERE (track_download.track_id NOT IN (SELECT je.value
     final db = await DatabaseService.getDatabase();
 
     try {
-      db.execute(
-        "DELETE FROM track_download WHERE track_id = ?",
-        [trackId],
-      );
+      db.execute("DELETE FROM track_download WHERE track_id = ?", [trackId]);
     } catch (e) {
       mainLogger.e(e);
       throw ServerUnknownException();
@@ -340,5 +346,6 @@ WHERE (track_download.track_id NOT IN (SELECT je.value
   }
 }
 
-final downloadTrackRepositoryProvider =
-    Provider((ref) => DownloadTrackRepository());
+final downloadTrackRepositoryProvider = Provider(
+  (ref) => DownloadTrackRepository(),
+);

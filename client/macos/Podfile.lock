@@ -110,7 +110,7 @@ SPEC CHECKSUMS:
   desktop_drop: e52397f93b3daec9fe1d504f1d5a21b76403d8ae
   file_picker: e716a70a9fe5fd9e09ebc922d7541464289443af
   file_saver: 44e6fbf666677faf097302460e214e977fdd977b
-  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
   MelodinkPlayer: cecc89bba9e76da17d93eaf765952c6b1caf7b89
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   screen_retriever_macos: 776e0fa5d42c6163d2bf772d22478df4b302b161
@@ -120,6 +120,6 @@ SPEC CHECKSUMS:
   sqlite3_flutter_libs: 86f82662868ee26ff3451f73cac9c5fc2a1f57fa
   window_manager: e25faf20d88283a0d46e7b1a759d07261ca27575
 
-PODFILE CHECKSUM: 2d5302d31b07debf7f04f0bc72e93666941565ea
+PODFILE CHECKSUM: 1af44edb5c2696b2e3cfd26b2319e2c79c4b64b7
 
 COCOAPODS: 1.16.2

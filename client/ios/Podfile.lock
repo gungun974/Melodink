@@ -136,7 +136,7 @@ SPEC CHECKSUMS:
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: b159e0c068aef54932bb15dc9fd1571818edaf49
   file_saver: 503e386464dbe118f630e17b4c2e1190fa0cf808
-  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   MelodinkPlayer: 74cee60658acb8235ce5a9b0afd80abf0c1ad8a0
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   SDWebImage: 73c6079366fea25fa4bb9640d5fb58f0893facd8
@@ -146,6 +146,6 @@ SPEC CHECKSUMS:
   sqlite3_flutter_libs: 86f82662868ee26ff3451f73cac9c5fc2a1f57fa
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
 
-PODFILE CHECKSUM: b4d15a9115f311f726ada45d900720c7f80cb50e
+PODFILE CHECKSUM: 276da3b7d4724290761cff704f5f55b3ffdffeab
 
 COCOAPODS: 1.16.2

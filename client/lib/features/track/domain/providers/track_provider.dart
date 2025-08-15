@@ -54,9 +54,7 @@ class AllTracks extends _$AllTracks {
       final tracks = await future;
 
       final updatedTracks = tracks
-          .where(
-            (track) => track.id != deletedTrack.id,
-          )
+          .where((track) => track.id != deletedTrack.id)
           .toList();
 
       state = AsyncData(updatedTracks);
@@ -157,8 +155,9 @@ Future<List<Track>> allSortedTracks(Ref ref) async {
 
 //! Search
 
-final allTracksSearchInputProvider =
-    StateProvider.autoDispose<String>((ref) => '');
+final allTracksSearchInputProvider = StateProvider.autoDispose<String>(
+  (ref) => '',
+);
 
 @riverpod
 Future<List<Track>> allSearchTracks(Ref ref) async {
@@ -230,8 +229,9 @@ Future<List<Artist>> allTracksArtistFiltersOptions(Ref ref) async {
 Future<List<Track>> allFilteredArtistsTracks(Ref ref) async {
   final allSearchTracks = await ref.watch(allSearchTracksProvider.future);
 
-  final allTracksArtistsSelectedOptions =
-      ref.watch(allTracksArtistsSelectedOptionsProvider);
+  final allTracksArtistsSelectedOptions = ref.watch(
+    allTracksArtistsSelectedOptionsProvider,
+  );
 
   if (allTracksArtistsSelectedOptions.isEmpty) {
     return allSearchTracks;
@@ -254,7 +254,7 @@ Future<List<Track>> allFilteredArtistsTracks(Ref ref) async {
       ...track.artists,
       ...track.albums.fold([], (acc, value) {
         return [...acc, ...value.artists];
-      })
+      }),
     ]) {
       if (allTracksArtistsSelectedOptions.contains(artist.id)) {
         addTrack(track);
@@ -277,8 +277,9 @@ final allTracksAlbumsSelectedOptionsProvider =
 
 @riverpod
 Future<List<(int, String)>> allTracksAlbumFiltersOptions(Ref ref) async {
-  final allFilteredArtistsTracks =
-      await ref.watch(allFilteredArtistsTracksProvider.future);
+  final allFilteredArtistsTracks = await ref.watch(
+    allFilteredArtistsTracksProvider.future,
+  );
 
   final List<(int, String)> albums = [];
 
@@ -303,11 +304,13 @@ Future<List<(int, String)>> allTracksAlbumFiltersOptions(Ref ref) async {
 
 @riverpod
 Future<List<Track>> allFilteredAlbumsTracks(Ref ref) async {
-  final allFilteredArtistsTracks =
-      await ref.watch(allFilteredArtistsTracksProvider.future);
+  final allFilteredArtistsTracks = await ref.watch(
+    allFilteredArtistsTracksProvider.future,
+  );
 
-  final allTracksAlbumsSelectedOptions =
-      ref.watch(allTracksAlbumsSelectedOptionsProvider);
+  final allTracksAlbumsSelectedOptions = ref.watch(
+    allTracksAlbumsSelectedOptionsProvider,
+  );
 
   if (allTracksAlbumsSelectedOptions.isEmpty) {
     return allFilteredArtistsTracks;
