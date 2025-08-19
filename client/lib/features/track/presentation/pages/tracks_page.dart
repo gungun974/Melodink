@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart'
     hide ChangeNotifierProvider, Consumer, Provider;
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
@@ -35,9 +36,10 @@ class TracksPage extends HookConsumerWidget {
 
     return ChangeNotifierProvider(
       create: (_) => TracksViewModel(
+        eventBus: ref.read(eventBusProvider),
         audioController: ref.read(audioControllerProvider),
         trackRepository: ref.read(trackRepositoryProvider),
-      ),
+      )..loadTracks(),
       child: Stack(
         children: [
           AppNavigationHeader(

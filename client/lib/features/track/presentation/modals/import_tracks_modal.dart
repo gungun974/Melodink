@@ -25,9 +25,7 @@ import 'package:melodink_client/features/track/presentation/widgets/artists_link
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class ImportTracksModal extends HookConsumerWidget {
-  const ImportTracksModal({
-    super.key,
-  });
+  const ImportTracksModal({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -49,20 +47,18 @@ class ImportTracksModal extends HookConsumerWidget {
                 Expanded(
                   child: DropTarget(
                     onDragDone: (detail) {
-                      ref.read(importTracksProvider.notifier).uploadAudios(
+                      ref
+                          .read(importTracksProvider.notifier)
+                          .uploadAudios(
                             detail.files
-                                .map(
-                                  (file) => File(file.path),
-                                )
+                                .map((file) => File(file.path))
                                 .toList(),
                           );
                     },
                     child: Container(
                       decoration: const BoxDecoration(
                         color: Color.fromRGBO(0, 0, 0, 0.08),
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(8),
-                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
                       ),
                       child: ListView.builder(
                         itemCount:
@@ -160,9 +156,9 @@ class ImportTracksModal extends HookConsumerWidget {
                               ? () async {
                                   final configuration =
                                       await ScanConfigurationModal.showModal(
-                                    context,
-                                    hideAdvancedScanQuestion: true,
-                                  );
+                                        context,
+                                        hideAdvancedScanQuestion: true,
+                                      );
 
                                   if (configuration == null) {
                                     return;
@@ -176,17 +172,20 @@ class ImportTracksModal extends HookConsumerWidget {
 
                                   final loadingWidget = OverlayEntry(
                                     builder: (context) => StreamBuilder(
-                                        stream: stream,
-                                        builder: (context, snapshot) {
-                                          return AppPageLoader(
-                                            value: snapshot.data,
-                                          );
-                                        }),
+                                      stream: stream,
+                                      builder: (context, snapshot) {
+                                        return AppPageLoader(
+                                          value: snapshot.data,
+                                        );
+                                      },
+                                    ),
                                   );
 
                                   if (context.mounted) {
-                                    Overlay.of(context, rootOverlay: true)
-                                        .insert(loadingWidget);
+                                    Overlay.of(
+                                      context,
+                                      rootOverlay: true,
+                                    ).insert(loadingWidget);
                                   }
 
                                   try {
@@ -207,20 +206,25 @@ class ImportTracksModal extends HookConsumerWidget {
                                     AppNotificationManager.of(context).notify(
                                       context,
                                       message: t
-                                          .notifications.trackHaveBeenScanned
+                                          .notifications
+                                          .trackHaveBeenScanned
                                           .message(
-                                        n: state.uploadedTracks.length,
-                                      ),
+                                            n: state.uploadedTracks.length,
+                                          ),
                                     );
                                   } catch (_) {
                                     streamController.close();
                                     if (context.mounted) {
                                       AppNotificationManager.of(context).notify(
                                         context,
-                                        title: t.notifications
-                                            .somethingWentWrong.title,
-                                        message: t.notifications
-                                            .somethingWentWrong.message,
+                                        title: t
+                                            .notifications
+                                            .somethingWentWrong
+                                            .title,
+                                        message: t
+                                            .notifications
+                                            .somethingWentWrong
+                                            .message,
                                         type: AppNotificationType.danger,
                                       );
                                     }
@@ -257,18 +261,21 @@ class ImportTracksModal extends HookConsumerWidget {
                                     AppNotificationManager.of(context).notify(
                                       context,
                                       message: t
-                                          .notifications.trackHaveBeenImported
-                                          .message(
-                                        n: numberOfTracks,
-                                      ),
+                                          .notifications
+                                          .trackHaveBeenImported
+                                          .message(n: numberOfTracks),
                                     );
                                   } else {
                                     AppNotificationManager.of(context).notify(
                                       context,
-                                      title: t.notifications.somethingWentWrong
+                                      title: t
+                                          .notifications
+                                          .somethingWentWrong
                                           .title,
-                                      message: t.notifications
-                                          .somethingWentWrong.message,
+                                      message: t
+                                          .notifications
+                                          .somethingWentWrong
+                                          .message,
                                       type: AppNotificationType.danger,
                                     );
                                   }
@@ -288,11 +295,11 @@ class ImportTracksModal extends HookConsumerWidget {
     );
   }
 
-  static showModal(BuildContext context) {
+  static void showModal(BuildContext context) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "ShowTrackModal",
+      barrierLabel: "ImportTracksModal",
       pageBuilder: (_, __, ___) {
         return HookConsumer(
           builder: (context, ref, _) {

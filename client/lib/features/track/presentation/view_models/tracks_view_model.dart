@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/fuzzy_search.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/track/domain/events/track_events.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class TracksViewModel extends ChangeNotifier {
@@ -14,24 +18,38 @@ class TracksViewModel extends ChangeNotifier {
 
   final TextEditingController searchTextController = TextEditingController();
 
+  final EventBus eventBus;
+
   final AudioController audioController;
 
   final TrackRepository trackRepository;
 
+  StreamSubscription? _deleteTrackStream;
+
   TracksViewModel({
+    required this.eventBus,
     required this.audioController,
     required this.trackRepository,
   }) {
-    loadTracks();
+    _deleteTrackStream = eventBus.on<DeleteTrackEvent>().listen((event) {
+      tracks = tracks
+          .where((track) => track.id != event.deletedTrack.id)
+          .toList();
+      _computeSearchTracks();
+      notifyListeners();
+    });
   }
 
   @override
   void dispose() {
     searchTextController.dispose();
+
+    _deleteTrackStream?.cancel();
+
     super.dispose();
   }
 
-  Future<void> loadTracks() async {
+  void loadTracks() {
     final stream = trackRepository.getAllTracks();
 
     isLoading = true;
