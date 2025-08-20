@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/app_confirm.dart';
@@ -15,7 +17,26 @@ class TrackViewModel extends ChangeNotifier {
   final EventBus eventBus;
   final TrackRepository trackRepository;
 
-  TrackViewModel({required this.eventBus, required this.trackRepository});
+  StreamSubscription? _editTrackStream;
+
+  TrackViewModel({required this.eventBus, required this.trackRepository}) {
+    _editTrackStream = eventBus.on<EditTrackEvent>().listen((event) {
+      if (event.updatedTrack.id != track?.id) {
+        return;
+      }
+
+      track = event.updatedTrack;
+
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _editTrackStream?.cancel();
+
+    super.dispose();
+  }
 
   Future<void> loadTrack(int id) async {
     isLoading = true;

@@ -13,7 +13,7 @@ import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/presentation/modals/edit_track_modal.dart';
-import 'package:melodink_client/features/track/presentation/view_models/track_view_model.dart';
+import 'package:melodink_client/features/track/presentation/viewmodels/track_viewmodel.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 

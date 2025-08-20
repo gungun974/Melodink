@@ -12,7 +12,7 @@ import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
-import 'package:melodink_client/features/track/presentation/view_models/tracks_view_model.dart';
+import 'package:melodink_client/features/track/presentation/viewmodels/tracks_viewmodel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';

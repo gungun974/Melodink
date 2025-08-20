@@ -24,6 +24,7 @@ class TracksViewModel extends ChangeNotifier {
 
   final TrackRepository trackRepository;
 
+  StreamSubscription? _editTrackStream;
   StreamSubscription? _deleteTrackStream;
 
   TracksViewModel({
@@ -31,6 +32,21 @@ class TracksViewModel extends ChangeNotifier {
     required this.audioController,
     required this.trackRepository,
   }) {
+    _editTrackStream = eventBus.on<EditTrackEvent>().listen((event) {
+      final index = tracks.indexWhere(
+        (track) => track.id == event.updatedTrack.id,
+      );
+
+      if (index < 0) {
+        return;
+      }
+
+      tracks[index] = event.updatedTrack;
+
+      _computeSearchTracks();
+      notifyListeners();
+    });
+
     _deleteTrackStream = eventBus.on<DeleteTrackEvent>().listen((event) {
       tracks = tracks
           .where((track) => track.id != event.deletedTrack.id)
@@ -44,6 +60,7 @@ class TracksViewModel extends ChangeNotifier {
   void dispose() {
     searchTextController.dispose();
 
+    _editTrackStream?.cancel();
     _deleteTrackStream?.cancel();
 
     super.dispose();
