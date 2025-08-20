@@ -6,3 +6,15 @@ class CreatePlaylistEvent extends EventBusEvent {
 
   CreatePlaylistEvent({required this.createdPlaylist});
 }
+
+class EditPlaylistEvent extends EventBusEvent {
+  final Playlist updatedPlaylist;
+
+  EditPlaylistEvent({required this.updatedPlaylist});
+}
+
+class DeletePlaylistEvent extends EventBusEvent {
+  final Playlist deletedPlaylist;
+
+  DeletePlaylistEvent({required this.deletedPlaylist});
+}

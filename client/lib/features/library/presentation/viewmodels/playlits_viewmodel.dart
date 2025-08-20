@@ -16,6 +16,8 @@ class PlaylistsViewModel extends ChangeNotifier {
   final PlaylistRepository playlistRepository;
 
   StreamSubscription? _createPlaylistStream;
+  StreamSubscription? _editPlaylistStream;
+  StreamSubscription? _deletePlaylistStream;
 
   PlaylistsViewModel({
     required this.eventBus,
@@ -25,11 +27,33 @@ class PlaylistsViewModel extends ChangeNotifier {
       playlists.add(event.createdPlaylist);
       notifyListeners();
     });
+
+    _editPlaylistStream = eventBus.on<EditPlaylistEvent>().listen((event) {
+      final index = playlists.indexWhere(
+        (playlist) => playlist.id == event.updatedPlaylist.id,
+      );
+
+      if (index < 0) {
+        return;
+      }
+
+      playlists[index] = event.updatedPlaylist;
+      notifyListeners();
+    });
+
+    _deletePlaylistStream = eventBus.on<DeletePlaylistEvent>().listen((event) {
+      playlists = playlists
+          .where((playlist) => playlist.id != event.deletedPlaylist.id)
+          .toList();
+      notifyListeners();
+    });
   }
 
   @override
   void dispose() {
     _createPlaylistStream?.cancel();
+    _editPlaylistStream?.cancel();
+    _deletePlaylistStream?.cancel();
 
     super.dispose();
   }
