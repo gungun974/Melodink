@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/event_bus/event_bus.dart';
@@ -17,12 +19,33 @@ class PlaylistViewModel extends ChangeNotifier {
   final PlaylistRepository playlistRepository;
   final DownloadPlaylistRepository downloadPlaylistRepository;
 
+  StreamSubscription? _editPlaylistStream;
+
   PlaylistViewModel({
     required this.eventBus,
     required this.audioController,
     required this.playlistRepository,
     required this.downloadPlaylistRepository,
-  });
+  }) {
+    _editPlaylistStream = eventBus.on<EditPlaylistEvent>().listen((event) {
+      if (event.updatedPlaylist.id != playlist?.id) {
+        return;
+      }
+
+      playlist = event.updatedPlaylist;
+
+      downloaded = playlist!.isDownloaded;
+
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _editPlaylistStream?.cancel();
+
+    super.dispose();
+  }
 
   bool isLoading = false;
 
