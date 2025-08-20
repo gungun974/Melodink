@@ -70,7 +70,7 @@ class TracksViewModel extends ChangeNotifier {
     final stream = trackRepository.getAllTracks();
 
     isLoading = true;
-    tracks = [];
+    tracks.clear();
     _computeSearchTracks();
     notifyListeners();
 
