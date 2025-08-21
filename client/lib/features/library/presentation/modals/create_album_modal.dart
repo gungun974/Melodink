@@ -97,7 +97,7 @@ class CreateAlbumModal extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: "CreateAlbumModal",
-      pageBuilder: (_, __, ___) {
+      pageBuilder: (_, _, _) {
         return Center(
           child: MaxContainer(
             maxWidth: 420,
