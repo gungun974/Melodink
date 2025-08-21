@@ -55,7 +55,7 @@ class AlbumRepository {
     );
   }
 
-  static loadAlbumTracks(
+  static Future<void> loadAlbumTracks(
     Database db,
     String applicationSupportDirectory,
     Album album,
@@ -63,11 +63,14 @@ class AlbumRepository {
     album.tracks
       ..clear()
       ..addAll(
-        (db.select('''
+        (db.select(
+          '''
         SELECT * FROM tracks
         JOIN track_album ON tracks.id = track_album.track_id
         WHERE track_album.album_id = ?
-      ''', [album.id])).map(TrackRepository.decodeTrack),
+      ''',
+          [album.id],
+        )).map(TrackRepository.decodeTrack),
       );
 
     for (final track in album.tracks) {
@@ -76,16 +79,19 @@ class AlbumRepository {
     }
   }
 
-  static loadAlbumArtists(Database db, Album album) {
+  static void loadAlbumArtists(Database db, Album album) {
     album.artists
       ..clear()
       ..addAll(
-        (db.select('''
+        (db.select(
+          '''
         SELECT * FROM artists
         JOIN album_artist ON artists.id = album_artist.artist_id
         WHERE album_artist.album_id = ?
 	    	ORDER BY album_artist.artist_pos ASC
-      ''', [album.id])).map(ArtistRepository.decodeArtist),
+      ''',
+          [album.id],
+        )).map(ArtistRepository.decodeArtist),
       );
   }
 
@@ -96,7 +102,8 @@ class AlbumRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final albums = (db.select("""
+      final albums =
+          (db.select("""
         SELECT albums.*, album_downloads.cover_file, album_downloads.album_id as download_id, album_downloads.partial_download,
           (
               SELECT MAX(tracks.date_added)
@@ -111,10 +118,8 @@ class AlbumRepository {
           latest_track_created_at IS NOT NULL,
           latest_track_created_at DESC
         """))
-          .map(
-            (album) => decodeAlbum(applicationSupportDirectory, album),
-          )
-          .toList();
+              .map((album) => decodeAlbum(applicationSupportDirectory, album))
+              .toList();
 
       for (final album in albums) {
         loadAlbumArtists(db, album);
@@ -134,17 +139,19 @@ class AlbumRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final album = (db.select("""
+      final album =
+          (db.select(
+                """
         SELECT albums.*, album_downloads.cover_file, album_downloads.album_id as download_id, album_downloads.partial_download
         FROM albums
         LEFT JOIN album_downloads
           ON album_downloads.album_id = albums.id
         WHERE id = ?
-        """, [id]))
-          .map(
-            (album) => decodeAlbum(applicationSupportDirectory, album),
-          )
-          .firstOrNull;
+        """,
+                [id],
+              ))
+              .map((album) => decodeAlbum(applicationSupportDirectory, album))
+              .firstOrNull;
 
       if (album == null) {
         throw AlbumNotFoundException();
@@ -171,9 +178,9 @@ class AlbumRepository {
 
     try {
       final response = await AppApi().dio.put(
-            "/album/$id/cover",
-            data: formData,
-          );
+        "/album/$id/cover",
+        data: formData,
+      );
 
       await syncRepository.performSync();
 
@@ -197,9 +204,7 @@ class AlbumRepository {
 
   Future<Album> removeAlbumCover(int id) async {
     try {
-      final response = await AppApi().dio.delete(
-            "/album/$id/cover",
-          );
+      final response = await AppApi().dio.delete("/album/$id/cover");
 
       await syncRepository.performSync();
 
@@ -225,9 +230,7 @@ class AlbumRepository {
     try {
       final response = await AppApi().dio.post(
         "/album",
-        data: {
-          "name": album.name,
-        },
+        data: {"name": album.name},
       );
 
       await syncRepository.performSync();
@@ -246,16 +249,38 @@ class AlbumRepository {
     }
   }
 
-  setAlbumArtists(
-    int albumId,
-    List<Artist> artists,
-  ) async {
+  Future<Album> saveAlbum(Album album) async {
+    try {
+      final response = await AppApi().dio.put(
+        "/album/${album.id}",
+        data: {"name": album.name},
+      );
+
+      await syncRepository.performSync();
+
+      return getAlbumById(AlbumModel.fromJson(response.data).id);
+    } on DioException catch (e) {
+      final response = e.response;
+      if (response == null) {
+        throw ServerTimeoutException();
+      }
+
+      if (response.statusCode == 404) {
+        throw AlbumNotFoundException();
+      }
+
+      throw ServerUnknownException();
+    } catch (e) {
+      mainLogger.e(e);
+      throw ServerUnknownException();
+    }
+  }
+
+  Future<Album> setAlbumArtists(int albumId, List<Artist> artists) async {
     try {
       final response = await AppApi().dio.put(
         "/album/$albumId/artists",
-        data: {
-          "artist_ids": artists.map((artist) => artist.id).toList(),
-        },
+        data: {"artist_ids": artists.map((artist) => artist.id).toList()},
       );
 
       await syncRepository.performSync();
@@ -282,9 +307,7 @@ class AlbumRepository {
     try {
       final old = await getAlbumById(albumId);
 
-      await AppApi().dio.delete(
-            "/album/$albumId",
-          );
+      await AppApi().dio.delete("/album/$albumId");
 
       await syncRepository.performSync();
 
@@ -309,14 +332,8 @@ class AlbumRepository {
 
 final albumRepositoryProvider = Provider(
   (ref) => AlbumRepository(
-    playedTrackRepository: ref.watch(
-      playedTrackRepositoryProvider,
-    ),
-    syncRepository: ref.watch(
-      syncRepositoryProvider,
-    ),
-    networkInfo: ref.watch(
-      networkInfoProvider,
-    ),
+    playedTrackRepository: ref.watch(playedTrackRepositoryProvider),
+    syncRepository: ref.watch(syncRepositoryProvider),
+    networkInfo: ref.watch(networkInfoProvider),
   ),
 );

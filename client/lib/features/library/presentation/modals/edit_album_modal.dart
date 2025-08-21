@@ -1,216 +1,119 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/core/api/api.dart';
-import 'package:melodink_client/core/helpers/app_confirm.dart';
-import 'package:melodink_client/core/helpers/pick_audio_files.dart';
+import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
+import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
+import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
-import 'package:melodink_client/features/library/domain/providers/edit_album_provider.dart';
-import 'package:melodink_client/features/library/presentation/modals/manage_album_artists_modal.dart';
+import 'package:melodink_client/features/library/presentation/viewmodels/edit_album_viewmodel.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class EditAlbumModal extends HookConsumerWidget {
-  final Album album;
-
-  const EditAlbumModal({
-    super.key,
-    required this.album,
-  });
+class EditAlbumModal extends StatelessWidget {
+  const EditAlbumModal({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final formKey = useMemoized(() => GlobalKey<FormState>());
-
-    final isLoading = useState(false);
-
-    final refreshKey = useState(0);
-
-    final fetchSignature = useMemoized(
-      () =>
-          AppApi().dio.get<String>("/album/${album.id}/cover/custom/signature"),
-      [refreshKey.value],
-    );
-
-    final coverSignature = useFuture(fetchSignature, preserveState: false).data;
-
-    final currentArtists = useState(album.artists);
-
+  Widget build(BuildContext context) {
     return IntrinsicHeight(
       child: Stack(
         children: [
           AppModal(
-            title: Text(
-              t.general.editAlbum(name: album.name),
+            title: Consumer<EditAlbumViewModel>(
+              builder: (context, viewModel, _) {
+                final album = viewModel.originalAlbum;
+                if (album == null) {
+                  return const SizedBox.shrink();
+                }
+
+                return Text(t.general.editAlbum(name: album.name));
+              },
             ),
             body: Form(
-              key: formKey,
+              key: context.read<EditAlbumViewModel>().formKey,
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      AppButton(
-                        text: t.actions.changeArtists,
-                        type: AppButtonType.secondary,
-                        onPressed: () async {
-                          final artists =
-                              await ManageAlbumArtistsModal.showModal(
-                            context,
-                            album,
-                            currentArtists.value
-                                .map(
-                                  (artist) => artist.id,
-                                )
-                                .toList(),
-                          );
+                  child: Consumer<EditAlbumViewModel>(
+                    builder: (context, viewModel, _) {
+                      final album = viewModel.originalAlbum;
+                      if (album == null) {
+                        return const SizedBox.shrink();
+                      }
 
-                          if (artists == null) {
-                            return;
-                          }
-
-                          currentArtists.value = artists;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      if (coverSignature?.data?.trim() == "")
-                        AppButton(
-                          text: t.actions.changeCover,
-                          type: AppButtonType.secondary,
-                          onPressed: () async {
-                            final file = await pickImageFile();
-
-                            if (file == null) {
-                              return;
-                            }
-
-                            isLoading.value = true;
-                            try {
-                              await ref
-                                  .read(editAlbumStreamProvider.notifier)
-                                  .changeAlbumCover(album.id, file);
-                              isLoading.value = false;
-                            } catch (_) {
-                              isLoading.value = false;
-
-                              if (context.mounted) {
-                                AppNotificationManager.of(context).notify(
-                                  context,
-                                  title:
-                                      t.notifications.somethingWentWrong.title,
-                                  message: t
-                                      .notifications.somethingWentWrong.message,
-                                  type: AppNotificationType.danger,
-                                );
-                              }
-                              rethrow;
-                            }
-
-                            refreshKey.value += 1;
-
-                            if (!context.mounted) {
-                              return;
-                            }
-
-                            AppNotificationManager.of(context).notify(
-                              context,
-                              message: t.notifications.albumCoverHaveBeenChanged
-                                  .message(
-                                name: album.name,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AppTextFormField(
+                            labelText: t.general.trackTitle,
+                            controller: viewModel.nameTextController,
+                            autovalidateMode: viewModel.autoValidate
+                                ? AutovalidateMode.always
+                                : AutovalidateMode.disabled,
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(
+                                errorText: t.validators.fieldShouldNotBeEmpty(
+                                  field: t.general.name,
+                                ),
                               ),
-                            );
-                          },
-                        ),
-                      if (coverSignature?.data?.trim() != "")
-                        AppButton(
-                          text: t.actions.removeCover,
-                          type: AppButtonType.secondary,
-                          onPressed: () async {
-                            if (!await appConfirm(
-                              context,
-                              title: t.confirms.title,
-                              content: t.confirms.removeCustomCover,
-                              textOK: t.confirms.confirm,
-                            )) {
-                              return;
-                            }
-
-                            isLoading.value = true;
-                            try {
-                              await ref
-                                  .read(editAlbumStreamProvider.notifier)
-                                  .removeAlbumCover(album.id);
-                              isLoading.value = false;
-                            } catch (_) {
-                              isLoading.value = false;
-
-                              if (context.mounted) {
-                                AppNotificationManager.of(context).notify(
-                                  context,
-                                  title:
-                                      t.notifications.somethingWentWrong.title,
-                                  message: t
-                                      .notifications.somethingWentWrong.message,
-                                  type: AppNotificationType.danger,
-                                );
-                              }
-                              rethrow;
-                            }
-
-                            refreshKey.value += 1;
-
-                            if (!context.mounted) {
-                              return;
-                            }
-
-                            AppNotificationManager.of(context).notify(
-                              context,
-                              message: t.notifications.albumCoverHaveBeenRemoved
-                                  .message(
-                                name: album.name,
-                              ),
-                            );
-                          },
-                        ),
-                      const SizedBox(height: 16),
-                      AppButton(
-                        text: t.general.save,
-                        type: AppButtonType.primary,
-                        onPressed: () async {
-                          Navigator.of(
-                            context,
-                            rootNavigator: true,
-                          ).pop();
-
-                          AppNotificationManager.of(context).notify(
-                            context,
-                            message: t.notifications.albumHaveBeenSaved.message(
-                              name: album.name,
+                            ]),
+                          ),
+                          const SizedBox(height: 8),
+                          AppButtonValueTextField(
+                            onTap: () => viewModel.selectArtists(context),
+                            labelText: t.general.artists,
+                            value: viewModel.artists
+                                .map((artist) => artist.name)
+                                .join(", "),
+                          ),
+                          const SizedBox(height: 16),
+                          if (album.coverSignature.trim() == "")
+                            AppButton(
+                              text: t.actions.changeCover,
+                              type: AppButtonType.secondary,
+                              onPressed: () =>
+                                  viewModel.addCustomCover(context),
                             ),
-                          );
-                        },
-                      ),
-                    ],
+                          if (album.coverSignature.trim() != "")
+                            AppButton(
+                              text: t.actions.removeCover,
+                              type: AppButtonType.secondary,
+                              onPressed: () =>
+                                  viewModel.removeCustomCover(context),
+                            ),
+                          const SizedBox(height: 16),
+                          AppButton(
+                            text: t.general.save,
+                            type: AppButtonType.primary,
+                            onPressed: () => viewModel.saveAlbum(context),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
             ),
           ),
-          if (isLoading.value || coverSignature == null) const AppPageLoader(),
+          Selector<EditAlbumViewModel, bool>(
+            selector: (_, viewModel) => viewModel.isLoading,
+            builder: (context, isLoading, _) {
+              if (!isLoading) {
+                return const SizedBox.shrink();
+              }
+              return const AppPageLoader();
+            },
+          ),
         ],
       ),
     );
   }
 
-  static showModal(
-    BuildContext context,
-    Album album,
-  ) {
+  static void showModal(BuildContext context, Album album) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -219,11 +122,18 @@ class EditAlbumModal extends HookConsumerWidget {
         return Center(
           child: MaxContainer(
             maxWidth: 420,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 64,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 64),
+            child: riverpod.Consumer(
+              builder: (context, ref, _) {
+                return ChangeNotifierProvider(
+                  create: (_) => EditAlbumViewModel(
+                    eventBus: ref.read(eventBusProvider),
+                    albumRepository: ref.read(albumRepositoryProvider),
+                  )..loadAlbum(album.id),
+                  child: EditAlbumModal(),
+                );
+              },
             ),
-            child: EditAlbumModal(album: album),
           ),
         );
       },
