@@ -5,8 +5,8 @@ import 'package:melodink_client/core/routes/provider.dart';
 import 'package:melodink_client/core/routes/routes.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
-import 'package:melodink_client/features/auth/domain/providers/server_setup_provider.dart';
 import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:melodink_client/features/auth/presentation/viewmodels/server_setup_viewmodel.dart';
 import 'package:melodink_client/features/home/presentation/widgets/desktop_sidebar.dart';
 import 'package:melodink_client/features/home/presentation/widgets/mobile_navbar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/desktop_player_bar.dart';
@@ -30,7 +30,7 @@ class GoRouterObserver extends NavigatorObserver {
 
   GoRouterObserver({required this.setCurrentUrl});
 
-  setRouter(GoRouter router) {
+  void setRouter(GoRouter router) {
     this.router = router;
   }
 
@@ -91,7 +91,9 @@ final appRouterProvider = riverpod.Provider((ref) {
     redirect: (context, state) async {
       setCurrentUrl(state.matchedLocation);
 
-      final isServerConfigured = ref.read(isServerConfiguredProvider);
+      final isServerConfigured = context
+          .read<ServerSetupViewModel>()
+          .getIsServerConfigured();
 
       if (!isServerConfigured) {
         return "/auth/serverSetup";

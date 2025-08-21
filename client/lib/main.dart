@@ -14,6 +14,7 @@ import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/auth/data/repository/auth_repository.dart';
 import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:melodink_client/features/auth/presentation/viewmodels/server_setup_viewmodel.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/domain/audio/melodink_player.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
@@ -180,6 +181,11 @@ class _EagerInitialization extends riverpod.ConsumerWidget {
           create: (_) => SettingsViewModel(
             audioController: ref.read(audioControllerProvider),
           )..loadSettings(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ServerSetupViewModel(
+            authRepository: ref.read(authRepositoryProvider),
+          ),
         ),
         ChangeNotifierProvider(
           create: (_) => AuthViewModel(
