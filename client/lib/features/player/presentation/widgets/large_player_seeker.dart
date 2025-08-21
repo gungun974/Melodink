@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
+import 'package:melodink_client/core/hooks/use_behavior_subject_stream.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 class LargePlayerSeeker extends HookConsumerWidget {
   final bool displayDurationsInBottom;
@@ -20,17 +22,19 @@ class LargePlayerSeeker extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+    final audioController = ref.read(audioControllerProvider);
 
-    final audioControllerPositionDataStream = ref.watch(
-      audioControllerPositionDataStreamProvider,
+    final audioControllerPositionDataStream = useBehaviorSubjectStream(
+      audioController.getPositionData(),
     );
 
-    final showRemainingDuration = ref.watch(showTrackRemainingDurationProvider);
+    final showRemainingDuration = context
+        .watch<SettingsViewModel>()
+        .getShowTrackRemainingDuration();
 
     final newSeekFuture = useState<Duration?>(null);
 
-    final positionData = audioControllerPositionDataStream.valueOrNull;
+    final positionData = audioControllerPositionDataStream.data;
 
     Duration trackDuration = Duration.zero;
 
@@ -91,11 +95,7 @@ class LargePlayerSeeker extends HookConsumerWidget {
       return RepaintBoundary(
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(child: progressBar),
-              ],
-            ),
+            Row(children: [Expanded(child: progressBar)]),
             SizedBox(height: large ? 8.0 : 4.0),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -110,13 +110,14 @@ class LargePlayerSeeker extends HookConsumerWidget {
                 ),
                 GestureDetector(
                   onTap: () {
-                    ref
-                        .read(showTrackRemainingDurationProvider.notifier)
-                        .toggle();
+                    context
+                        .read<SettingsViewModel>()
+                        .toggleShowTrackRemainingDuration();
                   },
                   child: Text(
                     durationToTime(
-                        showRemainingDuration ? remainingDuration : duration),
+                      showRemainingDuration ? remainingDuration : duration,
+                    ),
                     style: const TextStyle(
                       fontSize: 12,
                       letterSpacing: 12 * 0.03,
@@ -125,7 +126,7 @@ class LargePlayerSeeker extends HookConsumerWidget {
                   ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       );
@@ -144,17 +145,18 @@ class LargePlayerSeeker extends HookConsumerWidget {
             ),
           ),
           const SizedBox(width: 12.0),
-          Expanded(
-            child: progressBar,
-          ),
+          Expanded(child: progressBar),
           const SizedBox(width: 12.0),
           GestureDetector(
             onTap: () {
-              ref.read(showTrackRemainingDurationProvider.notifier).toggle();
+              context
+                  .read<SettingsViewModel>()
+                  .toggleShowTrackRemainingDuration();
             },
             child: Text(
               durationToTime(
-                  showRemainingDuration ? remainingDuration : duration),
+                showRemainingDuration ? remainingDuration : duration,
+              ),
               style: const TextStyle(
                 fontSize: 12,
                 letterSpacing: 12 * 0.03,

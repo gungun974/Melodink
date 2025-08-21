@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
+import 'package:melodink_client/core/hooks/use_behavior_subject_stream.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/open_queue_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_play_pause_control.dart';
@@ -14,12 +15,16 @@ import 'package:melodink_client/features/settings/domain/entities/settings.dart'
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:provider/provider.dart';
 
-class SidePlayerBar extends ConsumerWidget {
+class SidePlayerBar extends HookConsumerWidget {
   const SidePlayerBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTrack = ref.watch(currentTrackStreamProvider).valueOrNull;
+    final audioController = ref.read(audioControllerProvider);
+
+    final currentTrack = useBehaviorSubjectStream(
+      audioController.currentTrack,
+    ).data;
     final scoringSystem = context
         .watch<SettingsViewModel>()
         .currentScoringSystem();

@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/hooks/use_behavior_subject_stream.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 
-class TinyPlayerSeeker extends ConsumerWidget {
+class TinyPlayerSeeker extends HookConsumerWidget {
   const TinyPlayerSeeker({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+    final audioController = ref.read(audioControllerProvider);
 
-    final audioControllerPositionDataStream = ref.watch(
-      audioControllerPositionDataStreamProvider,
+    final audioControllerPositionDataStream = useBehaviorSubjectStream(
+      audioController.getPositionData(),
     );
 
-    final positionData = audioControllerPositionDataStream.valueOrNull;
+    final positionData = audioControllerPositionDataStream.data;
 
     Duration trackDuration = Duration.zero;
 

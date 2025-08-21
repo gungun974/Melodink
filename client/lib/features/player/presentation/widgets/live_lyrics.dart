@@ -2,46 +2,16 @@ import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
 import 'package:melodink_client/core/helpers/debounce.dart';
+import 'package:melodink_client/core/hooks/use_behavior_subject_stream.dart';
 import 'package:melodink_client/core/hooks/use_list_controller.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
-import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 
-final currentLyricsProvider = Provider.autoDispose<List<LyricLine>?>((ref) {
-  final currentTrackStream = ref.watch(currentTrackStreamProvider);
-
-  final currentTrack = currentTrackStream.valueOrNull;
-
-  if (currentTrack == null) {
-    return null;
-  }
-
-  final asyncLyrics = ref.watch(trackLyricsByIdProvider(currentTrack.id));
-
-  final lyrics = asyncLyrics.valueOrNull;
-
-  if (lyrics == null) {
-    return null;
-  }
-
-  if (lyrics.trim().isEmpty) {
-    return null;
-  }
-
-  final parsed = LyricsParser.parse(lyrics);
-
-  if (parsed.isEmpty) {
-    return [LyricLine(Duration.zero, lyrics, false)];
-  }
-
-  return parsed;
-});
-
-class LiveLyrics extends HookConsumerWidget {
+class LiveLyrics extends riverpod.HookConsumerWidget {
   final ScrollController? scrollController;
 
   final bool autoScrollToLyric;
@@ -56,13 +26,13 @@ class LiveLyrics extends HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, riverpod.WidgetRef ref) {
     final listController = useListController();
     final currentAutoScrollIndex = useState<int?>(null);
 
     final autoScrollDebouncer = useMemoized(() => Debouncer(milliseconds: 350));
 
-    final lyrics = ref.watch(currentLyricsProvider);
+    final lyrics = context.watch<List<LyricLine>?>();
 
     useEffect(() {
       if (!autoScrollToLyric) {
@@ -75,139 +45,131 @@ class LiveLyrics extends HookConsumerWidget {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
-    final audioController = ref.watch(audioControllerProvider);
+    final audioController = ref.read(audioControllerProvider);
 
-    final audioControllerPositionDataStream = ref.watch(
-      audioControllerPositionDataStreamProvider,
+    final audioControllerPositionDataStream = useBehaviorSubjectStream(
+      audioController.getPositionData(),
     );
-
-    final positionData = audioControllerPositionDataStream.valueOrNull;
+    final positionData = audioControllerPositionDataStream.data;
 
     final position = positionData?.position ?? Duration.zero;
 
-    ref.listen(audioControllerPositionDataStreamProvider,
-        (_, rawNewPositionData) {
-      if (!autoScrollToLyric) {
-        return;
-      }
-      final newPositionData = rawNewPositionData.valueOrNull;
-
-      if (newPositionData == null) {
-        return;
-      }
-
-      final position = positionData?.position;
-
-      if (position == null) {
-        return;
-      }
-
-      int? currentIndex;
-
-      for (var i = 0; i < lyrics.length; i++) {
-        final lyric = lyrics[i];
-
-        if (!lyric.timed) {
+    useOnStreamChange(
+      audioController.getPositionData().stream,
+      onData: (newPositionData) {
+        if (!autoScrollToLyric) {
           return;
         }
 
-        final nextLyric = i + 1 < lyrics.length ? lyrics[i + 1] : null;
+        final position = newPositionData.position;
 
-        final isNext = lyric.timestamp > position;
-        final isCurrent =
-            !isNext && (nextLyric == null || nextLyric.timestamp > position);
+        int? currentIndex;
 
-        if (isCurrent) {
-          currentIndex = i;
-          break;
-        }
-      }
+        for (var i = 0; i < lyrics.length; i++) {
+          final lyric = lyrics[i];
 
-      if (currentIndex == null) {
-        return;
-      }
+          if (!lyric.timed) {
+            return;
+          }
 
-      if (currentAutoScrollIndex.value == currentIndex) {
-        return;
-      }
-
-      setShouldDisableAutoScrollOnScroll?.call(false);
-
-      listController.animateToItem(
-        index: currentIndex,
-        scrollController: scrollController!,
-        alignment: 0.35,
-        curve: (_) => Curves.easeInOutCubic,
-        duration: (_) => const Duration(milliseconds: 300),
-      );
-
-      autoScrollDebouncer.run(() {
-        setShouldDisableAutoScrollOnScroll?.call(true);
-      });
-
-      currentAutoScrollIndex.value = currentIndex;
-    });
-
-    return SuperSliverList(
-      extentEstimation: (_, __) => 50,
-      listController: scrollController != null ? listController : null,
-      delegate: SliverChildBuilderDelegate(
-        childCount: lyrics.length,
-        (context, index) {
-          final lyric = lyrics[index];
-          final nextLyric =
-              index + 1 < lyrics.length ? lyrics[index + 1] : null;
+          final nextLyric = i + 1 < lyrics.length ? lyrics[i + 1] : null;
 
           final isNext = lyric.timestamp > position;
           final isCurrent =
               !isNext && (nextLyric == null || nextLyric.timestamp > position);
 
-          return Row(
-            children: [
-              HookBuilder(
-                builder: (context) {
-                  final isHovering = useState(false);
+          if (isCurrent) {
+            currentIndex = i;
+            break;
+          }
+        }
 
-                  return MouseRegion(
-                    cursor: lyric.timed
-                        ? SystemMouseCursors.click
-                        : MouseCursor.defer,
-                    onEnter: (_) {
-                      isHovering.value = true;
+        if (currentIndex == null) {
+          return;
+        }
+
+        if (currentAutoScrollIndex.value == currentIndex) {
+          return;
+        }
+
+        setShouldDisableAutoScrollOnScroll?.call(false);
+
+        listController.animateToItem(
+          index: currentIndex,
+          scrollController: scrollController!,
+          alignment: 0.35,
+          curve: (_) => Curves.easeInOutCubic,
+          duration: (_) => const Duration(milliseconds: 300),
+        );
+
+        autoScrollDebouncer.run(() {
+          setShouldDisableAutoScrollOnScroll?.call(true);
+        });
+
+        currentAutoScrollIndex.value = currentIndex;
+      },
+    );
+
+    return SuperSliverList(
+      extentEstimation: (_, _) => 50,
+      listController: scrollController != null ? listController : null,
+      delegate: SliverChildBuilderDelegate(childCount: lyrics.length, (
+        context,
+        index,
+      ) {
+        final lyric = lyrics[index];
+        final nextLyric = index + 1 < lyrics.length ? lyrics[index + 1] : null;
+
+        final isNext = lyric.timestamp > position;
+        final isCurrent =
+            !isNext && (nextLyric == null || nextLyric.timestamp > position);
+
+        return Row(
+          children: [
+            HookBuilder(
+              builder: (context) {
+                final isHovering = useState(false);
+
+                return MouseRegion(
+                  cursor: lyric.timed
+                      ? SystemMouseCursors.click
+                      : MouseCursor.defer,
+                  onEnter: (_) {
+                    isHovering.value = true;
+                  },
+                  onExit: (_) {
+                    isHovering.value = false;
+                  },
+                  child: GestureDetector(
+                    onTap: () {
+                      if (!lyric.timed) {
+                        return;
+                      }
+                      audioController.seek(lyric.timestamp);
                     },
-                    onExit: (_) {
-                      isHovering.value = false;
-                    },
-                    child: GestureDetector(
-                      onTap: () {
-                        if (!lyric.timed) {
-                          return;
-                        }
-                        audioController.seek(lyric.timestamp);
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Text(
-                          lyric.text,
-                          style: TextStyle(
-                            fontSize: 24,
-                            letterSpacing: 24 * 0.05,
-                            fontWeight:
-                                isCurrent ? FontWeight.w500 : FontWeight.w400,
-                            color: isCurrent || isHovering.value || !lyric.timed
-                                ? Colors.white
-                                : (isNext ? Colors.white70 : Colors.white54),
-                          ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Text(
+                        lyric.text,
+                        style: TextStyle(
+                          fontSize: 24,
+                          letterSpacing: 24 * 0.05,
+                          fontWeight: isCurrent
+                              ? FontWeight.w500
+                              : FontWeight.w400,
+                          color: isCurrent || isHovering.value || !lyric.timed
+                              ? Colors.white
+                              : (isNext ? Colors.white70 : Colors.white54),
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
-            ],
-          );
-        },
-      ),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      }),
     );
   }
 }
@@ -252,12 +214,14 @@ class LyricsParser {
   }
 }
 
-class LiveLyricsController extends HookConsumerWidget {
+class LiveLyricsController extends riverpod.HookConsumerWidget {
   final Widget Function(
     BuildContext context,
     bool autoScrollToLyric,
     void Function(bool value) setShouldDisableAutoScrollOnScroll,
-  ) builder;
+  )
+  builder;
+
   final ScrollController scrollController;
 
   final GlobalKey? liveLyricsKey;
@@ -273,8 +237,32 @@ class LiveLyricsController extends HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentLyrics = ref.watch(currentLyricsProvider);
+  Widget build(BuildContext context, riverpod.WidgetRef ref) {
+    final audioController = ref.read(audioControllerProvider);
+
+    final currentLyrics = useStream(
+      useMemoized(
+        () => audioController.currentTrack.stream.map((currentTrack) {
+          if (currentTrack == null) {
+            return null;
+          }
+
+          final lyrics = currentTrack.metadata.lyrics;
+
+          if (lyrics.trim().isEmpty) {
+            return null;
+          }
+
+          final parsed = LyricsParser.parse(lyrics);
+
+          if (parsed.isEmpty) {
+            return [LyricLine(Duration.zero, lyrics, false)];
+          }
+
+          return parsed;
+        }),
+      ),
+    ).data;
 
     final autoScrollToLyric = useState(startWithAutoLyrics);
     final shouldDisableAutoScrollOnScroll = useState(true);
@@ -317,15 +305,19 @@ class LiveLyricsController extends HookConsumerWidget {
       };
     }, [scrollController]);
 
-    final displayButton = !autoScrollToLyric.value &&
+    final displayButton =
+        !autoScrollToLyric.value &&
         shouldDisplayAutoScrollButton.value &&
         currentLyrics != null;
 
     return Stack(
       children: [
-        builder(context, autoScrollToLyric.value, (bool value) {
-          shouldDisableAutoScrollOnScroll.value = value;
-        }),
+        Provider.value(
+          value: currentLyrics,
+          child: builder(context, autoScrollToLyric.value, (bool value) {
+            shouldDisableAutoScrollOnScroll.value = value;
+          }),
+        ),
         IgnorePointer(
           ignoring: !displayButton,
           child: AnimatedOpacity(

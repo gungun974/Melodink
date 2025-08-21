@@ -81,4 +81,31 @@ class SettingsViewModel extends ChangeNotifier {
 
     return currentSettings.autoScrollViewToCurrentTrack;
   }
+
+  bool getShowTrackRemainingDuration() {
+    final currentSettings = state;
+
+    if (currentSettings == null) {
+      return false;
+    }
+
+    return currentSettings.showTrackRemainingDuration;
+  }
+
+  Future<void> toggleShowTrackRemainingDuration() async {
+    final currentSettings = state;
+
+    if (currentSettings == null) {
+      return;
+    }
+
+    await SettingsRepository().setSettings(
+      currentSettings.copyWith(
+        showTrackRemainingDuration: !currentSettings.showTrackRemainingDuration,
+      ),
+    );
+
+    state = await SettingsRepository().getSettings();
+    notifyListeners();
+  }
 }

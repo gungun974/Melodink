@@ -1,11 +1,18 @@
+import 'dart:io';
 import 'dart:math';
 
+import 'package:color_thief_flutter/color_thief_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
+import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
+import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
+import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 
 const defaultTheme = [
   Color.fromRGBO(58, 91, 111, 1),
@@ -37,7 +44,7 @@ const cyanTheme = [
   Color.fromRGBO(48, 156, 217, 1),
 ];
 
-class GradientBackground extends ConsumerWidget {
+class GradientBackground extends HookConsumerWidget {
   const GradientBackground({super.key});
 
   AlignmentGeometry gradientEndPoint(double angle) {
@@ -76,22 +83,74 @@ class GradientBackground extends ConsumerWidget {
         .watch<SettingsViewModel>()
         .shouldDynamicBackgroundColors();
 
-    final asyncPalette = ref.watch(currentTrackPaletteProvider);
+    final audioController = ref.read(audioControllerProvider);
+    final downloadTrackRepository = ref.read(downloadTrackRepositoryProvider);
 
-    final palette = asyncPalette.valueOrNull;
+    final palette = useState<List<List<int>>?>(null);
+
+    useOnStreamChange(
+      useMemoized(
+        () => audioController.currentTrack.stream
+            .startWith(audioController.currentTrack.value)
+            .distinct((prev, next) => prev?.id == next?.id),
+      ),
+      onData: (currentTrack) async {
+        if (currentTrack == null) {
+          return;
+        }
+
+        final downloadedTrack = await downloadTrackRepository
+            .getDownloadedTrackByTrackId(currentTrack.id);
+
+        final imageUrl =
+            downloadedTrack?.getCoverUrl() ??
+            currentTrack.getCompressedCoverUrl(
+              TrackCompressedCoverQuality.medium,
+            );
+
+        Uri? uri = Uri.tryParse(imageUrl);
+
+        ImageProvider imageProvider;
+
+        if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
+          imageProvider = FileImage(await ImageCacheManager.getImage(uri));
+        } else {
+          imageProvider = FileImage(File(imageUrl));
+        }
+
+        final image = await getImageFromProvider(imageProvider);
+
+        palette.value = await getPaletteFromImage(image, 5, 5);
+      },
+    );
 
     List<Color> appliedTheme = defaultTheme;
 
-    if (dynamicBackgroundColors && palette != null) {
+    if (dynamicBackgroundColors && palette.value != null) {
       appliedTheme = [
         adjustColorLightness(
-          Color.fromRGBO(palette[1][0], palette[1][1], palette[1][2], 1),
+          Color.fromRGBO(
+            palette.value![1][0],
+            palette.value![1][1],
+            palette.value![1][2],
+            1,
+          ),
         ),
         adjustColorLightness(
-          Color.fromRGBO(palette[3][0], palette[3][1], palette[3][2], 1),
+          Color.fromRGBO(
+            palette.value![3][0],
+            palette.value![3][1],
+            palette.value![3][2],
+            1,
+          ),
         ),
         adjustColorLightness(
-          Color.fromRGBO(palette[0][0], palette[0][1], palette[0][2], 1),
+          Color.fromRGBO(
+            palette.value![0][0],
+            palette.value![0][1],
+            palette.value![0][2],
+            1,
+          ),
         ),
       ];
     } else if (currentTheme == AppSettingTheme.dark) {

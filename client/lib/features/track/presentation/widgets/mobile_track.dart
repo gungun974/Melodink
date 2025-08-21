@@ -9,7 +9,7 @@ import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
-import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
@@ -81,7 +81,17 @@ class MobileTrack extends HookConsumerWidget {
 
     final isServerReachable = ref.watch(isServerReachableProvider);
 
-    final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
+    final audioController = ref.read(audioControllerProvider);
+
+    final isCurrentTrack =
+        useStream(
+          useMemoized(
+            () => audioController.currentTrack.stream.map(
+              (currentTrack) => currentTrack?.id == track.id,
+            ),
+          ),
+        ).data ??
+        false;
 
     final asyncDownloadedTrack = useAsyncGetDownloadTrack(track.id, ref);
 

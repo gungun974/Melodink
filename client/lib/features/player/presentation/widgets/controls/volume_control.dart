@@ -2,27 +2,26 @@ import 'dart:io';
 
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/hooks/use_behavior_subject_stream.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:popover/popover.dart';
 
-class VolumeControl extends ConsumerWidget {
+class VolumeControl extends HookConsumerWidget {
   final bool largeControlButton;
 
-  const VolumeControl({
-    super.key,
-    this.largeControlButton = false,
-  });
+  const VolumeControl({super.key, this.largeControlButton = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
-    final externalVolume = ref.watch(currentPlayerVolumeProvider);
-    final currentTrack = ref.watch(currentTrackStreamProvider);
+    final audioController = ref.read(audioControllerProvider);
+    final currentTrack = useBehaviorSubjectStream(audioController.currentTrack);
 
-    if (currentTrack.valueOrNull == null) {
+    final refresh = useState(UniqueKey());
+
+    if (currentTrack.data == null) {
       return const SizedBox.shrink();
     }
 
@@ -32,32 +31,29 @@ class VolumeControl extends ConsumerWidget {
 
     return AppIconButton(
       padding: const EdgeInsets.all(8),
-      icon: AdwaitaIcon(
-        switch (externalVolume) {
-          <= 0 => AdwaitaIcons.audio_volume_muted,
-          <= 33 => AdwaitaIcons.audio_volume_low,
-          <= 66 => AdwaitaIcons.audio_volume_medium,
-          _ => AdwaitaIcons.audio_volume_high
-        },
-      ),
+      icon: AdwaitaIcon(switch (audioController.getVolume()) {
+        <= 0 => AdwaitaIcons.audio_volume_muted,
+        <= 33 => AdwaitaIcons.audio_volume_low,
+        <= 66 => AdwaitaIcons.audio_volume_medium,
+        _ => AdwaitaIcons.audio_volume_high,
+      }),
       iconSize: largeControlButton ? 20.0 : 16.0,
       color: Colors.white,
       onPressed: () async {
-        final _ = ref.refresh(currentPlayerVolumeProvider);
         showPopover(
           context: context,
-          bodyBuilder: (context) => Consumer(
-            builder: (context, ref, child) {
-              final volume = ref.watch(currentPlayerVolumeProvider);
-
+          bodyBuilder: (context) => HookBuilder(
+            builder: (context) {
+              final volume = useState(audioController.getVolume());
               return RotatedBox(
                 quarterTurns: 3,
                 child: Slider(
                   onChanged: (value) {
                     audioController.setVolume(value);
-                    final _ = ref.refresh(currentPlayerVolumeProvider);
+                    volume.value = value;
+                    refresh.value = UniqueKey();
                   },
-                  value: volume,
+                  value: volume.value,
                   min: 0,
                   max: 100,
                 ),

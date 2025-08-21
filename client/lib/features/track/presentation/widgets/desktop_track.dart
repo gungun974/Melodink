@@ -13,7 +13,6 @@ import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
@@ -186,11 +185,19 @@ class DesktopTrack extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTheme = context.watch<SettingsViewModel>().currentAppTheme();
 
-    final audioController = ref.watch(audioControllerProvider);
+    final audioController = ref.read(audioControllerProvider);
 
     final isServerReachable = ref.watch(isServerReachableProvider);
 
-    final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
+    final isCurrentTrack =
+        useStream(
+          useMemoized(
+            () => audioController.currentTrack.stream.map(
+              (currentTrack) => currentTrack?.id == track.id,
+            ),
+          ),
+        ).data ??
+        false;
 
     final asyncDownloadedTrack = useAsyncGetDownloadTrack(track.id, ref);
 

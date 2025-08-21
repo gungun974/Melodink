@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
@@ -24,14 +24,12 @@ import 'package:melodink_client/features/track/presentation/widgets/single_track
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class MobilePlayerPage extends HookConsumerWidget {
+class MobilePlayerPage extends riverpod.HookConsumerWidget {
   const MobilePlayerPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
-
-    final currentLyrics = ref.watch(currentLyricsProvider);
+  Widget build(BuildContext context, riverpod.WidgetRef ref) {
+    final audioController = ref.read(audioControllerProvider);
 
     final trackContextMenuController = useMemoized(() => MenuController());
 
@@ -200,38 +198,50 @@ class MobilePlayerPage extends HookConsumerWidget {
                             ),
                           ),
                         ),
-                        if (currentLyrics != null)
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                                vertical: 8.0,
-                              ),
-                              child: Text(
-                                t.general.lyrics,
-                                style: const TextStyle(
-                                  fontSize: 40,
-                                  letterSpacing: 40 * 0.03,
-                                  fontWeight: FontWeight.w600,
+                        Consumer<List<LyricLine>?>(
+                          builder: (context, viewModel, _) {
+                            if (viewModel == null) {
+                              return SliverToBoxAdapter();
+                            }
+                            return SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 8.0,
+                                ),
+                                child: Text(
+                                  t.general.lyrics,
+                                  style: const TextStyle(
+                                    fontSize: 40,
+                                    letterSpacing: 40 * 0.03,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                        if (currentLyrics != null)
-                          SliverPadding(
-                            padding: const EdgeInsets.only(
-                              left: 16.0,
-                              right: 16.0,
-                              bottom: 16.0,
-                            ),
-                            sliver: LiveLyrics(
-                              key: liveLyricsKey,
-                              autoScrollToLyric: autoScrollToLyric,
-                              scrollController: scrollController,
-                              setShouldDisableAutoScrollOnScroll:
-                                  setShouldDisableAutoScrollOnScroll,
-                            ),
-                          ),
+                            );
+                          },
+                        ),
+                        Consumer<List<LyricLine>?>(
+                          builder: (context, viewModel, _) {
+                            if (viewModel == null) {
+                              return SliverToBoxAdapter();
+                            }
+                            return SliverPadding(
+                              padding: const EdgeInsets.only(
+                                left: 16.0,
+                                right: 16.0,
+                                bottom: 16.0,
+                              ),
+                              sliver: LiveLyrics(
+                                key: liveLyricsKey,
+                                autoScrollToLyric: autoScrollToLyric,
+                                scrollController: scrollController,
+                                setShouldDisableAutoScrollOnScroll:
+                                    setShouldDisableAutoScrollOnScroll,
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     );
                   },
@@ -258,7 +268,7 @@ class _MobilePlayerInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HookConsumer(
+    return riverpod.HookConsumer(
       builder: (context, ref, child) {
         final scoringSystem = context
             .watch<SettingsViewModel>()

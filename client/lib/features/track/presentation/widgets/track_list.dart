@@ -7,7 +7,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/hooks/use_list_controller.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/mobile_track.dart';
@@ -36,7 +35,8 @@ class TrackList extends HookConsumerWidget {
     Track track,
     int index,
     VoidCallback unselect,
-  )? singleCustomActionsBuilder;
+  )?
+  singleCustomActionsBuilder;
 
   final List<Widget> Function(
     BuildContext context,
@@ -44,7 +44,8 @@ class TrackList extends HookConsumerWidget {
     List<Track> tracks,
     Set<int> selectedIndexes,
     VoidCallback unselect,
-  )? multiCustomActionsBuilder;
+  )?
+  multiCustomActionsBuilder;
 
   final bool showDefaultActions;
 
@@ -76,7 +77,7 @@ class TrackList extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+    final audioController = ref.read(audioControllerProvider);
 
     final startSelect = useState<int?>(null);
     final endSelect = useState<int?>(null);
@@ -90,9 +91,7 @@ class TrackList extends HookConsumerWidget {
         selectedElements.value = {...selectedElements.value, index};
       } else {
         selectedElements.value = selectedElements.value
-            .where(
-              (el) => el != index,
-            )
+            .where((el) => el != index)
             .toSet();
       }
 
@@ -129,83 +128,85 @@ class TrackList extends HookConsumerWidget {
 
     final listController = useListController();
 
-    ref.listen(currentTrackStreamProvider, (asyncPrevTrack, asyncCurrentTrack) {
-      if (!autoScrollToCurrentTrack) {
-        return;
-      }
-
-      final currentTrack = asyncCurrentTrack.valueOrNull;
-
-      final prevTrack = asyncPrevTrack?.valueOrNull;
-
-      if (currentTrack == null) {
-        return;
-      }
-
-      if (prevTrack?.id == currentTrack.id) {
-        return;
-      }
-
-      if (scrollController == null) {
-        return;
-      }
-
-      final currentTrackIndex =
-          tracks.indexWhere((track) => track.id == currentTrack.id);
-
-      if (currentTrackIndex == -1) {
-        return;
-      }
-
-      final visibleRange = listController.visibleRange;
-
-      if (visibleRange != null) {
-        final (startView, endView) = visibleRange;
-
-        if (startView + 3 >= currentTrackIndex &&
-            currentTrackIndex >= startView) {
-          listController.animateToItem(
-            index: currentTrackIndex,
-            scrollController: scrollController!,
-            alignment: 0.1,
-            curve: (_) => Curves.easeOutQuad,
-            duration: (_) => const Duration(milliseconds: 400),
-          );
-
+    useOnStreamChange(
+      useMemoized(
+        () => audioController.currentTrack.stream.distinct(
+          (prev, next) => prev?.id == next?.id,
+        ),
+      ),
+      onData: (currentTrack) {
+        if (!autoScrollToCurrentTrack) {
           return;
         }
 
-        if (endView - 3 <= currentTrackIndex && currentTrackIndex <= endView) {
-          listController.animateToItem(
-            index: currentTrackIndex,
-            scrollController: scrollController!,
-            alignment: 0.9,
-            curve: (_) => Curves.easeOutQuad,
-            duration: (_) => const Duration(milliseconds: 400),
-          );
-
+        if (currentTrack == null) {
           return;
         }
 
-        if (startView <= currentTrackIndex && currentTrackIndex <= endView) {
+        if (scrollController == null) {
           return;
         }
-      }
 
-      listController.jumpToItem(
-        index: currentTrackIndex,
-        scrollController: scrollController!,
-        alignment: 0.4,
-      );
-    });
+        final currentTrackIndex = tracks.indexWhere(
+          (track) => track.id == currentTrack.id,
+        );
+
+        if (currentTrackIndex == -1) {
+          return;
+        }
+
+        final visibleRange = listController.visibleRange;
+
+        if (visibleRange != null) {
+          final (startView, endView) = visibleRange;
+
+          if (startView + 3 >= currentTrackIndex &&
+              currentTrackIndex >= startView) {
+            listController.animateToItem(
+              index: currentTrackIndex,
+              scrollController: scrollController!,
+              alignment: 0.1,
+              curve: (_) => Curves.easeOutQuad,
+              duration: (_) => const Duration(milliseconds: 400),
+            );
+
+            return;
+          }
+
+          if (endView - 3 <= currentTrackIndex &&
+              currentTrackIndex <= endView) {
+            listController.animateToItem(
+              index: currentTrackIndex,
+              scrollController: scrollController!,
+              alignment: 0.9,
+              curve: (_) => Curves.easeOutQuad,
+              duration: (_) => const Duration(milliseconds: 400),
+            );
+
+            return;
+          }
+
+          if (startView <= currentTrackIndex && currentTrackIndex <= endView) {
+            return;
+          }
+        }
+
+        listController.jumpToItem(
+          index: currentTrackIndex,
+          scrollController: scrollController!,
+          alignment: 0.4,
+        );
+      },
+    );
 
     useEffect(() {
       if (scrollToTrackIdOnMounted == null) return null;
 
       if (scrollController == null) return null;
 
-      final currentTrackIndex =
-          tracks.indexWhere((track) => track.id == scrollToTrackIdOnMounted);
+      final currentTrackIndex = tracks.indexWhere(
+        (track) => track.id == scrollToTrackIdOnMounted,
+      );
 
       if (currentTrackIndex == -1) return null;
 
@@ -225,187 +226,179 @@ class TrackList extends HookConsumerWidget {
     return SuperSliverList(
       extentEstimation: (_, __) => 50,
       listController: scrollController != null ? listController : null,
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          late final Widget child;
+      delegate: SliverChildBuilderDelegate((context, index) {
+        late final Widget child;
 
-          final selected = selectedElements.value.contains(index);
+        final selected = selectedElements.value.contains(index);
 
-          final List<Track> selectedTracks = tracks.indexed
-              .where(
-                (entry) => selectedElements.value.contains(
-                  entry.$1,
-                ),
-              )
-              .map(
-                (entry) => entry.$2,
-              )
-              .toList();
+        final List<Track> selectedTracks = tracks.indexed
+            .where((entry) => selectedElements.value.contains(entry.$1))
+            .map((entry) => entry.$2)
+            .toList();
 
-          selectCallback(track) {
-            if (HardwareKeyboard.instance.isShiftPressed) {
-              selectMultipleRange(index);
-              return;
-            }
-
-            if (HardwareKeyboard.instance.isControlPressed) {
-              selectMultiple(index);
-              return;
-            }
-
-            selectedElements.value = {index};
-            startElement.value = index;
+        selectCallback(track) {
+          if (HardwareKeyboard.instance.isShiftPressed) {
+            selectMultipleRange(index);
+            return;
           }
 
-          List<Widget> Function(
-            BuildContext context,
-            MenuController menuController,
-            Track track,
-          )? localSingleCustomActionsBuilder;
-
-          if (singleCustomActionsBuilder != null) {
-            localSingleCustomActionsBuilder = (context, menuController, track) {
-              return singleCustomActionsBuilder!(
-                context,
-                menuController,
-                track,
-                index,
-                () {
-                  startSelect.value = null;
-                  endSelect.value = null;
-                },
-              );
-            };
+          if (HardwareKeyboard.instance.isControlPressed) {
+            selectMultiple(index);
+            return;
           }
 
-          List<Widget> Function(
-            BuildContext context,
-            MenuController menuController,
-            List<Track> tracks,
-          )? localMultiCustomActionsBuilder;
+          selectedElements.value = {index};
+          startElement.value = index;
+        }
 
-          if (multiCustomActionsBuilder != null &&
-              selectedElements.value.isNotEmpty) {
-            localMultiCustomActionsBuilder = (context, menuController, tracks) {
-              return multiCustomActionsBuilder!(
-                context,
-                menuController,
+        List<Widget> Function(
+          BuildContext context,
+          MenuController menuController,
+          Track track,
+        )?
+        localSingleCustomActionsBuilder;
+
+        if (singleCustomActionsBuilder != null) {
+          localSingleCustomActionsBuilder = (context, menuController, track) {
+            return singleCustomActionsBuilder!(
+              context,
+              menuController,
+              track,
+              index,
+              () {
+                startSelect.value = null;
+                endSelect.value = null;
+              },
+            );
+          };
+        }
+
+        List<Widget> Function(
+          BuildContext context,
+          MenuController menuController,
+          List<Track> tracks,
+        )?
+        localMultiCustomActionsBuilder;
+
+        if (multiCustomActionsBuilder != null &&
+            selectedElements.value.isNotEmpty) {
+          localMultiCustomActionsBuilder = (context, menuController, tracks) {
+            return multiCustomActionsBuilder!(
+              context,
+              menuController,
+              tracks,
+              selectedElements.value,
+              () {
+                startSelect.value = null;
+                endSelect.value = null;
+              },
+            );
+          };
+        }
+
+        if (size == AppScreenTypeLayout.mobile) {
+          child = MobileTrack(
+            track: tracks[index],
+            playCallback: (track) async {
+              if (playCallback != null) {
+                playCallback?.call(track, index);
+                return;
+              }
+              await audioController.loadTracks(
                 tracks,
-                selectedElements.value,
-                () {
-                  startSelect.value = null;
-                  endSelect.value = null;
-                },
-              );
-            };
-          }
-
-          if (size == AppScreenTypeLayout.mobile) {
-            child = MobileTrack(
-              track: tracks[index],
-              playCallback: (track) async {
-                if (playCallback != null) {
-                  playCallback?.call(track, index);
-                  return;
-                }
-                await audioController.loadTracks(
-                  tracks,
-                  startAt: index,
-                  source: source,
-                );
-              },
-              selected: selected,
-              selectedTop: !selectedElements.value.contains(index - 1),
-              selectedBottom: !selectedElements.value.contains(index + 1),
-              selectedTracks: selectedTracks.length == 1 ? [] : selectedTracks,
-              selectCallback: selectCallback,
-              removeCallback: (track) {
-                removeCallback?.call(track, index);
-              },
-              singleCustomActionsBuilder: localSingleCustomActionsBuilder,
-              multiCustomActionsBuilder: localMultiCustomActionsBuilder,
-              showDefaultActions: showDefaultActions,
-              displayReorderable: orderKeys != null,
-              displayMoreActions: orderKeys == null,
-              displayRemove: orderKeys != null,
-            );
-          } else {
-            child = DesktopTrack(
-              track: tracks[index],
-              trackNumber:
-                  showTrackIndex ? tracks[index].trackNumber : index + 1,
-              playCallback: (track) async {
-                if (playCallback != null) {
-                  playCallback?.call(track, index);
-                  return;
-                }
-                await audioController.loadTracks(
-                  tracks,
-                  startAt: index,
-                  source: source,
-                );
-              },
-              modules: modules,
-              showImage: showImage,
-              showPlayButton: showPlayButton,
-              selected: selected,
-              selectedTracks: selectedTracks.length == 1 ? [] : selectedTracks,
-              selectCallback: selectCallback,
-              selectedTop: !selectedElements.value.contains(index - 1),
-              selectedBottom: !selectedElements.value.contains(index + 1),
-              removeCallback: (track) {
-                removeCallback?.call(track, index);
-              },
-              singleCustomActionsBuilder: localSingleCustomActionsBuilder,
-              multiCustomActionsBuilder: localMultiCustomActionsBuilder,
-              showDefaultActions: showDefaultActions,
-            );
-          }
-
-          if (orderKeys == null) {
-            return Container(
-              decoration: BoxDecoration(
-                color: const Color.fromRGBO(0, 0, 0, 0.03),
-                borderRadius: BorderRadius.vertical(
-                  top: size == AppScreenTypeLayout.mobile && index == 0
-                      ? const Radius.circular(8)
-                      : Radius.zero,
-                  bottom: index == tracks.length - 1
-                      ? const Radius.circular(8)
-                      : Radius.zero,
-                ),
-              ),
-              child: child,
-            );
-          }
-
-          return ReorderableItem(
-            key: orderKeys![index],
-            childBuilder: (BuildContext context, ReorderableItemState state) {
-              return Opacity(
-                opacity: state == ReorderableItemState.placeholder ? 0.0 : 1.0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: state == ReorderableItemState.normal
-                        ? const Color.fromRGBO(0, 0, 0, 0.03)
-                        : const Color.fromRGBO(0, 0, 0, 0.05),
-                    borderRadius: BorderRadius.vertical(
-                      top: size == AppScreenTypeLayout.mobile && index == 0
-                          ? const Radius.circular(8)
-                          : Radius.zero,
-                      bottom: index == tracks.length - 1
-                          ? const Radius.circular(8)
-                          : Radius.zero,
-                    ),
-                  ),
-                  child: child,
-                ),
+                startAt: index,
+                source: source,
               );
             },
+            selected: selected,
+            selectedTop: !selectedElements.value.contains(index - 1),
+            selectedBottom: !selectedElements.value.contains(index + 1),
+            selectedTracks: selectedTracks.length == 1 ? [] : selectedTracks,
+            selectCallback: selectCallback,
+            removeCallback: (track) {
+              removeCallback?.call(track, index);
+            },
+            singleCustomActionsBuilder: localSingleCustomActionsBuilder,
+            multiCustomActionsBuilder: localMultiCustomActionsBuilder,
+            showDefaultActions: showDefaultActions,
+            displayReorderable: orderKeys != null,
+            displayMoreActions: orderKeys == null,
+            displayRemove: orderKeys != null,
           );
-        },
-        childCount: tracks.length,
-      ),
+        } else {
+          child = DesktopTrack(
+            track: tracks[index],
+            trackNumber: showTrackIndex ? tracks[index].trackNumber : index + 1,
+            playCallback: (track) async {
+              if (playCallback != null) {
+                playCallback?.call(track, index);
+                return;
+              }
+              await audioController.loadTracks(
+                tracks,
+                startAt: index,
+                source: source,
+              );
+            },
+            modules: modules,
+            showImage: showImage,
+            showPlayButton: showPlayButton,
+            selected: selected,
+            selectedTracks: selectedTracks.length == 1 ? [] : selectedTracks,
+            selectCallback: selectCallback,
+            selectedTop: !selectedElements.value.contains(index - 1),
+            selectedBottom: !selectedElements.value.contains(index + 1),
+            removeCallback: (track) {
+              removeCallback?.call(track, index);
+            },
+            singleCustomActionsBuilder: localSingleCustomActionsBuilder,
+            multiCustomActionsBuilder: localMultiCustomActionsBuilder,
+            showDefaultActions: showDefaultActions,
+          );
+        }
+
+        if (orderKeys == null) {
+          return Container(
+            decoration: BoxDecoration(
+              color: const Color.fromRGBO(0, 0, 0, 0.03),
+              borderRadius: BorderRadius.vertical(
+                top: size == AppScreenTypeLayout.mobile && index == 0
+                    ? const Radius.circular(8)
+                    : Radius.zero,
+                bottom: index == tracks.length - 1
+                    ? const Radius.circular(8)
+                    : Radius.zero,
+              ),
+            ),
+            child: child,
+          );
+        }
+
+        return ReorderableItem(
+          key: orderKeys![index],
+          childBuilder: (BuildContext context, ReorderableItemState state) {
+            return Opacity(
+              opacity: state == ReorderableItemState.placeholder ? 0.0 : 1.0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: state == ReorderableItemState.normal
+                      ? const Color.fromRGBO(0, 0, 0, 0.03)
+                      : const Color.fromRGBO(0, 0, 0, 0.05),
+                  borderRadius: BorderRadius.vertical(
+                    top: size == AppScreenTypeLayout.mobile && index == 0
+                        ? const Radius.circular(8)
+                        : Radius.zero,
+                    bottom: index == tracks.length - 1
+                        ? const Radius.circular(8)
+                        : Radius.zero,
+                  ),
+                ),
+                child: child,
+              ),
+            );
+          },
+        );
+      }, childCount: tracks.length),
     );
   }
 }
