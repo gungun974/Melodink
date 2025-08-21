@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
 import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
@@ -8,7 +7,6 @@ import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
-import 'package:melodink_client/features/library/domain/providers/album_provider.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/albums_viewmodel.dart';
 import 'package:melodink_client/features/library/presentation/widgets/album_collections_grid.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
@@ -55,7 +53,7 @@ class AlbumsPage extends riverpod.HookConsumerWidget {
                         Consumer<AlbumsViewModel>(
                           builder: (context, viewModel, _) {
                             return Text(
-                              "(${viewModel.albums.length})",
+                              "(${viewModel.searchAlbums.length})",
                               style: const TextStyle(
                                 fontSize: 35,
                                 letterSpacing: 35 * 0.03,
