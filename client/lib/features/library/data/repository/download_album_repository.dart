@@ -12,9 +12,7 @@ import 'package:sqlite3/sqlite3.dart';
 class DownloadAlbumRepository {
   final AlbumRepository albumRepository;
 
-  DownloadAlbumRepository({
-    required this.albumRepository,
-  });
+  DownloadAlbumRepository({required this.albumRepository});
 
   Future<bool> isAlbumDownloaded(int id) async {
     final db = await DatabaseService.getDatabase();
@@ -97,9 +95,9 @@ class DownloadAlbumRepository {
       final downloadImagePath = "$downloadPath/image-${album.coverSignature}";
 
       await AppApi().dio.download(
-            "/album/${album.id}/cover",
-            "$applicationSupportDirectory/$downloadImagePath",
-          );
+        "/album/${album.id}/cover",
+        "$applicationSupportDirectory/$downloadImagePath",
+      );
 
       db.execute(
         "UPDATE album_downloads SET cover_file = ?, cover_signature = ? WHERE album_id = ?",
@@ -138,7 +136,7 @@ class DownloadAlbumRepository {
     }
   }
 
-  Future<void> freeAlbum(int id) async {
+  Future<bool> freeAlbum(int id) async {
     final db = await DatabaseService.getDatabase();
 
     final result = db.select(
@@ -147,7 +145,7 @@ class DownloadAlbumRepository {
     );
 
     if (result.isEmpty) {
-      return;
+      return false;
     }
 
     if (_shouldAlbumBePartial(db, id)) {
@@ -155,13 +153,10 @@ class DownloadAlbumRepository {
         "UPDATE album_downloads SET partial_download = TRUE WHERE album_id = ?",
         [id],
       );
-      return;
+      return true;
     }
 
-    db.execute(
-      "DELETE FROM album_downloads WHERE album_id = ?",
-      [id],
-    );
+    db.execute("DELETE FROM album_downloads WHERE album_id = ?", [id]);
 
     final applicationSupportDirectory =
         (await getMelodinkInstanceSupportDirectory()).path;
@@ -175,13 +170,14 @@ class DownloadAlbumRepository {
         ).delete();
       } catch (_) {}
     }
+
+    return false;
   }
 
   Future<void> freeOrphanAlbums() async {
     final db = await DatabaseService.getDatabase();
 
-    final rows = db.select(
-      """
+    final rows = db.select("""
       SELECT album_downloads.album_id
       FROM album_downloads
       WHERE (album_downloads.album_id NOT IN (SELECT track_album.album_id
@@ -191,8 +187,7 @@ class DownloadAlbumRepository {
                                                       JOIN track_album ON track_album.track_id = je.value)
           AND album_downloads.partial_download = TRUE)
         OR (album_downloads.album_id NOT IN (SELECT albums.id FROM albums));
-    """,
-    );
+    """);
 
     for (final row in rows) {
       await freeAlbum(row["album_id"]);
@@ -200,8 +195,9 @@ class DownloadAlbumRepository {
   }
 
   bool _shouldAlbumBePartial(Database db, int albumId) {
-    return db.select(
-      """
+    return db
+        .select(
+          """
       SELECT DISTINCT track_album.album_id
       FROM playlist_downloads
               JOIN playlists ON playlist_downloads.playlist_id = playlists.id
@@ -211,8 +207,9 @@ class DownloadAlbumRepository {
                     ON track_album.track_id = je.value
       WHERE track_album.album_id = ?;
     """,
-      [albumId],
-    ).isNotEmpty;
+          [albumId],
+        )
+        .isNotEmpty;
   }
 
   Future<void> freeAllAlbums() async {
