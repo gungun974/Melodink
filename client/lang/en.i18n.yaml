@@ -36,6 +36,7 @@ general:
   details: "Details"
   save: "Save"
   select: "Select"
+  selectAlbums: "Select albums"
   selectArtists: "Select artists"
   create: "Create"
   name: "Name"
@@ -101,7 +102,6 @@ general:
   artistHasRole: "Has role in"
 
   editTrack: "Edit \"{title}\""
-  editTrackAlbum: "Edit album"
 
   trackNb:
     one: "{n} Track"

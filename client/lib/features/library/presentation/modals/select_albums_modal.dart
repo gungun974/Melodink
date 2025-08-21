@@ -1,8 +1,7 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/core/helpers/fuzzy_search.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
@@ -12,79 +11,16 @@ import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
-import 'package:melodink_client/features/library/presentation/modals/create_album_modal.dart';
+import 'package:melodink_client/features/library/presentation/viewmodels/select_albums_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class SelectAlbumsModal extends HookConsumerWidget {
-  final List<int> currentIds;
-
-  const SelectAlbumsModal({super.key, required this.currentIds});
+class SelectAlbumsModal extends StatelessWidget {
+  const SelectAlbumsModal({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final albumRepository = ref.read(albumRepositoryProvider);
-
-    final isLoading = useState(false);
-
-    final searchTextController = useTextEditingController(text: "");
-
-    final albums = useState<List<Album>>([]);
-
-    final filteredAlbums = useState<List<Album>>([]);
-
-    final selectedIds = useState<List<int>>([...currentIds]);
-
-    applySearch() {
-      if (searchTextController.text.isEmpty) {
-        filteredAlbums.value = albums.value;
-      }
-      filteredAlbums.value =
-          albums.value.where((album) {
-            if (selectedIds.value.contains(album.id)) {
-              return true;
-            }
-
-            final buffer = StringBuffer();
-
-            buffer.write(album.name);
-
-            for (final artist in album.artists) {
-              buffer.write(artist.name);
-            }
-
-            return compareFuzzySearch(
-              searchTextController.text,
-              buffer.toString(),
-            );
-          }).toList()..sort(
-            (a, b) =>
-                (currentIds.contains(b.id) ? 1 : 0) -
-                (currentIds.contains(a.id) ? 1 : 0),
-          );
-    }
-
-    loadAlbums() async {
-      isLoading.value = true;
-      try {
-        final newAlbums = await albumRepository.getAllAlbums();
-        albums.value = newAlbums;
-      } finally {
-        isLoading.value = false;
-      }
-    }
-
-    useEffect(() {
-      loadAlbums();
-
-      return null;
-    }, []);
-
-    useEffect(() {
-      applySearch();
-      return null;
-    }, [albums.value]);
-
+  Widget build(BuildContext context) {
     return MaxContainer(
       maxWidth: 440,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 64),
@@ -104,7 +40,7 @@ class SelectAlbumsModal extends HookConsumerWidget {
                     children: [
                       AppModal(
                         preventUserClose: true,
-                        title: Text(t.general.editTrackAlbum),
+                        title: Text(t.general.selectAlbums),
                         body: Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 24.0,
@@ -117,10 +53,12 @@ class SelectAlbumsModal extends HookConsumerWidget {
                                 children: [
                                   Expanded(
                                     child: AppSearchFormField(
-                                      controller: searchTextController,
-                                      onChanged: (value) {
-                                        applySearch();
-                                      },
+                                      controller: context
+                                          .read<SelectAlbumsViewModel>()
+                                          .searchTextController,
+                                      onChanged: (_) => context
+                                          .read<SelectAlbumsViewModel>()
+                                          .updateSearch(),
                                     ),
                                   ),
                                   const SizedBox(width: 16),
@@ -146,22 +84,9 @@ class SelectAlbumsModal extends HookConsumerWidget {
                                       ),
                                     ),
                                     padding: EdgeInsets.zero,
-                                    onPressed: () async {
-                                      final album =
-                                          await CreateAlbumModal.showModal(
-                                            context,
-                                          );
-
-                                      if (album == null) {
-                                        return;
-                                      }
-
-                                      await loadAlbums();
-
-                                      selectedIds.value = [album.id];
-
-                                      applySearch();
-                                    },
+                                    onPressed: () => context
+                                        .read<SelectAlbumsViewModel>()
+                                        .createAlbum(context),
                                   ),
                                 ],
                               ),
@@ -170,59 +95,63 @@ class SelectAlbumsModal extends HookConsumerWidget {
                                 height: targetHeight,
                                 child: Scrollbar(
                                   thumbVisibility: true,
-                                  child: ListView.separated(
-                                    itemBuilder:
-                                        (BuildContext context, int index) {
-                                          final album =
-                                              filteredAlbums.value[index];
+                                  child: Consumer<SelectAlbumsViewModel>(
+                                    builder: (context, viewModel, _) {
+                                      if (viewModel.searchAlbums.isEmpty) {
+                                        return SizedBox.shrink();
+                                      }
 
-                                          final selected = selectedIds.value
-                                              .contains(album.id);
+                                      return ListView.separated(
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                              final album =
+                                                  viewModel.searchAlbums[index];
 
-                                          return AlbumSelector(
-                                            album: album,
-                                            selected: selected,
-                                            onSelect: () {
-                                              if (selected) {
-                                                selectedIds.value = [];
-                                                return;
-                                              }
-                                              selectedIds.value = [album.id];
+                                              final selected = viewModel
+                                                  .selectedIds
+                                                  .contains(album.id);
+
+                                              return AlbumSelector(
+                                                album: album,
+                                                selected: selected,
+                                                onSelect: () => viewModel
+                                                    .toggleAlbum(album),
+                                              );
                                             },
-                                          );
-                                        },
-                                    itemCount: filteredAlbums.value.length,
-                                    separatorBuilder:
-                                        (BuildContext context, int index) {
-                                          return SizedBox(height: 6);
-                                        },
+                                        itemCount:
+                                            viewModel.searchAlbums.length,
+                                        separatorBuilder:
+                                            (BuildContext context, int index) {
+                                              return SizedBox(height: 6);
+                                            },
+                                      );
+                                    },
                                   ),
                                 ),
                               ),
                               SizedBox(height: 8),
                               AppButton(
-                                text: t.general.save,
+                                text: t.general.select,
                                 type: AppButtonType.primary,
                                 onPressed: () {
-                                  final selectedAlbums = albums.value
-                                      .where(
-                                        (album) => selectedIds.value.contains(
-                                          album.id,
-                                        ),
-                                      )
-                                      .toList();
-
-                                  Navigator.of(
-                                    context,
-                                    rootNavigator: true,
-                                  ).pop(selectedAlbums);
+                                  context
+                                      .read<SelectAlbumsViewModel>()
+                                      .selectAlbums(context);
                                 },
                               ),
                             ],
                           ),
                         ),
                       ),
-                      if (isLoading.value) const AppPageLoader(),
+                      Selector<SelectAlbumsViewModel, bool>(
+                        selector: (_, viewModel) => viewModel.isLoading,
+                        builder: (context, isLoading, _) {
+                          if (!isLoading) {
+                            return const SizedBox.shrink();
+                          }
+                          return const AppPageLoader();
+                        },
+                      ),
                     ],
                   ),
                 );
@@ -236,7 +165,7 @@ class SelectAlbumsModal extends HookConsumerWidget {
 
   static Future<List<Album>?> showModal(
     BuildContext context,
-    List<int> currentIds,
+    List<int> defaultSelectedIds,
   ) async {
     final result = await showGeneralDialog(
       context: context,
@@ -247,7 +176,17 @@ class SelectAlbumsModal extends HookConsumerWidget {
           child: MaxContainer(
             maxWidth: 800,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 64),
-            child: SelectAlbumsModal(currentIds: currentIds),
+            child: riverpod.Consumer(
+              builder: (context, ref, _) {
+                return ChangeNotifierProvider(
+                  create: (_) => SelectAlbumsViewModel(
+                    eventBus: ref.read(eventBusProvider),
+                    albumRepository: ref.read(albumRepositoryProvider),
+                  )..loadAlbums(defaultSelectedIds),
+                  child: SelectAlbumsModal(),
+                );
+              },
+            ),
           ),
         );
       },
