@@ -18,7 +18,6 @@ import 'package:melodink_client/features/player/domain/audio/melodink_player.dar
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/sync/domain/providers/sync_manager_provider.dart';
-import 'package:melodink_client/features/track/domain/providers/import_tracks_provider.dart';
 import 'package:melodink_client/features/tracker/domain/providers/shared_played_track_provider.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:window_manager/window_manager.dart';
@@ -40,8 +39,9 @@ void main() async {
     WindowOptions windowOptions = WindowOptions(
       backgroundColor: Colors.transparent,
       skipTaskbar: false,
-      titleBarStyle:
-          Platform.isLinux ? TitleBarStyle.hidden : TitleBarStyle.normal,
+      titleBarStyle: Platform.isLinux
+          ? TitleBarStyle.hidden
+          : TitleBarStyle.normal,
       minimumSize: kReleaseMode ? const Size(972, 534) : const Size(300, 534),
       size: const Size(1200, 720),
       fullScreen: false,
@@ -70,11 +70,7 @@ void main() async {
     await ImageCacheManager.initCache();
   } catch (_) {}
 
-  runApp(ProviderScope(
-    child: TranslationProvider(
-      child: const MyApp(),
-    ),
-  ));
+  runApp(ProviderScope(child: TranslationProvider(child: const MyApp())));
 }
 
 class MyApp extends StatelessWidget {
@@ -85,9 +81,9 @@ class MyApp extends StatelessWidget {
     return _EagerInitialization(
       child: _DynamicSystemUIMode(
         child: MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(1),
-          ),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(1)),
           child: Consumer(
             builder: (contex, ref, _) {
               final appRouter = ref.watch(appRouterProvider);
@@ -105,8 +101,9 @@ class MyApp extends StatelessWidget {
 
               return Shortcuts(
                 shortcuts: <ShortcutActivator, Intent>{
-                  const SingleActivator(LogicalKeyboardKey.space):
-                      VoidCallbackIntent(() {
+                  const SingleActivator(
+                    LogicalKeyboardKey.space,
+                  ): VoidCallbackIntent(() {
                     if (audioController.playbackState.valueOrNull?.playing ==
                         true) {
                       audioController.pause();
@@ -128,11 +125,13 @@ class MyApp extends StatelessWidget {
                       theme: ThemeData(
                         useMaterial3: false,
                         brightness: Brightness.dark,
-                        appBarTheme:
-                            const AppBarTheme(backgroundColor: Colors.black),
+                        appBarTheme: const AppBarTheme(
+                          backgroundColor: Colors.black,
+                        ),
                         primaryColor: Colors.black,
-                        iconTheme:
-                            const IconThemeData().copyWith(color: Colors.white),
+                        iconTheme: const IconThemeData().copyWith(
+                          color: Colors.white,
+                        ),
                         colorScheme: ColorScheme.fromSeed(
                           seedColor: const Color.fromRGBO(196, 126, 208, 1),
                           brightness: Brightness.dark,
@@ -166,7 +165,6 @@ class _EagerInitialization extends ConsumerWidget {
     ref.watch(audioControllerProvider);
     ref.watch(sharedPlayedTrackerManagerProvider);
     ref.watch(syncManagerProvider);
-    ref.watch(importTracksProvider);
     return child;
   }
 }
@@ -177,41 +175,42 @@ class _DynamicSystemUIMode extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentPlayerBarPosition =
-        ref.watch(currentPlayerBarPositionProvider);
+    final currentPlayerBarPosition = ref.watch(
+      currentPlayerBarPositionProvider,
+    );
 
     final hide = useState(false);
 
-    return AppScreenTypeLayoutBuilder(builder: (context, type) {
-      if (type == AppScreenTypeLayout.desktop &&
-          currentPlayerBarPosition == AppSettingPlayerBarPosition.bottom) {
-        if (!hide.value) {
-          if (!kIsWeb && Platform.isIOS) {
-            SystemChrome.setEnabledSystemUIMode(
-              SystemUiMode.manual,
-              overlays: [SystemUiOverlay.top],
-            );
+    return AppScreenTypeLayoutBuilder(
+      builder: (context, type) {
+        if (type == AppScreenTypeLayout.desktop &&
+            currentPlayerBarPosition == AppSettingPlayerBarPosition.bottom) {
+          if (!hide.value) {
+            if (!kIsWeb && Platform.isIOS) {
+              SystemChrome.setEnabledSystemUIMode(
+                SystemUiMode.manual,
+                overlays: [SystemUiOverlay.top],
+              );
+            }
+
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              hide.value = true;
+            });
           }
+        } else {
+          if (hide.value) {
+            if (!kIsWeb && Platform.isIOS) {
+              SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+            }
 
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            hide.value = true;
-          });
-        }
-      } else {
-        if (hide.value) {
-          if (!kIsWeb && Platform.isIOS) {
-            SystemChrome.setEnabledSystemUIMode(
-              SystemUiMode.edgeToEdge,
-            );
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              hide.value = false;
+            });
           }
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            hide.value = false;
-          });
         }
-      }
 
-      return child;
-    });
+        return child;
+      },
+    );
   }
 }
