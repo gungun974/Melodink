@@ -10,7 +10,7 @@ import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/presentation/viewmodels/tracks_viewmodel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
@@ -24,9 +24,9 @@ class TracksPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isAutoScrollViewToCurrentTrackEnabled = ref.watch(
-      isAutoScrollViewToCurrentTrackEnabledProvider,
-    );
+    final isAutoScrollViewToCurrentTrackEnabled = context
+        .watch<SettingsViewModel>()
+        .isAutoScrollViewToCurrentTrackEnabled();
 
     final scrollController = useScrollController();
 

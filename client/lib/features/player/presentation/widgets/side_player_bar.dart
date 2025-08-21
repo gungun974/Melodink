@@ -11,7 +11,8 @@ import 'package:melodink_client/features/player/presentation/widgets/controls/pl
 import 'package:melodink_client/features/player/presentation/widgets/controls/volume_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 class SidePlayerBar extends ConsumerWidget {
   const SidePlayerBar({super.key});
@@ -19,7 +20,9 @@ class SidePlayerBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTrack = ref.watch(currentTrackStreamProvider).valueOrNull;
-    final scoringSystem = ref.watch(currentScoringSystemProvider);
+    final scoringSystem = context
+        .watch<SettingsViewModel>()
+        .currentScoringSystem();
 
     if (currentTrack == null) {
       return const SizedBox.shrink();
@@ -35,9 +38,7 @@ class SidePlayerBar extends ConsumerWidget {
             padding: EdgeInsets.symmetric(horizontal: 8.0),
             child: Center(
               child: IntrinsicHeight(
-                child: LargePlayerSeeker(
-                  displayDurationsInBottom: true,
-                ),
+                child: LargePlayerSeeker(displayDurationsInBottom: true),
               ),
             ),
           ),
@@ -47,21 +48,11 @@ class SidePlayerBar extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                PlayerShuffleControl(
-                  largeControlButton: false,
-                ),
-                PlayerSkipToPreviousControl(
-                  largeControlButton: true,
-                ),
-                PlayerPlayPauseControl(
-                  largeControlButton: true,
-                ),
-                PlayerSkipToNextControl(
-                  largeControlButton: true,
-                ),
-                PlayerRepeatControl(
-                  largeControlButton: false,
-                ),
+                PlayerShuffleControl(largeControlButton: false),
+                PlayerSkipToPreviousControl(largeControlButton: true),
+                PlayerPlayPauseControl(largeControlButton: true),
+                PlayerSkipToNextControl(largeControlButton: true),
+                PlayerRepeatControl(largeControlButton: false),
               ],
             ),
           ),

@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 const defaultTheme = [
   Color.fromRGBO(58, 91, 111, 1),
@@ -37,9 +38,7 @@ const cyanTheme = [
 ];
 
 class GradientBackground extends ConsumerWidget {
-  const GradientBackground({
-    super.key,
-  });
+  const GradientBackground({super.key});
 
   AlignmentGeometry gradientEndPoint(double angle) {
     double angleRad = (angle - 90) * (pi / 180);
@@ -51,24 +50,31 @@ class GradientBackground extends ConsumerWidget {
     return Alignment(cos(angleRad), sin(angleRad));
   }
 
-  Color adjustColorLightness(Color color,
-      {double minLightness = 0.4, double maxLightness = 0.8}) {
+  Color adjustColorLightness(
+    Color color, {
+    double minLightness = 0.4,
+    double maxLightness = 0.8,
+  }) {
     final hslColor = HSLColor.fromColor(color);
 
-    final double newLightness =
-        hslColor.lightness.clamp(minLightness, maxLightness);
+    final double newLightness = hslColor.lightness.clamp(
+      minLightness,
+      maxLightness,
+    );
 
-    final newHslColor =
-        hslColor.withLightness((newLightness + 0.12).clamp(0, 1));
+    final newHslColor = hslColor.withLightness(
+      (newLightness + 0.12).clamp(0, 1),
+    );
 
     return newHslColor.toColor();
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTheme = ref.watch(currentAppThemeProvider);
-    final dynamicBackgroundColors =
-        ref.watch(shouldDynamicBackgroundColorsProvider);
+    final currentTheme = context.watch<SettingsViewModel>().currentAppTheme();
+    final dynamicBackgroundColors = context
+        .watch<SettingsViewModel>()
+        .shouldDynamicBackgroundColors();
 
     final asyncPalette = ref.watch(currentTrackPaletteProvider);
 
@@ -79,28 +85,13 @@ class GradientBackground extends ConsumerWidget {
     if (dynamicBackgroundColors && palette != null) {
       appliedTheme = [
         adjustColorLightness(
-          Color.fromRGBO(
-            palette[1][0],
-            palette[1][1],
-            palette[1][2],
-            1,
-          ),
+          Color.fromRGBO(palette[1][0], palette[1][1], palette[1][2], 1),
         ),
         adjustColorLightness(
-          Color.fromRGBO(
-            palette[3][0],
-            palette[3][1],
-            palette[3][2],
-            1,
-          ),
+          Color.fromRGBO(palette[3][0], palette[3][1], palette[3][2], 1),
         ),
         adjustColorLightness(
-          Color.fromRGBO(
-            palette[0][0],
-            palette[0][1],
-            palette[0][2],
-            1,
-          ),
+          Color.fromRGBO(palette[0][0], palette[0][1], palette[0][2], 1),
         ),
       ];
     } else if (currentTheme == AppSettingTheme.dark) {
@@ -115,12 +106,8 @@ class GradientBackground extends ConsumerWidget {
 
     return Stack(
       children: [
-        Container(
-          color: Colors.grey[850],
-        ),
-        Container(
-          color: Colors.black87,
-        ),
+        Container(color: Colors.grey[850]),
+        Container(color: Colors.black87),
         AnimatedContainer(
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeInOutQuad,

@@ -11,12 +11,13 @@ import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/presentation/hooks/use_get_download_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
+import 'package:provider/provider.dart';
 
 class MobileTrack extends HookConsumerWidget {
   final Track track;
@@ -76,7 +77,7 @@ class MobileTrack extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTheme = ref.watch(currentAppThemeProvider);
+    final currentTheme = context.watch<SettingsViewModel>().currentAppTheme();
 
     final isServerReachable = ref.watch(isServerReachableProvider);
 

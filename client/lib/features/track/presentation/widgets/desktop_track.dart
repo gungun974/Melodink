@@ -15,7 +15,7 @@ import 'package:melodink_client/core/widgets/context_menu_button.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/presentation/hooks/use_get_download_track.dart';
@@ -24,6 +24,7 @@ import 'package:melodink_client/features/track/presentation/widgets/artists_link
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_score.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
 enum DesktopTrackModule {
   title(width: 28 + 24, rightPadding: 24),
@@ -66,7 +67,9 @@ class DesktopTrackModuleLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scoringSystem = ref.watch(currentScoringSystemProvider);
+    final scoringSystem = context
+        .watch<SettingsViewModel>()
+        .currentScoringSystem();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -181,7 +184,7 @@ class DesktopTrack extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentTheme = ref.watch(currentAppThemeProvider);
+    final currentTheme = context.watch<SettingsViewModel>().currentAppTheme();
 
     final audioController = ref.watch(audioControllerProvider);
 

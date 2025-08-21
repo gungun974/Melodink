@@ -7,12 +7,12 @@ import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
-
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
 class TrackScore extends HookConsumerWidget {
   final Track track;
@@ -27,12 +27,15 @@ class TrackScore extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scoringSystem = ref.watch(currentScoringSystemProvider);
+    final scoringSystem = context
+        .watch<SettingsViewModel>()
+        .currentScoringSystem();
 
     final refresh = useState(UniqueKey());
 
-    final updateScoreDebouncer =
-        useMemoized(() => Debouncer(milliseconds: 100));
+    final updateScoreDebouncer = useMemoized(
+      () => Debouncer(milliseconds: 100),
+    );
 
     final isUserTrigger = useState(false);
     final internalScore = useState(track.score);
@@ -82,7 +85,8 @@ class TrackScore extends HookConsumerWidget {
               },
               child: AppIconButton(
                 padding: EdgeInsets.symmetric(
-                    horizontal: largeControlButton ? 12 : 16),
+                  horizontal: largeControlButton ? 12 : 16,
+                ),
                 icon: likeActive
                     ? const AdwaitaIcon(AdwaitaIcons.heart_filled)
                     : const AdwaitaIcon(AdwaitaIcons.heart_outline_thick),

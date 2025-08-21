@@ -3,8 +3,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
 class ServerInfo extends ConsumerWidget {
   const ServerInfo({super.key});
@@ -13,7 +14,7 @@ class ServerInfo extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(loggedUserProvider).valueOrNull;
 
-    final deviceId = ref.watch(deviceIdProvider).valueOrNull;
+    final deviceId = context.watch<SettingsViewModel>().deviceId();
 
     final isServerReachable = ref.watch(isServerReachableProvider);
 

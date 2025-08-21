@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' as riverpod;
 import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/routes/provider.dart';
 import 'package:melodink_client/core/routes/routes.dart';
@@ -13,8 +13,9 @@ import 'package:melodink_client/features/player/presentation/widgets/desktop_pla
 import 'package:melodink_client/features/player/presentation/widgets/large_desktop_player_bar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/mobile_current_track.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/current_download_info.dart';
+import 'package:provider/provider.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -72,7 +73,7 @@ class GoRouterObserver extends NavigatorObserver {
   }
 }
 
-final appRouterProvider = Provider((ref) {
+final appRouterProvider = riverpod.Provider((ref) {
   setCurrentUrl(String? url) {
     Future(() {
       ref.read(appRouterCurrentUrl.notifier).state = url;
@@ -96,8 +97,9 @@ final appRouterProvider = Provider((ref) {
         return "/auth/serverSetup";
       }
 
-      final isAuthConfigured =
-          await ref.read(isUserAuthenticatedProvider.future);
+      final isAuthConfigured = await ref.read(
+        isUserAuthenticatedProvider.future,
+      );
 
       if (!isAuthConfigured) {
         switch (state.matchedLocation) {
@@ -120,44 +122,35 @@ final appRouterProvider = Provider((ref) {
           return AppScreenTypeLayoutBuilders(
             mobile: (BuildContext context) => child,
             desktop: (BuildContext context) {
-              return Consumer(
-                builder: (context, ref, _) {
-                  final currentPlayerBarPosition =
-                      ref.watch(currentPlayerBarPositionProvider);
-                  return Scaffold(
-                    resizeToAvoidBottomInset: false,
-                    body: Column(
-                      children: [
-                        if (currentPlayerBarPosition ==
-                            AppSettingPlayerBarPosition.top)
-                          RepaintBoundary(
-                            child: const DesktopPlayerBar(),
+              final currentPlayerBarPosition = context
+                  .watch<SettingsViewModel>()
+                  .currentPlayerBarPosition();
+              return Scaffold(
+                resizeToAvoidBottomInset: false,
+                body: Column(
+                  children: [
+                    if (currentPlayerBarPosition ==
+                        AppSettingPlayerBarPosition.top)
+                      RepaintBoundary(child: const DesktopPlayerBar()),
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          child,
+                          const Align(
+                            alignment: Alignment.bottomRight,
+                            child: CurrentDownloadInfo(),
                           ),
-                        Expanded(
-                          child: Stack(
-                            children: [
-                              child,
-                              const Align(
-                                alignment: Alignment.bottomRight,
-                                child: CurrentDownloadInfo(),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (currentPlayerBarPosition ==
-                            AppSettingPlayerBarPosition.bottom)
-                          RepaintBoundary(
-                            child: const DesktopPlayerBar(),
-                          ),
-                        if (currentPlayerBarPosition ==
-                            AppSettingPlayerBarPosition.center)
-                          RepaintBoundary(
-                            child: const LargeDesktopPlayerBar(),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  );
-                },
+                    if (currentPlayerBarPosition ==
+                        AppSettingPlayerBarPosition.bottom)
+                      RepaintBoundary(child: const DesktopPlayerBar()),
+                    if (currentPlayerBarPosition ==
+                        AppSettingPlayerBarPosition.center)
+                      RepaintBoundary(child: const LargeDesktopPlayerBar()),
+                  ],
+                ),
               );
             },
           );
@@ -184,23 +177,27 @@ final appRouterProvider = Provider((ref) {
                             SafeArea(
                               top: true,
                               bottom: false,
-                              child: NotificationListener<
-                                  OverscrollIndicatorNotification>(
-                                onNotification: (OverscrollIndicatorNotification
-                                    overscroll) {
-                                  overscroll.disallowIndicator();
-                                  return true;
-                                },
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const DesktopSidebar(),
-                                    Expanded(
-                                      child: child,
+                              child:
+                                  NotificationListener<
+                                    OverscrollIndicatorNotification
+                                  >(
+                                    onNotification:
+                                        (
+                                          OverscrollIndicatorNotification
+                                          overscroll,
+                                        ) {
+                                          overscroll.disallowIndicator();
+                                          return true;
+                                        },
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const DesktopSidebar(),
+                                        Expanded(child: child),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
+                                  ),
                             ),
                           ],
                         ),
@@ -216,35 +213,40 @@ final appRouterProvider = Provider((ref) {
                         resizeToAvoidBottomInset: false,
                         backgroundColor: Colors.transparent,
                         body: SafeArea(
-                          child: NotificationListener<
-                              OverscrollIndicatorNotification>(
-                            onNotification:
-                                (OverscrollIndicatorNotification overscroll) {
-                              overscroll.disallowIndicator();
-                              return true;
-                            },
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: Stack(
-                                    children: [
-                                      child,
-                                      const Align(
-                                        alignment: Alignment.bottomRight,
-                                        child: CurrentDownloadInfo(),
+                          child:
+                              NotificationListener<
+                                OverscrollIndicatorNotification
+                              >(
+                                onNotification:
+                                    (
+                                      OverscrollIndicatorNotification
+                                      overscroll,
+                                    ) {
+                                      overscroll.disallowIndicator();
+                                      return true;
+                                    },
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: Stack(
+                                        children: [
+                                          child,
+                                          const Align(
+                                            alignment: Alignment.bottomRight,
+                                            child: CurrentDownloadInfo(),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    const MobileCurrentTrackInfo(),
+                                  ],
                                 ),
-                                const MobileCurrentTrackInfo(),
-                              ],
-                            ),
-                          ),
+                              ),
                         ),
                         bottomNavigationBar: Theme(
-                          data: Theme.of(context).copyWith(
-                            splashColor: Colors.transparent,
-                          ),
+                          data: Theme.of(
+                            context,
+                          ).copyWith(splashColor: Colors.transparent),
                           child: const MobileNavbar(),
                         ),
                       ),
@@ -259,18 +261,14 @@ final appRouterProvider = Provider((ref) {
                   setCurrentUrl(GoRouter.of(context).location);
                   return child;
                 },
-                branches: [
-                  StatefulShellBranch(
-                    routes: appRoutesWithShell,
-                  ),
-                ],
+                branches: [StatefulShellBranch(routes: appRoutesWithShell)],
               ),
             ],
           ),
-          ...appRoutesWithDesktopPlayerShell
+          ...appRoutesWithDesktopPlayerShell,
         ],
       ),
-      ...appRoutesWithNoShell
+      ...appRoutesWithNoShell,
     ],
   );
 

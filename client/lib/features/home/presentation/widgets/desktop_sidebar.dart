@@ -6,8 +6,9 @@ import 'package:melodink_client/core/routes/provider.dart';
 import 'package:melodink_client/features/player/presentation/widgets/desktop_current_track.dart';
 import 'package:melodink_client/features/player/presentation/widgets/side_player_bar.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
 class DesktopSidebar extends ConsumerWidget {
   const DesktopSidebar({super.key});
@@ -20,8 +21,9 @@ class DesktopSidebar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUrl = ref.watch(appRouterCurrentUrl);
 
-    final currentPlayerBarPosition =
-        ref.watch(currentPlayerBarPositionProvider);
+    final currentPlayerBarPosition = context
+        .watch<SettingsViewModel>()
+        .currentPlayerBarPosition();
 
     return Container(
       width: switch (currentPlayerBarPosition) {
@@ -49,10 +51,7 @@ class DesktopSidebar extends ConsumerWidget {
                   ),
                   DesktopSidebarItem(
                     label: t.general.playlists,
-                    icon: const AdwaitaIcon(
-                      AdwaitaIcons.playlist2,
-                      size: 24.0,
-                    ),
+                    icon: const AdwaitaIcon(AdwaitaIcons.playlist2, size: 24.0),
                     onTap: () {
                       GoRouter.of(context).go("/playlist");
                     },
@@ -82,10 +81,7 @@ class DesktopSidebar extends ConsumerWidget {
                   ),
                   DesktopSidebarItem(
                     label: t.general.settings,
-                    icon: const AdwaitaIcon(
-                      AdwaitaIcons.gear,
-                      size: 24.0,
-                    ),
+                    icon: const AdwaitaIcon(AdwaitaIcons.gear, size: 24.0),
                     onTap: () {
                       GoRouter.of(context).go("/settings");
                     },
@@ -130,16 +126,11 @@ class DesktopSidebarItem extends StatelessWidget {
       onTap: onTap,
       child: Container(
         color: const Color.fromRGBO(0, 0, 0, 0.03),
-        padding: const EdgeInsets.symmetric(
-          vertical: 16.0,
-          horizontal: 20.0,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
         child: Row(
           children: [
             IconTheme(
-              data: IconThemeData(
-                color: color,
-              ),
+              data: IconThemeData(color: color),
               child: icon,
             ),
             const SizedBox(width: 12.0),

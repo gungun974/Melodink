@@ -14,7 +14,7 @@ import 'package:melodink_client/features/player/presentation/widgets/live_lyrics
 import 'package:melodink_client/features/player/presentation/widgets/player_controls.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_error_overlay.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/presentation/hooks/use_get_download_track.dart';
@@ -22,6 +22,7 @@ import 'package:melodink_client/features/track/presentation/widgets/album_link_t
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/single_track_context_menu.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
 class MobilePlayerPage extends HookConsumerWidget {
   const MobilePlayerPage({super.key});
@@ -259,7 +260,9 @@ class _MobilePlayerInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return HookConsumer(
       builder: (context, ref, child) {
-        final scoringSystem = ref.watch(currentScoringSystemProvider);
+        final scoringSystem = context
+            .watch<SettingsViewModel>()
+            .currentScoringSystem();
 
         final currentTrack = snapshot.data;
 

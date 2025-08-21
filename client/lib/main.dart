@@ -16,14 +16,15 @@ import 'package:melodink_client/features/auth/domain/providers/auth_provider.dar
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/domain/audio/melodink_player.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/sync/domain/providers/sync_manager_provider.dart';
 import 'package:melodink_client/features/tracker/domain/providers/shared_played_track_provider.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
 
 void main() async {
   MelodinkPlayer().init();
@@ -70,7 +71,9 @@ void main() async {
     await ImageCacheManager.initCache();
   } catch (_) {}
 
-  runApp(ProviderScope(child: TranslationProvider(child: const MyApp())));
+  runApp(
+    riverpod.ProviderScope(child: TranslationProvider(child: const MyApp())),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -84,7 +87,7 @@ class MyApp extends StatelessWidget {
           data: MediaQuery.of(
             context,
           ).copyWith(textScaler: TextScaler.linear(1)),
-          child: Consumer(
+          child: riverpod.Consumer(
             builder: (contex, ref, _) {
               final appRouter = ref.watch(appRouterProvider);
 
@@ -156,28 +159,37 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class _EagerInitialization extends ConsumerWidget {
+class _EagerInitialization extends riverpod.ConsumerWidget {
   const _EagerInitialization({required this.child});
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, riverpod.WidgetRef ref) {
     ref.watch(audioControllerProvider);
     ref.watch(sharedPlayedTrackerManagerProvider);
     ref.watch(syncManagerProvider);
-    return child;
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => SettingsViewModel(
+            audioController: ref.read(audioControllerProvider),
+          )..loadSettings(),
+        ),
+      ],
+      child: child,
+    );
   }
 }
 
-class _DynamicSystemUIMode extends HookConsumerWidget {
+class _DynamicSystemUIMode extends riverpod.HookConsumerWidget {
   const _DynamicSystemUIMode({required this.child});
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentPlayerBarPosition = ref.watch(
-      currentPlayerBarPositionProvider,
-    );
+  Widget build(BuildContext context, riverpod.WidgetRef ref) {
+    final currentPlayerBarPosition = context
+        .watch<SettingsViewModel>()
+        .currentPlayerBarPosition();
 
     final hide = useState(false);
 
