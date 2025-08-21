@@ -38,8 +38,6 @@ class CreatePlaylistViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  Future<void> loadPlaylists() async {}
-
   Future<void> createPlaylist(
     BuildContext context,
     List<Track> tracks,
@@ -91,7 +89,7 @@ class CreatePlaylistViewModel extends ChangeNotifier {
         return;
       }
 
-      Navigator.of(context, rootNavigator: true).pop();
+      Navigator.of(context, rootNavigator: true).pop(newPlaylist);
 
       if (pushRouteToNewPlaylist) {
         GoRouter.of(context).push("/playlist/${newPlaylist.id}");
