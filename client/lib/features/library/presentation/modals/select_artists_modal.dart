@@ -1,8 +1,7 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/core/helpers/fuzzy_search.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
@@ -12,67 +11,16 @@ import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/features/library/data/repository/artist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
-import 'package:melodink_client/features/library/presentation/modals/create_artist_modal.dart';
+import 'package:melodink_client/features/library/presentation/viewmodels/select_artists_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class SelectArtistsModal extends HookConsumerWidget {
-  final List<int> currentIds;
-
-  const SelectArtistsModal({super.key, required this.currentIds});
+class SelectArtistsModal extends StatelessWidget {
+  const SelectArtistsModal({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final artistRepository = ref.read(artistRepositoryProvider);
-
-    final isLoading = useState(false);
-
-    final searchTextController = useTextEditingController(text: "");
-
-    final artists = useState<List<Artist>>([]);
-
-    final filteredArtists = useState<List<Artist>>([]);
-
-    final selectedIds = useState<List<int>>([...currentIds]);
-
-    applySearch() {
-      if (searchTextController.text.isEmpty) {
-        filteredArtists.value = artists.value;
-      }
-      filteredArtists.value =
-          artists.value.where((artist) {
-            if (selectedIds.value.contains(artist.id)) {
-              return true;
-            }
-            return compareFuzzySearch(searchTextController.text, artist.name);
-          }).toList()..sort(
-            (a, b) =>
-                (currentIds.contains(b.id) ? 1 : 0) -
-                (currentIds.contains(a.id) ? 1 : 0),
-          );
-    }
-
-    loadArtists() async {
-      isLoading.value = true;
-      try {
-        final newArtists = await artistRepository.getAllArtists();
-        artists.value = newArtists;
-      } finally {
-        isLoading.value = false;
-      }
-    }
-
-    useEffect(() {
-      loadArtists();
-
-      return null;
-    }, []);
-
-    useEffect(() {
-      applySearch();
-      return null;
-    }, [artists.value]);
-
+  Widget build(BuildContext context) {
     return MaxContainer(
       maxWidth: 440,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 64),
@@ -92,7 +40,7 @@ class SelectArtistsModal extends HookConsumerWidget {
                     children: [
                       AppModal(
                         preventUserClose: true,
-                        title: Text(t.general.editTrackArtists),
+                        title: Text(t.general.selectArtists),
                         body: Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 24.0,
@@ -105,10 +53,12 @@ class SelectArtistsModal extends HookConsumerWidget {
                                 children: [
                                   Expanded(
                                     child: AppSearchFormField(
-                                      controller: searchTextController,
-                                      onChanged: (value) {
-                                        applySearch();
-                                      },
+                                      controller: context
+                                          .read<SelectArtistsViewModel>()
+                                          .searchTextController,
+                                      onChanged: (_) => context
+                                          .read<SelectArtistsViewModel>()
+                                          .updateSearch(),
                                     ),
                                   ),
                                   const SizedBox(width: 16),
@@ -134,25 +84,9 @@ class SelectArtistsModal extends HookConsumerWidget {
                                       ),
                                     ),
                                     padding: EdgeInsets.zero,
-                                    onPressed: () async {
-                                      final artist =
-                                          await CreateArtistModal.showModal(
-                                            context,
-                                          );
-
-                                      if (artist == null) {
-                                        return;
-                                      }
-
-                                      await loadArtists();
-
-                                      selectedIds.value = [
-                                        ...selectedIds.value,
-                                        artist.id,
-                                      ];
-
-                                      applySearch();
-                                    },
+                                    onPressed: () => context
+                                        .read<SelectArtistsViewModel>()
+                                        .createArtist(context),
                                   ),
                                 ],
                               ),
@@ -161,67 +95,63 @@ class SelectArtistsModal extends HookConsumerWidget {
                                 height: targetHeight,
                                 child: Scrollbar(
                                   thumbVisibility: true,
-                                  child: ListView.separated(
-                                    itemBuilder:
-                                        (BuildContext context, int index) {
-                                          final artist =
-                                              filteredArtists.value[index];
+                                  child: Consumer<SelectArtistsViewModel>(
+                                    builder: (context, viewModel, _) {
+                                      if (viewModel.searchArtists.isEmpty) {
+                                        return SizedBox.shrink();
+                                      }
 
-                                          final selected = selectedIds.value
-                                              .contains(artist.id);
+                                      return ListView.separated(
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                              final artist = viewModel
+                                                  .searchArtists[index];
 
-                                          return ArtistSelector(
-                                            artist: artist,
-                                            selected: selected,
-                                            onSelect: () {
-                                              if (selected) {
-                                                selectedIds.value = selectedIds
-                                                    .value
-                                                    .where(
-                                                      (id) => id != artist.id,
-                                                    )
-                                                    .toList();
-                                                return;
-                                              }
-                                              selectedIds.value = [
-                                                ...selectedIds.value,
-                                                artist.id,
-                                              ];
+                                              final selected = viewModel
+                                                  .selectedIds
+                                                  .contains(artist.id);
+
+                                              return ArtistSelector(
+                                                artist: artist,
+                                                selected: selected,
+                                                onSelect: () => viewModel
+                                                    .toggleArtist(artist),
+                                              );
                                             },
-                                          );
-                                        },
-                                    itemCount: filteredArtists.value.length,
-                                    separatorBuilder:
-                                        (BuildContext context, int index) {
-                                          return SizedBox(height: 6);
-                                        },
+                                        itemCount:
+                                            viewModel.searchArtists.length,
+                                        separatorBuilder:
+                                            (BuildContext context, int index) {
+                                              return SizedBox(height: 6);
+                                            },
+                                      );
+                                    },
                                   ),
                                 ),
                               ),
                               SizedBox(height: 8),
                               AppButton(
-                                text: t.general.save,
+                                text: t.general.select,
                                 type: AppButtonType.primary,
                                 onPressed: () {
-                                  final selectedArtists = artists.value
-                                      .where(
-                                        (album) => selectedIds.value.contains(
-                                          album.id,
-                                        ),
-                                      )
-                                      .toList();
-
-                                  Navigator.of(
-                                    context,
-                                    rootNavigator: true,
-                                  ).pop(selectedArtists);
+                                  context
+                                      .read<SelectArtistsViewModel>()
+                                      .selectArtists(context);
                                 },
                               ),
                             ],
                           ),
                         ),
                       ),
-                      if (isLoading.value) const AppPageLoader(),
+                      Selector<SelectArtistsViewModel, bool>(
+                        selector: (_, viewModel) => viewModel.isLoading,
+                        builder: (context, isLoading, _) {
+                          if (!isLoading) {
+                            return const SizedBox.shrink();
+                          }
+                          return const AppPageLoader();
+                        },
+                      ),
                     ],
                   ),
                 );
@@ -235,7 +165,7 @@ class SelectArtistsModal extends HookConsumerWidget {
 
   static Future<List<Artist>?> showModal(
     BuildContext context,
-    List<int> currentIds,
+    List<int> defaultSelectedIds,
   ) async {
     final result = await showGeneralDialog(
       context: context,
@@ -246,7 +176,17 @@ class SelectArtistsModal extends HookConsumerWidget {
           child: MaxContainer(
             maxWidth: 800,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 64),
-            child: SelectArtistsModal(currentIds: currentIds),
+            child: riverpod.Consumer(
+              builder: (context, ref, _) {
+                return ChangeNotifierProvider(
+                  create: (_) => SelectArtistsViewModel(
+                    eventBus: ref.read(eventBusProvider),
+                    artistRepository: ref.read(artistRepositoryProvider),
+                  )..loadArtists(defaultSelectedIds),
+                  child: SelectArtistsModal(),
+                );
+              },
+            ),
           ),
         );
       },
