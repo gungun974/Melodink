@@ -3,7 +3,6 @@ import 'package:melodink_client/features/library/data/repository/playlist_reposi
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
-import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'playlist_context_menu_provider.g.dart';
@@ -12,10 +11,7 @@ class PlaylistContextMenuError extends Equatable {
   final String? title;
   final String message;
 
-  const PlaylistContextMenuError({
-    this.title,
-    required this.message,
-  });
+  const PlaylistContextMenuError({this.title, required this.message});
 
   @override
   List<Object?> get props => [title, message];
@@ -39,14 +35,7 @@ class PlaylistContextMenuNotifier extends _$PlaylistContextMenuNotifier {
   }
 
   setTracks(Playlist playlist, List<Track> tracks) async {
-    await _playlistRepository.setPlaylistTracks(
-      playlist.id,
-      tracks,
-    );
-
-    await ref
-        .read(downloadManagerNotifierProvider.notifier)
-        .deleteOrphanTracks();
+    await _playlistRepository.setPlaylistTracks(playlist.id, tracks);
 
     final _ = ref.refresh(playlistByIdProvider(playlist.id));
   }

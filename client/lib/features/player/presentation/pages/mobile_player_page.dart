@@ -17,16 +17,14 @@ import 'package:melodink_client/features/settings/domain/entities/settings.dart'
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
-import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/hooks/use_get_download_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/single_track_context_menu.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class MobilePlayerPage extends HookConsumerWidget {
-  const MobilePlayerPage({
-    super.key,
-  });
+  const MobilePlayerPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -70,24 +68,25 @@ class MobilePlayerPage extends HookConsumerWidget {
                   contextMenuKey: trackContextMenuKey,
                   menuController: trackContextMenuController,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                )
+                ),
               ],
               title: StreamBuilder<String?>(
-                  stream: audioController.playerTracksFrom.stream,
-                  builder: (context, snapshot) {
-                    final source = snapshot.data;
-                    if (source == null) {
-                      return const SizedBox.shrink();
-                    }
-                    return Text(
-                      source,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        letterSpacing: 20 * 0.03,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    );
-                  }),
+                stream: audioController.playerTracksFrom.stream,
+                builder: (context, snapshot) {
+                  final source = snapshot.data;
+                  if (source == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return Text(
+                    source,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      letterSpacing: 20 * 0.03,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  );
+                },
+              ),
               centerTitle: true,
               backgroundColor: const Color.fromRGBO(0, 0, 0, 0.08),
               shadowColor: Colors.transparent,
@@ -98,11 +97,7 @@ class MobilePlayerPage extends HookConsumerWidget {
                   startWithAutoLyrics: false,
                   liveLyricsKey: liveLyricsKey,
                   scrollController: scrollController,
-                  builder: (
-                    _,
-                    autoScrollToLyric,
-                    setShouldDisableAutoScrollOnScroll,
-                  ) {
+                  builder: (_, autoScrollToLyric, setShouldDisableAutoScrollOnScroll) {
                     return CustomScrollView(
                       controller: scrollController,
                       slivers: [
@@ -120,45 +115,45 @@ class MobilePlayerPage extends HookConsumerWidget {
                                         horizontal: 16.0,
                                         vertical: 8.0,
                                       ),
-                                      constraints:
-                                          const BoxConstraints(maxWidth: 512),
+                                      constraints: const BoxConstraints(
+                                        maxWidth: 512,
+                                      ),
                                       child: Column(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
                                           StreamBuilder(
                                             stream: audioController
-                                                .currentTrack.stream,
+                                                .currentTrack
+                                                .stream,
                                             builder: (context, snapshot) {
                                               audioController
-                                                  .previousTracks.valueOrNull
+                                                  .previousTracks
+                                                  .valueOrNull
                                                   ?.take(5)
-                                                  .forEach(
-                                                (track) {
-                                                  ImageCacheManager.preCache(
-                                                    track.getCompressedCoverUri(
-                                                      TrackCompressedCoverQuality
-                                                          .high,
-                                                    ),
-                                                    context,
-                                                  );
-                                                },
-                                              );
+                                                  .forEach((track) {
+                                                    ImageCacheManager.preCache(
+                                                      track.getCompressedCoverUri(
+                                                        TrackCompressedCoverQuality
+                                                            .high,
+                                                      ),
+                                                      context,
+                                                    );
+                                                  });
 
                                               audioController
-                                                  .nextTracks.valueOrNull
+                                                  .nextTracks
+                                                  .valueOrNull
                                                   ?.take(5)
-                                                  .forEach(
-                                                (track) {
-                                                  ImageCacheManager.preCache(
-                                                    track.getCompressedCoverUri(
-                                                      TrackCompressedCoverQuality
-                                                          .high,
-                                                    ),
-                                                    context,
-                                                  );
-                                                },
-                                              );
+                                                  .forEach((track) {
+                                                    ImageCacheManager.preCache(
+                                                      track.getCompressedCoverUri(
+                                                        TrackCompressedCoverQuality
+                                                            .high,
+                                                      ),
+                                                      context,
+                                                    );
+                                                  });
 
                                               return _MobilePlayerInfo(
                                                 trackContextMenuKey:
@@ -177,16 +172,19 @@ class MobilePlayerPage extends HookConsumerWidget {
                                                 large: true,
                                               ),
                                               PlayerControls(
-                                                  largeControlsButton: true),
+                                                largeControlsButton: true,
+                                              ),
                                             ],
-                                          )
+                                          ),
                                         ],
                                       ),
                                     ),
                                   ),
                                   const Padding(
                                     padding: EdgeInsets.only(
-                                        right: 16.0, bottom: 16.0),
+                                      right: 16.0,
+                                      bottom: 16.0,
+                                    ),
                                     child: Row(
                                       children: [
                                         Spacer(),
@@ -195,7 +193,7 @@ class MobilePlayerPage extends HookConsumerWidget {
                                         ),
                                       ],
                                     ),
-                                  )
+                                  ),
                                 ],
                               ),
                             ),
@@ -205,7 +203,9 @@ class MobilePlayerPage extends HookConsumerWidget {
                           SliverToBoxAdapter(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0, vertical: 8.0),
+                                horizontal: 16.0,
+                                vertical: 8.0,
+                              ),
                               child: Text(
                                 t.general.lyrics,
                                 style: const TextStyle(
@@ -219,7 +219,10 @@ class MobilePlayerPage extends HookConsumerWidget {
                         if (currentLyrics != null)
                           SliverPadding(
                             padding: const EdgeInsets.only(
-                                left: 16.0, right: 16.0, bottom: 16.0),
+                              left: 16.0,
+                              right: 16.0,
+                              bottom: 16.0,
+                            ),
                             sliver: LiveLyrics(
                               key: liveLyricsKey,
                               autoScrollToLyric: autoScrollToLyric,
@@ -254,7 +257,7 @@ class _MobilePlayerInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer(
+    return HookConsumer(
       builder: (context, ref, child) {
         final scoringSystem = ref.watch(currentScoringSystemProvider);
 
@@ -264,26 +267,20 @@ class _MobilePlayerInfo extends StatelessWidget {
           return const SizedBox.shrink();
         }
 
-        final downloadedTrack = ref
-            .watch(
-              isTrackDownloadedProvider(currentTrack.id),
-            )
-            .valueOrNull;
+        final downloadedTrack = useGetDownloadTrack(currentTrack.id, ref);
 
         final image = PlayerErrorOverlay(
           child: AuthCachedNetworkImage(
             fit: BoxFit.contain,
-            imageUrl: downloadedTrack?.getCoverUrl() ??
+            imageUrl:
+                downloadedTrack?.getCoverUrl() ??
                 currentTrack.getCompressedCoverUrl(
                   TrackCompressedCoverQuality.high,
                 ),
-            placeholder: (context, url) => Image.asset(
-              "assets/melodink_track_cover_not_found.png",
-            ),
+            placeholder: (context, url) =>
+                Image.asset("assets/melodink_track_cover_not_found.png"),
             errorWidget: (context, url, error) {
-              return Image.asset(
-                "assets/melodink_track_cover_not_found.png",
-              );
+              return Image.asset("assets/melodink_track_cover_not_found.png");
             },
             gaplessPlayback: true,
           ),
@@ -299,11 +296,8 @@ class _MobilePlayerInfo extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: AspectRatio(
-                        aspectRatio: 1.0,
-                        child: image,
-                      ),
-                    )
+                      child: AspectRatio(aspectRatio: 1.0, child: image),
+                    ),
                   ],
                 ),
               ),
@@ -339,9 +333,7 @@ class _MobilePlayerInfo extends StatelessWidget {
                         const SizedBox(height: 4),
                         AlbumLinkText(
                           text: currentTrack.albums
-                              .map(
-                                (album) => album.name,
-                              )
+                              .map((album) => album.name)
                               .join(", "),
                           albumId: currentTrack.albums.firstOrNull?.id,
                           style: TextStyle(
@@ -355,9 +347,7 @@ class _MobilePlayerInfo extends StatelessWidget {
                     ),
                   ),
                   if (scoringSystem != AppSettingScoringSystem.none)
-                    CurrentTrackScoreControl(
-                      largeControlButton: true,
-                    ),
+                    CurrentTrackScoreControl(largeControlButton: true),
                 ],
               ),
             ],

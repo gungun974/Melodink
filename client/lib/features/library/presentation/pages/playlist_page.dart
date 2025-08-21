@@ -16,6 +16,7 @@ import 'package:melodink_client/features/library/presentation/widgets/mobile_pla
 import 'package:melodink_client/features/library/presentation/widgets/playlist_context_menu.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
+import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
@@ -45,6 +46,7 @@ class PlaylistPage extends riverpod.HookConsumerWidget {
       create: (_) => PlaylistViewModel(
         eventBus: ref.read(eventBusProvider),
         audioController: ref.read(audioControllerProvider),
+        downloadManager: ref.read(downloadManagerProvider),
         playlistRepository: ref.read(playlistRepositoryProvider),
         downloadPlaylistRepository: ref.read(
           downloadPlaylistRepositoryProvider,

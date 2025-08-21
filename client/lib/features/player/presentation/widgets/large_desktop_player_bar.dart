@@ -13,7 +13,7 @@ import 'package:melodink_client/features/player/presentation/widgets/player_erro
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
-import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/hooks/use_get_download_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 
@@ -38,10 +38,7 @@ class LargeDesktopPlayerBar extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
-                flex: 3,
-                child: DesktopCurrentTrack2(),
-              ),
+              Expanded(flex: 3, child: DesktopCurrentTrack2()),
               Expanded(
                 flex: 5,
                 child: Column(
@@ -70,7 +67,7 @@ class LargeDesktopPlayerBar extends ConsumerWidget {
                     ],
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -94,35 +91,23 @@ class DesktopCurrentTrack2 extends ConsumerWidget {
           return Container();
         }
 
-        audioController.previousTracks.valueOrNull?.take(5).forEach(
-          (track) {
-            ImageCacheManager.preCache(
-              track.getCompressedCoverUri(
-                TrackCompressedCoverQuality.small,
-              ),
-              context,
-            );
-          },
-        );
+        audioController.previousTracks.valueOrNull?.take(5).forEach((track) {
+          ImageCacheManager.preCache(
+            track.getCompressedCoverUri(TrackCompressedCoverQuality.small),
+            context,
+          );
+        });
 
-        audioController.nextTracks.valueOrNull?.take(5).forEach(
-          (track) {
-            ImageCacheManager.preCache(
-              track.getCompressedCoverUri(
-                TrackCompressedCoverQuality.small,
-              ),
-              context,
-            );
-          },
-        );
+        audioController.nextTracks.valueOrNull?.take(5).forEach((track) {
+          ImageCacheManager.preCache(
+            track.getCompressedCoverUri(TrackCompressedCoverQuality.small),
+            context,
+          );
+        });
 
-        return Consumer(
+        return HookConsumer(
           builder: (context, ref, child) {
-            final downloadedTrack = ref
-                .watch(
-                  isTrackDownloadedProvider(currentTrack.id),
-                )
-                .valueOrNull;
+            final downloadedTrack = useGetDownloadTrack(currentTrack.id, ref);
 
             return Container(
               color: const Color.fromRGBO(0, 0, 0, 0.08),
@@ -138,7 +123,8 @@ class DesktopCurrentTrack2 extends ConsumerWidget {
                       cursor: SystemMouseCursors.click,
                       child: PlayerErrorOverlay(
                         child: AuthCachedNetworkImage(
-                          imageUrl: downloadedTrack?.getCoverUrl() ??
+                          imageUrl:
+                              downloadedTrack?.getCoverUrl() ??
                               currentTrack.getCompressedCoverUrl(
                                 TrackCompressedCoverQuality.small,
                               ),

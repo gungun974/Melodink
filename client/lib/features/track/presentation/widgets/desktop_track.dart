@@ -18,7 +18,7 @@ import 'package:melodink_client/features/settings/domain/entities/settings.dart'
 import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
-import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/hooks/use_get_download_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
@@ -55,7 +55,8 @@ class DesktopTrackModuleLayout extends ConsumerWidget {
   final Widget Function(
     BuildContext context,
     List<DesktopTrackModule> newModules,
-  ) builder;
+  )
+  builder;
 
   const DesktopTrackModuleLayout({
     super.key,
@@ -67,55 +68,58 @@ class DesktopTrackModuleLayout extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final scoringSystem = ref.watch(currentScoringSystemProvider);
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final newModules = modules.toList();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final newModules = modules.toList();
 
-      if (scoringSystem == AppSettingScoringSystem.none) {
-        newModules.remove(DesktopTrackModule.score);
-      }
+        if (scoringSystem == AppSettingScoringSystem.none) {
+          newModules.remove(DesktopTrackModule.score);
+        }
 
-      double calculateRemainingSpace() {
-        double totalWidth = 0;
-        int flex = 0;
+        double calculateRemainingSpace() {
+          double totalWidth = 0;
+          int flex = 0;
 
-        for (final module in newModules) {
-          totalWidth += module.width + module.leftPadding + module.rightPadding;
+          for (final module in newModules) {
+            totalWidth +=
+                module.width + module.leftPadding + module.rightPadding;
 
-          if (module == DesktopTrackModule.title ||
-              module == DesktopTrackModule.album) {
-            flex += 1;
+            if (module == DesktopTrackModule.title ||
+                module == DesktopTrackModule.album) {
+              flex += 1;
+            }
+
+            if (module == DesktopTrackModule.score) {
+              totalWidth += TrackScore.getSize(scoringSystem);
+            }
           }
 
-          if (module == DesktopTrackModule.score) {
-            totalWidth += TrackScore.getSize(scoringSystem);
+          final remainingSpace = constraints.maxWidth - totalWidth;
+
+          if (flex == 0) {
+            return remainingSpace;
           }
+
+          return remainingSpace / flex;
         }
 
-        final remainingSpace = constraints.maxWidth - totalWidth;
+        const minimumRequiredSpace = 180;
 
-        if (flex == 0) {
-          return remainingSpace;
+        for (final removableModule in [
+          DesktopTrackModule.quality,
+          DesktopTrackModule.dateAdded,
+          DesktopTrackModule.lastPlayed,
+        ]) {
+          if (calculateRemainingSpace() >= minimumRequiredSpace) {
+            break;
+          }
+
+          newModules.remove(removableModule);
         }
 
-        return remainingSpace / flex;
-      }
-
-      const minimumRequiredSpace = 180;
-
-      for (final removableModule in [
-        DesktopTrackModule.quality,
-        DesktopTrackModule.dateAdded,
-        DesktopTrackModule.lastPlayed,
-      ]) {
-        if (calculateRemainingSpace() >= minimumRequiredSpace) {
-          break;
-        }
-
-        newModules.remove(removableModule);
-      }
-
-      return builder(context, newModules);
-    });
+        return builder(context, newModules);
+      },
+    );
   }
 }
 
@@ -144,13 +148,15 @@ class DesktopTrack extends HookConsumerWidget {
     BuildContext context,
     MenuController menuController,
     Track track,
-  )? singleCustomActionsBuilder;
+  )?
+  singleCustomActionsBuilder;
 
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
     List<Track> tracks,
-  )? multiCustomActionsBuilder;
+  )?
+  multiCustomActionsBuilder;
 
   final bool showDefaultActions;
 
@@ -183,11 +189,9 @@ class DesktopTrack extends HookConsumerWidget {
 
     final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
 
-    final downloadedTrackAsync = ref.watch(
-      isTrackDownloadedProvider(track.id),
-    );
+    final asyncDownloadedTrack = useAsyncGetDownloadTrack(track.id, ref);
 
-    final downloadedTrack = downloadedTrackAsync.valueOrNull;
+    final downloadedTrack = asyncDownloadedTrack.data;
 
     final trackContextMenuController = useMemoized(() => MenuController());
 
@@ -245,17 +249,18 @@ class DesktopTrack extends HookConsumerWidget {
               decoration: BoxDecoration(
                 color: selected
                     ? (currentTheme == AppSettingTheme.dark
-                        ? const Color.fromRGBO(160, 160, 160, 0.139)
-                        : const Color.fromRGBO(0, 0, 0, 0.139))
+                          ? const Color.fromRGBO(160, 160, 160, 0.139)
+                          : const Color.fromRGBO(0, 0, 0, 0.139))
                     : (isHovering.value
-                        ? (currentTheme == AppSettingTheme.dark
-                            ? const Color.fromRGBO(160, 160, 160, 0.05)
-                            : const Color.fromRGBO(0, 0, 0, 0.05))
-                        : Colors.transparent),
+                          ? (currentTheme == AppSettingTheme.dark
+                                ? const Color.fromRGBO(160, 160, 160, 0.05)
+                                : const Color.fromRGBO(0, 0, 0, 0.05))
+                          : Colors.transparent),
                 borderRadius: BorderRadius.vertical(
                   top: selectedTop ? const Radius.circular(8) : Radius.zero,
-                  bottom:
-                      selectedBottom ? const Radius.circular(8) : Radius.zero,
+                  bottom: selectedBottom
+                      ? const Radius.circular(8)
+                      : Radius.zero,
                 ),
               ),
               child: DesktopTrackModuleLayout(
@@ -264,9 +269,7 @@ class DesktopTrack extends HookConsumerWidget {
                   return Row(
                     children: newModules.expand((module) sync* {
                       if (module.leftPadding != 0) {
-                        yield SizedBox(
-                          width: module.leftPadding,
-                        );
+                        yield SizedBox(width: module.leftPadding);
                       }
 
                       final showPlayButton =
@@ -309,7 +312,9 @@ class DesktopTrack extends HookConsumerWidget {
                                       return;
                                     }
                                     if (audioController
-                                        .playbackState.value.playing) {
+                                        .playbackState
+                                        .value
+                                        .playing) {
                                       await audioController.pause();
                                       return;
                                     }
@@ -318,29 +323,31 @@ class DesktopTrack extends HookConsumerWidget {
                                   child: GestureDetector(
                                     onDoubleTap: () {},
                                     child: StreamBuilder(
-                                        stream: audioController
-                                            .playbackState.stream,
-                                        builder: (context, snapshot) {
-                                          return AppIconButton(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: (28 + 24 - 18) / 2,
-                                              vertical: 16,
-                                            ),
-                                            icon: (snapshot.data?.playing ??
-                                                        false) &&
-                                                    isCurrentTrack
-                                                ? const AdwaitaIcon(
-                                                    AdwaitaIcons
-                                                        .media_playback_pause,
-                                                  )
-                                                : const AdwaitaIcon(
-                                                    AdwaitaIcons
-                                                        .media_playback_start,
-                                                  ),
-                                            iconSize: 18,
-                                            onPressed: () {},
-                                          );
-                                        }),
+                                      stream:
+                                          audioController.playbackState.stream,
+                                      builder: (context, snapshot) {
+                                        return AppIconButton(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: (28 + 24 - 18) / 2,
+                                            vertical: 16,
+                                          ),
+                                          icon:
+                                              (snapshot.data?.playing ??
+                                                      false) &&
+                                                  isCurrentTrack
+                                              ? const AdwaitaIcon(
+                                                  AdwaitaIcons
+                                                      .media_playback_pause,
+                                                )
+                                              : const AdwaitaIcon(
+                                                  AdwaitaIcons
+                                                      .media_playback_start,
+                                                ),
+                                          iconSize: 18,
+                                          onPressed: () {},
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
@@ -348,21 +355,22 @@ class DesktopTrack extends HookConsumerWidget {
                           }
                           yield Expanded(
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                              ),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   if (showImage &&
-                                      downloadedTrackAsync.hasValue)
+                                      asyncDownloadedTrack.connectionState ==
+                                          ConnectionState.done)
                                     AuthCachedNetworkImage(
-                                      imageUrl: downloadedTrack
-                                              ?.getCoverUrl() ??
+                                      imageUrl:
+                                          downloadedTrack?.getCoverUrl() ??
                                           track.getCompressedCoverUrl(
                                             TrackCompressedCoverQuality.small,
                                           ),
-                                      placeholder: (context, url) =>
-                                          Image.asset(
+                                      placeholder: (context, url) => Image.asset(
                                         "assets/melodink_track_cover_not_found.png",
                                       ),
                                       errorWidget: (context, url, error) {
@@ -381,8 +389,9 @@ class DesktopTrack extends HookConsumerWidget {
                                       children: [
                                         Tooltip(
                                           message: track.title,
-                                          waitDuration:
-                                              const Duration(milliseconds: 800),
+                                          waitDuration: const Duration(
+                                            milliseconds: 800,
+                                          ),
                                           child: Text(
                                             track.title,
                                             maxLines: 1,
@@ -392,9 +401,9 @@ class DesktopTrack extends HookConsumerWidget {
                                               letterSpacing: 14 * 0.03,
                                               fontWeight: FontWeight.w500,
                                               color: isCurrentTrack
-                                                  ? Theme.of(context)
-                                                      .colorScheme
-                                                      .primary
+                                                  ? Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary
                                                   : null,
                                             ),
                                           ),
@@ -436,9 +445,7 @@ class DesktopTrack extends HookConsumerWidget {
                             child: IntrinsicWidth(
                               child: AlbumLinkText(
                                 text: track.albums
-                                    .map(
-                                      (album) => album.name,
-                                    )
+                                    .map((album) => album.name)
                                     .join(", "),
                                 albumId: track.albums.firstOrNull?.id,
                                 maxLines: 1,
@@ -455,12 +462,14 @@ class DesktopTrack extends HookConsumerWidget {
                           if (track.historyInfo?.computed == false) {
                             yield SizedBox(
                               width: module.width,
-                              child: Text("N/A",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    letterSpacing: 14 * 0.03,
-                                    color: Colors.grey[350],
-                                  )),
+                              child: Text(
+                                "N/A",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  letterSpacing: 14 * 0.03,
+                                  color: Colors.grey[350],
+                                ),
+                              ),
                             );
                           } else {
                             yield SizedBox(
@@ -493,12 +502,14 @@ class DesktopTrack extends HookConsumerWidget {
                           if (track.historyInfo?.computed == false) {
                             yield SizedBox(
                               width: module.width,
-                              child: Text("N/A",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    letterSpacing: 14 * 0.03,
-                                    color: Colors.grey[350],
-                                  )),
+                              child: Text(
+                                "N/A",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  letterSpacing: 14 * 0.03,
+                                  color: Colors.grey[350],
+                                ),
+                              ),
                             );
                           } else {
                             yield SizedBox(
@@ -601,7 +612,8 @@ class DesktopTrack extends HookConsumerWidget {
                                   child: Container(
                                     height: 50,
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 20),
+                                      horizontal: 20,
+                                    ),
                                     color: Colors.transparent,
                                     child: const MouseRegion(
                                       cursor: SystemMouseCursors.grab,
@@ -654,9 +666,7 @@ class DesktopTrack extends HookConsumerWidget {
                       }
 
                       if (module.rightPadding != 0) {
-                        yield SizedBox(
-                          width: module.rightPadding,
-                        );
+                        yield SizedBox(width: module.rightPadding);
                       }
                     }).toList(),
                   );
@@ -669,12 +679,7 @@ class DesktopTrack extends HookConsumerWidget {
     );
 
     if (!isServerReachable && downloadedTrack == null) {
-      return IgnorePointer(
-        child: Opacity(
-          opacity: 0.4,
-          child: trackWidget,
-        ),
-      );
+      return IgnorePointer(child: Opacity(opacity: 0.4, child: trackWidget));
     }
 
     return trackWidget;

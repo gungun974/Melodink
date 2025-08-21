@@ -11,11 +11,13 @@ import 'package:melodink_client/features/library/data/repository/playlist_reposi
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/events/playlist_events.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class PlaylistViewModel extends ChangeNotifier {
   final EventBus eventBus;
   final AudioController audioController;
+  final DownloadManager downloadManager;
   final PlaylistRepository playlistRepository;
   final DownloadPlaylistRepository downloadPlaylistRepository;
 
@@ -24,6 +26,7 @@ class PlaylistViewModel extends ChangeNotifier {
   PlaylistViewModel({
     required this.eventBus,
     required this.audioController,
+    required this.downloadManager,
     required this.playlistRepository,
     required this.downloadPlaylistRepository,
   }) {
@@ -94,17 +97,10 @@ class PlaylistViewModel extends ChangeNotifier {
 
       notifyListeners();
 
-      //TODO: downloadManager.addTracksToDownloadTodo(playlist.tracks);
+      downloadManager.addTracksToDownloadTodo(playlist.tracks);
     } catch (_) {
       isLoading = false;
       notifyListeners();
-
-      // state = state.copyWithError(
-      //   isLoading: false,
-      //   error: const PlaylistDownloadError(
-      //     message: "An error was not expected",
-      //   ),
-      // );
     }
   }
 
@@ -127,7 +123,7 @@ class PlaylistViewModel extends ChangeNotifier {
         ),
       );
 
-      //TODO: await downloadManager.deleteOrphanTracks();
+      await downloadManager.deleteOrphanTracks();
 
       isLoading = false;
       downloaded = false;

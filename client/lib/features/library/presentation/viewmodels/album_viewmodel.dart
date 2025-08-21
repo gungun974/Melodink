@@ -11,11 +11,13 @@ import 'package:melodink_client/features/library/data/repository/album_repositor
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/domain/events/album_events.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class AlbumViewModel extends ChangeNotifier {
   final EventBus eventBus;
   final AudioController audioController;
+  final DownloadManager downloadManager;
   final AlbumRepository albumRepository;
   final DownloadAlbumRepository downloadAlbumRepository;
 
@@ -24,6 +26,7 @@ class AlbumViewModel extends ChangeNotifier {
   AlbumViewModel({
     required this.eventBus,
     required this.audioController,
+    required this.downloadManager,
     required this.albumRepository,
     required this.downloadAlbumRepository,
   }) {
@@ -121,7 +124,7 @@ class AlbumViewModel extends ChangeNotifier {
 
       notifyListeners();
 
-      //TODO: downloadManager.addTracksToDownloadTodo(album.tracks);
+      downloadManager.addTracksToDownloadTodo(album.tracks);
     } catch (_) {
       isLoading = false;
       notifyListeners();
@@ -150,7 +153,7 @@ class AlbumViewModel extends ChangeNotifier {
         ),
       );
 
-      //TODO: await downloadManager.deleteOrphanTracks();
+      await downloadManager.deleteOrphanTracks();
 
       isLoading = false;
       downloaded = false;

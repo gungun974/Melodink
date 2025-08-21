@@ -1,20 +1,18 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/data/repository/download_album_repository.dart';
 import 'package:melodink_client/features/library/data/repository/download_playlist_repository.dart';
-import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
-import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/domain/events/download_events.dart';
 import 'package:mutex/mutex.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-
-part 'download_manager_provider.g.dart';
 
 class DownloadTask extends Equatable {
   final Track track;
@@ -27,9 +25,7 @@ class DownloadTask extends Equatable {
     required this.progressController,
   });
 
-  DownloadTask copyWith({
-    Track? track,
-  }) {
+  DownloadTask copyWith({Track? track}) {
     return DownloadTask(
       track: track ?? this.track,
       progress: progress,
@@ -38,11 +34,7 @@ class DownloadTask extends Equatable {
   }
 
   @override
-  List<Object> get props => [
-        track,
-        progress,
-        progressController,
-      ];
+  List<Object> get props => [track, progress, progressController];
 }
 
 class DownloadState extends Equatable {
@@ -52,10 +44,7 @@ class DownloadState extends Equatable {
 
   DownloadTask? get currentTask => queueTasks.firstOrNull;
 
-  const DownloadState({
-    required this.queueTasks,
-    required this.isDownloading,
-  });
+  const DownloadState({required this.queueTasks, required this.isDownloading});
 
   DownloadState copyWith({
     List<DownloadTask>? queueTasks,
@@ -68,15 +57,34 @@ class DownloadState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [
-        queueTasks,
-      ];
+  List<Object?> get props => [queueTasks];
 }
 
-@Riverpod(keepAlive: true)
-class DownloadManagerNotifier extends _$DownloadManagerNotifier {
-  late DownloadTrackRepository _downloadTrackRepository;
-  late AudioController _audioController;
+class DownloadManager extends ChangeNotifier {
+  final EventBus eventBus;
+  final AudioController audioController;
+  final AlbumRepository albumRepository;
+  final DownloadTrackRepository downloadTrackRepository;
+  final DownloadAlbumRepository downloadAlbumRepository;
+  final DownloadPlaylistRepository downloadPlaylistRepository;
+
+  DownloadManager({
+    required this.eventBus,
+    required this.audioController,
+    required this.albumRepository,
+    required this.downloadTrackRepository,
+    required this.downloadPlaylistRepository,
+    required this.downloadAlbumRepository,
+  }) {
+    audioController.currentTrack.stream.listen((track) async {
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      if (track != null && _lastCurrentTrackId != track.id) {
+        _lastCurrentTrackId = track.id;
+        deleteOrphanTracks();
+      }
+    });
+  }
 
   final _executor = AsyncExecutor();
 
@@ -84,41 +92,27 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
 
   int? _lastCurrentTrackId;
 
-  @override
-  DownloadState build() {
-    _downloadTrackRepository = ref.read(downloadTrackRepositoryProvider);
-    _audioController = ref.read(audioControllerProvider);
+  DownloadState state = const DownloadState(
+    queueTasks: [],
+    isDownloading: false,
+  );
 
-    _audioController.currentTrack.stream.listen((track) async {
-      await Future.delayed(
-        const Duration(milliseconds: 10),
-      );
+  void addTracksToDownloadTodo(List<Track> tracks) {
+    state = state.copyWith(
+      queueTasks: [
+        ...state.queueTasks,
+        ...tracks.map((track) {
+          final streamController = StreamController<double>();
 
-      if (track != null && _lastCurrentTrackId != track.id) {
-        _lastCurrentTrackId = track.id;
-        deleteOrphanTracks();
-      }
-    });
-
-    return const DownloadState(
-      queueTasks: [],
-      isDownloading: false,
+          return DownloadTask(
+            track: track,
+            progress: streamController.stream.asBroadcastStream(),
+            progressController: streamController,
+          );
+        }),
+      ],
     );
-  }
-
-  addTracksToDownloadTodo(List<Track> tracks) {
-    state = state.copyWith(queueTasks: [
-      ...state.queueTasks,
-      ...tracks.map((track) {
-        final streamController = StreamController<double>();
-
-        return DownloadTask(
-          track: track,
-          progress: streamController.stream.asBroadcastStream(),
-          progressController: streamController,
-        );
-      }),
-    ]);
+    notifyListeners();
 
     _executor.execute(_manageDownload);
   }
@@ -138,28 +132,24 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
         if (!NetworkInfo().isServerRecheable()) {
           currentTask.progressController.close();
 
-          state = state.copyWith(
-            queueTasks: state.queueTasks.skip(1).toList(),
-          );
+          state = state.copyWith(queueTasks: state.queueTasks.skip(1).toList());
+          notifyListeners();
 
           _mutex.release();
 
           continue;
         }
 
-        final result =
-            await _downloadTrackRepository.shouldDownloadOrUpdateTrack(
-          currentTask.track,
-        );
+        final result = await downloadTrackRepository
+            .shouldDownloadOrUpdateTrack(currentTask.track);
 
         if (result.shouldDownload) {
           if (!state.isDownloading) {
-            state = state.copyWith(
-              isDownloading: true,
-            );
+            state = state.copyWith(isDownloading: true);
+            notifyListeners();
           }
 
-          await _downloadTrackRepository.downloadOrUpdateTrack(
+          await downloadTrackRepository.downloadOrUpdateTrack(
             currentTask.track.id,
             result.signature,
             result.coverSignature,
@@ -170,49 +160,43 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
 
         currentTask.progressController.close();
 
-        state = state.copyWith(
-          queueTasks: state.queueTasks.skip(1).toList(),
-        );
+        state = state.copyWith(queueTasks: state.queueTasks.skip(1).toList());
+        notifyListeners();
 
         _mutex.release();
 
         if (result.shouldDownload) {
-          await _audioController.reloadPlayerTracks();
+          await audioController.reloadPlayerTracks();
 
-          final _ =
-              ref.refresh(isTrackDownloadedProvider(currentTask.track.id));
+          eventBus.fire(
+            DownloadTrackEvent(trackId: currentTask.track.id, downloaded: true),
+          );
         }
 
         if (state.isDownloading && state.queueTasks.isEmpty) {
-          state = state.copyWith(
-            isDownloading: false,
-          );
+          state = state.copyWith(isDownloading: false);
+          notifyListeners();
         }
       } catch (e) {
         state = state.copyWith(
-          queueTasks: [
-            ...state.queueTasks.skip(1),
-            state.queueTasks.first,
-          ],
+          queueTasks: [...state.queueTasks.skip(1), state.queueTasks.first],
         );
+        notifyListeners();
 
         _mutex.release();
 
         if (state.isDownloading && state.queueTasks.isEmpty) {
-          state = state.copyWith(
-            isDownloading: false,
-          );
+          state = state.copyWith(isDownloading: false);
+          notifyListeners();
         }
 
-        await Future.delayed(
-          const Duration(seconds: 1),
-        );
+        await Future.delayed(const Duration(seconds: 1));
       }
     }
   }
 
-  deleteOrphanTracks() async {
-    final orphans = await _downloadTrackRepository.getOrphanTracks();
+  Future<void> deleteOrphanTracks() async {
+    final orphans = await downloadTrackRepository.getOrphanTracks();
 
     if (orphans.isEmpty) {
       return;
@@ -227,25 +211,25 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
           )
           .toList(),
     );
+    notifyListeners();
     _mutex.release();
 
-    await _downloadTrackRepository.deleteOrphanTracks(
-      _audioController.currentTrack.value?.id,
+    await downloadTrackRepository.deleteOrphanTracks(
+      audioController.currentTrack.value?.id,
     );
 
-    await _audioController.reloadPlayerTracks();
+    await audioController.reloadPlayerTracks();
 
     for (final orphan in orphans) {
-      final _ = ref.refresh(isTrackDownloadedProvider(orphan.trackId));
+      eventBus.fire(
+        DownloadTrackEvent(trackId: orphan.trackId, downloaded: false),
+      );
     }
   }
 
   Future<void> downloadAllAlbums(
     StreamController<double>? streamController,
   ) async {
-    final downloadAlbumRepository = ref.read(downloadAlbumRepositoryProvider);
-    final albumRepository = ref.read(albumRepositoryProvider);
-
     final albums = await albumRepository.getAllAlbums();
 
     final Set<int> trackIds = {};
@@ -256,9 +240,7 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
 
       final album = await albumRepository.getAlbumById(indexed.$2.id);
 
-      await downloadAlbumRepository.downloadAlbum(
-        album.id,
-      );
+      await downloadAlbumRepository.downloadAlbum(album.id);
 
       for (final track in album.tracks) {
         if (trackIds.add(track.id)) {
@@ -267,29 +249,27 @@ class DownloadManagerNotifier extends _$DownloadManagerNotifier {
       }
     }
 
-    state = state.copyWith(queueTasks: [
-      ...state.queueTasks,
-      ...tracks.map((track) {
-        final streamController = StreamController<double>();
+    state = state.copyWith(
+      queueTasks: [
+        ...state.queueTasks,
+        ...tracks.map((track) {
+          final streamController = StreamController<double>();
 
-        return DownloadTask(
-          track: track,
-          progress: streamController.stream.asBroadcastStream(),
-          progressController: streamController,
-        );
-      }),
-    ]);
+          return DownloadTask(
+            track: track,
+            progress: streamController.stream.asBroadcastStream(),
+            progressController: streamController,
+          );
+        }),
+      ],
+    );
+    notifyListeners();
 
     _executor.execute(_manageDownload);
   }
 
   Future<void> removeAllDownloads() async {
-    final downloadPlaylistRepository =
-        ref.read(downloadPlaylistRepositoryProvider);
-
     await downloadPlaylistRepository.freeAllPlaylists();
-
-    final downloadAlbumRepository = ref.read(downloadAlbumRepositoryProvider);
 
     await downloadAlbumRepository.freeAllAlbums();
 
@@ -315,16 +295,13 @@ class AsyncExecutor {
   }
 }
 
-@riverpod
-bool isDownloadManagerRunning(Ref ref) {
-  final downloadManager = ref.watch(downloadManagerNotifierProvider);
-
-  return downloadManager.isDownloading;
-}
-
-@riverpod
-DownloadTask? currentDownloadManagerTask(Ref ref) {
-  final downloadManager = ref.watch(downloadManagerNotifierProvider);
-
-  return downloadManager.currentTask;
-}
+final downloadManagerProvider = Provider(
+  (ref) => DownloadManager(
+    eventBus: ref.read(eventBusProvider),
+    audioController: ref.read(audioControllerProvider),
+    albumRepository: ref.read(albumRepositoryProvider),
+    downloadTrackRepository: ref.read(downloadTrackRepositoryProvider),
+    downloadPlaylistRepository: ref.read(downloadPlaylistRepositoryProvider),
+    downloadAlbumRepository: ref.read(downloadAlbumRepositoryProvider),
+  ),
+);

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
-import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'delete_album_provider.g.dart';
@@ -26,10 +25,6 @@ class DeleteAlbumStream extends _$DeleteAlbumStream {
 
   deleteAlbum(int albumId) async {
     final deletedAlbum = await _albumRepository.deleteAlbumById(albumId);
-
-    await ref
-        .read(downloadManagerNotifierProvider.notifier)
-        .deleteOrphanTracks();
 
     if (!_controller.isClosed) {
       _controller.add(deletedAlbum);

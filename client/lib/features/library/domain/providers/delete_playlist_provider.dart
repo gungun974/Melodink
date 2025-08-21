@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
-import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'delete_playlist_provider.g.dart';
@@ -25,12 +24,9 @@ class DeletePlaylistStream extends _$DeletePlaylistStream {
   }
 
   deletePlaylist(int playlistId) async {
-    final deletedPlaylist =
-        await _playlistRepository.deletePlaylistById(playlistId);
-
-    await ref
-        .read(downloadManagerNotifierProvider.notifier)
-        .deleteOrphanTracks();
+    final deletedPlaylist = await _playlistRepository.deletePlaylistById(
+      playlistId,
+    );
 
     if (!_controller.isClosed) {
       _controller.add(deletedPlaylist);

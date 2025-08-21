@@ -10,7 +10,6 @@ import 'package:melodink_client/features/library/domain/providers/delete_album_p
 import 'package:melodink_client/features/library/domain/providers/edit_album_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
-import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
@@ -57,11 +56,13 @@ Future<List<Album>> allAlbums(Ref ref) async {
   return await albumRepository.getAllAlbums();
 }
 
-final allAlbumsSortedModeProvider =
-    StateProvider.autoDispose<String>((ref) => 'newest');
+final allAlbumsSortedModeProvider = StateProvider.autoDispose<String>(
+  (ref) => 'newest',
+);
 
-final allAlbumsSearchInputProvider =
-    StateProvider.autoDispose<String>((ref) => '');
+final allAlbumsSearchInputProvider = StateProvider.autoDispose<String>(
+  (ref) => '',
+);
 
 int compareArtists(List<Artist> a, List<Artist> b) {
   int minLength = a.length < b.length ? a.length : b.length;
@@ -92,17 +93,21 @@ Future<List<Album>> allAlbumsSorted(Ref ref) async {
 
   return switch (sortedMode) {
     // Artist Z-A
-    "artist-za" => allAlbums.toList(growable: false)
-      ..sort((a, b) => compareArtists(b.artists, a.artists)),
+    "artist-za" => allAlbums.toList(
+      growable: false,
+    )..sort((a, b) => compareArtists(b.artists, a.artists)),
     // Artist A-Z
-    "artist-az" => allAlbums.toList(growable: false)
-      ..sort((a, b) => compareArtists(a.artists, b.artists)),
+    "artist-az" => allAlbums.toList(
+      growable: false,
+    )..sort((a, b) => compareArtists(a.artists, b.artists)),
     // Name Z-A
-    "name-za" => allAlbums.toList(growable: false)
-      ..sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase())),
+    "name-za" => allAlbums.toList(
+      growable: false,
+    )..sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase())),
     // Name A-Z
-    "name-az" => allAlbums.toList(growable: false)
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())),
+    "name-az" => allAlbums.toList(
+      growable: false,
+    )..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase())),
     // Oldest
     "oldest" => allAlbums.reversed.toList(growable: false),
     // Newest
@@ -181,8 +186,9 @@ class AlbumById extends _$AlbumById {
 
       final newTrack = newTrackInfo.track;
 
-      final info =
-          await _playedTrackRepository.getTrackHistoryInfo(newTrack.id);
+      final info = await _playedTrackRepository.getTrackHistoryInfo(
+        newTrack.id,
+      );
 
       final album = await future;
 
@@ -194,9 +200,9 @@ class AlbumById extends _$AlbumById {
 
       state = AsyncData(album.copyWith(tracks: updatedTracks));
 
-      ref.read(albumDownloadNotifierProvider(id).notifier).refresh(
-            shouldCheckDownload: newTrackInfo.shouldCheckDownload,
-          );
+      ref
+          .read(albumDownloadNotifierProvider(id).notifier)
+          .refresh(shouldCheckDownload: newTrackInfo.shouldCheckDownload);
     });
 
     ref.listen(trackDeleteStreamProvider, (_, rawDeletedTrack) async {
@@ -209,9 +215,7 @@ class AlbumById extends _$AlbumById {
       final album = await future;
 
       final updatedTracks = album.tracks
-          .where(
-            (track) => track.id != deletedTrack.id,
-          )
+          .where((track) => track.id != deletedTrack.id)
           .toList();
 
       state = AsyncData(album.copyWith(tracks: updatedTracks));
@@ -256,10 +260,7 @@ class AlbumDownloadState extends Equatable {
     required this.error,
   });
 
-  AlbumDownloadState copyWith({
-    bool? downloaded,
-    bool? isLoading,
-  }) {
+  AlbumDownloadState copyWith({bool? downloaded, bool? isLoading}) {
     return AlbumDownloadState(
       downloaded: downloaded ?? this.downloaded,
       isLoading: isLoading ?? this.isLoading,
@@ -280,21 +281,14 @@ class AlbumDownloadState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [
-        downloaded,
-        isLoading,
-        error,
-      ];
+  List<Object?> get props => [downloaded, isLoading, error];
 }
 
 class AlbumDownloadError extends Equatable {
   final String? title;
   final String message;
 
-  const AlbumDownloadError({
-    this.title,
-    required this.message,
-  });
+  const AlbumDownloadError({this.title, required this.message});
 
   @override
   List<Object?> get props => [title, message];
@@ -313,13 +307,10 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
     );
   }
 
-  refresh({
-    required bool shouldCheckDownload,
-  }) {
-    ref
-        .read(downloadAlbumRepositoryProvider)
-        .isAlbumDownloaded(albumId)
-        .then((downloaded) {
+  refresh({required bool shouldCheckDownload}) {
+    ref.read(downloadAlbumRepositoryProvider).isAlbumDownloaded(albumId).then((
+      downloaded,
+    ) {
       state = state.copyWith(downloaded: downloaded);
 
       if (downloaded) {
@@ -328,9 +319,7 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
     });
   }
 
-  download({
-    required bool shouldCheckDownload,
-  }) async {
+  download({required bool shouldCheckDownload}) async {
     if (state.isLoading) {
       return;
     }
@@ -344,19 +333,9 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
       await downloadAlbumRepository.downloadAlbum(albumId);
       final album = await albumRepository.getAlbumById(albumId);
 
-      state = state.copyWith(
-        isLoading: false,
-        downloaded: true,
-      );
+      state = state.copyWith(isLoading: false, downloaded: true);
 
-      if (shouldCheckDownload) {
-        final downloadManagerNotifier =
-            ref.read(downloadManagerNotifierProvider.notifier);
-
-        downloadManagerNotifier.addTracksToDownloadTodo(
-          album.tracks,
-        );
-      }
+      if (shouldCheckDownload) {}
 
       ref.invalidate(allAlbumsProvider);
     } catch (e) {
@@ -379,15 +358,7 @@ class AlbumDownloadNotifier extends _$AlbumDownloadNotifier {
     try {
       await downloadAlbumRepository.freeAlbum(albumId);
 
-      final downloadManagerNotifier =
-          ref.read(downloadManagerNotifierProvider.notifier);
-
-      await downloadManagerNotifier.deleteOrphanTracks();
-
-      state = state.copyWith(
-        isLoading: false,
-        downloaded: false,
-      );
+      state = state.copyWith(isLoading: false, downloaded: false);
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,

@@ -7,7 +7,7 @@ import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_error_overlay.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
-import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/hooks/use_get_download_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/single_track_context_menu.dart';
@@ -29,35 +29,23 @@ class DesktopCurrentTrack extends HookConsumerWidget {
           return Container();
         }
 
-        audioController.previousTracks.valueOrNull?.take(5).forEach(
-          (track) {
-            ImageCacheManager.preCache(
-              track.getCompressedCoverUri(
-                TrackCompressedCoverQuality.medium,
-              ),
-              context,
-            );
-          },
-        );
+        audioController.previousTracks.valueOrNull?.take(5).forEach((track) {
+          ImageCacheManager.preCache(
+            track.getCompressedCoverUri(TrackCompressedCoverQuality.medium),
+            context,
+          );
+        });
 
-        audioController.nextTracks.valueOrNull?.take(5).forEach(
-          (track) {
-            ImageCacheManager.preCache(
-              track.getCompressedCoverUri(
-                TrackCompressedCoverQuality.medium,
-              ),
-              context,
-            );
-          },
-        );
+        audioController.nextTracks.valueOrNull?.take(5).forEach((track) {
+          ImageCacheManager.preCache(
+            track.getCompressedCoverUri(TrackCompressedCoverQuality.medium),
+            context,
+          );
+        });
 
-        return Consumer(
+        return HookConsumer(
           builder: (context, ref, child) {
-            final downloadedTrack = ref
-                .watch(
-                  isTrackDownloadedProvider(currentTrack.id),
-                )
-                .valueOrNull;
+            final downloadedTrack = useGetDownloadTrack(currentTrack.id, ref);
 
             return SingleTrackContextMenu(
               track: currentTrack,
@@ -86,7 +74,8 @@ class DesktopCurrentTrack extends HookConsumerWidget {
                           child: PlayerErrorOverlay(
                             child: AuthCachedNetworkImage(
                               fit: BoxFit.contain,
-                              imageUrl: downloadedTrack?.getCoverUrl() ??
+                              imageUrl:
+                                  downloadedTrack?.getCoverUrl() ??
                                   currentTrack.getCompressedCoverUrl(
                                     TrackCompressedCoverQuality.medium,
                                   ),
@@ -126,9 +115,7 @@ class DesktopCurrentTrack extends HookConsumerWidget {
                       const SizedBox(height: 4),
                       AlbumLinkText(
                         text: currentTrack.albums
-                            .map(
-                              (album) => album.name,
-                            )
+                            .map((album) => album.name)
                             .join(", "),
                         albumId: currentTrack.albums.firstOrNull?.id,
                         style: TextStyle(

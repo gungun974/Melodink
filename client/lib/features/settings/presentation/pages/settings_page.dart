@@ -20,14 +20,12 @@ import 'package:melodink_client/features/settings/presentation/widgets/setting_e
 import 'package:melodink_client/features/settings/presentation/widgets/setting_pannel.dart';
 import 'package:melodink_client/features/settings/presentation/widgets/setting_toggle_option.dart';
 import 'package:melodink_client/features/sync/data/repository/sync_repository.dart';
-import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
+import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
 import 'package:melodink_client/features/track/presentation/modals/import_tracks_modal.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 
 class SettingsPage extends ConsumerWidget {
-  const SettingsPage({
-    super.key,
-  });
+  const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -133,10 +131,13 @@ class SettingsPage extends ConsumerWidget {
                                   onPressed: !isServerReachable
                                       ? null
                                       : () async {
-                                          AppNotificationManager.of(context)
-                                              .notify(
+                                          AppNotificationManager.of(
                                             context,
-                                            message: t.notifications.syncStarted
+                                          ).notify(
+                                            context,
+                                            message: t
+                                                .notifications
+                                                .syncStarted
                                                 .message,
                                             type: AppNotificationType.info,
                                           );
@@ -150,10 +151,13 @@ class SettingsPage extends ConsumerWidget {
                                               return;
                                             }
 
-                                            AppNotificationManager.of(context)
-                                                .notify(
+                                            AppNotificationManager.of(
                                               context,
-                                              message: t.notifications.syncEnded
+                                            ).notify(
+                                              context,
+                                              message: t
+                                                  .notifications
+                                                  .syncEnded
                                                   .message,
                                               type: AppNotificationType.info,
                                             );
@@ -162,12 +166,17 @@ class SettingsPage extends ConsumerWidget {
                                               return;
                                             }
 
-                                            AppNotificationManager.of(context)
-                                                .notify(
+                                            AppNotificationManager.of(
                                               context,
-                                              title: t.notifications
-                                                  .somethingWentWrong.title,
-                                              message: t.notifications.syncEnded
+                                            ).notify(
+                                              context,
+                                              title: t
+                                                  .notifications
+                                                  .somethingWentWrong
+                                                  .title,
+                                              message: t
+                                                  .notifications
+                                                  .syncEnded
                                                   .message,
                                               type: AppNotificationType.danger,
                                             );
@@ -190,11 +199,7 @@ class SettingsPage extends ConsumerWidget {
                             onChanged: (theme) {
                               ref
                                   .read(appSettingsNotifierProvider.notifier)
-                                  .setSettings(
-                                    settings.copyWith(
-                                      theme: theme,
-                                    ),
-                                  );
+                                  .setSettings(settings.copyWith(theme: theme));
                             },
                             items: [
                               DropdownMenuItem(
@@ -488,28 +493,28 @@ class SettingsPage extends ConsumerWidget {
                               final streamController =
                                   StreamController<double>();
 
-                              final stream =
-                                  streamController.stream.asBroadcastStream();
+                              final stream = streamController.stream
+                                  .asBroadcastStream();
 
                               final loadingWidget = OverlayEntry(
                                 builder: (context) => StreamBuilder(
-                                    stream: stream,
-                                    builder: (context, snapshot) {
-                                      return AppPageLoader(
-                                        value: snapshot.data,
-                                      );
-                                    }),
+                                  stream: stream,
+                                  builder: (context, snapshot) {
+                                    return AppPageLoader(value: snapshot.data);
+                                  },
+                                ),
                               );
 
                               if (context.mounted) {
-                                Overlay.of(context, rootOverlay: true)
-                                    .insert(loadingWidget);
+                                Overlay.of(
+                                  context,
+                                  rootOverlay: true,
+                                ).insert(loadingWidget);
                               }
 
                               try {
                                 await ref
-                                    .read(downloadManagerNotifierProvider
-                                        .notifier)
+                                    .read(downloadManagerProvider)
                                     .downloadAllAlbums(streamController);
                                 streamController.close();
 
@@ -521,8 +526,10 @@ class SettingsPage extends ConsumerWidget {
 
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  message: t.notifications
-                                      .downloadAllAlbumsStarted.message,
+                                  message: t
+                                      .notifications
+                                      .downloadAllAlbumsStarted
+                                      .message,
                                 );
                               } catch (_) {
                                 streamController.close();
@@ -530,8 +537,12 @@ class SettingsPage extends ConsumerWidget {
                                   AppNotificationManager.of(context).notify(
                                     context,
                                     title: t
-                                        .notifications.somethingWentWrong.title,
-                                    message: t.notifications.somethingWentWrong
+                                        .notifications
+                                        .somethingWentWrong
+                                        .title,
+                                    message: t
+                                        .notifications
+                                        .somethingWentWrong
                                         .message,
                                     type: AppNotificationType.danger,
                                   );
@@ -560,14 +571,15 @@ class SettingsPage extends ConsumerWidget {
                               );
 
                               if (context.mounted) {
-                                Overlay.of(context, rootOverlay: true)
-                                    .insert(loadingWidget);
+                                Overlay.of(
+                                  context,
+                                  rootOverlay: true,
+                                ).insert(loadingWidget);
                               }
 
                               try {
                                 await ref
-                                    .read(downloadManagerNotifierProvider
-                                        .notifier)
+                                    .read(downloadManagerProvider)
                                     .removeAllDownloads();
                                 loadingWidget.remove();
 
@@ -577,16 +589,22 @@ class SettingsPage extends ConsumerWidget {
 
                                 AppNotificationManager.of(context).notify(
                                   context,
-                                  message: t.notifications
-                                      .allDownloadHaveBeenDeleted.message,
+                                  message: t
+                                      .notifications
+                                      .allDownloadHaveBeenDeleted
+                                      .message,
                                 );
                               } catch (_) {
                                 if (context.mounted) {
                                   AppNotificationManager.of(context).notify(
                                     context,
                                     title: t
-                                        .notifications.somethingWentWrong.title,
-                                    message: t.notifications.somethingWentWrong
+                                        .notifications
+                                        .somethingWentWrong
+                                        .title,
+                                    message: t
+                                        .notifications
+                                        .somethingWentWrong
                                         .message,
                                     type: AppNotificationType.danger,
                                   );
@@ -600,17 +618,19 @@ class SettingsPage extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      Consumer(builder: (context, ref, _) {
-                        return AppButton(
-                          text: t.actions.logout,
-                          type: AppButtonType.primary,
-                          onPressed: () async {
-                            await ref
-                                .read(authNotifierProvider.notifier)
-                                .logout();
-                          },
-                        );
-                      }),
+                      Consumer(
+                        builder: (context, ref, _) {
+                          return AppButton(
+                            text: t.actions.logout,
+                            type: AppButtonType.primary,
+                            onPressed: () async {
+                              await ref
+                                  .read(authNotifierProvider.notifier)
+                                  .logout();
+                            },
+                          );
+                        },
+                      ),
                       SizedBox(height: padding),
                     ],
                   ),

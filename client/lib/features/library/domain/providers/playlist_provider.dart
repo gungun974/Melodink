@@ -8,7 +8,6 @@ import 'package:melodink_client/features/library/domain/providers/delete_playlis
 import 'package:melodink_client/features/library/domain/providers/edit_playlist_provider.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/providers/delete_track_provider.dart';
-import 'package:melodink_client/features/track/domain/providers/download_manager_provider.dart';
 import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
@@ -99,8 +98,9 @@ class PlaylistById extends _$PlaylistById {
 
       final newTrack = newTrackInfo.track;
 
-      final info =
-          await _playedTrackRepository.getTrackHistoryInfo(newTrack.id);
+      final info = await _playedTrackRepository.getTrackHistoryInfo(
+        newTrack.id,
+      );
 
       final playlist = await future;
 
@@ -112,9 +112,9 @@ class PlaylistById extends _$PlaylistById {
 
       state = AsyncData(playlist.copyWith(tracks: updatedTracks));
 
-      ref.read(playlistDownloadNotifierProvider(id).notifier).refresh(
-            shouldCheckDownload: newTrackInfo.shouldCheckDownload,
-          );
+      ref
+          .read(playlistDownloadNotifierProvider(id).notifier)
+          .refresh(shouldCheckDownload: newTrackInfo.shouldCheckDownload);
     });
 
     ref.listen(trackDeleteStreamProvider, (_, rawDeletedTrack) async {
@@ -127,9 +127,7 @@ class PlaylistById extends _$PlaylistById {
       final playlist = await future;
 
       final updatedTracks = playlist.tracks
-          .where(
-            (track) => track.id != deletedTrack.id,
-          )
+          .where((track) => track.id != deletedTrack.id)
           .toList();
 
       state = AsyncData(playlist.copyWith(tracks: updatedTracks));
@@ -172,10 +170,7 @@ class PlaylistDownloadState extends Equatable {
     required this.error,
   });
 
-  PlaylistDownloadState copyWith({
-    bool? downloaded,
-    bool? isLoading,
-  }) {
+  PlaylistDownloadState copyWith({bool? downloaded, bool? isLoading}) {
     return PlaylistDownloadState(
       downloaded: downloaded ?? this.downloaded,
       isLoading: isLoading ?? this.isLoading,
@@ -196,21 +191,14 @@ class PlaylistDownloadState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [
-        downloaded,
-        isLoading,
-        error,
-      ];
+  List<Object?> get props => [downloaded, isLoading, error];
 }
 
 class PlaylistDownloadError extends Equatable {
   final String? title;
   final String message;
 
-  const PlaylistDownloadError({
-    this.title,
-    required this.message,
-  });
+  const PlaylistDownloadError({this.title, required this.message});
 
   @override
   List<Object?> get props => [title, message];
@@ -229,30 +217,27 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
     );
   }
 
-  refresh({
-    required bool shouldCheckDownload,
-  }) {
+  refresh({required bool shouldCheckDownload}) {
     ref
         .read(downloadPlaylistRepositoryProvider)
         .isPlaylistDownloaded(playlistId)
         .then((downloaded) {
-      state = state.copyWith(downloaded: downloaded);
+          state = state.copyWith(downloaded: downloaded);
 
-      if (downloaded) {
-        download(shouldCheckDownload: shouldCheckDownload);
-      }
-    });
+          if (downloaded) {
+            download(shouldCheckDownload: shouldCheckDownload);
+          }
+        });
   }
 
-  download({
-    required bool shouldCheckDownload,
-  }) async {
+  download({required bool shouldCheckDownload}) async {
     if (state.isLoading) {
       return;
     }
 
-    final downloadPlaylistRepository =
-        ref.read(downloadPlaylistRepositoryProvider);
+    final downloadPlaylistRepository = ref.read(
+      downloadPlaylistRepositoryProvider,
+    );
     final playlistRepository = ref.read(playlistRepositoryProvider);
 
     state = state.copyWith(isLoading: true);
@@ -261,26 +246,17 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
       await downloadPlaylistRepository.downloadPlaylist(playlistId);
       final playlist = await playlistRepository.getPlaylistById(playlistId);
 
-      state = state.copyWith(
-        isLoading: false,
-        downloaded: true,
-      );
+      state = state.copyWith(isLoading: false, downloaded: true);
 
-      if (shouldCheckDownload) {
-        final downloadManagerNotifier =
-            ref.read(downloadManagerNotifierProvider.notifier);
-
-        downloadManagerNotifier.addTracksToDownloadTodo(
-          playlist.tracks,
-        );
-      }
+      if (shouldCheckDownload) {}
 
       ref.invalidate(allPlaylistsProvider);
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,
-        error:
-            const PlaylistDownloadError(message: "An error was not expected"),
+        error: const PlaylistDownloadError(
+          message: "An error was not expected",
+        ),
       );
     }
   }
@@ -290,28 +266,22 @@ class PlaylistDownloadNotifier extends _$PlaylistDownloadNotifier {
       return;
     }
 
-    final downloadPlaylistRepository =
-        ref.read(downloadPlaylistRepositoryProvider);
+    final downloadPlaylistRepository = ref.read(
+      downloadPlaylistRepositoryProvider,
+    );
 
     state = state.copyWith(isLoading: true);
 
     try {
       await downloadPlaylistRepository.freePlaylist(playlistId);
 
-      final downloadManagerNotifier =
-          ref.read(downloadManagerNotifierProvider.notifier);
-
-      await downloadManagerNotifier.deleteOrphanTracks();
-
-      state = state.copyWith(
-        isLoading: false,
-        downloaded: false,
-      );
+      state = state.copyWith(isLoading: false, downloaded: false);
     } catch (e) {
       state = state.copyWithError(
         isLoading: false,
-        error:
-            const PlaylistDownloadError(message: "An error was not expected"),
+        error: const PlaylistDownloadError(
+          message: "An error was not expected",
+        ),
       );
     }
   }
