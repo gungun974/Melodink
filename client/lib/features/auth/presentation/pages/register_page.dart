@@ -3,21 +3,21 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_password_form_field.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
-import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
+import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class RegisterPage extends HookConsumerWidget {
+class RegisterPage extends HookWidget {
   const RegisterPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
 
     final autoValidate = useState(false);
@@ -39,7 +39,10 @@ class RegisterPage extends HookConsumerWidget {
                 "assets/icons/arrow-left.svg",
                 width: 24,
                 height: 24,
-                color: Colors.white,
+                colorFilter: const ColorFilter.mode(
+                  Colors.white,
+                  BlendMode.srcIn,
+                ),
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -92,21 +95,18 @@ class RegisterPage extends HookConsumerWidget {
                             autovalidateMode: autoValidate.value
                                 ? AutovalidateMode.always
                                 : AutovalidateMode.disabled,
-                            validator: FormBuilderValidators.compose(
-                              [
-                                FormBuilderValidators.required(
-                                  errorText: t.validators.fieldShouldNotBeEmpty(
-                                    field: t.general.email,
-                                  ),
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(
+                                errorText: t.validators.fieldShouldNotBeEmpty(
+                                  field: t.general.email,
                                 ),
-                                FormBuilderValidators.email(
-                                  errorText:
-                                      t.validators.fieldShouldBeValidEmail(
-                                    field: t.general.email,
-                                  ),
+                              ),
+                              FormBuilderValidators.email(
+                                errorText: t.validators.fieldShouldBeValidEmail(
+                                  field: t.general.email,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ]),
                             autofillHints: const [AutofillHints.email],
                           ),
                           const SizedBox(height: 12.0),
@@ -116,27 +116,27 @@ class RegisterPage extends HookConsumerWidget {
                             autovalidateMode: autoValidate.value
                                 ? AutovalidateMode.always
                                 : AutovalidateMode.disabled,
-                            validator: FormBuilderValidators.compose(
-                              [
-                                FormBuilderValidators.required(
-                                  errorText: t.validators.fieldShouldNotBeEmpty(
-                                    field: t.general.password,
-                                  ),
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(
+                                errorText: t.validators.fieldShouldNotBeEmpty(
+                                  field: t.general.password,
                                 ),
-                                FormBuilderValidators.minLength(
-                                  8,
-                                  errorText: t.validators.fieldMustBeAtLeast(
-                                      field: t.general.password, n: 8),
+                              ),
+                              FormBuilderValidators.minLength(
+                                8,
+                                errorText: t.validators.fieldMustBeAtLeast(
+                                  field: t.general.password,
+                                  n: 8,
                                 ),
-                                FormBuilderValidators.maxLength(
-                                  32,
-                                  errorText: t.validators.fieldMustNotExceed(
-                                    field: t.general.password,
-                                    n: 32,
-                                  ),
+                              ),
+                              FormBuilderValidators.maxLength(
+                                32,
+                                errorText: t.validators.fieldMustNotExceed(
+                                  field: t.general.password,
+                                  n: 32,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ]),
                             autofillHints: const [AutofillHints.newUsername],
                           ),
                           const SizedBox(height: 12.0),
@@ -145,21 +145,19 @@ class RegisterPage extends HookConsumerWidget {
                             autovalidateMode: autoValidate.value
                                 ? AutovalidateMode.always
                                 : AutovalidateMode.disabled,
-                            validator: FormBuilderValidators.compose(
-                              [
-                                FormBuilderValidators.required(
-                                  errorText: t.validators.fieldShouldNotBeEmpty(
-                                    field: t.general.confirmPassword,
-                                  ),
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(
+                                errorText: t.validators.fieldShouldNotBeEmpty(
+                                  field: t.general.confirmPassword,
                                 ),
-                                (value) {
-                                  if (value != passwordTextController.text) {
-                                    return t.validators.passwordDontMatch;
-                                  }
-                                  return null;
-                                },
-                              ],
-                            ),
+                              ),
+                              (value) {
+                                if (value != passwordTextController.text) {
+                                  return t.validators.passwordDontMatch;
+                                }
+                                return null;
+                              },
+                            ]),
                             autofillHints: const [AutofillHints.newPassword],
                           ),
                           const SizedBox(height: 12.0),
@@ -177,14 +175,13 @@ class RegisterPage extends HookConsumerWidget {
                                 return;
                               }
 
-                              final authNotifier =
-                                  ref.read(authNotifierProvider.notifier);
-
-                              final success = await authNotifier.register(
-                                nameTextController.text,
-                                emailTextController.text,
-                                passwordTextController.text,
-                              );
+                              final success = await context
+                                  .read<AuthViewModel>()
+                                  .register(
+                                    nameTextController.text,
+                                    emailTextController.text,
+                                    passwordTextController.text,
+                                  );
 
                               if (!success) {
                                 return;
@@ -197,15 +194,9 @@ class RegisterPage extends HookConsumerWidget {
                               GoRouter.of(context).go("/");
                             },
                           ),
-                          Consumer(
-                            builder: (
-                              BuildContext context,
-                              WidgetRef ref,
-                              Widget? child,
-                            ) {
-                              final asyncAuth = ref.watch(authNotifierProvider);
-
-                              final auth = asyncAuth.valueOrNull;
+                          Consumer<AuthViewModel>(
+                            builder: (context, viewModel, _) {
+                              final auth = viewModel.state;
 
                               if (auth == null || auth is! AuthError) {
                                 return const SizedBox.shrink();
@@ -233,15 +224,10 @@ class RegisterPage extends HookConsumerWidget {
             ),
           ),
         ),
-        Consumer(
-          builder: (
-            BuildContext context,
-            WidgetRef ref,
-            Widget? child,
-          ) {
-            final asyncAuth = ref.watch(authNotifierProvider);
-
-            if (!asyncAuth.isLoading) {
+        Selector<AuthViewModel, bool>(
+          selector: (_, viewModel) => viewModel.isLoading,
+          builder: (context, isLoading, _) {
+            if (!isLoading) {
               return const SizedBox.shrink();
             }
 

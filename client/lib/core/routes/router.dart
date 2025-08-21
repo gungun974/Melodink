@@ -5,8 +5,8 @@ import 'package:melodink_client/core/routes/provider.dart';
 import 'package:melodink_client/core/routes/routes.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
-import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
 import 'package:melodink_client/features/auth/domain/providers/server_setup_provider.dart';
+import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:melodink_client/features/home/presentation/widgets/desktop_sidebar.dart';
 import 'package:melodink_client/features/home/presentation/widgets/mobile_navbar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/desktop_player_bar.dart';
@@ -97,9 +97,11 @@ final appRouterProvider = riverpod.Provider((ref) {
         return "/auth/serverSetup";
       }
 
-      final isAuthConfigured = await ref.read(
-        isUserAuthenticatedProvider.future,
-      );
+      final authViewModel = context.read<AuthViewModel>();
+
+      await authViewModel.waitForLoading();
+
+      final isAuthConfigured = authViewModel.getIsUserAuthenticated();
 
       if (!isAuthConfigured) {
         switch (state.matchedLocation) {

@@ -10,7 +10,7 @@ import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
-import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
+import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/settings/presentation/widgets/server_info.dart';
@@ -601,18 +601,11 @@ class SettingsPage extends riverpod.ConsumerWidget {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          riverpod.Consumer(
-                            builder: (context, ref, _) {
-                              return AppButton(
-                                text: t.actions.logout,
-                                type: AppButtonType.primary,
-                                onPressed: () async {
-                                  await ref
-                                      .read(authNotifierProvider.notifier)
-                                      .logout();
-                                },
-                              );
-                            },
+                          AppButton(
+                            text: t.actions.logout,
+                            type: AppButtonType.primary,
+                            onPressed: () =>
+                                context.read<AuthViewModel>().logout(),
                           ),
                           SizedBox(height: padding),
                         ],

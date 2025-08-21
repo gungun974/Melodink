@@ -12,7 +12,8 @@ import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
-import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
+import 'package:melodink_client/features/auth/data/repository/auth_repository.dart';
+import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/domain/audio/melodink_player.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
@@ -87,13 +88,18 @@ class MyApp extends StatelessWidget {
           data: MediaQuery.of(
             context,
           ).copyWith(textScaler: TextScaler.linear(1)),
-          child: riverpod.Consumer(
-            builder: (contex, ref, _) {
-              final appRouter = ref.watch(appRouterProvider);
+          child: riverpod.HookConsumer(
+            builder: (context, ref, _) {
+              final appRouter = ref.read(appRouterProvider);
 
-              ref.listen(isUserAuthenticatedProvider, (prev, next) {
-                final prevValue = prev?.valueOrNull ?? false;
-                final nextValue = next.valueOrNull ?? false;
+              final authViewModel = context.read<AuthViewModel>();
+
+              final prevRef = useRef<bool?>(null);
+
+              useOnListenableChange(authViewModel, () {
+                final prevValue = prevRef.value ?? false;
+                final nextValue = authViewModel.getIsUserAuthenticated();
+                prevRef.value = nextValue;
 
                 if (prevValue && !nextValue) {
                   appRouter.refresh();
@@ -174,6 +180,12 @@ class _EagerInitialization extends riverpod.ConsumerWidget {
           create: (_) => SettingsViewModel(
             audioController: ref.read(audioControllerProvider),
           )..loadSettings(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AuthViewModel(
+            audioController: ref.read(audioControllerProvider),
+            authRepository: ref.read(authRepositoryProvider),
+          ),
         ),
       ],
       child: child,
