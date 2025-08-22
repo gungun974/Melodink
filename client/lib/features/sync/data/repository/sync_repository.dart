@@ -572,7 +572,7 @@ class SyncRepository {
 
   final _mutex = Mutex();
 
-  Future<void> performSync({bool fullSync = true}) async {
+  Future<void> performSync({bool fullSync = false}) async {
     await _mutex.protect(() async {
       final db = await DatabaseService.getDatabase();
 
