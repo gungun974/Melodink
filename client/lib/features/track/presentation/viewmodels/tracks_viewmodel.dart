@@ -74,15 +74,27 @@ class TracksViewModel extends ChangeNotifier {
   }
 
   void loadTracks() {
+    if (isLoading) {
+      return;
+    }
+
     final stream = trackRepository.getAllTracks();
 
     isLoading = true;
-    tracks.clear();
+
+    final shouldUpdateInBackground = tracks.isNotEmpty;
+
+    final List<Track> backgroundLoadingTracks = [];
+
     _computeSearchTracks();
     notifyListeners();
 
     stream.listen(
-      (newTracks) async {
+      (newTracks) {
+        backgroundLoadingTracks.addAll(newTracks);
+        if (shouldUpdateInBackground) {
+          return;
+        }
         tracks.addAll(newTracks);
         _sortTracks();
         _computeSearchTracks();
@@ -90,6 +102,9 @@ class TracksViewModel extends ChangeNotifier {
       },
       onDone: () {
         isLoading = false;
+        tracks = backgroundLoadingTracks;
+        _sortTracks();
+        _computeSearchTracks();
         notifyListeners();
       },
       onError: (_) {

@@ -59,8 +59,11 @@ class PlaylistsContextMenuViewModel extends ChangeNotifier {
   bool isLoading = false;
 
   Future<void> loadPlaylists() async {
+    if (isLoading) {
+      return;
+    }
+
     isLoading = true;
-    playlists.clear();
     notifyListeners();
 
     try {

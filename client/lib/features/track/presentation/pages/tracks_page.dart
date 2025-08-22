@@ -29,105 +29,104 @@ class TracksPage extends HookWidget {
 
     useAutoCloseContextMenuOnScroll(scrollController: scrollController);
 
-    return ChangeNotifierProvider(
-      create: (context) => TracksViewModel(
-        eventBus: context.read(),
-        audioController: context.read(),
-        trackRepository: context.read(),
-      )..loadTracks(),
-      child: Stack(
-        children: [
-          AppNavigationHeader(
-            title: AppScreenTypeLayoutBuilders(
-              mobile: (_) => const Text("Tracks"),
-            ),
-            child: AppScreenTypeLayoutBuilder(
-              builder: (context, size) {
-                final maxWidth = size == AppScreenTypeLayout.desktop
-                    ? 1200
-                    : 512;
-                final padding = size == AppScreenTypeLayout.desktop
-                    ? 24.0
-                    : 16.0;
+    useEffect(() {
+      final loadTracks = context.read<TracksViewModel>().loadTracks;
 
-                return Column(
-                  children: [
-                    if (size == AppScreenTypeLayout.desktop)
-                      TracksPageSearchHeader(padding: padding),
-                    Expanded(
-                      child: CustomScrollView(
-                        key: scrollViewKey,
-                        controller: scrollController,
-                        slivers: [
-                          if (size == AppScreenTypeLayout.mobile)
-                            SliverToBoxAdapter(
-                              child: TracksPageSearchHeader(padding: padding),
-                            ),
-                          SliverContainer(
-                            maxWidth: maxWidth,
-                            padding: EdgeInsets.only(
-                              left: padding,
-                              right: padding,
-                            ),
-                            sliver: StickyDesktopTrackHeader(
-                              modules: [
-                                DesktopTrackModule.title,
-                                DesktopTrackModule.album,
-                                DesktopTrackModule.lastPlayed,
-                                DesktopTrackModule.playedCount,
-                                DesktopTrackModule.dateAdded,
-                                DesktopTrackModule.quality,
-                                DesktopTrackModule.duration,
-                                DesktopTrackModule.score,
-                                DesktopTrackModule.moreActions,
-                              ],
-                              scrollController: scrollController,
-                              scrollViewKey: scrollViewKey,
-                            ),
-                          ),
-                          SliverContainer(
-                            maxWidth: maxWidth,
-                            padding: EdgeInsets.only(
-                              left: padding,
-                              right: padding,
-                            ),
-                            sliver: Consumer<TracksViewModel>(
-                              builder: (context, viewModel, _) {
-                                return TrackList(
-                                  tracks: viewModel.searchTracks,
-                                  size: size,
-                                  modules: const [
-                                    DesktopTrackModule.title,
-                                    DesktopTrackModule.album,
-                                    DesktopTrackModule.lastPlayed,
-                                    DesktopTrackModule.playedCount,
-                                    DesktopTrackModule.dateAdded,
-                                    DesktopTrackModule.quality,
-                                    DesktopTrackModule.duration,
-                                    DesktopTrackModule.score,
-                                    DesktopTrackModule.moreActions,
-                                  ],
-                                  showImage: true,
-                                  scrollController: scrollController,
-                                  autoScrollToCurrentTrack:
-                                      isAutoScrollViewToCurrentTrackEnabled,
-                                  playCallback: (track, _) =>
-                                      viewModel.playTrack(track),
-                                );
-                              },
-                            ),
-                          ),
-                          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
+      Future(() {
+        loadTracks();
+      });
+
+      return null;
+    }, []);
+
+    return Stack(
+      children: [
+        AppNavigationHeader(
+          title: AppScreenTypeLayoutBuilders(
+            mobile: (_) => const Text("Tracks"),
           ),
-        ],
-      ),
+          child: AppScreenTypeLayoutBuilder(
+            builder: (context, size) {
+              final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
+              final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
+
+              return Column(
+                children: [
+                  if (size == AppScreenTypeLayout.desktop)
+                    TracksPageSearchHeader(padding: padding),
+                  Expanded(
+                    child: CustomScrollView(
+                      key: scrollViewKey,
+                      controller: scrollController,
+                      slivers: [
+                        if (size == AppScreenTypeLayout.mobile)
+                          SliverToBoxAdapter(
+                            child: TracksPageSearchHeader(padding: padding),
+                          ),
+                        SliverContainer(
+                          maxWidth: maxWidth,
+                          padding: EdgeInsets.only(
+                            left: padding,
+                            right: padding,
+                          ),
+                          sliver: StickyDesktopTrackHeader(
+                            modules: [
+                              DesktopTrackModule.title,
+                              DesktopTrackModule.album,
+                              DesktopTrackModule.lastPlayed,
+                              DesktopTrackModule.playedCount,
+                              DesktopTrackModule.dateAdded,
+                              DesktopTrackModule.quality,
+                              DesktopTrackModule.duration,
+                              DesktopTrackModule.score,
+                              DesktopTrackModule.moreActions,
+                            ],
+                            scrollController: scrollController,
+                            scrollViewKey: scrollViewKey,
+                          ),
+                        ),
+                        SliverContainer(
+                          maxWidth: maxWidth,
+                          padding: EdgeInsets.only(
+                            left: padding,
+                            right: padding,
+                          ),
+                          sliver: Consumer<TracksViewModel>(
+                            builder: (context, viewModel, _) {
+                              return TrackList(
+                                tracks: viewModel.searchTracks,
+                                size: size,
+                                modules: const [
+                                  DesktopTrackModule.title,
+                                  DesktopTrackModule.album,
+                                  DesktopTrackModule.lastPlayed,
+                                  DesktopTrackModule.playedCount,
+                                  DesktopTrackModule.dateAdded,
+                                  DesktopTrackModule.quality,
+                                  DesktopTrackModule.duration,
+                                  DesktopTrackModule.score,
+                                  DesktopTrackModule.moreActions,
+                                ],
+                                showImage: true,
+                                scrollController: scrollController,
+                                autoScrollToCurrentTrack:
+                                    isAutoScrollViewToCurrentTrackEnabled,
+                                playCallback: (track, _) =>
+                                    viewModel.playTrack(track),
+                              );
+                            },
+                          ),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

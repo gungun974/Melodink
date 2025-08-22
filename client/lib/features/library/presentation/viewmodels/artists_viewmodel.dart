@@ -33,8 +33,11 @@ class ArtistsViewModel extends ChangeNotifier {
   }
 
   Future<void> loadArtists() async {
+    if (isLoading) {
+      return;
+    }
+
     isLoading = true;
-    artists.clear();
     notifyListeners();
 
     try {

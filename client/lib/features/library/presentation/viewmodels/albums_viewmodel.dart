@@ -68,8 +68,11 @@ class AlbumsViewModel extends ChangeNotifier {
   }
 
   Future<void> loadAlbums() async {
+    if (isLoading) {
+      return;
+    }
+
     isLoading = true;
-    albums.clear();
     notifyListeners();
 
     try {

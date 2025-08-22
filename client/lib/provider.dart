@@ -11,12 +11,16 @@ import 'package:melodink_client/features/library/data/repository/artist_reposito
 import 'package:melodink_client/features/library/data/repository/download_album_repository.dart';
 import 'package:melodink_client/features/library/data/repository/download_playlist_repository.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
+import 'package:melodink_client/features/library/presentation/viewmodels/albums_viewmodel.dart';
+import 'package:melodink_client/features/library/presentation/viewmodels/artists_viewmodel.dart';
+import 'package:melodink_client/features/library/presentation/viewmodels/playlits_viewmodel.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/sync/data/repository/sync_repository.dart';
 import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
 import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
+import 'package:melodink_client/features/track/presentation/viewmodels/tracks_viewmodel.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:provider/provider.dart';
@@ -123,6 +127,31 @@ class MainProviderScope extends StatelessWidget {
           create: (context) => AuthViewModel(
             audioController: context.read(),
             authRepository: context.read(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => TracksViewModel(
+            eventBus: context.read(),
+            audioController: context.read(),
+            trackRepository: context.read(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => PlaylistsViewModel(
+            eventBus: context.read(),
+            playlistRepository: context.read(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => AlbumsViewModel(
+            eventBus: context.read(),
+            albumRepository: context.read(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ArtistsViewModel(
+            eventBus: context.read(),
+            artistRepository: context.read(),
           ),
         ),
       ],

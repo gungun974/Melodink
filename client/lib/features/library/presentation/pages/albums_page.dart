@@ -16,120 +16,121 @@ class AlbumsPage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AlbumsViewModel(
-        eventBus: context.read(),
-        albumRepository: context.read(),
-      )..loadAlbums(),
-      child: AppScreenTypeLayoutBuilder(
-        builder: (context, size) {
-          final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
-          final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
+    useEffect(() {
+      final loadAlbums = context.read<AlbumsViewModel>().loadAlbums;
+      Future(() {
+        loadAlbums();
+      });
+      return null;
+    });
+    return AppScreenTypeLayoutBuilder(
+      builder: (context, size) {
+        final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
+        final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
 
-          return Column(
-            children: [
-              MaxContainer(
-                maxWidth: maxWidth,
-                padding: EdgeInsets.only(
-                  left: padding,
-                  right: padding,
-                  top: 16.0,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          "${t.general.albums} ",
-                          style: const TextStyle(
-                            fontSize: 48,
-                            letterSpacing: 48 * 0.03,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Consumer<AlbumsViewModel>(
-                          builder: (context, viewModel, _) {
-                            return Text(
-                              "(${viewModel.searchAlbums.length})",
-                              style: const TextStyle(
-                                fontSize: 35,
-                                letterSpacing: 35 * 0.03,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppSearchFormField(
-                            controller: context
-                                .read<AlbumsViewModel>()
-                                .searchTextController,
-                            onChanged: (value) =>
-                                context.read<AlbumsViewModel>().updateSearch(),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Builder(
-                          builder: (context) {
-                            final viewModel = context.read<AlbumsViewModel>();
-                            return AppButton(
-                              text: t.general.sort,
-                              type: AppButtonType.primary,
-                              onPressed: () {
-                                showPopover(
-                                  context: context,
-                                  bodyBuilder: (context) =>
-                                      ChangeNotifierProvider.value(
-                                        value: viewModel,
-                                        child: const AlbumsSortedPopup(),
-                                      ),
-                                  direction: PopoverDirection.bottom,
-                                  arrowDyOffset: 8,
-                                  arrowHeight: 0,
-                                  arrowWidth: 0,
-                                  barrierColor: Colors.transparent,
-                                  backgroundColor: Colors.black,
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+        return Column(
+          children: [
+            MaxContainer(
+              maxWidth: maxWidth,
+              padding: EdgeInsets.only(
+                left: padding,
+                right: padding,
+                top: 16.0,
               ),
-              Expanded(
-                child: CustomScrollView(
-                  slivers: [
-                    SliverContainer(
-                      maxWidth: maxWidth,
-                      padding: EdgeInsets.only(
-                        left: padding,
-                        right: padding,
-                        top: 16.0,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        "${t.general.albums} ",
+                        style: const TextStyle(
+                          fontSize: 48,
+                          letterSpacing: 48 * 0.03,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      sliver: Consumer<AlbumsViewModel>(
+                      Consumer<AlbumsViewModel>(
                         builder: (context, viewModel, _) {
-                          return AlbumCollectionsGrid(
-                            albums: viewModel.searchAlbums,
+                          return Text(
+                            "(${viewModel.searchAlbums.length})",
+                            style: const TextStyle(
+                              fontSize: 35,
+                              letterSpacing: 35 * 0.03,
+                              fontWeight: FontWeight.w600,
+                            ),
                           );
                         },
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppSearchFormField(
+                          controller: context
+                              .read<AlbumsViewModel>()
+                              .searchTextController,
+                          onChanged: (value) =>
+                              context.read<AlbumsViewModel>().updateSearch(),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Builder(
+                        builder: (context) {
+                          final viewModel = context.read<AlbumsViewModel>();
+                          return AppButton(
+                            text: t.general.sort,
+                            type: AppButtonType.primary,
+                            onPressed: () {
+                              showPopover(
+                                context: context,
+                                bodyBuilder: (context) =>
+                                    ChangeNotifierProvider.value(
+                                      value: viewModel,
+                                      child: const AlbumsSortedPopup(),
+                                    ),
+                                direction: PopoverDirection.bottom,
+                                arrowDyOffset: 8,
+                                arrowHeight: 0,
+                                arrowWidth: 0,
+                                barrierColor: Colors.transparent,
+                                backgroundColor: Colors.black,
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          );
-        },
-      ),
+            ),
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  SliverContainer(
+                    maxWidth: maxWidth,
+                    padding: EdgeInsets.only(
+                      left: padding,
+                      right: padding,
+                      top: 16.0,
+                    ),
+                    sliver: Consumer<AlbumsViewModel>(
+                      builder: (context, viewModel, _) {
+                        return AlbumCollectionsGrid(
+                          albums: viewModel.searchAlbums,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
