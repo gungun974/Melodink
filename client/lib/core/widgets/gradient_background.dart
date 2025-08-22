@@ -1,17 +1,11 @@
-import 'dart:io';
 import 'dart:math';
 
-import 'package:color_thief_flutter/color_thief_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
-import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/core/viewmodels/dynamic_background_viewmodel.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
-import 'package:melodink_client/features/track/data/repository/download_track_repository.dart';
-import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:provider/provider.dart';
-import 'package:rxdart/rxdart.dart';
 
 const defaultTheme = [
   Color.fromRGBO(58, 91, 111, 1),
@@ -82,72 +76,35 @@ class GradientBackground extends HookWidget {
         .watch<SettingsViewModel>()
         .shouldDynamicBackgroundColors();
 
-    final audioController = context.read<AudioController>();
-    final downloadTrackRepository = context.read<DownloadTrackRepository>();
-
-    final palette = useState<List<List<int>>?>(null);
-
-    useOnStreamChange(
-      useMemoized(
-        () => audioController.currentTrack.stream
-            .startWith(audioController.currentTrack.value)
-            .distinct((prev, next) => prev?.id == next?.id),
-      ),
-      onData: (currentTrack) async {
-        if (currentTrack == null) {
-          return;
-        }
-
-        final downloadedTrack = await downloadTrackRepository
-            .getDownloadedTrackByTrackId(currentTrack.id);
-
-        final imageUrl =
-            downloadedTrack?.getCoverUrl() ??
-            currentTrack.getCompressedCoverUrl(
-              TrackCompressedCoverQuality.medium,
-            );
-
-        Uri? uri = Uri.tryParse(imageUrl);
-
-        ImageProvider imageProvider;
-
-        if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https')) {
-          imageProvider = FileImage(await ImageCacheManager.getImage(uri));
-        } else {
-          imageProvider = FileImage(File(imageUrl));
-        }
-
-        final image = await getImageFromProvider(imageProvider);
-
-        palette.value = await getPaletteFromImage(image, 5, 5);
-      },
-    );
+    final dynamicPalette = context
+        .watch<DynamicBackgroundViewModel>()
+        .currentPalette;
 
     List<Color> appliedTheme = defaultTheme;
 
-    if (dynamicBackgroundColors && palette.value != null) {
+    if (dynamicBackgroundColors && dynamicPalette != null) {
       appliedTheme = [
         adjustColorLightness(
           Color.fromRGBO(
-            palette.value![1][0],
-            palette.value![1][1],
-            palette.value![1][2],
+            dynamicPalette[1][0],
+            dynamicPalette[1][1],
+            dynamicPalette[1][2],
             1,
           ),
         ),
         adjustColorLightness(
           Color.fromRGBO(
-            palette.value![3][0],
-            palette.value![3][1],
-            palette.value![3][2],
+            dynamicPalette[3][0],
+            dynamicPalette[3][1],
+            dynamicPalette[3][2],
             1,
           ),
         ),
         adjustColorLightness(
           Color.fromRGBO(
-            palette.value![0][0],
-            palette.value![0][1],
-            palette.value![0][2],
+            dynamicPalette[0][0],
+            dynamicPalette[0][1],
+            dynamicPalette[0][2],
             1,
           ),
         ),

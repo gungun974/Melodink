@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/routes/router.dart';
+import 'package:melodink_client/core/viewmodels/dynamic_background_viewmodel.dart';
 import 'package:melodink_client/features/auth/data/repository/auth_repository.dart';
 import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:melodink_client/features/auth/presentation/viewmodels/server_setup_viewmodel.dart';
@@ -107,6 +108,12 @@ class MainProviderScope extends StatelessWidget {
           create: (context) =>
               SettingsViewModel(audioController: context.read())
                 ..loadSettings(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => DynamicBackgroundViewModel(
+            audioController: context.read(),
+            downloadTrackRepository: context.read(),
+          ),
         ),
         ChangeNotifierProvider(
           create: (context) =>
