@@ -20,7 +20,7 @@ class SharedPlayedTrackerManager {
     _scheduleSync();
   }
 
-  _scheduleSync() async {
+  Future<void> _scheduleSync() async {
     await _execute();
 
     _timer = Timer(const Duration(seconds: 45), () async {
@@ -34,7 +34,7 @@ class SharedPlayedTrackerManager {
     });
   }
 
-  _execute() async {
+  Future _execute() async {
     try {
       await getMelodinkInstanceSupportDirectory();
     } catch (_) {

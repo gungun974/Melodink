@@ -4,21 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
-import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
-import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
+import 'package:melodink_client/features/track/presentation/hooks/use_get_download_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
+import 'package:provider/provider.dart';
 
-class MobileTrack extends HookConsumerWidget {
+class MobileTrack extends HookWidget {
   final Track track;
 
   final void Function(Track track) playCallback;
@@ -43,13 +43,15 @@ class MobileTrack extends HookConsumerWidget {
     BuildContext context,
     MenuController menuController,
     Track track,
-  )? singleCustomActionsBuilder;
+  )?
+  singleCustomActionsBuilder;
 
   final List<Widget> Function(
     BuildContext context,
     MenuController menuController,
     List<Track> tracks,
-  )? multiCustomActionsBuilder;
+  )?
+  multiCustomActionsBuilder;
 
   final bool showDefaultActions;
 
@@ -73,18 +75,28 @@ class MobileTrack extends HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentTheme = ref.watch(currentAppThemeProvider);
+  Widget build(BuildContext context) {
+    final currentTheme = context.watch<SettingsViewModel>().currentAppTheme();
 
-    final isServerReachable = ref.watch(isServerReachableProvider);
+    final isServerReachable = context.select<NetworkInfo, bool>(
+      (networkInfo) => networkInfo.isServerRecheable(),
+    );
 
-    final isCurrentTrack = ref.watch(isCurrentTrackProvider(track.id));
+    final audioController = context.read<AudioController>();
 
-    final downloadedTrack = ref
-        .watch(
-          isTrackDownloadedProvider(track.id),
-        )
-        .valueOrNull;
+    final isCurrentTrack =
+        useStream(
+          useMemoized(
+            () => audioController.currentTrack.stream.map(
+              (currentTrack) => currentTrack?.id == track.id,
+            ),
+          ),
+        ).data ??
+        false;
+
+    final asyncDownloadedTrack = useAsyncGetDownloadTrack(context, track.id);
+
+    final downloadedTrack = asyncDownloadedTrack.data;
 
     final trackContextMenuController = useMemoized(() => MenuController());
 
@@ -142,17 +154,18 @@ class MobileTrack extends HookConsumerWidget {
               decoration: BoxDecoration(
                 color: selected
                     ? (currentTheme == AppSettingTheme.dark
-                        ? const Color.fromRGBO(160, 160, 160, 0.139)
-                        : const Color.fromRGBO(0, 0, 0, 0.139))
+                          ? const Color.fromRGBO(160, 160, 160, 0.139)
+                          : const Color.fromRGBO(0, 0, 0, 0.139))
                     : (isHovering.value
-                        ? (currentTheme == AppSettingTheme.dark
-                            ? const Color.fromRGBO(160, 160, 160, 0.05)
-                            : const Color.fromRGBO(0, 0, 0, 0.05))
-                        : Colors.transparent),
+                          ? (currentTheme == AppSettingTheme.dark
+                                ? const Color.fromRGBO(160, 160, 160, 0.05)
+                                : const Color.fromRGBO(0, 0, 0, 0.05))
+                          : Colors.transparent),
                 borderRadius: BorderRadius.vertical(
                   top: selectedTop ? const Radius.circular(8) : Radius.zero,
-                  bottom:
-                      selectedBottom ? const Radius.circular(8) : Radius.zero,
+                  bottom: selectedBottom
+                      ? const Radius.circular(8)
+                      : Radius.zero,
                 ),
               ),
               child: Row(
@@ -175,9 +188,7 @@ class MobileTrack extends HookConsumerWidget {
                               child: SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: AdwaitaIcon(
-                                  AdwaitaIcons.list_remove,
-                                ),
+                                child: AdwaitaIcon(AdwaitaIcons.list_remove),
                               ),
                             ),
                           ),
@@ -190,9 +201,12 @@ class MobileTrack extends HookConsumerWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          if (showImage)
+                          if (showImage &&
+                              asyncDownloadedTrack.connectionState ==
+                                  ConnectionState.done)
                             AuthCachedNetworkImage(
-                              imageUrl: downloadedTrack?.getCoverUrl() ??
+                              imageUrl:
+                                  downloadedTrack?.getCoverUrl() ??
                                   track.getCompressedCoverUrl(
                                     TrackCompressedCoverQuality.small,
                                   ),
@@ -213,8 +227,9 @@ class MobileTrack extends HookConsumerWidget {
                               children: [
                                 Tooltip(
                                   message: track.title,
-                                  waitDuration:
-                                      const Duration(milliseconds: 800),
+                                  waitDuration: const Duration(
+                                    milliseconds: 800,
+                                  ),
                                   child: Text(
                                     track.title,
                                     maxLines: 1,
@@ -224,9 +239,9 @@ class MobileTrack extends HookConsumerWidget {
                                       letterSpacing: 14 * 0.03,
                                       fontWeight: FontWeight.w500,
                                       color: isCurrentTrack
-                                          ? Theme.of(context)
-                                              .colorScheme
-                                              .primary
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.primary
                                           : null,
                                     ),
                                   ),
@@ -278,10 +293,7 @@ class MobileTrack extends HookConsumerWidget {
                         child: ContextMenuButton(
                           contextMenuKey: trackContextMenuKey,
                           menuController: trackContextMenuController,
-                          padding: const EdgeInsets.only(
-                            left: 16,
-                            right: 16,
-                          ),
+                          padding: const EdgeInsets.only(left: 16, right: 16),
                           direction: Axis.vertical,
                         ),
                       ),
@@ -317,12 +329,7 @@ class MobileTrack extends HookConsumerWidget {
     );
 
     if (!isServerReachable && downloadedTrack == null) {
-      return IgnorePointer(
-        child: Opacity(
-          opacity: 0.4,
-          child: trackWidget,
-        ),
-      );
+      return IgnorePointer(child: Opacity(opacity: 0.4, child: trackWidget));
     }
 
     return trackWidget;

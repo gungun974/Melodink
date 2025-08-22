@@ -1,36 +1,28 @@
-import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
-import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
-import 'package:melodink_client/features/library/domain/providers/artist_provider.dart';
+import 'package:melodink_client/features/library/presentation/viewmodels/artists_viewmodel.dart';
 import 'package:melodink_client/features/library/presentation/widgets/artist_collections_grid.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:popover/popover.dart';
+import 'package:provider/provider.dart';
 
-class ArtistsPage extends HookConsumerWidget {
+class ArtistsPage extends HookWidget {
   const ArtistsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncArtists = ref.watch(allSearchArtistsProvider);
-
-    final searchTextController = useTextEditingController(
-        text: ref.watch(allArtistsSearchInputProvider));
-
-    ref.watch(allArtistsSortedModeProvider);
-
-    final artists = asyncArtists.valueOrNull;
-
-    if (artists == null) {
-      return Container();
-    }
-
+  Widget build(BuildContext context) {
+    useEffect(() {
+      final loadArtists = context.read<ArtistsViewModel>().loadArtists;
+      Future(() {
+        loadArtists();
+      });
+      return null;
+    });
     return AppScreenTypeLayoutBuilder(
       builder: (context, size) {
         final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
@@ -58,13 +50,17 @@ class ArtistsPage extends HookConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Text(
-                        "(${artists.length})",
-                        style: const TextStyle(
-                          fontSize: 35,
-                          letterSpacing: 35 * 0.03,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Consumer<ArtistsViewModel>(
+                        builder: (context, viewModel, _) {
+                          return Text(
+                            "(${viewModel.searchArtists.length})",
+                            style: const TextStyle(
+                              fontSize: 35,
+                              letterSpacing: 35 * 0.03,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -73,34 +69,41 @@ class ArtistsPage extends HookConsumerWidget {
                     children: [
                       Expanded(
                         child: AppSearchFormField(
-                          controller: searchTextController,
-                          onChanged: (value) => ref
-                              .read(allArtistsSearchInputProvider.notifier)
-                              .state = value,
+                          controller: context
+                              .read<ArtistsViewModel>()
+                              .searchTextController,
+                          onChanged: (_) =>
+                              context.read<ArtistsViewModel>().updateSearch(),
                         ),
                       ),
                       const SizedBox(width: 16),
-                      Builder(builder: (context) {
-                        return AppButton(
-                          text: t.general.sort,
-                          type: AppButtonType.primary,
-                          onPressed: () {
-                            showPopover(
-                              context: context,
-                              bodyBuilder: (context) =>
-                                  const ArtistsSortedPopup(),
-                              direction: PopoverDirection.bottom,
-                              arrowDyOffset: 8,
-                              arrowHeight: 0,
-                              arrowWidth: 0,
-                              barrierColor: Colors.transparent,
-                              backgroundColor: Colors.black,
-                            );
-                          },
-                        );
-                      }),
+                      Builder(
+                        builder: (context) {
+                          final viewModel = context.read<ArtistsViewModel>();
+                          return AppButton(
+                            text: t.general.sort,
+                            type: AppButtonType.primary,
+                            onPressed: () {
+                              showPopover(
+                                context: context,
+                                bodyBuilder: (context) =>
+                                    ChangeNotifierProvider.value(
+                                      value: viewModel,
+                                      child: const ArtistsSortedPopup(),
+                                    ),
+                                direction: PopoverDirection.bottom,
+                                arrowDyOffset: 8,
+                                arrowHeight: 0,
+                                arrowWidth: 0,
+                                barrierColor: Colors.transparent,
+                                backgroundColor: Colors.black,
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -114,8 +117,12 @@ class ArtistsPage extends HookConsumerWidget {
                       right: padding,
                       top: 16.0,
                     ),
-                    sliver: ArtistCollectionsGrid(
-                      artists: artists,
+                    sliver: Consumer<ArtistsViewModel>(
+                      builder: (context, viewModel, _) {
+                        return ArtistCollectionsGrid(
+                          artists: viewModel.searchArtists,
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -128,60 +135,65 @@ class ArtistsPage extends HookConsumerWidget {
   }
 }
 
-class ArtistsSortedPopup extends ConsumerWidget {
-  const ArtistsSortedPopup({
-    super.key,
-  });
+class ArtistsSortedPopup extends StatelessWidget {
+  const ArtistsSortedPopup({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final sortedMode = ref.watch(allArtistsSortedModeProvider);
-
+  Widget build(BuildContext context) {
     return IntrinsicWidth(
       child: IntrinsicHeight(
-        child: Column(
-          children: [
-            RadioListTile(
-              title: Text(t.sorting.newest),
-              value: "newest",
-              groupValue: sortedMode,
-              onChanged: (value) {
-                ref.read(allArtistsSortedModeProvider.notifier).state =
-                    "newest";
-                Navigator.pop(context);
-              },
-            ),
-            RadioListTile(
-              title: Text(t.sorting.oldest),
-              value: "oldest",
-              groupValue: sortedMode,
-              onChanged: (value) {
-                ref.read(allArtistsSortedModeProvider.notifier).state =
-                    "oldest";
-                Navigator.pop(context);
-              },
-            ),
-            RadioListTile(
-              title: Text(t.sorting.artistsAz),
-              value: "name-az",
-              groupValue: sortedMode,
-              onChanged: (value) {
-                ref.read(allArtistsSortedModeProvider.notifier).state =
-                    "name-az";
-                Navigator.pop(context);
-              },
-            ),
-            RadioListTile(
-              title: Text(t.sorting.artistsZa),
-              value: "name-za",
-              groupValue: sortedMode,
-              onChanged: (value) {
-                ref.read(allArtistsSortedModeProvider.notifier).state =
-                    "name-za";
-                Navigator.pop(context);
-              },
-            ),
-          ],
+        child: Selector<ArtistsViewModel, ArtistsSortMode>(
+          selector: (_, viewModel) => viewModel.sortMode,
+          builder: (context, sortMode, _) {
+            return Column(
+              children: [
+                RadioListTile(
+                  title: Text(t.sorting.newest),
+                  value: ArtistsSortMode.newest,
+                  groupValue: sortMode,
+                  onChanged: (value) {
+                    context.read<ArtistsViewModel>().setSortMode(
+                      ArtistsSortMode.newest,
+                    );
+                    Navigator.pop(context);
+                  },
+                ),
+                RadioListTile(
+                  title: Text(t.sorting.oldest),
+                  value: ArtistsSortMode.oldest,
+                  groupValue: sortMode,
+                  onChanged: (value) {
+                    context.read<ArtistsViewModel>().setSortMode(
+                      ArtistsSortMode.oldest,
+                    );
+                    Navigator.pop(context);
+                  },
+                ),
+                RadioListTile(
+                  title: Text(t.sorting.artistsAz),
+                  value: ArtistsSortMode.nameAZ,
+                  groupValue: sortMode,
+                  onChanged: (value) {
+                    context.read<ArtistsViewModel>().setSortMode(
+                      ArtistsSortMode.nameAZ,
+                    );
+                    Navigator.pop(context);
+                  },
+                ),
+                RadioListTile(
+                  title: Text(t.sorting.artistsZa),
+                  value: ArtistsSortMode.nameZA,
+                  groupValue: sortMode,
+                  onChanged: (value) {
+                    context.read<ArtistsViewModel>().setSortMode(
+                      ArtistsSortMode.nameZA,
+                    );
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

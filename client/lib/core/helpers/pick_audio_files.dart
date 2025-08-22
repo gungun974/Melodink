@@ -4,7 +4,7 @@ import 'package:file_picker/file_picker.dart';
 
 Future<File?> pickAudioFile() async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
-    type: FileType.audio,
+    type: FileType.custom,
     allowedExtensions: [
       "mp3",
       "mp4",
@@ -26,7 +26,7 @@ Future<File?> pickAudioFile() async {
 
 Future<File?> pickImageFile() async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
-    type: FileType.image,
+    type: FileType.custom,
     allowedExtensions: [
       "jpeg",
       "jpg",
@@ -50,7 +50,7 @@ Future<File?> pickImageFile() async {
 Future<List<File>> pickAudioFiles() async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
     allowMultiple: true,
-    type: FileType.audio,
+    type: FileType.custom,
     allowedExtensions: [
       "mp3",
       "mp4",
@@ -67,9 +67,5 @@ Future<List<File>> pickAudioFiles() async {
     return [];
   }
 
-  return result.paths
-      .map(
-        (path) => File(path!),
-      )
-      .toList();
+  return result.paths.map((path) => File(path!)).toList();
 }

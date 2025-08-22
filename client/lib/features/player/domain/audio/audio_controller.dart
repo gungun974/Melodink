@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/logger/logger.dart';
@@ -17,7 +17,7 @@ import 'package:melodink_client/features/track/data/repository/download_track_re
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
-import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
+import 'package:melodink_client/features/track/domain/events/track_events.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart';
@@ -49,9 +49,10 @@ Future<AudioController> initAudioService() async {
 class AudioController extends BaseAudioHandler {
   static final Stream<Duration> quickPosition =
       AudioService.createPositionStream(
-          steps: 8000,
-          minPeriod: const Duration(milliseconds: 16),
-          maxPeriod: const Duration(milliseconds: 200));
+        steps: 8000,
+        minPeriod: const Duration(milliseconds: 16),
+        maxPeriod: const Duration(milliseconds: 200),
+      );
 
   AudioController() {
     player.eventAudioChangedStream.listen((value) {
@@ -65,6 +66,23 @@ class AudioController extends BaseAudioHandler {
     Connectivity().onConnectivityChanged.listen((_) {
       reloadPlayerTracks();
     });
+  }
+
+  factory AudioController.setupAudioController({
+    required EventBus eventBus,
+    required DownloadTrackRepository downloadTrackRepository,
+    required PlayerTrackerManager playerTrackerManager,
+  }) {
+    _audioController.downloadTrackRepository = downloadTrackRepository;
+    _audioController.playerTrackerManager = playerTrackerManager;
+
+    eventBus.on<EditTrackEvent>().listen((event) {
+      final newTrack = event.updatedTrack;
+
+      _audioController.updateTrack(newTrack);
+    });
+
+    return _audioController;
   }
 
   final SharedPreferencesAsync _asyncPrefs = SharedPreferencesAsync();
@@ -114,8 +132,9 @@ class AudioController extends BaseAudioHandler {
       audioControllerLogger.d("$index : ${track.title}");
     }
 
-    audioControllerLogger
-        .d("\n---------------------------------------------\n");
+    audioControllerLogger.d(
+      "\n---------------------------------------------\n",
+    );
   }
 
   Future<void> restoreLastState() async {
@@ -276,18 +295,17 @@ class AudioController extends BaseAudioHandler {
       pause();
     }
 
-    player.setLoopMode(const {
-      AudioServiceRepeatMode.none: MelodinkLoopMode.none,
-      AudioServiceRepeatMode.all: MelodinkLoopMode.all,
-      AudioServiceRepeatMode.one: MelodinkLoopMode.one,
-    }[repeatMode]!);
+    player.setLoopMode(
+      const {
+        AudioServiceRepeatMode.none: MelodinkLoopMode.none,
+        AudioServiceRepeatMode.all: MelodinkLoopMode.all,
+        AudioServiceRepeatMode.one: MelodinkLoopMode.one,
+      }[repeatMode]!,
+    );
 
     await _updatePlaylistTracks(_previousTracks.length - 1);
 
-    await _asyncPrefs.setString(
-      "audioPlayerLastLoopState",
-      repeatMode.name,
-    );
+    await _asyncPrefs.setString("audioPlayerLastLoopState", repeatMode.name);
   }
 
   Future<void> toogleShufle() async {
@@ -309,7 +327,7 @@ class AudioController extends BaseAudioHandler {
     });
   }
 
-  setVolume(double volume) {
+  void setVolume(double volume) {
     player.setVolume(volume.clamp(0, 100) / 100.0);
   }
 
@@ -543,8 +561,10 @@ class AudioController extends BaseAudioHandler {
     );
   }
 
-  Future<void> _updatePlaylistTracks(int currentTrackIndex,
-      {bool updatePlayerTracks = true}) async {
+  Future<void> _updatePlaylistTracks(
+    int currentTrackIndex, {
+    bool updatePlayerTracks = true,
+  }) async {
     await playlistTracksMutex.protect(() async {
       final playerState = player.getCurrentPlayerState();
 
@@ -607,7 +627,7 @@ class AudioController extends BaseAudioHandler {
 
   DateTime _lastUpdatePlayerTracks = DateTime.fromMillisecondsSinceEpoch(0);
 
-  updatePlayerQuality() async {
+  Future<void> updatePlayerQuality() async {
     // AudioQuality
     final config = await SettingsRepository().getSettings();
 
@@ -623,7 +643,7 @@ class AudioController extends BaseAudioHandler {
     player.setQuality(currentAudioQuality);
   }
 
-  updatePlayerEqualizer() async {
+  Future<void> updatePlayerEqualizer() async {
     final config = await SettingsRepository().getSettings();
 
     await player.setEqualizer(config.equalizer.enabled, config.equalizer.bands);
@@ -738,10 +758,7 @@ class AudioController extends BaseAudioHandler {
 
   void audioChanged(int pos) {
     audioChangedDebouncer.run(() async {
-      await _updatePlaylistTracks(
-        pos,
-        updatePlayerTracks: true,
-      );
+      await _updatePlaylistTracks(pos, updatePlayerTracks: true);
     });
   }
 
@@ -756,13 +773,8 @@ class AudioController extends BaseAudioHandler {
   Future<void> _updatePlaybackState({shouldDoubleCheck = true}) async {
     if (shouldStop) {
       final newState = playbackState.value.copyWith(
-        controls: [
-          MediaControl.skipToPrevious,
-          MediaControl.skipToNext,
-        ],
-        systemActions: const {
-          MediaAction.seek,
-        },
+        controls: [MediaControl.skipToPrevious, MediaControl.skipToNext],
+        systemActions: const {MediaAction.seek},
         androidCompactActionIndices: const [0, 1, 2],
         processingState: AudioProcessingState.idle,
         playing: false,
@@ -797,9 +809,7 @@ class AudioController extends BaseAudioHandler {
         if (playerPlaying) MediaControl.pause else MediaControl.play,
         MediaControl.skipToNext,
       ],
-      systemActions: const {
-        MediaAction.seek,
-      },
+      systemActions: const {MediaAction.seek},
       androidCompactActionIndices: const [0, 1, 2],
       processingState: const {
         MelodinkProcessingState.idle: AudioProcessingState.idle,
@@ -810,10 +820,12 @@ class AudioController extends BaseAudioHandler {
         MelodinkProcessingState.error: AudioProcessingState.error,
       }[playerState]!,
       playing: _previousTracks.isEmpty ? false : playerPlaying,
-      updatePosition:
-          Duration(microseconds: (playerPosition * 1000000).round()),
-      bufferedPosition:
-          Duration(microseconds: (playerBufferedPosition * 1000000).round()),
+      updatePosition: Duration(
+        microseconds: (playerPosition * 1000000).round(),
+      ),
+      bufferedPosition: Duration(
+        microseconds: (playerBufferedPosition * 1000000).round(),
+      ),
       speed: 1.0,
       repeatMode: const {
         MelodinkLoopMode.none: AudioServiceRepeatMode.none,
@@ -845,33 +857,35 @@ class AudioController extends BaseAudioHandler {
       downloadedTrack = await getDownloadedTrackByTrackId(track.id);
     }
 
-    mediaItem.add(track != null
-        ? MediaItem(
-            id: "${track.id}",
-            album: track.albums.map((album) => album.name).join(", "),
-            title: track.title,
-            artist: track.artists.map((artist) => artist.name).join(", "),
-            duration: track.duration,
-            artUri: downloadedTrack?.getCoverUri() ??
-                track.getCompressedCoverUri(
-                  TrackCompressedCoverQuality.medium,
-                ),
-            artHeaders: {
-              'Cookie': AppApi().generateCookieHeader(),
-            },
-          )
-        : null);
+    mediaItem.add(
+      track != null
+          ? MediaItem(
+              id: "${track.id}",
+              album: track.albums.map((album) => album.name).join(", "),
+              title: track.title,
+              artist: track.artists.map((artist) => artist.name).join(", "),
+              duration: track.duration,
+              artUri:
+                  downloadedTrack?.getCoverUri() ??
+                  track.getCompressedCoverUri(
+                    TrackCompressedCoverQuality.medium,
+                  ),
+              artHeaders: {'Cookie': AppApi().generateCookieHeader()},
+            )
+          : null,
+    );
 
     // Be sure current Player State is up to date in case of strange lag
     if (shouldDoubleCheck) {
-      Future.delayed(const Duration(milliseconds: 10)).then(
-        (_) => _updatePlaybackState(shouldDoubleCheck: false),
-      );
+      Future.delayed(
+        const Duration(milliseconds: 10),
+      ).then((_) => _updatePlaybackState(shouldDoubleCheck: false));
     }
   }
 
-  final BehaviorSubject<List<Track>> previousTracks =
-      BehaviorSubject.seeded([]);
+  final BehaviorSubject<List<Track>> previousTracks = BehaviorSubject.seeded(
+    [],
+  );
 
   final BehaviorSubject<List<Track>> queueTracks = BehaviorSubject.seeded([]);
 
@@ -879,8 +893,9 @@ class AudioController extends BaseAudioHandler {
 
   final BehaviorSubject<Track?> currentTrack = BehaviorSubject.seeded(null);
 
-  final BehaviorSubject<String?> playerTracksFrom =
-      BehaviorSubject.seeded(null);
+  final BehaviorSubject<String?> playerTracksFrom = BehaviorSubject.seeded(
+    null,
+  );
 
   void _updateUiTrackLists() {
     previousTracks.add(List.from(_previousTracks));
@@ -892,7 +907,7 @@ class AudioController extends BaseAudioHandler {
     currentTrack.add(_previousTracks.lastOrNull);
   }
 
-  updateTrack(Track newTrack) async {
+  Future<void> updateTrack(Track newTrack) async {
     await playlistTracksMutex.protect(() async {
       for (final entry in _previousTracks.indexed) {
         if (entry.$2.id == newTrack.id) {
@@ -915,33 +930,55 @@ class AudioController extends BaseAudioHandler {
       _updateUiTrackLists();
     });
   }
-}
 
-final audioControllerProvider = Provider((ref) {
-  _audioController.downloadTrackRepository =
-      ref.watch(downloadTrackRepositoryProvider);
+  BehaviorSubject<AudioControllerPositionData>? _positionData;
 
-  _audioController.playerTrackerManager =
-      ref.watch(playerTrackerManagerProvider);
-
-  ref.listen(trackEditStreamProvider, (_, rawNewTrack) async {
-    final newTrack = rawNewTrack.valueOrNull?.track;
-
-    if (newTrack == null) {
-      return;
+  BehaviorSubject<AudioControllerPositionData> getPositionData() {
+    if (_positionData != null) {
+      return _positionData!;
     }
 
-    await _audioController.updateTrack(newTrack);
-  });
+    _positionData = BehaviorSubject();
 
-  return _audioController;
-});
+    Rx.combineLatest3<
+          Duration,
+          PlaybackState,
+          MediaItem?,
+          AudioControllerPositionData
+        >(AudioController.quickPosition, playbackState, mediaItem, (
+          position,
+          playerState,
+          duration,
+        ) {
+          return AudioControllerPositionData(
+            position: position,
+            bufferedPosition: playerState.bufferedPosition,
+            duration: duration?.duration ?? Duration.zero,
+          );
+        })
+        .listen(_positionData!.add);
+
+    return _positionData!;
+  }
+}
+
+class AudioControllerPositionData {
+  final Duration position;
+  final Duration bufferedPosition;
+  final Duration duration;
+
+  AudioControllerPositionData({
+    required this.position,
+    required this.bufferedPosition,
+    required this.duration,
+  });
+}
 
 class AudioSessionHandler {
   late AudioSession session;
   bool _playInterrupted = false;
 
-  setActive(bool active) {
+  void setActive(bool active) {
     // Miniaudio handle IOS
     if (Platform.isIOS) {
       return;

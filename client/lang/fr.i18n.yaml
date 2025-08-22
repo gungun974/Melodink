@@ -35,6 +35,9 @@ general:
   lyrics: "Paroles"
   details: "Détails"
   save: "Enregistrer"
+  select: "Sélectionner"
+  selectAlbums: "Sélectionner des albums"
+  selectArtists: "Sélectionner des artistes"
   create: "Créer"
   name: "Nom"
   description: "Description"
@@ -99,10 +102,6 @@ general:
   artistHasRole: "A un rôle dans"
 
   editTrack: "Modifier \"{title}\""
-  editTrackArtists: "Modification d'artistes"
-  editTrackAlbum: "Modification d'album"
-
-  editAlbumArtists: "Modification d'artistes"
 
   trackNb:
     one: "{n} Morceau"

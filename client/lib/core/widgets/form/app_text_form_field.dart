@@ -95,11 +95,13 @@ class AppTextFormField extends HookWidget {
                         maxLines: maxLines,
                         keyboardType: keyboardType,
                         decoration: InputDecoration(
-                          prefixIcon:
-                              prefixIcon != null ? buildPrefixIcon() : null,
+                          prefixIcon: prefixIcon != null
+                              ? buildPrefixIcon()
+                              : null,
                           prefixIconConstraints: const BoxConstraints(),
-                          suffixIcon:
-                              suffixIcon != null ? buildSuffixIcon() : null,
+                          suffixIcon: suffixIcon != null
+                              ? buildSuffixIcon()
+                              : null,
                           suffixIconConstraints: const BoxConstraints(),
                           isDense: true,
                           filled: false,
@@ -153,7 +155,7 @@ class AppTextFormField extends HookWidget {
                           ),
                         ),
                       ),
-                    )
+                    ),
                 ],
               ),
             ),
@@ -175,10 +177,7 @@ class AppTextFormField extends HookWidget {
       return iconWidget;
     }
 
-    return GestureDetector(
-      onTap: prefixIconOnPressed,
-      child: iconWidget,
-    );
+    return GestureDetector(onTap: prefixIconOnPressed, child: iconWidget);
   }
 
   Widget buildSuffixIcon() {
@@ -193,10 +192,7 @@ class AppTextFormField extends HookWidget {
       return iconWidget;
     }
 
-    return GestureDetector(
-      onTap: suffixIconOnPressed,
-      child: iconWidget,
-    );
+    return GestureDetector(onTap: suffixIconOnPressed, child: iconWidget);
   }
 }
 
@@ -246,7 +242,9 @@ class AppValueTextField extends HookWidget {
     final textController = useTextEditingController(text: value);
 
     useEffect(() {
-      textController.text = value;
+      if (textController.text != value) {
+        textController.text = value;
+      }
 
       return null;
     }, [value]);
@@ -273,7 +271,7 @@ class AppButtonValueTextField extends StatelessWidget {
   final String labelText;
   final String value;
 
-  final Future<Null> Function() onTap;
+  final Function() onTap;
 
   final Widget? prefixIcon;
   final Widget? suffixIcon;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/core/routes/provider.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/features/home/presentation/widgets/desktop_sidebar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/open_queue_control.dart';
@@ -8,18 +8,25 @@ import 'package:melodink_client/features/player/presentation/widgets/controls/vo
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_controls.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
+import 'package:provider/provider.dart';
 
-class DesktopPlayerBar extends ConsumerWidget {
+class DesktopPlayerBar extends HookWidget {
   const DesktopPlayerBar({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentUrl = ref.watch(appRouterCurrentUrl);
-    final scoringSystem = ref.watch(currentScoringSystemProvider);
+  Widget build(BuildContext context) {
+    final currentUrl = useValueListenable(
+      context.read<AppRouter>().currentUrlNotifier,
+    );
 
-    final currentPlayerBarPosition =
-        ref.watch(currentPlayerBarPositionProvider);
+    final scoringSystem = context
+        .watch<SettingsViewModel>()
+        .currentScoringSystem();
+
+    final currentPlayerBarPosition = context
+        .watch<SettingsViewModel>()
+        .currentPlayerBarPosition();
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
@@ -35,10 +42,7 @@ class DesktopPlayerBar extends ConsumerWidget {
           color: Colors.black,
           child: Row(
             children: [
-              SizedBox(
-                width: DesktopSidebar.width,
-                child: PlayerControls(),
-              ),
+              SizedBox(width: DesktopSidebar.width, child: PlayerControls()),
               Expanded(child: LargePlayerSeeker()),
               Padding(
                 padding: EdgeInsets.only(left: 12, right: 18),
@@ -53,7 +57,7 @@ class DesktopPlayerBar extends ConsumerWidget {
                     OpenQueueControl(),
                   ],
                 ),
-              )
+              ),
             ],
           ),
         ),

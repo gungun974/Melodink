@@ -1,8 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
+import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/tracker/domain/entities/played_track.dart';
 import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
@@ -36,38 +36,49 @@ class PlayedTrackRepository {
     );
   }
 
-  Future<List<PlayedTrack>> getLastPlayedTracks() async {
+  Future<List<Track>> getLastPlayedTracks() async {
     final db = await DatabaseService.getDatabase();
 
     final deviceId = await SettingsRepository().getDeviceId();
 
     try {
-      final data = db.select("""
-        SELECT *
-        FROM (
-          SELECT *,
-                LAG(track_id) OVER (
-                  ORDER BY finish_at ASC
-                ) AS prev_track_id
+      final data = db.select(
+        """
+        WITH merged AS (
+          SELECT track_id, finish_at
+          FROM played_tracks
+          UNION ALL
+          SELECT track_id, finish_at
+          FROM shared_played_tracks
+          WHERE device_id != ?
+        )
+        SELECT t.*
+        FROM tracks AS t
+        JOIN (
+          SELECT track_id, finish_at
           FROM (
-            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended, track_duration
-            FROM played_tracks
-
-            UNION ALL
-
-            SELECT id, track_id, start_at, finish_at, begin_at, ended_at, shuffle, track_ended, track_duration
-            FROM shared_played_tracks
-            WHERE device_id != ?
+            SELECT track_id,
+                  finish_at,
+                  LAG(track_id) OVER (ORDER BY finish_at ASC) AS prev_track_id
+            FROM merged
           )
-        ) AS ranked_tracks
-        WHERE track_id != prev_track_id OR prev_track_id IS NULL
-        ORDER BY finish_at DESC
-        LIMIT 999;
-      """, [deviceId]);
+          WHERE prev_track_id IS NULL OR track_id != prev_track_id
+          ORDER BY finish_at DESC
+          LIMIT 100
+        ) AS r
+          ON t.id = r.track_id
+        ORDER BY r.finish_at DESC;
+      """,
+        [deviceId],
+      );
 
-      return data.reversed
-          .map(PlayedTrackRepository.decodePlayedTrack)
-          .toList();
+      final tracks = data.map(TrackRepository.decodeTrack).toList();
+
+      for (final track in tracks) {
+        TrackRepository.loadTrackArtists(db, track);
+      }
+
+      return tracks;
     } catch (e) {
       databaseLogger.e(e);
       throw ServerUnknownException();
@@ -80,7 +91,8 @@ class PlayedTrackRepository {
     final deviceId = await SettingsRepository().getDeviceId();
 
     try {
-      final data = db.select("""
+      final data = db.select(
+        """
         WITH SegmentedTracks AS (SELECT *,
                                         CASE
                                             WHEN LEAD(begin_at, 1, begin_at)
@@ -135,7 +147,9 @@ class PlayedTrackRepository {
         HAVING SUM(ended_at - begin_at) > MIN(track_duration * 0.4, 30000.0)
         ORDER BY finish_at DESC
         LIMIT 1
-        """, [deviceId, deviceId, trackId]);
+        """,
+        [deviceId, deviceId, trackId],
+      );
 
       if (data.firstOrNull == null) {
         return null;
@@ -154,7 +168,8 @@ class PlayedTrackRepository {
     final deviceId = await SettingsRepository().getDeviceId();
 
     try {
-      final data = db.select("""
+      final data = db.select(
+        """
         WITH SegmentedTracks AS (SELECT *,
                                         CASE
                                             WHEN LEAD(begin_at, 1, begin_at)
@@ -205,7 +220,9 @@ class PlayedTrackRepository {
                                 HAVING SUM(ended_at - begin_at) > MIN(track_duration * 0.4, 30000.0))
         SELECT COUNT(*)
         FROM FilteredTracks order by finish_at desc;
-        """, [deviceId, deviceId, trackId]);
+        """,
+        [deviceId, deviceId, trackId],
+      );
 
       if (data.firstOrNull == null) {
         return 0;
@@ -290,9 +307,7 @@ class PlayedTrackRepository {
 
     try {
       for (final row in data) {
-        results.add(
-          PlayedTrackRepository.decodeTrackHistoryInfo(row),
-        );
+        results.add(PlayedTrackRepository.decodeTrackHistoryInfo(row));
       }
     } catch (e) {
       databaseLogger.e(e);
@@ -339,7 +354,9 @@ class PlayedTrackRepository {
     final db = await DatabaseService.getDatabase();
 
     final data = db.select(
-        "SELECT * FROM track_history_info_cache WHERE track_id = ?", [trackId]);
+      "SELECT * FROM track_history_info_cache WHERE track_id = ?",
+      [trackId],
+    );
 
     if (data.isEmpty) {
       return updateTrackHistoryInfoCache(trackId);
@@ -358,8 +375,9 @@ class PlayedTrackRepository {
 
     final info = TrackHistoryInfo(
       trackId: trackId,
-      lastPlayedDate:
-          (await getLastFinishedPlayedTrackByTrackId(trackId))?.finishAt,
+      lastPlayedDate: (await getLastFinishedPlayedTrackByTrackId(
+        trackId,
+      ))?.finishAt,
       playedCount: await getTrackPlayedCountByTrackId(trackId),
       computed: true,
     );
@@ -417,7 +435,7 @@ class PlayedTrackRepository {
     }
   }
 
-  loadTrackHistoryIntoTracks(List<Track> tracks) async {
+  Future<void> loadTrackHistoryIntoTracks(List<Track> tracks) async {
     final infos = await getMultipleTracksHistoryInfo(
       tracks.map((track) => track.id).toList(),
     );
@@ -425,14 +443,8 @@ class PlayedTrackRepository {
     for (final (index, track) in tracks.indexed) {
       final infoIndex = infos.indexWhere((info) => info.trackId == track.id);
       if (infoIndex >= 0) {
-        tracks[index] = track.copyWith(
-          historyInfo: () => infos[infoIndex],
-        );
+        tracks[index] = track.copyWith(historyInfo: () => infos[infoIndex]);
       }
     }
   }
 }
-
-final playedTrackRepositoryProvider = Provider(
-  (ref) => PlayedTrackRepository(),
-);

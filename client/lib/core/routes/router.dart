@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:melodink_client/core/routes/provider.dart';
 import 'package:melodink_client/core/routes/routes.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
-import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
-import 'package:melodink_client/features/auth/domain/providers/server_setup_provider.dart';
+import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:melodink_client/features/auth/presentation/viewmodels/server_setup_viewmodel.dart';
 import 'package:melodink_client/features/home/presentation/widgets/desktop_sidebar.dart';
 import 'package:melodink_client/features/home/presentation/widgets/mobile_navbar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/desktop_player_bar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_desktop_player_bar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/mobile_current_track.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/current_download_info.dart';
+import 'package:provider/provider.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -29,7 +28,7 @@ class GoRouterObserver extends NavigatorObserver {
 
   GoRouterObserver({required this.setCurrentUrl});
 
-  setRouter(GoRouter router) {
+  void setRouter(GoRouter router) {
     this.router = router;
   }
 
@@ -72,214 +71,221 @@ class GoRouterObserver extends NavigatorObserver {
   }
 }
 
-final appRouterProvider = Provider((ref) {
-  setCurrentUrl(String? url) {
-    Future(() {
-      ref.read(appRouterCurrentUrl.notifier).state = url;
-    });
-  }
+class AppRouter {
+  late GoRouter router;
 
-  final routeObserver1 = GoRouterObserver(setCurrentUrl: setCurrentUrl);
-  final routeObserver2 = GoRouterObserver(setCurrentUrl: setCurrentUrl);
-  final routeObserver3 = GoRouterObserver(setCurrentUrl: setCurrentUrl);
+  final currentUrlNotifier = ValueNotifier<String?>(null);
 
-  final router = GoRouter(
-    initialLocation: "/",
-    navigatorKey: _rootNavigatorKey,
-    observers: [routeObserver1],
-    redirect: (context, state) async {
-      setCurrentUrl(state.matchedLocation);
+  AppRouter() {
+    setCurrentUrl(String? url) {
+      Future(() {
+        currentUrlNotifier.value = url;
+      });
+    }
 
-      final isServerConfigured = ref.read(isServerConfiguredProvider);
+    final routeObserver1 = GoRouterObserver(setCurrentUrl: setCurrentUrl);
+    final routeObserver2 = GoRouterObserver(setCurrentUrl: setCurrentUrl);
+    final routeObserver3 = GoRouterObserver(setCurrentUrl: setCurrentUrl);
 
-      if (!isServerConfigured) {
-        return "/auth/serverSetup";
-      }
+    final router = GoRouter(
+      initialLocation: "/",
+      navigatorKey: _rootNavigatorKey,
+      observers: [routeObserver1],
+      redirect: (context, state) async {
+        setCurrentUrl(state.matchedLocation);
 
-      final isAuthConfigured =
-          await ref.read(isUserAuthenticatedProvider.future);
+        final isServerConfigured = context
+            .read<ServerSetupViewModel>()
+            .getIsServerConfigured();
 
-      if (!isAuthConfigured) {
-        switch (state.matchedLocation) {
-          case "/auth/serverSetup":
-            return null;
-          case "/auth/register":
-            return null;
-          default:
-            return "/auth/login";
+        if (!isServerConfigured) {
+          return "/auth/serverSetup";
         }
-      }
 
-      return null;
-    },
-    routes: [
-      ShellRoute(
-        navigatorKey: _globalShellNavigatorKey,
-        observers: [routeObserver2],
-        builder: (context, state, child) {
-          return AppScreenTypeLayoutBuilders(
-            mobile: (BuildContext context) => child,
-            desktop: (BuildContext context) {
-              return Consumer(
-                builder: (context, ref, _) {
-                  final currentPlayerBarPosition =
-                      ref.watch(currentPlayerBarPositionProvider);
-                  return Scaffold(
-                    resizeToAvoidBottomInset: false,
-                    body: Column(
-                      children: [
-                        if (currentPlayerBarPosition ==
-                            AppSettingPlayerBarPosition.top)
-                          RepaintBoundary(
-                            child: const DesktopPlayerBar(),
-                          ),
-                        Expanded(
-                          child: Stack(
-                            children: [
-                              child,
-                              const Align(
-                                alignment: Alignment.bottomRight,
-                                child: CurrentDownloadInfo(),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (currentPlayerBarPosition ==
-                            AppSettingPlayerBarPosition.bottom)
-                          RepaintBoundary(
-                            child: const DesktopPlayerBar(),
-                          ),
-                        if (currentPlayerBarPosition ==
-                            AppSettingPlayerBarPosition.center)
-                          RepaintBoundary(
-                            child: const LargeDesktopPlayerBar(),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
-        routes: [
-          ShellRoute(
-            observers: [routeObserver3],
-            navigatorKey: _shellNavigatorKey,
-            builder: (context, state, child) {
-              return AppScreenTypeLayoutBuilders(
-                desktop: (BuildContext context) {
-                  return Stack(
+        final authViewModel = context.read<AuthViewModel>();
+
+        await authViewModel.waitForLoading();
+
+        final isAuthConfigured = authViewModel.getIsUserAuthenticated();
+
+        if (!isAuthConfigured) {
+          switch (state.matchedLocation) {
+            case "/auth/serverSetup":
+              return null;
+            case "/auth/register":
+              return null;
+            default:
+              return "/auth/login";
+          }
+        }
+
+        return null;
+      },
+      routes: [
+        ShellRoute(
+          navigatorKey: _globalShellNavigatorKey,
+          observers: [routeObserver2],
+          builder: (context, state, child) {
+            return AppScreenTypeLayoutBuilders(
+              mobile: (BuildContext context) => child,
+              desktop: (BuildContext context) {
+                final currentPlayerBarPosition = context
+                    .watch<SettingsViewModel>()
+                    .currentPlayerBarPosition();
+                return Scaffold(
+                  resizeToAvoidBottomInset: false,
+                  body: Column(
                     children: [
-                      const GradientBackground(),
-                      Scaffold(
-                        resizeToAvoidBottomInset: false,
-                        backgroundColor: Colors.transparent,
-                        body: Stack(
+                      if (currentPlayerBarPosition ==
+                          AppSettingPlayerBarPosition.top)
+                        RepaintBoundary(child: const DesktopPlayerBar()),
+                      Expanded(
+                        child: Stack(
                           children: [
-                            Container(
-                              color: const Color.fromRGBO(0, 0, 0, 0.15),
-                              height: MediaQuery.paddingOf(context).top,
-                            ),
-                            SafeArea(
-                              top: true,
-                              bottom: false,
-                              child: NotificationListener<
-                                  OverscrollIndicatorNotification>(
-                                onNotification: (OverscrollIndicatorNotification
-                                    overscroll) {
-                                  overscroll.disallowIndicator();
-                                  return true;
-                                },
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const DesktopSidebar(),
-                                    Expanded(
-                                      child: child,
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            child,
+                            const Align(
+                              alignment: Alignment.bottomRight,
+                              child: CurrentDownloadInfo(),
                             ),
                           ],
                         ),
                       ),
+                      if (currentPlayerBarPosition ==
+                          AppSettingPlayerBarPosition.bottom)
+                        RepaintBoundary(child: const DesktopPlayerBar()),
+                      if (currentPlayerBarPosition ==
+                          AppSettingPlayerBarPosition.center)
+                        RepaintBoundary(child: const LargeDesktopPlayerBar()),
                     ],
-                  );
-                },
-                mobile: (BuildContext context) {
-                  return Stack(
-                    children: [
-                      const GradientBackground(),
-                      Scaffold(
-                        resizeToAvoidBottomInset: false,
-                        backgroundColor: Colors.transparent,
-                        body: SafeArea(
-                          child: NotificationListener<
-                              OverscrollIndicatorNotification>(
-                            onNotification:
-                                (OverscrollIndicatorNotification overscroll) {
-                              overscroll.disallowIndicator();
-                              return true;
-                            },
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: Stack(
-                                    children: [
-                                      child,
-                                      const Align(
-                                        alignment: Alignment.bottomRight,
-                                        child: CurrentDownloadInfo(),
+                  ),
+                );
+              },
+            );
+          },
+          routes: [
+            ShellRoute(
+              observers: [routeObserver3],
+              navigatorKey: _shellNavigatorKey,
+              builder: (context, state, child) {
+                return AppScreenTypeLayoutBuilders(
+                  desktop: (BuildContext context) {
+                    return Stack(
+                      children: [
+                        const GradientBackground(),
+                        Scaffold(
+                          resizeToAvoidBottomInset: false,
+                          backgroundColor: Colors.transparent,
+                          body: Stack(
+                            children: [
+                              Container(
+                                color: const Color.fromRGBO(0, 0, 0, 0.15),
+                                height: MediaQuery.paddingOf(context).top,
+                              ),
+                              SafeArea(
+                                top: true,
+                                bottom: false,
+                                child:
+                                    NotificationListener<
+                                      OverscrollIndicatorNotification
+                                    >(
+                                      onNotification:
+                                          (
+                                            OverscrollIndicatorNotification
+                                            overscroll,
+                                          ) {
+                                            overscroll.disallowIndicator();
+                                            return true;
+                                          },
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const DesktopSidebar(),
+                                          Expanded(child: child),
+                                        ],
                                       ),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                  mobile: (BuildContext context) {
+                    return Stack(
+                      children: [
+                        const GradientBackground(),
+                        Scaffold(
+                          resizeToAvoidBottomInset: false,
+                          backgroundColor: Colors.transparent,
+                          body: SafeArea(
+                            child:
+                                NotificationListener<
+                                  OverscrollIndicatorNotification
+                                >(
+                                  onNotification:
+                                      (
+                                        OverscrollIndicatorNotification
+                                        overscroll,
+                                      ) {
+                                        overscroll.disallowIndicator();
+                                        return true;
+                                      },
+                                  child: Column(
+                                    children: [
+                                      Expanded(
+                                        child: Stack(
+                                          children: [
+                                            child,
+                                            const Align(
+                                              alignment: Alignment.bottomRight,
+                                              child: CurrentDownloadInfo(),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const MobileCurrentTrackInfo(),
                                     ],
                                   ),
                                 ),
-                                const MobileCurrentTrackInfo(),
-                              ],
-                            ),
+                          ),
+                          bottomNavigationBar: Theme(
+                            data: Theme.of(
+                              context,
+                            ).copyWith(splashColor: Colors.transparent),
+                            child: const MobileNavbar(),
                           ),
                         ),
-                        bottomNavigationBar: Theme(
-                          data: Theme.of(context).copyWith(
-                            splashColor: Colors.transparent,
-                          ),
-                          child: const MobileNavbar(),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            routes: [
-              StatefulShellRoute.indexedStack(
-                builder: (context, state, child) {
-                  setCurrentUrl(GoRouter.of(context).location);
-                  return child;
-                },
-                branches: [
-                  StatefulShellBranch(
-                    routes: appRoutesWithShell,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          ...appRoutesWithDesktopPlayerShell
-        ],
-      ),
-      ...appRoutesWithNoShell
-    ],
-  );
+                      ],
+                    );
+                  },
+                );
+              },
+              routes: [
+                StatefulShellRoute.indexedStack(
+                  builder: (context, state, child) {
+                    setCurrentUrl(GoRouter.of(context).location);
+                    return child;
+                  },
+                  branches: [StatefulShellBranch(routes: appRoutesWithShell)],
+                ),
+              ],
+            ),
+            ...appRoutesWithDesktopPlayerShell,
+          ],
+        ),
+        ...appRoutesWithNoShell,
+      ],
+    );
 
-  routeObserver1.setRouter(router);
-  routeObserver2.setRouter(router);
-  routeObserver3.setRouter(router);
+    routeObserver1.setRouter(router);
+    routeObserver2.setRouter(router);
+    routeObserver3.setRouter(router);
 
-  return router;
-});
+    this.router = router;
+  }
+}
 
 extension GoRouterLocation on GoRouter {
   String? get location {

@@ -1,37 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
-import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
-import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
-import 'package:melodink_client/features/track/domain/providers/track_provider.dart';
-import 'package:melodink_client/features/track/presentation/widgets/all_track_filter_panel.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
+import 'package:melodink_client/features/track/presentation/viewmodels/tracks_viewmodel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class TracksPage extends HookConsumerWidget {
-  const TracksPage({
-    super.key,
-  });
+class TracksPage extends HookWidget {
+  const TracksPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
-
-    final tracks = ref.watch(allSortedTracksProvider).valueOrNull;
-    final searchTracks = ref.watch(allFilteredAlbumsTracksProvider).valueOrNull;
-
-    final isAutoScrollViewToCurrentTrackEnabled = ref.watch(
-      isAutoScrollViewToCurrentTrackEnabledProvider,
-    );
+  Widget build(BuildContext context) {
+    final isAutoScrollViewToCurrentTrackEnabled = context
+        .watch<SettingsViewModel>()
+        .isAutoScrollViewToCurrentTrackEnabled();
 
     final scrollController = useScrollController();
 
@@ -39,150 +29,124 @@ class TracksPage extends HookConsumerWidget {
 
     useAutoCloseContextMenuOnScroll(scrollController: scrollController);
 
-    if (searchTracks == null || tracks == null) {
-      return AppNavigationHeader(
-        title: AppScreenTypeLayoutBuilders(
-          mobile: (_) => const Text("Tracks"),
-        ),
-        child: Container(),
-      );
-    }
+    useEffect(() {
+      final loadTracks = context.read<TracksViewModel>().loadTracks;
 
-    return AppNavigationHeader(
-      title: AppScreenTypeLayoutBuilders(
-        mobile: (_) => const Text("Tracks"),
-      ),
-      child: AppScreenTypeLayoutBuilder(
-        builder: (context, size) {
-          final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
-          final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
+      Future(() {
+        loadTracks();
+      });
 
-          return Column(
-            children: [
-              if (size == AppScreenTypeLayout.desktop)
-                TracksPageSearchAndFilterHeader(
-                  maxWidth: maxWidth,
-                  padding: padding,
-                ),
-              Expanded(
-                child: CustomScrollView(
-                  key: scrollViewKey,
-                  controller: scrollController,
-                  slivers: [
-                    if (size == AppScreenTypeLayout.mobile)
-                      SliverToBoxAdapter(
-                        child: TracksPageSearchAndFilterHeader(
+      return null;
+    }, []);
+
+    return Stack(
+      children: [
+        AppNavigationHeader(
+          title: AppScreenTypeLayoutBuilders(
+            mobile: (_) => const Text("Tracks"),
+          ),
+          child: AppScreenTypeLayoutBuilder(
+            builder: (context, size) {
+              final maxWidth = size == AppScreenTypeLayout.desktop ? 1200 : 512;
+              final padding = size == AppScreenTypeLayout.desktop ? 24.0 : 16.0;
+
+              return Column(
+                children: [
+                  if (size == AppScreenTypeLayout.desktop)
+                    TracksPageSearchHeader(padding: padding),
+                  Expanded(
+                    child: CustomScrollView(
+                      key: scrollViewKey,
+                      controller: scrollController,
+                      slivers: [
+                        if (size == AppScreenTypeLayout.mobile)
+                          SliverToBoxAdapter(
+                            child: TracksPageSearchHeader(padding: padding),
+                          ),
+                        SliverContainer(
                           maxWidth: maxWidth,
-                          padding: padding,
+                          padding: EdgeInsets.only(
+                            left: padding,
+                            right: padding,
+                          ),
+                          sliver: StickyDesktopTrackHeader(
+                            modules: [
+                              DesktopTrackModule.title,
+                              DesktopTrackModule.album,
+                              DesktopTrackModule.lastPlayed,
+                              DesktopTrackModule.playedCount,
+                              DesktopTrackModule.dateAdded,
+                              DesktopTrackModule.quality,
+                              DesktopTrackModule.duration,
+                              DesktopTrackModule.score,
+                              DesktopTrackModule.moreActions,
+                            ],
+                            scrollController: scrollController,
+                            scrollViewKey: scrollViewKey,
+                          ),
                         ),
-                      ),
-                    SliverContainer(
-                      maxWidth: maxWidth,
-                      padding: EdgeInsets.only(
-                        left: padding,
-                        right: padding,
-                      ),
-                      sliver: StickyDesktopTrackHeader(
-                        modules: [
-                          DesktopTrackModule.title,
-                          DesktopTrackModule.album,
-                          DesktopTrackModule.lastPlayed,
-                          DesktopTrackModule.playedCount,
-                          DesktopTrackModule.dateAdded,
-                          DesktopTrackModule.quality,
-                          DesktopTrackModule.duration,
-                          DesktopTrackModule.score,
-                          DesktopTrackModule.moreActions,
-                        ],
-                        scrollController: scrollController,
-                        scrollViewKey: scrollViewKey,
-                      ),
+                        SliverContainer(
+                          maxWidth: maxWidth,
+                          padding: EdgeInsets.only(
+                            left: padding,
+                            right: padding,
+                          ),
+                          sliver: Consumer<TracksViewModel>(
+                            builder: (context, viewModel, _) {
+                              return TrackList(
+                                tracks: viewModel.searchTracks,
+                                size: size,
+                                modules: const [
+                                  DesktopTrackModule.title,
+                                  DesktopTrackModule.album,
+                                  DesktopTrackModule.lastPlayed,
+                                  DesktopTrackModule.playedCount,
+                                  DesktopTrackModule.dateAdded,
+                                  DesktopTrackModule.quality,
+                                  DesktopTrackModule.duration,
+                                  DesktopTrackModule.score,
+                                  DesktopTrackModule.moreActions,
+                                ],
+                                showImage: true,
+                                scrollController: scrollController,
+                                autoScrollToCurrentTrack:
+                                    isAutoScrollViewToCurrentTrackEnabled,
+                                playCallback: (track, _) =>
+                                    viewModel.playTrack(track),
+                              );
+                            },
+                          ),
+                        ),
+                        const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                      ],
                     ),
-                    SliverContainer(
-                      maxWidth: maxWidth,
-                      padding: EdgeInsets.only(
-                        left: padding,
-                        right: padding,
-                      ),
-                      sliver: TrackList(
-                        tracks: searchTracks,
-                        size: size,
-                        modules: const [
-                          DesktopTrackModule.title,
-                          DesktopTrackModule.album,
-                          DesktopTrackModule.lastPlayed,
-                          DesktopTrackModule.playedCount,
-                          DesktopTrackModule.dateAdded,
-                          DesktopTrackModule.quality,
-                          DesktopTrackModule.duration,
-                          DesktopTrackModule.score,
-                          DesktopTrackModule.moreActions,
-                        ],
-                        showImage: true,
-                        scrollController: scrollController,
-                        autoScrollToCurrentTrack:
-                            isAutoScrollViewToCurrentTrackEnabled,
-                        playCallback: (track, _) async {
-                          final index = tracks.indexWhere(
-                            (trackd) => trackd.id == track.id,
-                          );
-
-                          if (index < 0) {
-                            return;
-                          }
-
-                          await audioController.loadTracks(
-                            tracks,
-                            startAt: index,
-                            source: t.general.playingFromAllTracks,
-                          );
-                        },
-                      ),
-                    ),
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: 8),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
 
-class TracksPageSearchAndFilterHeader extends HookConsumerWidget {
-  const TracksPageSearchAndFilterHeader({
-    super.key,
-    required this.maxWidth,
-    required this.padding,
-  });
+class TracksPageSearchHeader extends StatelessWidget {
+  const TracksPageSearchHeader({super.key, required this.padding});
 
-  final int maxWidth;
   final double padding;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final searchTextController =
-        useTextEditingController(text: ref.watch(allTracksSearchInputProvider));
-
-    final showFilterPanel = useState(false);
-
+  Widget build(BuildContext context) {
     return AppScreenTypeLayoutBuilder(
       builder: (context, size) {
         final searchField = AppSearchFormField(
-          controller: searchTextController,
-          onChanged: (value) =>
-              ref.read(allTracksSearchInputProvider.notifier).state = value,
+          controller: context.read<TracksViewModel>().searchTextController,
+          onChanged: (_) => context.read<TracksViewModel>().updateSearch(),
         );
 
         return Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: padding,
-            vertical: 16,
-          ),
+          padding: EdgeInsets.symmetric(horizontal: padding, vertical: 16),
           child: Column(
             children: [
               if (size == AppScreenTypeLayout.mobile)
@@ -195,60 +159,17 @@ class TracksPageSearchAndFilterHeader extends HookConsumerWidget {
                     : MainAxisAlignment.start,
                 children: [
                   AppButton(
-                    text: t.general.filter,
-                    type: showFilterPanel.value
-                        ? AppButtonType.primary
-                        : AppButtonType.neutral,
-                    onPressed: () {
-                      if (showFilterPanel.value) {
-                        ref
-                            .read(allTracksArtistsSelectedOptionsProvider
-                                .notifier)
-                            .state = [];
-
-                        ref
-                            .read(
-                                allTracksAlbumsSelectedOptionsProvider.notifier)
-                            .state = [];
-                      }
-
-                      showFilterPanel.value = !showFilterPanel.value;
-                    },
-                  ),
-                  const SizedBox(width: 16),
-                  AppButton(
                     text: t.actions.viewAll,
                     type: AppButtonType.primary,
-                    onPressed: () {
-                      searchTextController.clear();
-
-                      ref.read(allTracksSearchInputProvider.notifier).state =
-                          "";
-
-                      ref
-                          .read(
-                              allTracksArtistsSelectedOptionsProvider.notifier)
-                          .state = [];
-
-                      ref
-                          .read(allTracksAlbumsSelectedOptionsProvider.notifier)
-                          .state = [];
-                    },
+                    onPressed: () =>
+                        context.read<TracksViewModel>().clearSearch(),
                   ),
                   if (size == AppScreenTypeLayout.desktop)
                     const SizedBox(width: 24),
                   if (size == AppScreenTypeLayout.desktop)
-                    Expanded(
-                      child: searchField,
-                    ),
+                    Expanded(child: searchField),
                 ],
               ),
-              if (showFilterPanel.value)
-                MaxContainer(
-                  maxWidth: maxWidth,
-                  padding: EdgeInsets.zero,
-                  child: const AllTrackFilterPanel(),
-                ),
             ],
           ),
         );

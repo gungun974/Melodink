@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/network/network_info.dart';
-import 'package:melodink_client/features/auth/domain/providers/auth_provider.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class ServerInfo extends ConsumerWidget {
+class ServerInfo extends StatelessWidget {
   const ServerInfo({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(loggedUserProvider).valueOrNull;
+  Widget build(BuildContext context) {
+    final user = context.watch<AuthViewModel>().getLoggedUser();
 
-    final deviceId = ref.watch(deviceIdProvider).valueOrNull;
+    final deviceId = context.watch<SettingsViewModel>().deviceId();
 
-    final isServerReachable = ref.watch(isServerReachableProvider);
+    final isServerReachable = context.select<NetworkInfo, bool>(
+      (networkInfo) => networkInfo.isServerRecheable(),
+    );
 
     return Container(
       decoration: BoxDecoration(

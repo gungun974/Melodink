@@ -3,27 +3,27 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
-import 'package:melodink_client/features/auth/domain/providers/server_setup_provider.dart';
+import 'package:melodink_client/features/auth/presentation/viewmodels/server_setup_viewmodel.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class SelectServerPage extends HookConsumerWidget {
+class SelectServerPage extends HookWidget {
   const SelectServerPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final serverSetup = ref.watch(serverSetupNotifierProvider);
-
+  Widget build(BuildContext context) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
 
     final autoValidate = useState(false);
 
     String hostTextControllerInitialValue = "";
+
+    final serverSetup = context.watch<ServerSetupViewModel>().state;
 
     if (serverSetup is ServerSetupConfigured) {
       hostTextControllerInitialValue = serverSetup.serverUrl;
@@ -45,7 +45,10 @@ class SelectServerPage extends HookConsumerWidget {
                       "assets/icons/arrow-left.svg",
                       width: 24,
                       height: 24,
-                      color: Colors.white,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
                     ),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
@@ -102,21 +105,19 @@ class SelectServerPage extends HookConsumerWidget {
                           autovalidateMode: autoValidate.value
                               ? AutovalidateMode.always
                               : AutovalidateMode.disabled,
-                          validator: FormBuilderValidators.compose(
-                            [
-                              FormBuilderValidators.required(
-                                errorText: t.validators.fieldShouldBeFilled(
-                                  field: t.general.host,
-                                ),
+                          validator: FormBuilderValidators.compose([
+                            FormBuilderValidators.required(
+                              errorText: t.validators.fieldShouldBeFilled(
+                                field: t.general.host,
                               ),
-                              FormBuilderValidators.url(
-                                protocols: ["http", "https"],
-                                errorText: t.validators.fieldShouldBeAValidUrl(
-                                  field: t.general.host,
-                                ),
+                            ),
+                            FormBuilderValidators.url(
+                              protocols: ["http", "https"],
+                              errorText: t.validators.fieldShouldBeAValidUrl(
+                                field: t.general.host,
                               ),
-                            ],
-                          ),
+                            ),
+                          ]),
                         ),
                         const SizedBox(height: 12.0),
                         AppButton(
@@ -133,10 +134,8 @@ class SelectServerPage extends HookConsumerWidget {
                               return;
                             }
 
-                            final serverSetupNotifier =
-                                ref.read(serverSetupNotifierProvider.notifier);
-
-                            final success = await serverSetupNotifier
+                            final success = await context
+                                .read<ServerSetupViewModel>()
                                 .checkAndSetServerUrl(hostTextController.text);
 
                             if (!success) {

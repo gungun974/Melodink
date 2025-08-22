@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/features/player/domain/providers/audio_provider.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:melodink_client/core/hooks/use_behavior_subject_stream.dart';
+import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/open_queue_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/player_play_pause_control.dart';
@@ -11,15 +12,22 @@ import 'package:melodink_client/features/player/presentation/widgets/controls/pl
 import 'package:melodink_client/features/player/presentation/widgets/controls/volume_control.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_player_seeker.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
-import 'package:melodink_client/features/settings/domain/providers/settings_provider.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
+import 'package:provider/provider.dart';
 
-class SidePlayerBar extends ConsumerWidget {
+class SidePlayerBar extends HookWidget {
   const SidePlayerBar({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentTrack = ref.watch(currentTrackStreamProvider).valueOrNull;
-    final scoringSystem = ref.watch(currentScoringSystemProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
+
+    final currentTrack = useBehaviorSubjectStream(
+      audioController.currentTrack,
+    ).data;
+    final scoringSystem = context
+        .watch<SettingsViewModel>()
+        .currentScoringSystem();
 
     if (currentTrack == null) {
       return const SizedBox.shrink();
@@ -35,9 +43,7 @@ class SidePlayerBar extends ConsumerWidget {
             padding: EdgeInsets.symmetric(horizontal: 8.0),
             child: Center(
               child: IntrinsicHeight(
-                child: LargePlayerSeeker(
-                  displayDurationsInBottom: true,
-                ),
+                child: LargePlayerSeeker(displayDurationsInBottom: true),
               ),
             ),
           ),
@@ -47,21 +53,11 @@ class SidePlayerBar extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                PlayerShuffleControl(
-                  largeControlButton: false,
-                ),
-                PlayerSkipToPreviousControl(
-                  largeControlButton: true,
-                ),
-                PlayerPlayPauseControl(
-                  largeControlButton: true,
-                ),
-                PlayerSkipToNextControl(
-                  largeControlButton: true,
-                ),
-                PlayerRepeatControl(
-                  largeControlButton: false,
-                ),
+                PlayerShuffleControl(largeControlButton: false),
+                PlayerSkipToPreviousControl(largeControlButton: true),
+                PlayerPlayPauseControl(largeControlButton: true),
+                PlayerSkipToNextControl(largeControlButton: true),
+                PlayerRepeatControl(largeControlButton: false),
               ],
             ),
           ),

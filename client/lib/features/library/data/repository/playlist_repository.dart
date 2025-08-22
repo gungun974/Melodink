@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
@@ -52,17 +51,21 @@ class PlaylistRepository {
     );
   }
 
-  static loadPlaylistTracks(
+  static void loadPlaylistTracks(
     Database db,
     String applicationSupportDirectory,
     Playlist playlist,
   ) {
     final trackIds = List<int>.from(
       jsonDecode(
-        (db.select('''
+        (db.select(
+              '''
         SELECT tracks FROM playlists
         WHERE id = ?
-      ''', [playlist.id])).first["tracks"] as String,
+      ''',
+              [playlist.id],
+            )).first["tracks"]
+            as String,
       ),
     );
 
@@ -72,13 +75,16 @@ class PlaylistRepository {
 
     final placeholders = List.filled(trackIds.length, '?').join(', ');
 
-    final tracks = db.select('''
+    final tracks = db
+        .select('''
         SELECT * FROM tracks
         WHERE id IN ($placeholders)
         ORDER BY CASE id
             ${trackIds.indexed.map((entry) => "WHEN ${entry.$2} THEN ${entry.$1}").join(" ")}
         END;
-      ''', trackIds).map(TrackRepository.decodeTrack).toList();
+      ''', trackIds)
+        .map(TrackRepository.decodeTrack)
+        .toList();
 
     playlist.tracks
       ..clear
@@ -97,16 +103,18 @@ class PlaylistRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final playlists = (db.select("""
+      final playlists =
+          (db.select("""
         SELECT playlists.*, playlist_downloads.cover_file, playlist_downloads.playlist_id as download_id
         FROM playlists
         LEFT JOIN playlist_downloads
           ON playlist_downloads.playlist_id = playlists.id
         """))
-          .map(
-            (playlist) => decodePlaylist(applicationSupportDirectory, playlist),
-          )
-          .toList();
+              .map(
+                (playlist) =>
+                    decodePlaylist(applicationSupportDirectory, playlist),
+              )
+              .toList();
 
       return playlists;
     } catch (e) {
@@ -122,17 +130,22 @@ class PlaylistRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final playlist = (db.select("""
+      final playlist =
+          (db.select(
+                """
         SELECT playlists.*, playlist_downloads.cover_file, playlist_downloads.playlist_id as download_id
         FROM playlists
         LEFT JOIN playlist_downloads
           ON playlist_downloads.playlist_id = playlists.id
         WHERE id = ?
-        """, [id]))
-          .map(
-            (playlist) => decodePlaylist(applicationSupportDirectory, playlist),
-          )
-          .firstOrNull;
+        """,
+                [id],
+              ))
+              .map(
+                (playlist) =>
+                    decodePlaylist(applicationSupportDirectory, playlist),
+              )
+              .firstOrNull;
 
       if (playlist == null) {
         throw PlaylistNotFoundException();
@@ -149,28 +162,20 @@ class PlaylistRepository {
     }
   }
 
-  Future<Playlist> addPlaylistTracks(
-    int playlistId,
-    List<Track> tracks,
-  ) async {
+  Future<Playlist> addPlaylistTracks(int playlistId, List<Track> tracks) async {
     final playlist = await getPlaylistById(playlistId);
 
-    return await setPlaylistTracks(
-      playlist.id,
-      [...playlist.tracks, ...tracks],
-    );
+    return await setPlaylistTracks(playlist.id, [
+      ...playlist.tracks,
+      ...tracks,
+    ]);
   }
 
-  Future<Playlist> setPlaylistTracks(
-    int playlistId,
-    List<Track> tracks,
-  ) async {
+  Future<Playlist> setPlaylistTracks(int playlistId, List<Track> tracks) async {
     try {
       final response = await AppApi().dio.put(
         "/playlist/$playlistId/tracks",
-        data: {
-          "track_ids": tracks.map((track) => track.id).toList(),
-        },
+        data: {"track_ids": tracks.map((track) => track.id).toList()},
       );
 
       await syncRepository.performSync();
@@ -197,10 +202,7 @@ class PlaylistRepository {
     try {
       final response = await AppApi().dio.post(
         "/playlist",
-        data: {
-          "name": playlist.name,
-          "description": playlist.description,
-        },
+        data: {"name": playlist.name, "description": playlist.description},
       );
 
       await syncRepository.performSync();
@@ -222,8 +224,8 @@ class PlaylistRepository {
   Future<Playlist> duplicatePlaylist(int playlistId) async {
     try {
       final response = await AppApi().dio.post(
-            "/playlist/$playlistId/duplicate",
-          );
+        "/playlist/$playlistId/duplicate",
+      );
 
       await syncRepository.performSync();
 
@@ -249,10 +251,7 @@ class PlaylistRepository {
     try {
       final response = await AppApi().dio.put(
         "/playlist/${playlist.id}",
-        data: {
-          "name": playlist.name,
-          "description": playlist.description,
-        },
+        data: {"name": playlist.name, "description": playlist.description},
       );
 
       await syncRepository.performSync();
@@ -284,9 +283,9 @@ class PlaylistRepository {
 
     try {
       final response = await AppApi().dio.put(
-            "/playlist/$id/cover",
-            data: formData,
-          );
+        "/playlist/$id/cover",
+        data: formData,
+      );
 
       await syncRepository.performSync();
 
@@ -310,9 +309,7 @@ class PlaylistRepository {
 
   Future<Playlist> removePlaylistCover(int id) async {
     try {
-      final response = await AppApi().dio.delete(
-            "/playlist/$id/cover",
-          );
+      final response = await AppApi().dio.delete("/playlist/$id/cover");
 
       await syncRepository.performSync();
 
@@ -338,9 +335,7 @@ class PlaylistRepository {
     try {
       final old = await getPlaylistById(playlistId);
 
-      await AppApi().dio.delete(
-            "/playlist/$playlistId",
-          );
+      await AppApi().dio.delete("/playlist/$playlistId");
 
       await syncRepository.performSync();
 
@@ -362,17 +357,3 @@ class PlaylistRepository {
     }
   }
 }
-
-final playlistRepositoryProvider = Provider(
-  (ref) => PlaylistRepository(
-    playedTrackRepository: ref.watch(
-      playedTrackRepositoryProvider,
-    ),
-    syncRepository: ref.watch(
-      syncRepositoryProvider,
-    ),
-    networkInfo: ref.watch(
-      networkInfoProvider,
-    ),
-  ),
-);

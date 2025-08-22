@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
-import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
-import 'package:melodink_client/features/library/domain/entities/playlist.dart';
-import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
+import 'package:melodink_client/features/library/presentation/viewmodels/create_playlist_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class CreatePlaylistModal extends HookConsumerWidget {
+class CreatePlaylistModal extends StatelessWidget {
   final List<Track> tracks;
 
   final bool pushRouteToNewPlaylist;
@@ -27,131 +23,82 @@ class CreatePlaylistModal extends HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final formKey = useMemoized(() => GlobalKey<FormState>());
-
-    final autoValidate = useState(false);
-
-    final isLoading = useState(false);
-
-    final hasError = useState(false);
-
-    final nameTextController = useTextEditingController();
-
-    final descriptionTextController = useTextEditingController();
-
+  Widget build(BuildContext context) {
     return IntrinsicHeight(
       child: Stack(
         children: [
           AppModal(
             title: Text(t.general.newPlaylist),
             body: Form(
-              key: formKey,
+              key: context.read<CreatePlaylistViewModel>().formKey,
               child: SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      AppTextFormField(
-                        labelText: t.general.name,
-                        controller: nameTextController,
-                        autovalidateMode: autoValidate.value
-                            ? AutovalidateMode.always
-                            : AutovalidateMode.disabled,
-                        validator: FormBuilderValidators.compose(
-                          [
-                            FormBuilderValidators.required(
-                              errorText: t.validators.fieldShouldNotBeEmpty(
-                                field: t.general.name,
+                  child: Consumer<CreatePlaylistViewModel>(
+                    builder: (context, viewModel, _) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          AppTextFormField(
+                            labelText: t.general.name,
+                            controller: viewModel.nameTextController,
+                            autovalidateMode: viewModel.autoValidate
+                                ? AutovalidateMode.always
+                                : AutovalidateMode.disabled,
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(
+                                errorText: t.validators.fieldShouldNotBeEmpty(
+                                  field: t.general.name,
+                                ),
                               ),
+                            ]),
+                          ),
+                          const SizedBox(height: 8),
+                          AppTextFormField(
+                            labelText: t.general.description,
+                            controller: viewModel.descriptionTextController,
+                            maxLines: null,
+                          ),
+                          const SizedBox(height: 16),
+                          if (viewModel.hasError)
+                            AppErrorBox(
+                              title: t.notifications.somethingWentWrong.title,
+                              message:
+                                  t.notifications.somethingWentWrong.message,
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      AppTextFormField(
-                        labelText: t.general.description,
-                        controller: descriptionTextController,
-                        maxLines: null,
-                      ),
-                      const SizedBox(height: 16),
-                      if (hasError.value)
-                        AppErrorBox(
-                          title: t.notifications.somethingWentWrong.title,
-                          message: t.notifications.somethingWentWrong.message,
-                        ),
-                      if (hasError.value) const SizedBox(height: 16),
-                      AppButton(
-                        text: t.general.create,
-                        type: AppButtonType.primary,
-                        onPressed: () async {
-                          hasError.value = false;
-                          final currentState = formKey.currentState;
-                          if (currentState == null) {
-                            return;
-                          }
-
-                          if (!currentState.validate()) {
-                            autoValidate.value = true;
-                            return;
-                          }
-
-                          isLoading.value = true;
-
-                          try {
-                            final newPlaylist = await ref
-                                .read(createPlaylistStreamProvider.notifier)
-                                .createPlaylist(Playlist(
-                                  id: -1,
-                                  name: nameTextController.text,
-                                  description: descriptionTextController.text,
-                                  tracks: tracks,
-                                  coverSignature: "",
-                                ));
-
-                            isLoading.value = false;
-
-                            if (!context.mounted) {
-                              return;
-                            }
-
-                            Navigator.of(
+                          if (viewModel.hasError) const SizedBox(height: 16),
+                          AppButton(
+                            text: t.general.create,
+                            type: AppButtonType.primary,
+                            onPressed: () => viewModel.createPlaylist(
                               context,
-                              rootNavigator: true,
-                            ).pop();
-
-                            if (pushRouteToNewPlaylist) {
-                              GoRouter.of(context)
-                                  .push("/playlist/${newPlaylist.id}");
-                            }
-
-                            AppNotificationManager.of(context).notify(
-                              context,
-                              message: t.notifications.playlistHaveBeenCreated
-                                  .message(
-                                name: newPlaylist.name,
-                              ),
-                            );
-                          } catch (_) {
-                            isLoading.value = false;
-                            hasError.value = true;
-                          }
-                        },
-                      ),
-                    ],
+                              tracks,
+                              pushRouteToNewPlaylist,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
             ),
           ),
-          if (isLoading.value) const AppPageLoader(),
+          Selector<CreatePlaylistViewModel, bool>(
+            selector: (_, viewModel) => viewModel.isLoading,
+            builder: (context, isLoading, _) {
+              if (!isLoading) {
+                return const SizedBox.shrink();
+              }
+              return const AppPageLoader();
+            },
+          ),
         ],
       ),
     );
   }
 
-  static showModal(
+  static void showModal(
     BuildContext context, {
     List<Track> tracks = const [],
     bool pushRouteToNewPlaylist = false,
@@ -160,17 +107,20 @@ class CreatePlaylistModal extends HookConsumerWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: "CreatePlaylistModal",
-      pageBuilder: (_, __, ___) {
+      pageBuilder: (_, _, _) {
         return Center(
           child: MaxContainer(
             maxWidth: 420,
-            padding: EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 64,
-            ),
-            child: CreatePlaylistModal(
-              tracks: tracks,
-              pushRouteToNewPlaylist: pushRouteToNewPlaylist,
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 64),
+            child: ChangeNotifierProvider(
+              create: (context) => CreatePlaylistViewModel(
+                eventBus: context.read(),
+                playlistRepository: context.read(),
+              ),
+              child: CreatePlaylistModal(
+                tracks: tracks,
+                pushRouteToNewPlaylist: pushRouteToNewPlaylist,
+              ),
             ),
           ),
         );

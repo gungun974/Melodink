@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:audio_service/audio_service.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/entities/played_track.dart';
 
@@ -12,14 +11,12 @@ class PlayerTrackerManager {
 
   late Stream<List<PlaybackState>> lastState;
 
-  PlayerTrackerManager({
-    required this.playedTrackRepository,
-  });
+  PlayerTrackerManager({required this.playedTrackRepository});
 
   final PublishSubject<PlayedTrack> newPlayedTrack =
       PublishSubject<PlayedTrack>();
 
-  watchState(
+  void watchState(
     PlaybackState lastState,
     PlaybackState currentState,
     Track? currentTrack,
@@ -68,7 +65,7 @@ class PlayerTrackerManager {
 
   bool _resetAntiEndSpam = false;
 
-  _startTrackTracking(Duration startPosition) {
+  void _startTrackTracking(Duration startPosition) {
     _trackedStartAt = DateTime.now();
     _trackedFinishAt = null;
 
@@ -78,7 +75,7 @@ class PlayerTrackerManager {
     _startTrackingTrack = true;
   }
 
-  _finishTrackTracking(Duration endPosition) {
+  void _finishTrackTracking(Duration endPosition) {
     if (!_startTrackingTrack) {
       return;
     }
@@ -92,7 +89,7 @@ class PlayerTrackerManager {
     _registerTrackTracking();
   }
 
-  _registerTrackTracking() {
+  void _registerTrackTracking() {
     final currentTrack = _lastTrackingTrack;
     if (currentTrack == null) {
       return;
@@ -124,8 +121,10 @@ class PlayerTrackerManager {
 
     if (currentTrack.duration - endedAt >
         Duration(
-          milliseconds:
-              max((currentTrack.duration * 0.01).inMilliseconds, 1000),
+          milliseconds: max(
+            (currentTrack.duration * 0.01).inMilliseconds,
+            1000,
+          ),
         )) {
     } else {
       trackEnded = true;
@@ -164,15 +163,3 @@ class PlayerTrackerManager {
     _trackedEndedAt = null;
   }
 }
-
-final playerTrackerManagerProvider = Provider(
-  (ref) {
-    final manager = PlayerTrackerManager(
-      playedTrackRepository: ref.watch(
-        playedTrackRepositoryProvider,
-      ),
-    );
-
-    return manager;
-  },
-);

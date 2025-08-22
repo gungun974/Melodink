@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
@@ -19,16 +18,11 @@ import 'package:sqlite3/sqlite3.dart';
 class SyncRepository {
   final NetworkInfo networkInfo;
 
-  SyncRepository({
-    required this.networkInfo,
-  });
+  SyncRepository({required this.networkInfo});
 
   //! Tracks
 
-  void _createOrUpdateTracks(
-    Database db,
-    List<TrackModel> tracks,
-  ) {
+  void _createOrUpdateTracks(Database db, List<TrackModel> tracks) {
     final insert = db.prepare('''
     INSERT OR REPLACE INTO tracks (
       id,
@@ -98,24 +92,19 @@ class SyncRepository {
     insert.dispose();
   }
 
-  void _deleteExtraTracks(
-    Database db,
-    List<TrackModel> tracks,
-  ) {
+  void _deleteExtraTracks(Database db, List<TrackModel> tracks) {
     final placeholders = List.filled(tracks.length, '?').join(', ');
 
-    final delete =
-        db.prepare("DELETE FROM tracks WHERE id NOT IN ($placeholders)");
+    final delete = db.prepare(
+      "DELETE FROM tracks WHERE id NOT IN ($placeholders)",
+    );
 
     delete.execute(tracks.map((track) => track.id).toList());
 
     delete.dispose();
   }
 
-  void _deleteTracks(
-    Database db,
-    List<int> tracks,
-  ) {
+  void _deleteTracks(Database db, List<int> tracks) {
     final placeholders = List.filled(tracks.length, '?').join(', ');
 
     final delete = db.prepare("DELETE FROM tracks WHERE id IN ($placeholders)");
@@ -125,10 +114,7 @@ class SyncRepository {
     delete.dispose();
   }
 
-  void _setTrackAlbums(
-    Database db,
-    TrackModel track,
-  ) {
+  void _setTrackAlbums(Database db, TrackModel track) {
     if (track.albums.isEmpty) {
       final delete = db.prepare('''
 			DELETE FROM track_album
@@ -157,25 +143,26 @@ class SyncRepository {
 
     // Insert Missing
 
-    final placeholders2 =
-        List.filled(track.albums.length, '(?, ?, ?)').join(', ');
+    final placeholders2 = List.filled(
+      track.albums.length,
+      '(?, ?, ?)',
+    ).join(', ');
 
     final insert = db.prepare('''
       INSERT OR REPLACE INTO track_album (track_id, album_id, album_pos) VALUES $placeholders2
       ''');
 
-    insert.execute(List.generate(
-      track.albums.length,
-      (i) => [track.id, track.albums[i], i],
-    ).expand((e) => e).toList());
+    insert.execute(
+      List.generate(
+        track.albums.length,
+        (i) => [track.id, track.albums[i], i],
+      ).expand((e) => e).toList(),
+    );
 
     insert.dispose();
   }
 
-  void _setTrackArtists(
-    Database db,
-    TrackModel track,
-  ) {
+  void _setTrackArtists(Database db, TrackModel track) {
     if (track.artists.isEmpty) {
       final delete = db.prepare('''
 			DELETE FROM track_artist
@@ -204,27 +191,28 @@ class SyncRepository {
 
     // Insert Missing
 
-    final placeholders2 =
-        List.filled(track.artists.length, '(?, ?, ?)').join(', ');
+    final placeholders2 = List.filled(
+      track.artists.length,
+      '(?, ?, ?)',
+    ).join(', ');
 
     final insert = db.prepare('''
       INSERT OR REPLACE INTO track_artist (track_id, artist_id, artist_pos) VALUES $placeholders2
       ''');
 
-    insert.execute(List.generate(
-      track.artists.length,
-      (i) => [track.id, track.artists[i], i],
-    ).expand((e) => e).toList());
+    insert.execute(
+      List.generate(
+        track.artists.length,
+        (i) => [track.id, track.artists[i], i],
+      ).expand((e) => e).toList(),
+    );
 
     insert.dispose();
   }
 
   //! Albums
 
-  void _createOrUpdateAlbums(
-    Database db,
-    List<AlbumModel> albums,
-  ) {
+  void _createOrUpdateAlbums(Database db, List<AlbumModel> albums) {
     final insert = db.prepare('''
       INSERT OR REPLACE INTO albums (
         id,
@@ -248,24 +236,19 @@ class SyncRepository {
     insert.dispose();
   }
 
-  void _deleteExtraAlbums(
-    Database db,
-    List<AlbumModel> albums,
-  ) {
+  void _deleteExtraAlbums(Database db, List<AlbumModel> albums) {
     final placeholders = List.filled(albums.length, '?').join(', ');
 
-    final delete =
-        db.prepare("DELETE FROM albums WHERE id NOT IN ($placeholders)");
+    final delete = db.prepare(
+      "DELETE FROM albums WHERE id NOT IN ($placeholders)",
+    );
 
     delete.execute(albums.map((album) => album.id).toList());
 
     delete.dispose();
   }
 
-  void _deleteAlbums(
-    Database db,
-    List<int> albums,
-  ) {
+  void _deleteAlbums(Database db, List<int> albums) {
     final placeholders = List.filled(albums.length, '?').join(', ');
 
     final delete = db.prepare("DELETE FROM albums WHERE id IN ($placeholders)");
@@ -275,10 +258,7 @@ class SyncRepository {
     delete.dispose();
   }
 
-  void _setAlbumArtists(
-    Database db,
-    AlbumModel album,
-  ) {
+  void _setAlbumArtists(Database db, AlbumModel album) {
     if (album.artists.isEmpty) {
       final delete = db.prepare('''
 			DELETE FROM album_artist
@@ -307,27 +287,28 @@ class SyncRepository {
 
     // Insert Missing
 
-    final placeholders2 =
-        List.filled(album.artists.length, '(?, ?, ?)').join(', ');
+    final placeholders2 = List.filled(
+      album.artists.length,
+      '(?, ?, ?)',
+    ).join(', ');
 
     final insert = db.prepare('''
       INSERT OR REPLACE INTO album_artist (album_id, artist_id, artist_pos) VALUES $placeholders2
       ''');
 
-    insert.execute(List.generate(
-      album.artists.length,
-      (i) => [album.id, album.artists[i], i],
-    ).expand((e) => e).toList());
+    insert.execute(
+      List.generate(
+        album.artists.length,
+        (i) => [album.id, album.artists[i], i],
+      ).expand((e) => e).toList(),
+    );
 
     insert.dispose();
   }
 
   //! Artists
 
-  void _createOrUpdateArtists(
-    Database db,
-    List<ArtistModel> artists,
-  ) {
+  void _createOrUpdateArtists(Database db, List<ArtistModel> artists) {
     final insert = db.prepare('''
       INSERT OR REPLACE INTO artists (
         id,
@@ -339,38 +320,30 @@ class SyncRepository {
     ''');
 
     for (var artist in artists) {
-      insert.execute([
-        artist.id,
-        artist.userId,
-        artist.name,
-      ]);
+      insert.execute([artist.id, artist.userId, artist.name]);
     }
 
     insert.dispose();
   }
 
-  void _deleteExtraArtists(
-    Database db,
-    List<ArtistModel> artists,
-  ) {
+  void _deleteExtraArtists(Database db, List<ArtistModel> artists) {
     final placeholders = List.filled(artists.length, '?').join(', ');
 
-    final delete =
-        db.prepare("DELETE FROM artists WHERE id NOT IN ($placeholders)");
+    final delete = db.prepare(
+      "DELETE FROM artists WHERE id NOT IN ($placeholders)",
+    );
 
     delete.execute(artists.map((artist) => artist.id).toList());
 
     delete.dispose();
   }
 
-  void _deleteArtists(
-    Database db,
-    List<int> artists,
-  ) {
+  void _deleteArtists(Database db, List<int> artists) {
     final placeholders = List.filled(artists.length, '?').join(', ');
 
-    final delete =
-        db.prepare("DELETE FROM artists WHERE id IN ($placeholders)");
+    final delete = db.prepare(
+      "DELETE FROM artists WHERE id IN ($placeholders)",
+    );
 
     delete.execute(artists);
 
@@ -379,10 +352,7 @@ class SyncRepository {
 
   //! Playlists
 
-  void _createOrUpdatePlaylists(
-    Database db,
-    List<PlaylistModel> playlists,
-  ) {
+  void _createOrUpdatePlaylists(Database db, List<PlaylistModel> playlists) {
     final insert = db.prepare('''
       INSERT OR REPLACE INTO playlists (
         id,
@@ -410,28 +380,24 @@ class SyncRepository {
     insert.dispose();
   }
 
-  void _deleteExtraPlaylists(
-    Database db,
-    List<PlaylistModel> playlists,
-  ) {
+  void _deleteExtraPlaylists(Database db, List<PlaylistModel> playlists) {
     final placeholders = List.filled(playlists.length, '?').join(', ');
 
-    final delete =
-        db.prepare("DELETE FROM playlists WHERE id NOT IN ($placeholders)");
+    final delete = db.prepare(
+      "DELETE FROM playlists WHERE id NOT IN ($placeholders)",
+    );
 
     delete.execute(playlists.map((playlist) => playlist.id).toList());
 
     delete.dispose();
   }
 
-  void _deletePlaylists(
-    Database db,
-    List<int> playlists,
-  ) {
+  void _deletePlaylists(Database db, List<int> playlists) {
     final placeholders = List.filled(playlists.length, '?').join(', ');
 
-    final delete =
-        db.prepare("DELETE FROM playlists WHERE id IN ($placeholders)");
+    final delete = db.prepare(
+      "DELETE FROM playlists WHERE id IN ($placeholders)",
+    );
 
     delete.execute(playlists);
 
@@ -440,9 +406,7 @@ class SyncRepository {
 
   //! Sync
 
-  DateTime? _getLastSyncDate(
-    Database db,
-  ) {
+  DateTime? _getLastSyncDate(Database db) {
     final result = db.select("SELECT last_sync FROM sync");
     if (result.isEmpty) {
       return null;
@@ -451,14 +415,10 @@ class SyncRepository {
     return DateTime.parse(result.first["last_sync"]);
   }
 
-  DateTime? _setLastSyncDate(
-    Database db,
-    DateTime date,
-  ) {
-    db.execute(
-      "INSERT OR REPLACE INTO sync (id, last_sync) VALUES (1, ?)",
-      [date.toIso8601String()],
-    );
+  void _setLastSyncDate(Database db, DateTime date) {
+    db.execute("INSERT OR REPLACE INTO sync (id, last_sync) VALUES (1, ?)", [
+      date.toIso8601String(),
+    ]);
   }
 
   Future<FullSyncModel> _getFullData() async {
@@ -517,8 +477,9 @@ class SyncRepository {
 
   Future<PartialSyncModel> _getPartialData(DateTime since) async {
     try {
-      final response =
-          await AppApi().dio.get("/sync/${since.toIso8601String()}");
+      final response = await AppApi().dio.get(
+        "/sync/${since.toIso8601String()}",
+      );
 
       return PartialSyncModel.fromJson(response.data);
     } on DioException catch (e) {
@@ -582,9 +543,7 @@ class SyncRepository {
         final start = DateTime.now();
         syncLogger.i("Start full sync");
         await _performFullSync(db);
-        syncLogger.i(
-          "Finish full sync in ${DateTime.now().difference(start)}",
-        );
+        syncLogger.i("Finish full sync in ${DateTime.now().difference(start)}");
         return;
       }
 
@@ -597,11 +556,3 @@ class SyncRepository {
     });
   }
 }
-
-final syncRepositoryProvider = Provider(
-  (ref) => SyncRepository(
-    networkInfo: ref.watch(
-      networkInfoProvider,
-    ),
-  ),
-);

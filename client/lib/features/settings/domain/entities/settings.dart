@@ -1,33 +1,13 @@
 import 'package:equatable/equatable.dart';
 import 'package:melodink_client/features/settings/domain/entities/equalizer.dart';
 
-enum AppSettingTheme {
-  base,
-  dark,
-  purple,
-  cyan,
-  grey,
-}
+enum AppSettingTheme { base, dark, purple, cyan, grey }
 
-enum AppSettingPlayerBarPosition {
-  bottom,
-  top,
-  side,
-  center,
-}
+enum AppSettingPlayerBarPosition { bottom, top, side, center }
 
-enum AppSettingAudioQuality {
-  low,
-  medium,
-  high,
-  lossless,
-}
+enum AppSettingAudioQuality { low, medium, high, lossless }
 
-enum AppSettingScoringSystem {
-  none,
-  like,
-  stars,
-}
+enum AppSettingScoringSystem { none, like, stars }
 
 class AppSettings extends Equatable {
   final AppSettingTheme theme;
@@ -46,6 +26,8 @@ class AppSettings extends Equatable {
   final bool enableHistoryTracking;
   final bool shareAllHistoryTrackingToServer;
 
+  final bool showTrackRemainingDuration;
+
   final AppEqualizer equalizer;
 
   const AppSettings({
@@ -61,6 +43,7 @@ class AppSettings extends Equatable {
     required this.autoScrollViewToCurrentTrack,
     required this.enableHistoryTracking,
     required this.shareAllHistoryTrackingToServer,
+    required this.showTrackRemainingDuration,
     required this.equalizer,
   });
 
@@ -77,6 +60,7 @@ class AppSettings extends Equatable {
     bool? autoScrollViewToCurrentTrack,
     bool? enableHistoryTracking,
     bool? shareAllHistoryTrackingToServer,
+    bool? showTrackRemainingDuration,
     AppEqualizer? equalizer,
   }) {
     return AppSettings(
@@ -90,33 +74,38 @@ class AppSettings extends Equatable {
       downloadAudioQuality: downloadAudioQuality ?? this.downloadAudioQuality,
       rememberLoopAndShuffleAcrossRestarts:
           rememberLoopAndShuffleAcrossRestarts ??
-              this.rememberLoopAndShuffleAcrossRestarts,
-      keepLastPlayingListAcrossRestarts: keepLastPlayingListAcrossRestarts ??
+          this.rememberLoopAndShuffleAcrossRestarts,
+      keepLastPlayingListAcrossRestarts:
+          keepLastPlayingListAcrossRestarts ??
           this.keepLastPlayingListAcrossRestarts,
       autoScrollViewToCurrentTrack:
           autoScrollViewToCurrentTrack ?? this.autoScrollViewToCurrentTrack,
       enableHistoryTracking:
           enableHistoryTracking ?? this.enableHistoryTracking,
-      shareAllHistoryTrackingToServer: shareAllHistoryTrackingToServer ??
+      shareAllHistoryTrackingToServer:
+          shareAllHistoryTrackingToServer ??
           this.shareAllHistoryTrackingToServer,
+      showTrackRemainingDuration:
+          showTrackRemainingDuration ?? this.showTrackRemainingDuration,
       equalizer: equalizer ?? this.equalizer,
     );
   }
 
   @override
   List<Object?> get props => [
-        theme,
-        dynamicBackgroundColors,
-        playerBarPosition,
-        scoringSystem,
-        wifiAudioQuality,
-        cellularAudioQuality,
-        downloadAudioQuality,
-        rememberLoopAndShuffleAcrossRestarts,
-        keepLastPlayingListAcrossRestarts,
-        autoScrollViewToCurrentTrack,
-        enableHistoryTracking,
-        shareAllHistoryTrackingToServer,
-        equalizer,
-      ];
+    theme,
+    dynamicBackgroundColors,
+    playerBarPosition,
+    scoringSystem,
+    wifiAudioQuality,
+    cellularAudioQuality,
+    downloadAudioQuality,
+    rememberLoopAndShuffleAcrossRestarts,
+    keepLastPlayingListAcrossRestarts,
+    autoScrollViewToCurrentTrack,
+    enableHistoryTracking,
+    shareAllHistoryTrackingToServer,
+    showTrackRemainingDuration,
+    equalizer,
+  ];
 }

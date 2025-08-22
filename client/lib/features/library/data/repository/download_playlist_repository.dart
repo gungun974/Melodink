@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
@@ -81,9 +80,9 @@ class DownloadPlaylistRepository {
           "$downloadPath/image-${playlist.coverSignature}";
 
       await AppApi().dio.download(
-            "/playlist/${playlist.id}/cover",
-            "$applicationSupportDirectory/$downloadImagePath",
-          );
+        "/playlist/${playlist.id}/cover",
+        "$applicationSupportDirectory/$downloadImagePath",
+      );
 
       db.execute(
         "UPDATE playlist_downloads SET cover_file = ?, cover_signature = ? WHERE playlist_id = ?",
@@ -131,10 +130,7 @@ class DownloadPlaylistRepository {
     );
 
     if (result.isNotEmpty) {
-      db.execute(
-        "DELETE FROM playlist_downloads WHERE playlist_id = ?",
-        [id],
-      );
+      db.execute("DELETE FROM playlist_downloads WHERE playlist_id = ?", [id]);
 
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
@@ -156,13 +152,11 @@ class DownloadPlaylistRepository {
   Future<void> freeOrphanPlaylists() async {
     final db = await DatabaseService.getDatabase();
 
-    final rows = db.select(
-      """
+    final rows = db.select("""
       SELECT playlist_downloads.playlist_id
       FROM playlist_downloads
       WHERE playlist_downloads.playlist_id NOT IN (SELECT playlists.id FROM playlists);
-    """,
-    );
+    """);
 
     for (final row in rows) {
       await freePlaylist(row["playlist_id"]);
@@ -179,10 +173,3 @@ class DownloadPlaylistRepository {
     }
   }
 }
-
-final downloadPlaylistRepositoryProvider = Provider(
-  (ref) => DownloadPlaylistRepository(
-    playlistRepository: ref.watch(playlistRepositoryProvider),
-    downloadAlbumRepository: ref.watch(downloadAlbumRepositoryProvider),
-  ),
-);

@@ -10,12 +10,11 @@ ifeq ($(UNAME_S),Darwin)
 	cd macos; pod install
 endif
 
-	flutter pub run build_runner build --delete-conflicting-outputs
+	flutter pub run slang
 endif
 
 watch-code-generation: 
-	@flutter pub run build_runner watch --delete-conflicting-outputs 1>/dev/null &
-	@flutter pub run slang watch 1>/dev/null &
+	flutter pub run slang watch
 
 dev: prebuild watch-code-generation
 	flutter run

@@ -1,42 +1,26 @@
-import 'dart:async';
-import 'dart:io';
-
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
-import 'package:melodink_client/core/helpers/pick_audio_files.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
-import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
-import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
-import 'package:melodink_client/features/track/domain/providers/import_tracks_provider.dart';
-import 'package:melodink_client/features/track/presentation/modals/edit_track_modal.dart';
-import 'package:melodink_client/features/track/presentation/modals/scan_configuration_modal.dart';
+import 'package:melodink_client/features/track/presentation/viewmodels/import_tracks_viewmodel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class ImportTracksModal extends HookConsumerWidget {
-  const ImportTracksModal({
-    super.key,
-  });
+class ImportTracksModal extends StatelessWidget {
+  const ImportTracksModal({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final trackRepository = ref.watch(trackRepositoryProvider);
-
-    final state = ref.watch(importTracksProvider);
-
-    final isLoading = useState(false);
-
+  Widget build(BuildContext context) {
     return Stack(
       children: [
         AppModal(
@@ -48,85 +32,54 @@ class ImportTracksModal extends HookConsumerWidget {
               children: [
                 Expanded(
                   child: DropTarget(
-                    onDragDone: (detail) {
-                      ref.read(importTracksProvider.notifier).uploadAudios(
-                            detail.files
-                                .map(
-                                  (file) => File(file.path),
-                                )
-                                .toList(),
-                          );
-                    },
+                    onDragDone: (detail) => context
+                        .read<ImportTracksViewModel>()
+                        .uploadAudiosFromDropZone(detail),
                     child: Container(
                       decoration: const BoxDecoration(
                         color: Color.fromRGBO(0, 0, 0, 0.08),
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(8),
-                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
                       ),
-                      child: ListView.builder(
-                        itemCount:
-                            state.uploads.length + state.uploadedTracks.length,
-                        itemBuilder: (context, index) {
-                          if (index < state.uploads.length) {
-                            final upload = state.uploads[index];
+                      child: Consumer<ImportTracksViewModel>(
+                        builder: (context, viewModel, _) {
+                          return ListView.builder(
+                            itemCount:
+                                viewModel.state.uploads.length +
+                                viewModel.state.uploadedTracks.length,
+                            itemBuilder: (context, index) {
+                              if (index < viewModel.state.uploads.length) {
+                                final upload = viewModel.state.uploads[index];
 
-                            return Container(
-                              height: 50,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: UploadTrack(
-                                trackUploadProgress: upload,
-                                removeOnTap: () {
-                                  ref
-                                      .read(importTracksProvider.notifier)
-                                      .removeErrorUpload(upload);
-                                },
-                              ),
-                            );
-                          }
-
-                          final track = state
-                              .uploadedTracks[index - state.uploads.length];
-                          return Container(
-                            height: 50,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: ImportTrack(
-                              track: track,
-                              onTap: () async {
-                                isLoading.value = true;
-
-                                late Track detailedTrack;
-
-                                try {
-                                  detailedTrack = await trackRepository
-                                      .getTrackByIdOnline(track.id);
-                                } catch (_) {
-                                  isLoading.value = false;
-                                  return;
-                                }
-
-                                isLoading.value = false;
-
-                                if (!context.mounted) {
-                                  return;
-                                }
-
-                                EditTrackModal.showModal(
-                                  context,
-                                  detailedTrack,
-                                  displayDateAdded: false,
+                                return Container(
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: UploadTrack(
+                                    trackUploadProgress: upload,
+                                    removeOnTap: () =>
+                                        viewModel.removeErrorUpload(upload),
+                                  ),
                                 );
-                              },
-                              removeOnTap: () {
-                                ref
-                                    .read(importTracksProvider.notifier)
-                                    .removeTrack(track);
-                              },
-                            ),
+                              }
+
+                              final track =
+                                  viewModel.state.uploadedTracks[index -
+                                      viewModel.state.uploads.length];
+                              return Container(
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: ImportTrack(
+                                  track: track,
+                                  onTap: () =>
+                                      viewModel.showImportTrack(context, track),
+                                  removeOnTap: () =>
+                                      viewModel.removeTrack(track),
+                                ),
+                              );
+                            },
                           );
                         },
                       ),
@@ -142,138 +95,47 @@ class ImportTracksModal extends HookConsumerWidget {
                         child: AppButton(
                           text: t.actions.addFileOrFiles,
                           type: AppButtonType.primary,
-                          onPressed: () async {
-                            final files = await pickAudioFiles();
-
-                            ref
-                                .read(importTracksProvider.notifier)
-                                .uploadAudios(files);
+                          onPressed: () => context
+                              .read<ImportTracksViewModel>()
+                              .uploadAudios(),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Selector<ImportTracksViewModel, bool>(
+                          selector: (_, viewModel) =>
+                              viewModel.state.uploadedTracks.isNotEmpty,
+                          builder: (context, enable, _) {
+                            return AppButton(
+                              text: t.general.advancedScan,
+                              type: AppButtonType.primary,
+                              onPressed: enable
+                                  ? () {
+                                      context
+                                          .read<ImportTracksViewModel>()
+                                          .handleAdvancedScans(context);
+                                    }
+                                  : null,
+                            );
                           },
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: AppButton(
-                          text: t.general.advancedScan,
-                          type: AppButtonType.primary,
-                          onPressed: state.uploadedTracks.isNotEmpty
-                              ? () async {
-                                  final configuration =
-                                      await ScanConfigurationModal.showModal(
-                                    context,
-                                    hideAdvancedScanQuestion: true,
-                                  );
-
-                                  if (configuration == null) {
-                                    return;
-                                  }
-
-                                  final streamController =
-                                      StreamController<double>();
-
-                                  final stream = streamController.stream
-                                      .asBroadcastStream();
-
-                                  final loadingWidget = OverlayEntry(
-                                    builder: (context) => StreamBuilder(
-                                        stream: stream,
-                                        builder: (context, snapshot) {
-                                          return AppPageLoader(
-                                            value: snapshot.data,
-                                          );
-                                        }),
-                                  );
-
-                                  if (context.mounted) {
-                                    Overlay.of(context, rootOverlay: true)
-                                        .insert(loadingWidget);
-                                  }
-
-                                  try {
-                                    await ref
-                                        .read(importTracksProvider.notifier)
-                                        .performAnAdvancedScans(
-                                          configuration.onlyReplaceEmptyFields,
-                                          streamController,
-                                        );
-                                    streamController.close();
-
-                                    loadingWidget.remove();
-
-                                    if (!context.mounted) {
-                                      return;
-                                    }
-
-                                    AppNotificationManager.of(context).notify(
-                                      context,
-                                      message: t
-                                          .notifications.trackHaveBeenScanned
-                                          .message(
-                                        n: state.uploadedTracks.length,
-                                      ),
-                                    );
-                                  } catch (_) {
-                                    streamController.close();
-                                    if (context.mounted) {
-                                      AppNotificationManager.of(context).notify(
-                                        context,
-                                        title: t.notifications
-                                            .somethingWentWrong.title,
-                                        message: t.notifications
-                                            .somethingWentWrong.message,
-                                        type: AppNotificationType.danger,
-                                      );
-                                    }
-                                    loadingWidget.remove();
-                                  }
-                                }
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: AppButton(
-                          text: t.general.import,
-                          type: AppButtonType.primary,
-                          onPressed: state.uploadedTracks.isNotEmpty
-                              ? () async {
-                                  final numberOfTracks =
-                                      state.uploadedTracks.length;
-
-                                  final result = await ref
-                                      .read(importTracksProvider.notifier)
-                                      .imports();
-
-                                  if (!context.mounted) {
-                                    return;
-                                  }
-
-                                  if (result) {
-                                    Navigator.of(
-                                      context,
-                                      rootNavigator: true,
-                                    ).pop();
-
-                                    AppNotificationManager.of(context).notify(
-                                      context,
-                                      message: t
-                                          .notifications.trackHaveBeenImported
-                                          .message(
-                                        n: numberOfTracks,
-                                      ),
-                                    );
-                                  } else {
-                                    AppNotificationManager.of(context).notify(
-                                      context,
-                                      title: t.notifications.somethingWentWrong
-                                          .title,
-                                      message: t.notifications
-                                          .somethingWentWrong.message,
-                                      type: AppNotificationType.danger,
-                                    );
-                                  }
-                                }
-                              : null,
+                        child: Selector<ImportTracksViewModel, bool>(
+                          selector: (_, viewModel) =>
+                              viewModel.state.uploadedTracks.isNotEmpty,
+                          builder: (context, enable, _) {
+                            return AppButton(
+                              text: t.general.import,
+                              type: AppButtonType.primary,
+                              onPressed: enable
+                                  ? () => context
+                                        .read<ImportTracksViewModel>()
+                                        .importTracks(context)
+                                  : null,
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -283,35 +145,38 @@ class ImportTracksModal extends HookConsumerWidget {
             ),
           ),
         ),
-        if (isLoading.value || state.isLoading) const AppPageLoader(),
+        Selector<ImportTracksViewModel, bool>(
+          selector: (_, viewModel) => viewModel.state.isLoading,
+          builder: (context, isLoading, _) {
+            if (!isLoading) {
+              return const SizedBox.shrink();
+            }
+            return const AppPageLoader();
+          },
+        ),
       ],
     );
   }
 
-  static showModal(BuildContext context) {
+  static void showModal(BuildContext context) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "ShowTrackModal",
-      pageBuilder: (_, __, ___) {
-        return HookConsumer(
-          builder: (context, ref, _) {
-            useEffect(() {
-              Future(() {
-                ref.read(importTracksProvider.notifier).refresh();
-              });
-              return null;
-            }, []);
-
-            return const Center(
-              child: MaxContainer(
-                maxWidth: 850,
-                maxHeight: 540,
-                padding: EdgeInsets.all(32),
-                child: ImportTracksModal(),
+      barrierLabel: "ImportTracksModal",
+      pageBuilder: (_, _, _) {
+        return Center(
+          child: MaxContainer(
+            maxWidth: 850,
+            maxHeight: 540,
+            padding: EdgeInsets.all(32),
+            child: ChangeNotifierProvider(
+              create: (context) => ImportTracksViewModel(
+                eventBus: context.read(),
+                trackRepository: context.read(),
               ),
-            );
-          },
+              child: ImportTracksModal(),
+            ),
+          ),
         );
       },
     );
