@@ -21,7 +21,7 @@ AsyncSnapshot<DownloadTrack?> useAsyncGetDownloadTrack(
 
   final downloadTrackFuture = useMemoized(() {
     return downloadTrackRepository.getDownloadedTrackByTrackId(trackId);
-  }, [reloadKey.value]);
+  }, [trackId, reloadKey.value]);
 
   useEffect(() {
     final subscribe = eventBus.on<DownloadTrackEvent>().listen((event) {
