@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
@@ -19,7 +18,7 @@ import 'package:melodink_client/features/track/presentation/widgets/artists_link
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 import 'package:provider/provider.dart';
 
-class MobileTrack extends HookConsumerWidget {
+class MobileTrack extends HookWidget {
   final Track track;
 
   final void Function(Track track) playCallback;
@@ -76,12 +75,14 @@ class MobileTrack extends HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final currentTheme = context.watch<SettingsViewModel>().currentAppTheme();
 
-    final isServerReachable = ref.watch(isServerReachableProvider);
+    final isServerReachable = context.select<NetworkInfo, bool>(
+      (networkInfo) => networkInfo.isServerRecheable(),
+    );
 
-    final audioController = ref.read(audioControllerProvider);
+    final audioController = context.read<AudioController>();
 
     final isCurrentTrack =
         useStream(
@@ -93,7 +94,7 @@ class MobileTrack extends HookConsumerWidget {
         ).data ??
         false;
 
-    final asyncDownloadedTrack = useAsyncGetDownloadTrack(track.id, ref);
+    final asyncDownloadedTrack = useAsyncGetDownloadTrack(context, track.id);
 
     final downloadedTrack = asyncDownloadedTrack.data;
 

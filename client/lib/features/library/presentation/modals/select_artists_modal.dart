@@ -1,7 +1,5 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
@@ -9,7 +7,6 @@ import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
-import 'package:melodink_client/features/library/data/repository/artist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/select_artists_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
@@ -176,16 +173,12 @@ class SelectArtistsModal extends StatelessWidget {
           child: MaxContainer(
             maxWidth: 800,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 64),
-            child: riverpod.Consumer(
-              builder: (context, ref, _) {
-                return ChangeNotifierProvider(
-                  create: (_) => SelectArtistsViewModel(
-                    eventBus: ref.read(eventBusProvider),
-                    artistRepository: ref.read(artistRepositoryProvider),
-                  )..loadArtists(defaultSelectedIds),
-                  child: SelectArtistsModal(),
-                );
-              },
+            child: ChangeNotifierProvider(
+              create: (context) => SelectArtistsViewModel(
+                eventBus: context.read(),
+                artistRepository: context.read(),
+              )..loadArtists(defaultSelectedIds),
+              child: SelectArtistsModal(),
             ),
           ),
         );

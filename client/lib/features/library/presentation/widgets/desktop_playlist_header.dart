@@ -2,7 +2,6 @@ import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_human.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
@@ -12,8 +11,9 @@ import 'package:melodink_client/features/player/domain/audio/audio_controller.da
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class DesktopPlaylistHeader extends ConsumerWidget {
+class DesktopPlaylistHeader extends StatelessWidget {
   final String name;
   final String type;
   final String imageUrl;
@@ -53,8 +53,8 @@ class DesktopPlaylistHeader extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     return IntrinsicHeight(
       child: Row(
@@ -63,13 +63,10 @@ class DesktopPlaylistHeader extends ConsumerWidget {
             fit: BoxFit.contain,
             alignment: Alignment.center,
             imageUrl: imageUrl,
-            placeholder: (context, url) => Image.asset(
-              "assets/melodink_track_cover_not_found.png",
-            ),
+            placeholder: (context, url) =>
+                Image.asset("assets/melodink_track_cover_not_found.png"),
             errorWidget: (context, url, error) {
-              return Image.asset(
-                "assets/melodink_track_cover_not_found.png",
-              );
+              return Image.asset("assets/melodink_track_cover_not_found.png");
             },
             width: 256,
             height: 256,
@@ -106,7 +103,7 @@ class DesktopPlaylistHeader extends ConsumerWidget {
                         (sum, activity) => sum + activity.duration,
                       ),
                       context,
-                    )
+                    ),
                   ].join(" • "),
                   style: const TextStyle(
                     fontSize: 14,
@@ -154,7 +151,8 @@ class DesktopPlaylistHeader extends ConsumerWidget {
                           icon: const AdwaitaIcon(
                             AdwaitaIcons.media_playlist_shuffle,
                           ),
-                          color: snapshot.data?.shuffleMode ==
+                          color:
+                              snapshot.data?.shuffleMode ==
                                   AudioServiceShuffleMode.all
                               ? Theme.of(context).colorScheme.primary
                               : Colors.white,
@@ -184,8 +182,11 @@ class DesktopPlaylistHeader extends ConsumerWidget {
                     const Spacer(),
                     const SizedBox(width: 8),
                     AppIconButton(
-                      padding:
-                          const EdgeInsets.only(left: 8, top: 8, bottom: 8),
+                      padding: const EdgeInsets.only(
+                        left: 8,
+                        top: 8,
+                        bottom: 8,
+                      ),
                       icon: downloaded
                           ? SvgPicture.asset(
                               "assets/icons/download2.svg",
@@ -203,9 +204,9 @@ class DesktopPlaylistHeader extends ConsumerWidget {
                             ),
                       iconSize: 24.0,
                       onPressed: downloadCallback,
-                    )
+                    ),
                   ],
-                )
+                ),
               ],
             ),
           ),

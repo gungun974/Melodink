@@ -9,7 +9,6 @@ import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/features/auth/data/repository/auth_repository.dart';
 import 'package:melodink_client/features/auth/domain/entities/user.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 enum AuthStatus { unauthenticated, authenticated }
 
@@ -44,7 +43,6 @@ class AuthError extends AuthState {
   List<Object?> get props => [title, message];
 }
 
-@riverpod
 class AuthViewModel extends ChangeNotifier {
   final AudioController audioController;
   final AuthRepository authRepository;

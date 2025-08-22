@@ -1,15 +1,15 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
+import 'package:provider/provider.dart';
 
-class CurrentDownloadInfo extends ConsumerWidget {
+class CurrentDownloadInfo extends StatelessWidget {
   const CurrentDownloadInfo({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final downloadManager = ref.read(downloadManagerProvider);
+  Widget build(BuildContext context) {
+    final downloadManager = context.read<DownloadManager>();
 
     return ListenableBuilder(
       listenable: downloadManager,

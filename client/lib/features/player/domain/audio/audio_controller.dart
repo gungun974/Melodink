@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
 import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/logger/logger.dart';
@@ -17,7 +17,7 @@ import 'package:melodink_client/features/track/data/repository/download_track_re
 import 'package:melodink_client/features/track/domain/entities/download_track.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
-import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
+import 'package:melodink_client/features/track/domain/events/track_events.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
 import 'package:mutex/mutex.dart';
 import 'package:path/path.dart';
@@ -66,6 +66,23 @@ class AudioController extends BaseAudioHandler {
     Connectivity().onConnectivityChanged.listen((_) {
       reloadPlayerTracks();
     });
+  }
+
+  factory AudioController.setupAudioController({
+    required EventBus eventBus,
+    required DownloadTrackRepository downloadTrackRepository,
+    required PlayerTrackerManager playerTrackerManager,
+  }) {
+    _audioController.downloadTrackRepository = downloadTrackRepository;
+    _audioController.playerTrackerManager = playerTrackerManager;
+
+    eventBus.on<EditTrackEvent>().listen((event) {
+      final newTrack = event.updatedTrack;
+
+      _audioController.updateTrack(newTrack);
+    });
+
+    return _audioController;
   }
 
   final SharedPreferencesAsync _asyncPrefs = SharedPreferencesAsync();
@@ -956,28 +973,6 @@ class AudioControllerPositionData {
     required this.duration,
   });
 }
-
-final audioControllerProvider = Provider((ref) {
-  _audioController.downloadTrackRepository = ref.watch(
-    downloadTrackRepositoryProvider,
-  );
-
-  _audioController.playerTrackerManager = ref.watch(
-    playerTrackerManagerProvider,
-  );
-
-  ref.listen(trackEditStreamProvider, (_, rawNewTrack) async {
-    final newTrack = rawNewTrack.valueOrNull?.track;
-
-    if (newTrack == null) {
-      return;
-    }
-
-    await _audioController.updateTrack(newTrack);
-  });
-
-  return _audioController;
-});
 
 class AudioSessionHandler {
   late AudioSession session;

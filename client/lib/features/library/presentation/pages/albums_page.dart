@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
-import 'package:melodink_client/core/event_bus/event_bus.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
-import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/albums_viewmodel.dart';
 import 'package:melodink_client/features/library/presentation/widgets/album_collections_grid.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:popover/popover.dart';
 import 'package:provider/provider.dart';
 
-class AlbumsPage extends riverpod.HookConsumerWidget {
+class AlbumsPage extends HookWidget {
   const AlbumsPage({super.key});
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
+  Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AlbumsViewModel(
-        eventBus: ref.read(eventBusProvider),
-        albumRepository: ref.read(albumRepositoryProvider),
+      create: (context) => AlbumsViewModel(
+        eventBus: context.read(),
+        albumRepository: context.read(),
       )..loadAlbums(),
       child: AppScreenTypeLayoutBuilder(
         builder: (context, size) {

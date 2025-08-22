@@ -1,10 +1,10 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:provider/provider.dart';
 
-class PlayerSkipToPreviousControl extends ConsumerWidget {
+class PlayerSkipToPreviousControl extends StatelessWidget {
   final bool largeControlButton;
 
   const PlayerSkipToPreviousControl({
@@ -13,8 +13,8 @@ class PlayerSkipToPreviousControl extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     return AppIconButton(
       padding: const EdgeInsets.all(8),

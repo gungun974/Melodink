@@ -1,20 +1,21 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/app_confirm.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
+import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
-import 'package:melodink_client/features/library/domain/providers/create_playlist_provider.dart';
-import 'package:melodink_client/features/library/domain/providers/playlist_provider.dart';
+import 'package:melodink_client/features/library/domain/events/playlist_events.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class PlaylistContextMenu extends ConsumerWidget {
+class PlaylistContextMenu extends StatelessWidget {
   const PlaylistContextMenu({
     super.key,
     required this.playlist,
@@ -31,13 +32,16 @@ class PlaylistContextMenu extends ConsumerWidget {
     BuildContext context,
     MenuController menuController,
     Playlist playlist,
-  )? customActionsBuilder;
+  )?
+  customActionsBuilder;
 
   final Widget child;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final eventBus = context.read<EventBus>();
+    final audioController = context.read<AudioController>();
+    final playlistRepository = context.read<PlaylistRepository>();
 
     return AutoCloseContextMenuOnScroll(
       menuController: menuController,
@@ -47,19 +51,12 @@ class PlaylistContextMenu extends ConsumerWidget {
             clipBehavior: Clip.antiAlias,
             menuChildren: [
               MenuItemButton(
-                leadingIcon: const AdwaitaIcon(
-                  AdwaitaIcons.playlist,
-                  size: 20,
-                ),
+                leadingIcon: const AdwaitaIcon(AdwaitaIcons.playlist, size: 20),
                 child: Text(t.actions.addToQueue),
                 onPressed: () async {
                   menuController.close();
 
-                  final tracks = await ref.read(
-                    playlistSortedTracksProvider(playlist.id).future,
-                  );
-
-                  audioController.addTracksToQueue(tracks);
+                  audioController.addTracksToQueue(playlist.tracks);
 
                   if (!context.mounted) {
                     return;
@@ -68,7 +65,7 @@ class PlaylistContextMenu extends ConsumerWidget {
                   AppNotificationManager.of(context).notify(
                     context,
                     message: t.notifications.haveBeenAddedToQueue.message(
-                      n: tracks.length,
+                      n: playlist.tracks.length,
                     ),
                   );
                 },
@@ -82,9 +79,7 @@ class PlaylistContextMenu extends ConsumerWidget {
                 onPressed: () async {
                   menuController.close();
 
-                  final List<Track> tracks = List.from(await ref.read(
-                    playlistSortedTracksProvider(playlist.id).future,
-                  ));
+                  final List<Track> tracks = List.from(playlist.tracks);
 
                   tracks.shuffle();
 
@@ -106,10 +101,7 @@ class PlaylistContextMenu extends ConsumerWidget {
               MenuItemButton(
                 leadingIcon: const Padding(
                   padding: EdgeInsets.all(2.0),
-                  child: AdwaitaIcon(
-                    AdwaitaIcons.edit,
-                    size: 16,
-                  ),
+                  child: AdwaitaIcon(AdwaitaIcons.edit, size: 16),
                 ),
                 child: Text(t.general.edit),
                 onPressed: () {
@@ -131,10 +123,7 @@ class PlaylistContextMenu extends ConsumerWidget {
               MenuItemButton(
                 leadingIcon: const Padding(
                   padding: EdgeInsets.all(2.0),
-                  child: AdwaitaIcon(
-                    AdwaitaIcons.edit_copy,
-                    size: 16,
-                  ),
+                  child: AdwaitaIcon(AdwaitaIcons.edit_copy, size: 16),
                 ),
                 child: Text(t.general.duplicate),
                 onPressed: () async {
@@ -164,14 +153,19 @@ class PlaylistContextMenu extends ConsumerWidget {
                   );
 
                   if (context.mounted) {
-                    Overlay.of(context, rootOverlay: true)
-                        .insert(loadingWidget);
+                    Overlay.of(
+                      context,
+                      rootOverlay: true,
+                    ).insert(loadingWidget);
                   }
 
                   try {
-                    final newPlaylist = await ref
-                        .read(createPlaylistStreamProvider.notifier)
+                    final newPlaylist = await playlistRepository
                         .duplicatePlaylist(playlist.id);
+
+                    eventBus.fire(
+                      CreatePlaylistEvent(createdPlaylist: newPlaylist),
+                    );
 
                     loadingWidget.remove();
 
@@ -179,15 +173,14 @@ class PlaylistContextMenu extends ConsumerWidget {
                       return;
                     }
 
-                    GoRouter.of(context)
-                        .pushReplacement("/playlist/${newPlaylist.id}");
+                    GoRouter.of(
+                      context,
+                    ).pushReplacement("/playlist/${newPlaylist.id}");
 
                     AppNotificationManager.of(context).notify(
                       context,
-                      message:
-                          t.notifications.playlistHaveBeenDuplicated.message(
-                        name: playlist.name,
-                      ),
+                      message: t.notifications.playlistHaveBeenDuplicated
+                          .message(name: playlist.name),
                     );
                   } catch (_) {
                     if (context.mounted) {

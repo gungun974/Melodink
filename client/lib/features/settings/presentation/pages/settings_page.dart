@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
 import 'package:melodink_client/core/helpers/app_confirm.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
@@ -25,14 +24,18 @@ import 'package:melodink_client/features/track/presentation/modals/import_tracks
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class SettingsPage extends riverpod.ConsumerWidget {
+class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
-    final forceOffline = ref.watch(isForceOfflineProvider);
+  Widget build(BuildContext context) {
+    final forceOffline = context.select<NetworkInfo, bool>(
+      (networkInfo) => networkInfo.getForceOffline(),
+    );
 
-    final isServerReachable = ref.watch(isServerReachableProvider);
+    final isServerReachable = context.select<NetworkInfo, bool>(
+      (networkInfo) => networkInfo.isServerRecheable(),
+    );
 
     return Stack(
       children: [
@@ -107,8 +110,8 @@ class SettingsPage extends riverpod.ConsumerWidget {
                                         text: t.actions.forceOffline,
                                         type: AppButtonType.primary,
                                         onPressed: () async {
-                                          await ref
-                                              .read(networkInfoProvider)
+                                          context
+                                              .read<NetworkInfo>()
                                               .setForceOffline(true);
                                         },
                                       ),
@@ -119,8 +122,8 @@ class SettingsPage extends riverpod.ConsumerWidget {
                                         text: t.actions.disableForceOffline,
                                         type: AppButtonType.primary,
                                         onPressed: () async {
-                                          await ref
-                                              .read(networkInfoProvider)
+                                          context
+                                              .read<NetworkInfo>()
                                               .setForceOffline(false);
                                         },
                                       ),
@@ -149,10 +152,8 @@ class SettingsPage extends riverpod.ConsumerWidget {
                                               );
 
                                               try {
-                                                await ref
-                                                    .read(
-                                                      syncRepositoryProvider,
-                                                    )
+                                                context
+                                                    .read<SyncRepository>()
                                                     .performSync(
                                                       fullSync: true,
                                                     );
@@ -449,6 +450,8 @@ class SettingsPage extends riverpod.ConsumerWidget {
                                 text: "${t.actions.downloadAllAlbums} :",
                                 action: t.general.download,
                                 onPressed: () async {
+                                  final downloadManager = context
+                                      .read<DownloadManager>();
                                   if (!NetworkInfo().isServerRecheable()) {
                                     AppNotificationManager.of(context).notify(
                                       context,
@@ -494,9 +497,9 @@ class SettingsPage extends riverpod.ConsumerWidget {
                                   }
 
                                   try {
-                                    await ref
-                                        .read(downloadManagerProvider)
-                                        .downloadAllAlbums(streamController);
+                                    await downloadManager.downloadAllAlbums(
+                                      streamController,
+                                    );
                                     streamController.close();
 
                                     loadingWidget.remove();
@@ -538,6 +541,9 @@ class SettingsPage extends riverpod.ConsumerWidget {
                                     "${t.actions.removeAllDownloadedTracks} :",
                                 action: t.actions.removeAll,
                                 onPressed: () async {
+                                  final downloadManager = context
+                                      .read<DownloadManager>();
+
                                   if (!await appConfirm(
                                     context,
                                     title: t.confirms.title,
@@ -561,9 +567,7 @@ class SettingsPage extends riverpod.ConsumerWidget {
                                   }
 
                                   try {
-                                    await ref
-                                        .read(downloadManagerProvider)
-                                        .removeAllDownloads();
+                                    await downloadManager.removeAllDownloads();
                                     loadingWidget.remove();
 
                                     if (!context.mounted) {

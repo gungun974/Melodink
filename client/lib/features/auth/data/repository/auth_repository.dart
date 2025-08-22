@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
@@ -53,10 +52,7 @@ class AuthRepository {
     try {
       await AppApi().dio.post(
         "/login",
-        data: {
-          "email": email.trim(),
-          "password": password.trim(),
-        },
+        data: {"email": email.trim(), "password": password.trim()},
       );
     } on DioException catch (e) {
       final response = e.response;
@@ -96,9 +92,7 @@ class AuthRepository {
 
       await asyncPrefs.setString(
         "current_user_cache",
-        json.encode(
-          model.toJson(),
-        ),
+        json.encode(model.toJson()),
       );
 
       await ImageCacheManager.initCache();
@@ -117,8 +111,9 @@ class AuthRepository {
   }
 
   static Future<User?> getCachedUser() async {
-    final cachedUser =
-        await SharedPreferencesAsync().getString("current_user_cache");
+    final cachedUser = await SharedPreferencesAsync().getString(
+      "current_user_cache",
+    );
 
     if (cachedUser != null) {
       return UserModel.fromJson(json.decode(cachedUser)).toUser();
@@ -140,10 +135,7 @@ class AuthRepository {
 
       await AppApi().dio.post(
         "/login",
-        data: {
-          "email": email.trim(),
-          "password": password.trim(),
-        },
+        data: {"email": email.trim(), "password": password.trim()},
       );
     } on DioException catch (e) {
       final response = e.response;
@@ -175,5 +167,3 @@ class AuthRepository {
     await AppApi().cookieJar.deleteAll();
   }
 }
-
-final authRepositoryProvider = Provider((ref) => AuthRepository());

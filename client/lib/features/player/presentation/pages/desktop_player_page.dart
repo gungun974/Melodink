@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
@@ -30,12 +29,12 @@ import 'package:melodink_client/features/track/presentation/widgets/artists_link
 import 'package:melodink_client/features/track/presentation/widgets/single_track_context_menu.dart';
 import 'package:provider/provider.dart';
 
-class DesktopPlayerPage extends HookConsumerWidget {
+class DesktopPlayerPage extends HookWidget {
   const DesktopPlayerPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
     final scoringSystem = context
         .watch<SettingsViewModel>()
         .currentScoringSystem();
@@ -152,8 +151,8 @@ class DesktopPlayerPage extends HookConsumerWidget {
                                         );
                                       });
 
-                                  return HookConsumer(
-                                    builder: (context, ref, child) {
+                                  return HookBuilder(
+                                    builder: (context) {
                                       final currentTrack = snapshot.data;
 
                                       if (currentTrack == null) {
@@ -162,8 +161,8 @@ class DesktopPlayerPage extends HookConsumerWidget {
 
                                       final downloadedTrack =
                                           useGetDownloadTrack(
+                                            context,
                                             currentTrack.id,
-                                            ref,
                                           );
 
                                       final image = PlayerErrorOverlay(

@@ -1,7 +1,7 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
@@ -9,12 +9,13 @@ import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
+import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
-import 'package:melodink_client/features/track/domain/providers/edit_track_provider.dart';
+import 'package:melodink_client/features/track/domain/events/track_events.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class TrackScore extends HookConsumerWidget {
+class TrackScore extends HookWidget {
   final Track track;
 
   final bool largeControlButton;
@@ -26,10 +27,13 @@ class TrackScore extends HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final scoringSystem = context
         .watch<SettingsViewModel>()
         .currentScoringSystem();
+
+    final eventBus = context.read<EventBus>();
+    final trackRepository = context.read<TrackRepository>();
 
     final refresh = useState(UniqueKey());
 
@@ -79,9 +83,12 @@ class TrackScore extends HookConsumerWidget {
 
                 internalScore.value = newScore;
 
-                await ref
-                    .read(trackEditStreamProvider.notifier)
-                    .setTrackScore(track.id, newScore);
+                final newTrack = await trackRepository.setTrackScore(
+                  track.id,
+                  newScore,
+                );
+
+                eventBus.fire(EditTrackEvent(updatedTrack: newTrack));
               },
               child: AppIconButton(
                 padding: EdgeInsets.symmetric(
@@ -145,9 +152,13 @@ class TrackScore extends HookConsumerWidget {
                 isUserTrigger.value = true;
                 internalScore.value = rating / 5.0;
                 updateScoreDebouncer.run(() async {
-                  await ref
-                      .read(trackEditStreamProvider.notifier)
-                      .setTrackScore(track.id, rating / 5.0);
+                  final newTrack = await trackRepository.setTrackScore(
+                    track.id,
+                    rating / 5.0,
+                  );
+
+                  eventBus.fire(EditTrackEvent(updatedTrack: newTrack));
+
                   isUserTrigger.value = false;
                 });
               },

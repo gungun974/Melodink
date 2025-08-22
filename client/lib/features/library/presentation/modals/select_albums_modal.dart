@@ -1,7 +1,5 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
@@ -9,7 +7,6 @@ import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
-import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/select_albums_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
@@ -176,16 +173,12 @@ class SelectAlbumsModal extends StatelessWidget {
           child: MaxContainer(
             maxWidth: 800,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 64),
-            child: riverpod.Consumer(
-              builder: (context, ref, _) {
-                return ChangeNotifierProvider(
-                  create: (_) => SelectAlbumsViewModel(
-                    eventBus: ref.read(eventBusProvider),
-                    albumRepository: ref.read(albumRepositoryProvider),
-                  )..loadAlbums(defaultSelectedIds),
-                  child: SelectAlbumsModal(),
-                );
-              },
+            child: ChangeNotifierProvider(
+              create: (context) => SelectAlbumsViewModel(
+                eventBus: context.read(),
+                albumRepository: context.read(),
+              )..loadAlbums(defaultSelectedIds),
+              child: SelectAlbumsModal(),
             ),
           ),
         );

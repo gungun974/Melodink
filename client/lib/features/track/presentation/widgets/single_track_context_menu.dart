@@ -2,16 +2,13 @@ import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
-import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/presentation/modals/create_playlist_modal.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/playlists_context_menu_viewmodel.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -21,7 +18,7 @@ import 'package:melodink_client/features/track/presentation/modals/show_track_mo
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class SingleTrackContextMenu extends riverpod.ConsumerWidget {
+class SingleTrackContextMenu extends StatelessWidget {
   const SingleTrackContextMenu({
     super.key,
     required this.track,
@@ -47,8 +44,8 @@ class SingleTrackContextMenu extends riverpod.ConsumerWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     return AutoCloseContextMenuOnScroll(
       menuController: menuController,
@@ -70,9 +67,9 @@ class SingleTrackContextMenu extends riverpod.ConsumerWidget {
               },
             ),
             ChangeNotifierProvider(
-              create: (_) => PlaylistsContextMenuViewModel(
-                eventBus: ref.read(eventBusProvider),
-                playlistRepository: ref.read(playlistRepositoryProvider),
+              create: (context) => PlaylistsContextMenuViewModel(
+                eventBus: context.read(),
+                playlistRepository: context.read(),
               )..loadPlaylists(),
               child: Consumer<PlaylistsContextMenuViewModel>(
                 builder: (context, viewModel, _) {

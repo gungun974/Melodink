@@ -1,8 +1,8 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/core/routes/provider.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/features/player/presentation/widgets/desktop_current_track.dart';
 import 'package:melodink_client/features/player/presentation/widgets/side_player_bar.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
@@ -10,7 +10,7 @@ import 'package:melodink_client/features/settings/presentation/viewmodels/settin
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class DesktopSidebar extends ConsumerWidget {
+class DesktopSidebar extends HookWidget {
   const DesktopSidebar({super.key});
 
   static const smallWidth = 180.0;
@@ -18,8 +18,10 @@ class DesktopSidebar extends ConsumerWidget {
   static const largeWidth = 280.0;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentUrl = ref.watch(appRouterCurrentUrl);
+  Widget build(BuildContext context) {
+    final currentUrl = useValueListenable(
+      context.read<AppRouter>().currentUrlNotifier,
+    );
 
     final currentPlayerBarPosition = context
         .watch<SettingsViewModel>()

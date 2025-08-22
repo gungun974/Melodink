@@ -175,7 +175,7 @@
           NIX = "true";
 
           preBuild = ''
-            packageRun build_runner build --delete-conflicting-outputs
+            packageRun slang
             make prebuild
           '';
 

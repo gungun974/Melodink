@@ -1,10 +1,8 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' as riverpod;
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:intl/intl.dart';
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
@@ -13,7 +11,6 @@ import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_datetime_form_field.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
-import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/presentation/viewmodels/edit_track_viewmodel.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
@@ -430,28 +427,21 @@ class EditTrackModal extends HookWidget {
       barrierDismissible: true,
       barrierLabel: "EditTrackModal",
       pageBuilder: (_, _, _) {
-        return riverpod.Consumer(
-          builder: (context, ref, _) {
-            return Center(
-              child: MaxContainer(
-                maxWidth: 800,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 64,
-                ),
-                child: ChangeNotifierProvider(
-                  create: (_) => EditTrackViewModel(
-                    eventBus: ref.read(eventBusProvider),
-                    trackRepository: ref.read(trackRepositoryProvider),
-                  )..loadTrack(track),
-                  child: EditTrackModal(
-                    track: track,
-                    displayDateAdded: displayDateAdded,
-                  ),
-                ),
+        return Center(
+          child: MaxContainer(
+            maxWidth: 800,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 64),
+            child: ChangeNotifierProvider(
+              create: (context) => EditTrackViewModel(
+                eventBus: context.read(),
+                trackRepository: context.read(),
+              )..loadTrack(track),
+              child: EditTrackModal(
+                track: track,
+                displayDateAdded: displayDateAdded,
               ),
-            );
-          },
+            ),
+          ),
         );
       },
     );

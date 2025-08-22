@@ -1,36 +1,31 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
-import 'package:melodink_client/features/library/data/repository/download_playlist_repository.dart';
-import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/playlist_viewmodel.dart';
 import 'package:melodink_client/features/library/presentation/widgets/desktop_playlist_header.dart';
 import 'package:melodink_client/features/library/presentation/widgets/mobile_playlist_header.dart';
 import 'package:melodink_client/features/library/presentation/widgets/playlist_context_menu.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
-import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class PlaylistPage extends riverpod.HookConsumerWidget {
+class PlaylistPage extends HookWidget {
   final int playlistId;
 
   const PlaylistPage({super.key, required this.playlistId});
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     final playlistContextMenuController = useMemoized(() => MenuController());
 
@@ -43,14 +38,12 @@ class PlaylistPage extends riverpod.HookConsumerWidget {
     useAutoCloseContextMenuOnScroll(scrollController: scrollController);
 
     return ChangeNotifierProvider(
-      create: (_) => PlaylistViewModel(
-        eventBus: ref.read(eventBusProvider),
-        audioController: ref.read(audioControllerProvider),
-        downloadManager: ref.read(downloadManagerProvider),
-        playlistRepository: ref.read(playlistRepositoryProvider),
-        downloadPlaylistRepository: ref.read(
-          downloadPlaylistRepositoryProvider,
-        ),
+      create: (context) => PlaylistViewModel(
+        eventBus: context.read(),
+        audioController: context.read(),
+        downloadManager: context.read(),
+        playlistRepository: context.read(),
+        downloadPlaylistRepository: context.read(),
       )..loadPlaylist(playlistId),
       child: Stack(
         children: [

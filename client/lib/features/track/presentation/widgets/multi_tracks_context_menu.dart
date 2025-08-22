@@ -1,11 +1,8 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
-import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/presentation/modals/create_playlist_modal.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/playlists_context_menu_viewmodel.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -13,7 +10,7 @@ import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class MultiTracksContextMenu extends riverpod.ConsumerWidget {
+class MultiTracksContextMenu extends StatelessWidget {
   const MultiTracksContextMenu({
     super.key,
     required this.tracks,
@@ -39,8 +36,8 @@ class MultiTracksContextMenu extends riverpod.ConsumerWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     return AutoCloseContextMenuOnScroll(
       menuController: menuController,
@@ -48,9 +45,9 @@ class MultiTracksContextMenu extends riverpod.ConsumerWidget {
         menuChildren: [
           if (showDefaultActions) ...[
             ChangeNotifierProvider(
-              create: (_) => PlaylistsContextMenuViewModel(
-                eventBus: ref.read(eventBusProvider),
-                playlistRepository: ref.read(playlistRepositoryProvider),
+              create: (context) => PlaylistsContextMenuViewModel(
+                eventBus: context.read(),
+                playlistRepository: context.read(),
               )..loadPlaylists(),
               child: Consumer<PlaylistsContextMenuViewModel>(
                 builder: (context, viewModel, _) {

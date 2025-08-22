@@ -1,18 +1,19 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/core/routes/provider.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
-class MobileNavbar extends ConsumerWidget {
-  const MobileNavbar({
-    super.key,
-  });
+class MobileNavbar extends HookWidget {
+  const MobileNavbar({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentUrl = ref.watch(appRouterCurrentUrl);
+  Widget build(BuildContext context) {
+    final currentUrl = useValueListenable(
+      context.read<AppRouter>().currentUrlNotifier,
+    );
 
     return BottomAppBar(
       color: Colors.black87,
@@ -21,10 +22,7 @@ class MobileNavbar extends ConsumerWidget {
         children: [
           MobileNavbarItem(
             label: t.general.tracks,
-            icon: const AdwaitaIcon(
-              AdwaitaIcons.music_note_single,
-              size: 24,
-            ),
+            icon: const AdwaitaIcon(AdwaitaIcons.music_note_single, size: 24),
             onTap: () {
               GoRouter.of(context).go("/track");
             },
@@ -32,10 +30,7 @@ class MobileNavbar extends ConsumerWidget {
           ),
           MobileNavbarItem(
             label: t.general.playlists,
-            icon: const AdwaitaIcon(
-              AdwaitaIcons.playlist2,
-              size: 24,
-            ),
+            icon: const AdwaitaIcon(AdwaitaIcons.playlist2, size: 24),
             onTap: () {
               GoRouter.of(context).go("/playlist");
             },
@@ -43,10 +38,7 @@ class MobileNavbar extends ConsumerWidget {
           ),
           MobileNavbarItem(
             label: t.general.albums,
-            icon: const AdwaitaIcon(
-              AdwaitaIcons.media_optical,
-              size: 24,
-            ),
+            icon: const AdwaitaIcon(AdwaitaIcons.media_optical, size: 24),
             onTap: () {
               GoRouter.of(context).go("/album");
             },
@@ -54,10 +46,7 @@ class MobileNavbar extends ConsumerWidget {
           ),
           MobileNavbarItem(
             label: t.general.artists,
-            icon: const AdwaitaIcon(
-              AdwaitaIcons.music_artist2,
-              size: 24,
-            ),
+            icon: const AdwaitaIcon(AdwaitaIcons.music_artist2, size: 24),
             onTap: () {
               GoRouter.of(context).go("/artist");
             },
@@ -65,10 +54,7 @@ class MobileNavbar extends ConsumerWidget {
           ),
           MobileNavbarItem(
             label: t.general.settings,
-            icon: const AdwaitaIcon(
-              AdwaitaIcons.gear,
-              size: 24,
-            ),
+            icon: const AdwaitaIcon(AdwaitaIcons.gear, size: 24),
             onTap: () {
               GoRouter.of(context).go("/settings");
             },
@@ -110,9 +96,7 @@ class MobileNavbarItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconTheme(
-                data: IconThemeData(
-                  color: color,
-                ),
+                data: IconThemeData(color: color),
                 child: icon,
               ),
               const SizedBox(height: 3.0),

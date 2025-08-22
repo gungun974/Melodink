@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/logger/logger.dart';
@@ -436,7 +435,7 @@ class PlayedTrackRepository {
     }
   }
 
-  loadTrackHistoryIntoTracks(List<Track> tracks) async {
+  Future<void> loadTrackHistoryIntoTracks(List<Track> tracks) async {
     final infos = await getMultipleTracksHistoryInfo(
       tracks.map((track) => track.id).toList(),
     );
@@ -449,7 +448,3 @@ class PlayedTrackRepository {
     }
   }
 }
-
-final playedTrackRepositoryProvider = Provider(
-  (ref) => PlayedTrackRepository(),
-);

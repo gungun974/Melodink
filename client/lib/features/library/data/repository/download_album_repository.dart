@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/helpers/app_path_provider.dart';
@@ -222,9 +221,3 @@ class DownloadAlbumRepository {
     }
   }
 }
-
-final downloadAlbumRepositoryProvider = Provider(
-  (ref) => DownloadAlbumRepository(
-    albumRepository: ref.watch(albumRepositoryProvider),
-  ),
-);

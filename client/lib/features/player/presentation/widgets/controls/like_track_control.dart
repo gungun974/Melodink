@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:melodink_client/core/hooks/use_behavior_subject_stream.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_score.dart';
+import 'package:provider/provider.dart';
 
-class CurrentTrackScoreControl extends HookConsumerWidget {
+class CurrentTrackScoreControl extends HookWidget {
   final bool largeControlButton;
 
   const CurrentTrackScoreControl({super.key, this.largeControlButton = false});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.read(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     final currentTrack = useBehaviorSubjectStream(
       audioController.currentTrack,

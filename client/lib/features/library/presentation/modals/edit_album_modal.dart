@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_modal.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
-import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/edit_album_viewmodel.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
@@ -117,21 +114,17 @@ class EditAlbumModal extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: "EditAlbumModal",
-      pageBuilder: (_, __, ___) {
+      pageBuilder: (_, _, _) {
         return Center(
           child: MaxContainer(
             maxWidth: 420,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 64),
-            child: riverpod.Consumer(
-              builder: (context, ref, _) {
-                return ChangeNotifierProvider(
-                  create: (_) => EditAlbumViewModel(
-                    eventBus: ref.read(eventBusProvider),
-                    albumRepository: ref.read(albumRepositoryProvider),
-                  )..loadAlbum(album.id),
-                  child: EditAlbumModal(),
-                );
-              },
+            child: ChangeNotifierProvider(
+              create: (context) => EditAlbumViewModel(
+                eventBus: context.read(),
+                albumRepository: context.read(),
+              )..loadAlbum(album.id),
+              child: EditAlbumModal(),
             ),
           ),
         );

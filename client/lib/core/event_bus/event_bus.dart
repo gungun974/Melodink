@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-
 class EventBus {
   final StreamController _streamController;
 
@@ -21,5 +19,3 @@ class EventBus {
 }
 
 abstract class EventBusEvent {}
-
-final eventBusProvider = Provider((ref) => EventBus());

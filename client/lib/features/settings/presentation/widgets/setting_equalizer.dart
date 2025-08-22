@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
 import 'package:melodink_client/core/widgets/app_switch.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/domain/entities/equalizer.dart';
@@ -8,12 +7,12 @@ import 'package:melodink_client/features/settings/presentation/viewmodels/settin
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class SettingEqualizer extends riverpod.HookConsumerWidget {
+class SettingEqualizer extends HookWidget {
   const SettingEqualizer({super.key});
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
     final viewModel = context.read<SettingsViewModel>();
 
     final bands = [

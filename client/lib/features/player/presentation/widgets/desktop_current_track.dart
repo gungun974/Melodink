@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -11,13 +10,14 @@ import 'package:melodink_client/features/track/presentation/hooks/use_get_downlo
 import 'package:melodink_client/features/track/presentation/widgets/album_link_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/single_track_context_menu.dart';
+import 'package:provider/provider.dart';
 
-class DesktopCurrentTrack extends HookConsumerWidget {
+class DesktopCurrentTrack extends HookWidget {
   const DesktopCurrentTrack({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     final trackContextMenuController = useMemoized(() => MenuController());
 
@@ -43,9 +43,12 @@ class DesktopCurrentTrack extends HookConsumerWidget {
           );
         });
 
-        return HookConsumer(
-          builder: (context, ref, child) {
-            final downloadedTrack = useGetDownloadTrack(currentTrack.id, ref);
+        return HookBuilder(
+          builder: (context) {
+            final downloadedTrack = useGetDownloadTrack(
+              context,
+              currentTrack.id,
+            );
 
             return SingleTrackContextMenu(
               track: currentTrack,

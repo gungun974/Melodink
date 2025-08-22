@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:color_thief_flutter/color_thief_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
@@ -44,7 +43,7 @@ const cyanTheme = [
   Color.fromRGBO(48, 156, 217, 1),
 ];
 
-class GradientBackground extends HookConsumerWidget {
+class GradientBackground extends HookWidget {
   const GradientBackground({super.key});
 
   AlignmentGeometry gradientEndPoint(double angle) {
@@ -77,14 +76,14 @@ class GradientBackground extends HookConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final currentTheme = context.watch<SettingsViewModel>().currentAppTheme();
     final dynamicBackgroundColors = context
         .watch<SettingsViewModel>()
         .shouldDynamicBackgroundColors();
 
-    final audioController = ref.read(audioControllerProvider);
-    final downloadTrackRepository = ref.read(downloadTrackRepositoryProvider);
+    final audioController = context.read<AudioController>();
+    final downloadTrackRepository = context.read<DownloadTrackRepository>();
 
     final palette = useState<List<List<int>>?>(null);
 

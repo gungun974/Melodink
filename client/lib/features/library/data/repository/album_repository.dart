@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
@@ -329,11 +328,3 @@ class AlbumRepository {
     }
   }
 }
-
-final albumRepositoryProvider = Provider(
-  (ref) => AlbumRepository(
-    playedTrackRepository: ref.watch(playedTrackRepositoryProvider),
-    syncRepository: ref.watch(syncRepositoryProvider),
-    networkInfo: ref.watch(networkInfoProvider),
-  ),
-);

@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
@@ -11,8 +10,9 @@ class SyncSharedPlayedTrackRepository {
   Future<int> _getLastSharedId() async {
     final db = await DatabaseService.getDatabase();
 
-    final List<Map<String, dynamic>> result =
-        db.select('SELECT MAX(id) as last_id FROM shared_played_tracks');
+    final List<Map<String, dynamic>> result = db.select(
+      'SELECT MAX(id) as last_id FROM shared_played_tracks',
+    );
 
     if (result.isNotEmpty && result.first['last_id'] != null) {
       return result.first['last_id'] as int;
@@ -27,13 +27,12 @@ class SyncSharedPlayedTrackRepository {
     final lastFetchedId = await _getLastSharedId();
 
     try {
-      final response =
-          await AppApi().dio.get("/sharedPlayedTrack/from/$lastFetchedId");
+      final response = await AppApi().dio.get(
+        "/sharedPlayedTrack/from/$lastFetchedId",
+      );
 
       final sharedPlayedTracks = (response.data as List)
-          .map(
-            (rawModel) => SharedPlayedTrackModel.fromJson(rawModel),
-          )
+          .map((rawModel) => SharedPlayedTrackModel.fromJson(rawModel))
           .toList();
 
       if (sharedPlayedTracks.isEmpty) {
@@ -42,8 +41,7 @@ class SyncSharedPlayedTrackRepository {
 
       const chunkSize = 75;
 
-      final insertBatch = db.prepare(
-        '''
+      final insertBatch = db.prepare('''
     INSERT OR REPLACE INTO shared_played_tracks (
       id,
       internal_device_id,
@@ -58,8 +56,7 @@ class SyncSharedPlayedTrackRepository {
       track_duration,
       shared_at
     ) VALUES ${List.filled(chunkSize, "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").join(', ')}
-    ''',
-      );
+    ''');
 
       for (var i = 0; i < sharedPlayedTracks.length; i += chunkSize) {
         if ((i + chunkSize < sharedPlayedTracks.length)) {
@@ -87,11 +84,12 @@ class SyncSharedPlayedTrackRepository {
                 .toList(),
           );
         } else {
-          final chunk =
-              sharedPlayedTracks.sublist(i, sharedPlayedTracks.length);
+          final chunk = sharedPlayedTracks.sublist(
+            i,
+            sharedPlayedTracks.length,
+          );
 
-          final insertBatchLast = db.prepare(
-            '''
+          final insertBatchLast = db.prepare('''
     INSERT OR REPLACE INTO shared_played_tracks (
       id,
       internal_device_id,
@@ -106,8 +104,7 @@ class SyncSharedPlayedTrackRepository {
       track_duration,
       shared_at
     ) VALUES ${List.filled(chunk.length, "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").join(', ')}
-    ''',
-          );
+    ''');
 
           insertBatchLast.execute(
             chunk
@@ -156,7 +153,8 @@ class SyncSharedPlayedTrackRepository {
 
     final deviceId = await SettingsRepository().getDeviceId();
 
-    final data = db.select("""
+    final data = db.select(
+      """
       SELECT *
       FROM played_tracks
       WHERE id NOT IN (
@@ -164,25 +162,31 @@ class SyncSharedPlayedTrackRepository {
           FROM shared_played_tracks 
           WHERE device_id = ?
       )
-      """, [deviceId]);
+      """,
+      [deviceId],
+    );
 
-    final playedTracks =
-        data.map(PlayedTrackRepository.decodePlayedTrack).toList();
+    final playedTracks = data
+        .map(PlayedTrackRepository.decodePlayedTrack)
+        .toList();
 
     for (var playedTrack in playedTracks) {
       try {
-        await AppApi().dio.post("/sharedPlayedTrack/upload", data: {
-          "internal_device_id": playedTrack.id,
-          "track_id": playedTrack.trackId,
-          "device_id": deviceId,
-          "start_at": playedTrack.startAt.toUtc().toIso8601String(),
-          "finish_at": playedTrack.finishAt.toUtc().toIso8601String(),
-          "begin_at": playedTrack.beginAt.inMilliseconds,
-          "ended_at": playedTrack.endedAt.inMilliseconds,
-          "track_duration": playedTrack.trackDuration.inMilliseconds,
-          "shuffle": playedTrack.shuffle,
-          "track_ended": playedTrack.trackEnded,
-        });
+        await AppApi().dio.post(
+          "/sharedPlayedTrack/upload",
+          data: {
+            "internal_device_id": playedTrack.id,
+            "track_id": playedTrack.trackId,
+            "device_id": deviceId,
+            "start_at": playedTrack.startAt.toUtc().toIso8601String(),
+            "finish_at": playedTrack.finishAt.toUtc().toIso8601String(),
+            "begin_at": playedTrack.beginAt.inMilliseconds,
+            "ended_at": playedTrack.endedAt.inMilliseconds,
+            "track_duration": playedTrack.trackDuration.inMilliseconds,
+            "shuffle": playedTrack.shuffle,
+            "track_ended": playedTrack.trackEnded,
+          },
+        );
       } on DioException catch (e) {
         final response = e.response;
         if (response == null) {
@@ -196,7 +200,3 @@ class SyncSharedPlayedTrackRepository {
     }
   }
 }
-
-final syncSharedPlayedTrackRepositoryProvider = Provider(
-  (ref) => SyncSharedPlayedTrackRepository(),
-);

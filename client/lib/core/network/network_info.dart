@@ -1,24 +1,17 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:mutex/mutex.dart';
 import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-class NetworkInfo {
+class NetworkInfo extends ChangeNotifier {
   bool _isServerRecheable = true;
   bool _forceOffline = false;
 
   final SharedPreferencesAsync _asyncPrefs = SharedPreferencesAsync();
-
-  bool isServerRecheable() {
-    if (_forceOffline) {
-      return false;
-    }
-    return _isServerRecheable;
-  }
 
   NetworkInfo._privateConstructor();
 
@@ -35,26 +28,29 @@ class NetworkInfo {
     return _forceOfflineStreamController.stream;
   }
 
-  setForceOffline(bool force) async {
-    await _asyncPrefs.setBool(
-      "forceOfflineMode",
-      force,
-    );
+  Future<void> setForceOffline(bool force) async {
+    await _asyncPrefs.setBool("forceOfflineMode", force);
     _forceOffline = force;
     _forceOfflineStreamController.add(force);
     _streamController.add(isServerRecheable());
+    notifyListeners();
   }
 
   bool getForceOffline() {
     return _forceOffline;
   }
 
-  setSavedForceOffline() async {
-    _forceOffline = await _asyncPrefs.getBool(
-          "forceOfflineMode",
-        ) ??
-        false;
+  bool isServerRecheable() {
+    if (_forceOffline) {
+      return false;
+    }
+    return _isServerRecheable;
+  }
+
+  Future<void> setSavedForceOffline() async {
+    _forceOffline = await _asyncPrefs.getBool("forceOfflineMode") ?? false;
     _forceOfflineStreamController.add(_forceOffline);
+    notifyListeners();
   }
 
   final _connectivity = Connectivity();
@@ -69,54 +65,50 @@ class NetworkInfo {
   final mutex = Mutex();
 
   void startCheckServerReachable() async {
-    return mutex.protect(
-      () async {
-        while (true) {
-          if (_isServerRecheable) {
-            return;
+    return mutex.protect(() async {
+      while (true) {
+        if (_isServerRecheable) {
+          return;
+        }
+
+        if (_forceOffline) {
+        } else if (AppApi().hasServerUrl()) {
+          final connectivityResult = await (_connectivity.checkConnectivity());
+
+          if (connectivityResult.contains(ConnectivityResult.none)) {
+            _isServerRecheable = false;
+
+            await Future.delayed(const Duration(seconds: 2));
+
+            continue;
           }
 
-          if (_forceOffline) {
-          } else if (AppApi().hasServerUrl()) {
-            final connectivityResult =
-                await (_connectivity.checkConnectivity());
+          try {
+            final response = await AppApi().dio.get(
+              "/health",
+              options: Options(
+                headers: {},
+                receiveTimeout: const Duration(seconds: 3),
+              ),
+            );
 
-            if (connectivityResult.contains(ConnectivityResult.none)) {
-              _isServerRecheable = false;
-
-              await Future.delayed(const Duration(
-                seconds: 2,
-              ));
-
-              continue;
-            }
-
-            try {
-              final response = await AppApi().dio.get(
-                    "/health",
-                    options: Options(
-                      headers: {},
-                      receiveTimeout: const Duration(seconds: 3),
-                    ),
-                  );
-
-              _isServerRecheable = response.statusCode == 200;
-              _streamController.add(_isServerRecheable);
-            } catch (_) {
-              _isServerRecheable = false;
-              _streamController.add(_isServerRecheable);
-            }
-          } else {
+            _isServerRecheable = response.statusCode == 200;
+            _streamController.add(_isServerRecheable);
+            notifyListeners();
+          } catch (_) {
             _isServerRecheable = false;
             _streamController.add(_isServerRecheable);
+            notifyListeners();
           }
-
-          await Future.delayed(const Duration(
-            seconds: 1,
-          ));
+        } else {
+          _isServerRecheable = false;
+          _streamController.add(_isServerRecheable);
+          notifyListeners();
         }
-      },
-    );
+
+        await Future.delayed(const Duration(seconds: 1));
+      }
+    });
   }
 
   void reportNetworkUnrechable() {
@@ -124,40 +116,3 @@ class NetworkInfo {
     startCheckServerReachable();
   }
 }
-
-final networkInfoProvider = Provider((ref) => NetworkInfo());
-
-final isServerReachableStreamProvider = StreamProvider<bool>((ref) {
-  final networkInfo = ref.watch(networkInfoProvider);
-
-  return networkInfo.stream;
-});
-
-final isServerReachableProvider = Provider<bool>((ref) {
-  final networkInfo = ref.watch(networkInfoProvider);
-  final isServerReachable =
-      ref.watch(isServerReachableStreamProvider).valueOrNull;
-
-  if (isServerReachable == null) {
-    return networkInfo.isServerRecheable();
-  }
-
-  return isServerReachable;
-});
-
-final isForceOfflineStreamProvider = StreamProvider<bool>((ref) {
-  final networkInfo = ref.watch(networkInfoProvider);
-
-  return networkInfo.forceOfflineStream;
-});
-
-final isForceOfflineProvider = Provider<bool>((ref) {
-  final networkInfo = ref.watch(networkInfoProvider);
-  final forceOffline = ref.watch(isForceOfflineStreamProvider).valueOrNull;
-
-  if (forceOffline == null) {
-    return networkInfo.getForceOffline();
-  }
-
-  return forceOffline;
-});

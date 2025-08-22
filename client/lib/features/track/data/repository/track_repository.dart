@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
@@ -135,7 +134,7 @@ class TrackRepository {
     );
   }
 
-  static loadTrackAlbums(
+  static void loadTrackAlbums(
     Database db,
     String applicationSupportDirectory,
     Track track,
@@ -164,7 +163,7 @@ class TrackRepository {
     }
   }
 
-  static loadTrackArtists(Database db, Track track) {
+  static void loadTrackArtists(Database db, Track track) {
     track.artists
       ..clear()
       ..addAll(
@@ -550,7 +549,7 @@ class TrackRepository {
     }
   }
 
-  importPendingTracks() async {
+  Future<void> importPendingTracks() async {
     try {
       await AppApi().dio.post("/track/import");
 
@@ -728,11 +727,3 @@ class TrackRepository {
     }
   }
 }
-
-final trackRepositoryProvider = Provider(
-  (ref) => TrackRepository(
-    playedTrackRepository: ref.watch(playedTrackRepositoryProvider),
-    syncRepository: ref.watch(syncRepositoryProvider),
-    networkInfo: ref.watch(networkInfoProvider),
-  ),
-);

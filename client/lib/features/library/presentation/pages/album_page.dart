@@ -1,29 +1,24 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
-import 'package:melodink_client/features/library/data/repository/album_repository.dart';
-import 'package:melodink_client/features/library/data/repository/download_album_repository.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/album_viewmodel.dart';
 import 'package:melodink_client/features/library/presentation/widgets/album_context_menu.dart';
 import 'package:melodink_client/features/library/presentation/widgets/desktop_playlist_header.dart';
 import 'package:melodink_client/features/library/presentation/widgets/mobile_playlist_header.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
-import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_list.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class AlbumPage extends riverpod.HookConsumerWidget {
+class AlbumPage extends HookWidget {
   final int albumId;
 
   final int? openWithScrollOnSpecificTrackId;
@@ -35,8 +30,8 @@ class AlbumPage extends riverpod.HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     final albumContextMenuController = useMemoized(() => MenuController());
 
@@ -49,12 +44,12 @@ class AlbumPage extends riverpod.HookConsumerWidget {
     useAutoCloseContextMenuOnScroll(scrollController: scrollController);
 
     return ChangeNotifierProvider(
-      create: (_) => AlbumViewModel(
-        eventBus: ref.read(eventBusProvider),
-        audioController: ref.read(audioControllerProvider),
-        downloadManager: ref.read(downloadManagerProvider),
-        albumRepository: ref.read(albumRepositoryProvider),
-        downloadAlbumRepository: ref.read(downloadAlbumRepositoryProvider),
+      create: (context) => AlbumViewModel(
+        eventBus: context.read(),
+        audioController: context.read(),
+        downloadManager: context.read(),
+        albumRepository: context.read(),
+        downloadAlbumRepository: context.read(),
       )..loadAlbum(albumId),
       child: Stack(
         children: [

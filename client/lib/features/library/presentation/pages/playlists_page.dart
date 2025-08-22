@@ -1,27 +1,24 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
-import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/presentation/modals/create_playlist_modal.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/playlits_viewmodel.dart';
 import 'package:melodink_client/features/library/presentation/widgets/playlist_collections_grid.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class PlaylistsPage extends riverpod.ConsumerWidget {
+class PlaylistsPage extends StatelessWidget {
   const PlaylistsPage({super.key});
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
+  Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => PlaylistsViewModel(
-        eventBus: ref.read(eventBusProvider),
-        playlistRepository: ref.read(playlistRepositoryProvider),
+      create: (context) => PlaylistsViewModel(
+        eventBus: context.read(),
+        playlistRepository: context.read(),
       )..loadPlaylists(),
       child: AppScreenTypeLayoutBuilder(
         builder: (context, size) {

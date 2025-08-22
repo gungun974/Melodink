@@ -3,8 +3,6 @@ import 'package:flutter/material.dart' hide ReorderableList;
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
@@ -14,7 +12,6 @@ import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
-import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/presentation/hooks/use_dragable_tracks.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/edit_playlist_viewmodel.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
@@ -25,13 +22,13 @@ import 'package:melodink_client/features/track/presentation/widgets/track_list.d
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class PlaylistPageEdit extends riverpod.HookConsumerWidget {
+class PlaylistPageEdit extends HookWidget {
   final int playlistId;
 
   const PlaylistPageEdit({super.key, required this.playlistId});
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
+  Widget build(BuildContext context) {
     final scrollController = useScrollController();
 
     final scrollViewKey = useMemoized(() => GlobalKey());
@@ -39,9 +36,9 @@ class PlaylistPageEdit extends riverpod.HookConsumerWidget {
     useAutoCloseContextMenuOnScroll(scrollController: scrollController);
 
     return ChangeNotifierProvider(
-      create: (_) => EditPlaylistViewModel(
-        eventBus: ref.read(eventBusProvider),
-        playlistRepository: ref.read(playlistRepositoryProvider),
+      create: (context) => EditPlaylistViewModel(
+        eventBus: context.read(),
+        playlistRepository: context.read(),
       )..loadPlaylist(playlistId),
       child: Stack(
         children: [

@@ -12,21 +12,16 @@ import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
-import 'package:melodink_client/features/auth/data/repository/auth_repository.dart';
 import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
-import 'package:melodink_client/features/auth/presentation/viewmodels/server_setup_viewmodel.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/domain/audio/melodink_player.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
-import 'package:melodink_client/features/sync/domain/providers/sync_manager_provider.dart';
-import 'package:melodink_client/features/tracker/domain/providers/shared_played_track_provider.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:melodink_client/provider.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:timeago/timeago.dart' as timeago;
-
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
 
 void main() async {
   MelodinkPlayer().init();
@@ -73,9 +68,7 @@ void main() async {
     await ImageCacheManager.initCache();
   } catch (_) {}
 
-  runApp(
-    riverpod.ProviderScope(child: TranslationProvider(child: const MyApp())),
-  );
+  runApp(MainProviderScope(child: TranslationProvider(child: const MyApp())));
 }
 
 class MyApp extends StatelessWidget {
@@ -83,128 +76,91 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _EagerInitialization(
-      child: _DynamicSystemUIMode(
-        child: MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(1)),
-          child: riverpod.HookConsumer(
-            builder: (context, ref, _) {
-              final appRouter = ref.read(appRouterProvider);
+    return _DynamicSystemUIMode(
+      child: MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
+        child: HookBuilder(
+          builder: (context) {
+            final appRouter = context.read<AppRouter>();
 
-              final authViewModel = context.read<AuthViewModel>();
+            final authViewModel = context.read<AuthViewModel>();
 
-              final prevRef = useRef<bool?>(null);
+            final prevRef = useRef<bool?>(null);
 
-              useOnListenableChange(authViewModel, () {
-                final prevValue = prevRef.value ?? false;
-                final nextValue = authViewModel.getIsUserAuthenticated();
-                prevRef.value = nextValue;
+            useOnListenableChange(authViewModel, () {
+              final prevValue = prevRef.value ?? false;
+              final nextValue = authViewModel.getIsUserAuthenticated();
+              prevRef.value = nextValue;
 
-                if (prevValue && !nextValue) {
-                  appRouter.refresh();
-                }
-              });
+              if (prevValue && !nextValue) {
+                appRouter.router.refresh();
+              }
+            });
 
-              final audioController = ref.watch(audioControllerProvider);
+            final audioController = context.read<AudioController>();
 
-              return Shortcuts(
-                shortcuts: <ShortcutActivator, Intent>{
-                  const SingleActivator(
-                    LogicalKeyboardKey.space,
-                  ): VoidCallbackIntent(() {
-                    if (audioController.playbackState.valueOrNull?.playing ==
-                        true) {
-                      audioController.pause();
-                      return;
-                    }
-                    audioController.play();
-                  }),
-                },
-                child: Stack(
-                  alignment: Alignment.topCenter,
-                  children: [
-                    MaterialApp.router(
-                      title: 'Melodink Client',
-                      locale: TranslationProvider.of(context).flutterLocale,
-                      supportedLocales: AppLocaleUtils.supportedLocales,
-                      localizationsDelegates:
-                          GlobalMaterialLocalizations.delegates,
-                      debugShowCheckedModeBanner: false,
-                      theme: ThemeData(
-                        useMaterial3: false,
+            return Shortcuts(
+              shortcuts: <ShortcutActivator, Intent>{
+                const SingleActivator(
+                  LogicalKeyboardKey.space,
+                ): VoidCallbackIntent(() {
+                  if (audioController.playbackState.valueOrNull?.playing ==
+                      true) {
+                    audioController.pause();
+                    return;
+                  }
+                  audioController.play();
+                }),
+              },
+              child: Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  MaterialApp.router(
+                    title: 'Melodink Client',
+                    locale: TranslationProvider.of(context).flutterLocale,
+                    supportedLocales: AppLocaleUtils.supportedLocales,
+                    localizationsDelegates:
+                        GlobalMaterialLocalizations.delegates,
+                    debugShowCheckedModeBanner: false,
+                    theme: ThemeData(
+                      useMaterial3: false,
+                      brightness: Brightness.dark,
+                      appBarTheme: const AppBarTheme(
+                        backgroundColor: Colors.black,
+                      ),
+                      primaryColor: Colors.black,
+                      iconTheme: const IconThemeData().copyWith(
+                        color: Colors.white,
+                      ),
+                      colorScheme: ColorScheme.fromSeed(
+                        seedColor: const Color.fromRGBO(196, 126, 208, 1),
                         brightness: Brightness.dark,
-                        appBarTheme: const AppBarTheme(
-                          backgroundColor: Colors.black,
-                        ),
-                        primaryColor: Colors.black,
-                        iconTheme: const IconThemeData().copyWith(
-                          color: Colors.white,
-                        ),
-                        colorScheme: ColorScheme.fromSeed(
-                          seedColor: const Color.fromRGBO(196, 126, 208, 1),
-                          brightness: Brightness.dark,
-                        ),
-                        fontFamily: "Roboto",
                       ),
-                      routerConfig: appRouter,
+                      fontFamily: "Roboto",
                     ),
-                    RepaintBoundary(
-                      child: AppNotificationManager(
-                        key: appNotificationManagerKey,
-                      ),
+                    routerConfig: appRouter.router,
+                  ),
+                  RepaintBoundary(
+                    child: AppNotificationManager(
+                      key: appNotificationManagerKey,
                     ),
-                  ],
-                ),
-              );
-            },
-          ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
 }
 
-class _EagerInitialization extends riverpod.ConsumerWidget {
-  const _EagerInitialization({required this.child});
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
-    ref.watch(audioControllerProvider);
-    ref.watch(sharedPlayedTrackerManagerProvider);
-    ref.watch(syncManagerProvider);
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => SettingsViewModel(
-            audioController: ref.read(audioControllerProvider),
-          )..loadSettings(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ServerSetupViewModel(
-            authRepository: ref.read(authRepositoryProvider),
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => AuthViewModel(
-            audioController: ref.read(audioControllerProvider),
-            authRepository: ref.read(authRepositoryProvider),
-          ),
-        ),
-      ],
-      child: child,
-    );
-  }
-}
-
-class _DynamicSystemUIMode extends riverpod.HookConsumerWidget {
+class _DynamicSystemUIMode extends HookWidget {
   const _DynamicSystemUIMode({required this.child});
   final Widget child;
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
+  Widget build(BuildContext context) {
     final currentPlayerBarPosition = context
         .watch<SettingsViewModel>()
         .currentPlayerBarPosition();

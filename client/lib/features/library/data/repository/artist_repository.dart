@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
@@ -19,14 +18,9 @@ class ArtistRepository {
 
   final NetworkInfo networkInfo;
 
-  ArtistRepository({
-    required this.syncRepository,
-    required this.networkInfo,
-  });
+  ArtistRepository({required this.syncRepository, required this.networkInfo});
 
-  static Artist decodeArtist(
-    Map<String, Object?> data,
-  ) {
+  static Artist decodeArtist(Map<String, Object?> data) {
     return Artist(
       id: data["id"] as int,
       name: data["name"] as String,
@@ -36,7 +30,7 @@ class ArtistRepository {
     );
   }
 
-  static loadArtistAlbums(
+  static void loadArtistAlbums(
     Database db,
     String applicationSupportDirectory,
     Artist artist,
@@ -44,17 +38,18 @@ class ArtistRepository {
     artist.albums
       ..clear()
       ..addAll(
-        (db.select('''
+        (db.select(
+          '''
         SELECT albums.*, album_downloads.cover_file, album_downloads.album_id as download_id, album_downloads.partial_download
         FROM albums
         LEFT JOIN album_downloads ON album_downloads.album_id = albums.id
         JOIN album_artist ON albums.id = album_artist.album_id
         WHERE album_artist.artist_id = ?
-      ''', [artist.id])).map(
-          (album) => AlbumRepository.decodeAlbum(
-            applicationSupportDirectory,
-            album,
-          ),
+      ''',
+          [artist.id],
+        )).map(
+          (album) =>
+              AlbumRepository.decodeAlbum(applicationSupportDirectory, album),
         ),
       );
 
@@ -71,7 +66,8 @@ class ArtistRepository {
     artist.appearAlbums
       ..clear()
       ..addAll(
-        (db.select('''
+        (db.select(
+          '''
     SELECT DISTINCT albums.*, album_downloads.cover_file, album_downloads.album_id as download_id, album_downloads.partial_download
     FROM albums
     LEFT JOIN album_downloads ON album_downloads.album_id = albums.id
@@ -84,11 +80,11 @@ class ArtistRepository {
         WHERE album_artist.album_id = albums.id
           AND album_artist.artist_id = ?
       )
-  ''', [artist.id, artist.id])).map(
-          (album) => AlbumRepository.decodeAlbum(
-            applicationSupportDirectory,
-            album,
-          ),
+  ''',
+          [artist.id, artist.id],
+        )).map(
+          (album) =>
+              AlbumRepository.decodeAlbum(applicationSupportDirectory, album),
         ),
       );
 
@@ -133,9 +129,9 @@ class ArtistRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      final artist = (db.select("SELECT * FROM artists WHERE id = ?", [id]))
-          .map(decodeArtist)
-          .firstOrNull;
+      final artist = (db.select("SELECT * FROM artists WHERE id = ?", [
+        id,
+      ])).map(decodeArtist).firstOrNull;
 
       if (artist == null) {
         throw ArtistNotFoundException();
@@ -155,9 +151,7 @@ class ArtistRepository {
     try {
       final response = await AppApi().dio.post(
         "/artist",
-        data: {
-          "name": artist.name,
-        },
+        data: {"name": artist.name},
       );
 
       await syncRepository.performSync();
@@ -176,14 +170,3 @@ class ArtistRepository {
     }
   }
 }
-
-final artistRepositoryProvider = Provider(
-  (ref) => ArtistRepository(
-    syncRepository: ref.watch(
-      syncRepositoryProvider,
-    ),
-    networkInfo: ref.watch(
-      networkInfoProvider,
-    ),
-  ),
-);

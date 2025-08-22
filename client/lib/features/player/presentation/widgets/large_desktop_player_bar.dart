@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:melodink_client/core/routes/provider.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
@@ -18,12 +18,15 @@ import 'package:melodink_client/features/track/presentation/widgets/album_link_t
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:provider/provider.dart';
 
-class LargeDesktopPlayerBar extends ConsumerWidget {
+class LargeDesktopPlayerBar extends HookWidget {
   const LargeDesktopPlayerBar({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentUrl = ref.watch(appRouterCurrentUrl);
+  Widget build(BuildContext context) {
+    final currentUrl = useValueListenable(
+      context.read<AppRouter>().currentUrlNotifier,
+    );
+
     final scoringSystem = context
         .watch<SettingsViewModel>()
         .currentScoringSystem();
@@ -79,12 +82,12 @@ class LargeDesktopPlayerBar extends ConsumerWidget {
   }
 }
 
-class DesktopCurrentTrack2 extends ConsumerWidget {
+class DesktopCurrentTrack2 extends StatelessWidget {
   const DesktopCurrentTrack2({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.watch(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     return StreamBuilder(
       stream: audioController.currentTrack.stream,
@@ -108,9 +111,12 @@ class DesktopCurrentTrack2 extends ConsumerWidget {
           );
         });
 
-        return HookConsumer(
-          builder: (context, ref, child) {
-            final downloadedTrack = useGetDownloadTrack(currentTrack.id, ref);
+        return HookBuilder(
+          builder: (context) {
+            final downloadedTrack = useGetDownloadTrack(
+              context,
+              currentTrack.id,
+            );
 
             return Container(
               color: const Color.fromRGBO(0, 0, 0, 0.08),

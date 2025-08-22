@@ -1,9 +1,6 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart'
-    hide ChangeNotifierProvider, Consumer, Provider;
 import 'package:intl/intl.dart';
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
@@ -11,25 +8,24 @@ import 'package:melodink_client/core/widgets/app_modal.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/form/app_text_form_field.dart';
-import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/presentation/modals/edit_track_modal.dart';
 import 'package:melodink_client/features/track/presentation/viewmodels/track_viewmodel.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class ShowTrackModal extends ConsumerWidget {
+class ShowTrackModal extends StatelessWidget {
   final int trackId;
 
   const ShowTrackModal({super.key, required this.trackId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final DateFormat formatter = DateFormat.yMd().add_Hm();
 
     return ChangeNotifierProvider(
-      create: (_) => TrackViewModel(
-        eventBus: ref.read(eventBusProvider),
-        trackRepository: ref.read(trackRepositoryProvider),
+      create: (context) => TrackViewModel(
+        eventBus: context.read(),
+        trackRepository: context.read(),
       )..loadTrack(trackId),
       child: Stack(
         children: [

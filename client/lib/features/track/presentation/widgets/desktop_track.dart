@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/helpers/timeago.dart';
@@ -49,7 +48,7 @@ enum DesktopTrackModule {
   });
 }
 
-class DesktopTrackModuleLayout extends ConsumerWidget {
+class DesktopTrackModuleLayout extends StatelessWidget {
   final List<DesktopTrackModule> modules;
 
   final Widget Function(
@@ -65,7 +64,7 @@ class DesktopTrackModuleLayout extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final scoringSystem = context
         .watch<SettingsViewModel>()
         .currentScoringSystem();
@@ -125,7 +124,7 @@ class DesktopTrackModuleLayout extends ConsumerWidget {
   }
 }
 
-class DesktopTrack extends HookConsumerWidget {
+class DesktopTrack extends HookWidget {
   final Track track;
 
   final int trackNumber;
@@ -182,12 +181,14 @@ class DesktopTrack extends HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final currentTheme = context.watch<SettingsViewModel>().currentAppTheme();
 
-    final audioController = ref.read(audioControllerProvider);
+    final audioController = context.read<AudioController>();
 
-    final isServerReachable = ref.watch(isServerReachableProvider);
+    final isServerReachable = context.select<NetworkInfo, bool>(
+      (networkInfo) => networkInfo.isServerRecheable(),
+    );
 
     final isCurrentTrack =
         useStream(
@@ -199,7 +200,7 @@ class DesktopTrack extends HookConsumerWidget {
         ).data ??
         false;
 
-    final asyncDownloadedTrack = useAsyncGetDownloadTrack(track.id, ref);
+    final asyncDownloadedTrack = useAsyncGetDownloadTrack(context, track.id);
 
     final downloadedTrack = asyncDownloadedTrack.data;
 

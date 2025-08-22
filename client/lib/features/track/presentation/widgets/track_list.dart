@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/hooks/use_list_controller.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/mobile_track.dart';
+import 'package:provider/provider.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 
-class TrackList extends HookConsumerWidget {
+class TrackList extends HookWidget {
   final List<Track> tracks;
   final List<Key>? orderKeys;
 
@@ -76,8 +76,8 @@ class TrackList extends HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.read(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     final startSelect = useState<int?>(null);
     final endSelect = useState<int?>(null);
@@ -224,7 +224,7 @@ class TrackList extends HookConsumerWidget {
     }, []);
 
     return SuperSliverList(
-      extentEstimation: (_, __) => 50,
+      extentEstimation: (_, _) => 50,
       listController: scrollController != null ? listController : null,
       delegate: SliverChildBuilderDelegate((context, index) {
         late final Widget child;

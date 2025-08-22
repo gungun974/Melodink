@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/network/network_info.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
@@ -294,14 +293,3 @@ class AsyncExecutor {
     return;
   }
 }
-
-final downloadManagerProvider = Provider(
-  (ref) => DownloadManager(
-    eventBus: ref.read(eventBusProvider),
-    audioController: ref.read(audioControllerProvider),
-    albumRepository: ref.read(albumRepositoryProvider),
-    downloadTrackRepository: ref.read(downloadTrackRepositoryProvider),
-    downloadPlaylistRepository: ref.read(downloadPlaylistRepositoryProvider),
-    downloadAlbumRepository: ref.read(downloadAlbumRepositoryProvider),
-  ),
-);

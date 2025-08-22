@@ -3,14 +3,13 @@ import 'dart:async';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/core/hooks/use_behavior_subject_stream.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:provider/provider.dart';
 
-class LargePlayerSeeker extends HookConsumerWidget {
+class LargePlayerSeeker extends HookWidget {
   final bool displayDurationsInBottom;
   final bool large;
 
@@ -21,8 +20,8 @@ class LargePlayerSeeker extends HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final audioController = ref.read(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     final audioControllerPositionDataStream = useBehaviorSubjectStream(
       audioController.getPositionData(),

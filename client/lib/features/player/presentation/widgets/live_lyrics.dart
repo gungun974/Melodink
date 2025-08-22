@@ -2,7 +2,6 @@ import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
 import 'package:melodink_client/core/helpers/debounce.dart';
 import 'package:melodink_client/core/hooks/use_behavior_subject_stream.dart';
 import 'package:melodink_client/core/hooks/use_list_controller.dart';
@@ -11,7 +10,7 @@ import 'package:melodink_client/features/player/domain/audio/audio_controller.da
 import 'package:provider/provider.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 
-class LiveLyrics extends riverpod.HookConsumerWidget {
+class LiveLyrics extends HookWidget {
   final ScrollController? scrollController;
 
   final bool autoScrollToLyric;
@@ -26,7 +25,7 @@ class LiveLyrics extends riverpod.HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
+  Widget build(BuildContext context) {
     final listController = useListController();
     final currentAutoScrollIndex = useState<int?>(null);
 
@@ -45,7 +44,7 @@ class LiveLyrics extends riverpod.HookConsumerWidget {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
-    final audioController = ref.read(audioControllerProvider);
+    final audioController = context.read<AudioController>();
 
     final audioControllerPositionDataStream = useBehaviorSubjectStream(
       audioController.getPositionData(),
@@ -214,7 +213,7 @@ class LyricsParser {
   }
 }
 
-class LiveLyricsController extends riverpod.HookConsumerWidget {
+class LiveLyricsController extends HookWidget {
   final Widget Function(
     BuildContext context,
     bool autoScrollToLyric,
@@ -237,8 +236,8 @@ class LiveLyricsController extends riverpod.HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
-    final audioController = ref.read(audioControllerProvider);
+  Widget build(BuildContext context) {
+    final audioController = context.read<AudioController>();
 
     final currentLyrics = useStream(
       useMemoized(

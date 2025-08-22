@@ -30,7 +30,3 @@ linter:
 analyzer:
   plugins:
     - custom_lint
-
-custom_lint:
-  rules:
-    - avoid_manual_providers_as_generated_provider_dependency: false

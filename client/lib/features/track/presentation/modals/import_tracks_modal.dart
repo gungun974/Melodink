@@ -2,8 +2,6 @@ import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
@@ -11,7 +9,6 @@ import 'package:melodink_client/core/widgets/app_modal.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/max_container.dart';
-import 'package:melodink_client/features/track/data/repository/track_repository.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/presentation/viewmodels/import_tracks_viewmodel.dart';
@@ -172,16 +169,12 @@ class ImportTracksModal extends StatelessWidget {
             maxWidth: 850,
             maxHeight: 540,
             padding: EdgeInsets.all(32),
-            child: riverpod.Consumer(
-              builder: (context, ref, _) {
-                return ChangeNotifierProvider(
-                  create: (_) => ImportTracksViewModel(
-                    eventBus: ref.read(eventBusProvider),
-                    trackRepository: ref.read(trackRepositoryProvider),
-                  ),
-                  child: ImportTracksModal(),
-                );
-              },
+            child: ChangeNotifierProvider(
+              create: (context) => ImportTracksViewModel(
+                eventBus: context.read(),
+                trackRepository: context.read(),
+              ),
+              child: ImportTracksModal(),
             ),
           ),
         );

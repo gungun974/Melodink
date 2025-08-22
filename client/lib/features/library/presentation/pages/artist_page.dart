@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart' as riverpod;
-import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/widgets/app_navigation_header.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
-import 'package:melodink_client/features/library/data/repository/artist_repository.dart';
 import 'package:melodink_client/features/library/presentation/viewmodels/artist_viewmodel.dart';
 import 'package:melodink_client/features/library/presentation/widgets/album_collections_grid.dart';
 import 'package:melodink_client/features/library/presentation/widgets/desktop_artist_header.dart';
@@ -13,17 +10,17 @@ import 'package:melodink_client/features/track/domain/entities/track_compressed_
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class ArtistPage extends riverpod.ConsumerWidget {
+class ArtistPage extends StatelessWidget {
   final int artistId;
 
   const ArtistPage({super.key, required this.artistId});
 
   @override
-  Widget build(BuildContext context, riverpod.WidgetRef ref) {
+  Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ArtistViewModel(
-        eventBus: ref.read(eventBusProvider),
-        artistRepository: ref.read(artistRepositoryProvider),
+      create: (context) => ArtistViewModel(
+        eventBus: context.read(),
+        artistRepository: context.read(),
       )..loadArtist(artistId),
       child: AppNavigationHeader(
         title: AppScreenTypeLayoutBuilders(
