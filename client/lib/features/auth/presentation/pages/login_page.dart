@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:go_router/go_router.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
@@ -170,9 +170,9 @@ class LoginPage extends StatelessWidget {
                                             text: t.actions.createAccount,
                                             type: AppButtonType.secondary,
                                             onPressed: () {
-                                              GoRouter.of(
-                                                context,
-                                              ).push("/auth/register");
+                                              context.read<AppRouter>().push(
+                                                "/auth/register",
+                                              );
                                             },
                                           ),
                                           const SizedBox(height: 12.0),
@@ -180,9 +180,9 @@ class LoginPage extends StatelessWidget {
                                             text: t.actions.changeServer,
                                             type: AppButtonType.secondary,
                                             onPressed: () {
-                                              GoRouter.of(
-                                                context,
-                                              ).push("/auth/serverSetup");
+                                              context.read<AppRouter>().push(
+                                                "/auth/serverSetup",
+                                              );
                                             },
                                           ),
                                         ],

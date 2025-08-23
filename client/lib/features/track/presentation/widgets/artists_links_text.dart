@@ -1,9 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/hoverable_text.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
+import 'package:provider/provider.dart';
 
 class ArtistsLinksText extends StatelessWidget {
   const ArtistsLinksText({
@@ -49,18 +49,13 @@ class ArtistsLinksText extends StatelessWidget {
       overflow: overflow,
       textAlign: textAlign ?? TextAlign.start,
       text: TextSpan(
-        style: style.copyWith(
-          fontFamily: "Roboto",
-        ),
+        style: style.copyWith(fontFamily: "Roboto"),
         children: texts,
       ),
     );
 
     if (!withTooltip) {
-      return Align(
-        alignment: alignment ?? Alignment.centerLeft,
-        child: text,
-      );
+      return Align(alignment: alignment ?? Alignment.centerLeft, child: text);
     }
 
     return Align(
@@ -100,19 +95,19 @@ List<InlineSpan> getArtistsLinksTextSpans(
                       return;
                     }
 
-                    while (
-                        GoRouter.of(context).location?.startsWith("/queue") ??
-                            true) {
-                      GoRouter.of(context).pop();
+                    while (context.read<AppRouter>().currentPath().startsWith(
+                      "/queue",
+                    )) {
+                      context.read<AppRouter>().pop();
                     }
 
-                    while (
-                        GoRouter.of(context).location?.startsWith("/player") ??
-                            true) {
-                      GoRouter.of(context).pop();
+                    while (context.read<AppRouter>().currentPath().startsWith(
+                      "/player",
+                    )) {
+                      context.read<AppRouter>().pop();
                     }
 
-                    GoRouter.of(context).push("/artist/${artist.id}");
+                    context.read<AppRouter>().push("/artist/${artist.id}");
                   },
             child: HoverableText(
               text: artist.name,
@@ -121,9 +116,7 @@ List<InlineSpan> getArtistsLinksTextSpans(
               overflow: overflow,
               hoverStyle: noInteraction
                   ? null
-                  : style.copyWith(
-                      decoration: TextDecoration.underline,
-                    ),
+                  : style.copyWith(decoration: TextDecoration.underline),
             ),
           ),
         ),
@@ -131,9 +124,7 @@ List<InlineSpan> getArtistsLinksTextSpans(
     );
 
     if (index != artists.length - 1) {
-      texts.add(
-        const TextSpan(text: ', '),
-      );
+      texts.add(const TextSpan(text: ', '));
     }
   }
 

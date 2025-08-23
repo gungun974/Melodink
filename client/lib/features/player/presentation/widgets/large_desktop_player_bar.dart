@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -18,13 +17,13 @@ import 'package:melodink_client/features/track/presentation/widgets/album_link_t
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:provider/provider.dart';
 
-class LargeDesktopPlayerBar extends HookWidget {
+class LargeDesktopPlayerBar extends StatelessWidget {
   const LargeDesktopPlayerBar({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final currentUrl = useValueListenable(
-      context.read<AppRouter>().currentUrlNotifier,
+    final currentUrl = context.select<AppRouter, String>(
+      (router) => router.currentPath(),
     );
 
     final scoringSystem = context
@@ -126,7 +125,7 @@ class DesktopCurrentTrack2 extends StatelessWidget {
                 children: [
                   GestureDetector(
                     onTap: () {
-                      GoRouter.of(context).push("/player");
+                      context.read<AppRouter>().push("/player");
                     },
                     child: MouseRegion(
                       cursor: SystemMouseCursors.click,

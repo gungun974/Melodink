@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/app_confirm.dart';
 import 'package:melodink_client/core/helpers/pick_audio_files.dart';
 import 'package:melodink_client/core/network/network_info.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
@@ -13,6 +13,7 @@ import 'package:melodink_client/features/library/domain/events/album_events.dart
 import 'package:melodink_client/features/library/presentation/modals/select_artists_modal.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
 class EditAlbumViewModel extends ChangeNotifier {
   final EventBus eventBus;
@@ -270,7 +271,7 @@ class EditAlbumViewModel extends ChangeNotifier {
         return;
       }
 
-      GoRouter.of(context).pop();
+      context.read<AppRouter>().pop();
 
       AppNotificationManager.of(context).notify(
         context,

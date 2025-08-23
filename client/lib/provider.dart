@@ -37,7 +37,7 @@ class MainProviderScope extends StatelessWidget {
         //! Core
         Provider(create: (context) => EventBus()),
         ChangeNotifierProvider(create: (context) => NetworkInfo()),
-        Provider(create: (context) => AppRouter()),
+        ChangeNotifierProvider(create: (context) => AppRouter()),
 
         //! Repositories
         Provider(create: (context) => AuthRepository()),

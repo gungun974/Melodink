@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/features/home/presentation/widgets/desktop_sidebar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
@@ -11,13 +10,13 @@ import 'package:melodink_client/features/settings/domain/entities/settings.dart'
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:provider/provider.dart';
 
-class DesktopPlayerBar extends HookWidget {
+class DesktopPlayerBar extends StatelessWidget {
   const DesktopPlayerBar({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final currentUrl = useValueListenable(
-      context.read<AppRouter>().currentUrlNotifier,
+    final currentUrl = context.select<AppRouter, String>(
+      (router) => router.currentPath(),
     );
 
     final scoringSystem = context

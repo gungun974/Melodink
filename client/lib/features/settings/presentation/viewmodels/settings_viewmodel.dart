@@ -13,17 +13,23 @@ class SettingsViewModel extends ChangeNotifier {
   String? _deviceId;
 
   Future<void> loadSettings() async {
-    state = await SettingsRepository().getSettings();
-    _deviceId = await SettingsRepository().getDeviceId();
-    notifyListeners();
+    try {
+      state = await SettingsRepository().getSettings();
+      _deviceId = await SettingsRepository().getDeviceId();
+    } finally {
+      notifyListeners();
+    }
   }
 
   Future<void> setSettings(AppSettings newSettings) async {
     await SettingsRepository().setSettings(newSettings);
 
-    state = await SettingsRepository().getSettings();
-    _deviceId = await SettingsRepository().getDeviceId();
-    notifyListeners();
+    try {
+      state = await SettingsRepository().getSettings();
+      _deviceId = await SettingsRepository().getDeviceId();
+    } finally {
+      notifyListeners();
+    }
 
     await audioController.updatePlayerQuality();
   }

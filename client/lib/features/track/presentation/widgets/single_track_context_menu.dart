@@ -1,7 +1,6 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/api/api.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
@@ -158,22 +157,24 @@ class SingleTrackContextMenu extends StatelessWidget {
                 onPressed: () {
                   menuController.close();
 
-                  while (GoRouter.of(context).location?.startsWith("/queue") ??
-                      true) {
-                    GoRouter.of(context).pop();
+                  while (context.read<AppRouter>().currentPath().startsWith(
+                    "/queue",
+                  )) {
+                    context.read<AppRouter>().pop();
                   }
 
-                  while (GoRouter.of(context).location?.startsWith("/player") ??
-                      true) {
-                    GoRouter.of(context).pop();
+                  while (context.read<AppRouter>().currentPath().startsWith(
+                    "/player",
+                  )) {
+                    context.read<AppRouter>().pop();
                   }
 
-                  if (GoRouter.of(context).location ==
+                  if (context.read<AppRouter>().currentPath() ==
                       "/album/${track.albums.first.id}") {
                     return;
                   }
 
-                  GoRouter.of(context).push(
+                  context.read<AppRouter>().push(
                     "/album/${track.albums.first.id}",
                     extra: {"openWithScrollOnSpecificTrackId": track.id},
                   );
@@ -192,26 +193,24 @@ class SingleTrackContextMenu extends StatelessWidget {
                     onPressed: () {
                       menuController.close();
 
-                      while (GoRouter.of(
-                            context,
-                          ).location?.startsWith("/queue") ??
-                          true) {
-                        GoRouter.of(context).pop();
+                      while (context.read<AppRouter>().currentPath().startsWith(
+                        "/queue",
+                      )) {
+                        context.read<AppRouter>().pop();
                       }
 
-                      while (GoRouter.of(
-                            context,
-                          ).location?.startsWith("/player") ??
-                          true) {
-                        GoRouter.of(context).pop();
+                      while (context.read<AppRouter>().currentPath().startsWith(
+                        "/player",
+                      )) {
+                        context.read<AppRouter>().pop();
                       }
 
-                      if (GoRouter.of(context).location ==
+                      if (context.read<AppRouter>().currentPath() ==
                           "/album/${album.id}") {
                         return;
                       }
 
-                      GoRouter.of(context).push(
+                      context.read<AppRouter>().push(
                         "/album/${album.id}",
                         extra: {"openWithScrollOnSpecificTrackId": track.id},
                       );
@@ -227,19 +226,21 @@ class SingleTrackContextMenu extends StatelessWidget {
                 onPressed: () {
                   menuController.close();
 
-                  while (GoRouter.of(context).location?.startsWith("/queue") ??
-                      true) {
-                    GoRouter.of(context).pop();
+                  while (context.read<AppRouter>().currentPath().startsWith(
+                    "/queue",
+                  )) {
+                    context.read<AppRouter>().pop();
                   }
 
-                  while (GoRouter.of(context).location?.startsWith("/player") ??
-                      true) {
-                    GoRouter.of(context).pop();
+                  while (context.read<AppRouter>().currentPath().startsWith(
+                    "/player",
+                  )) {
+                    context.read<AppRouter>().pop();
                   }
 
-                  GoRouter.of(
-                    context,
-                  ).push("/artist/${track.artists.first.id}");
+                  context.read<AppRouter>().push(
+                    "/artist/${track.artists.first.id}",
+                  );
                 },
               ),
             if (track.artists.length > 1)
@@ -255,21 +256,19 @@ class SingleTrackContextMenu extends StatelessWidget {
                     onPressed: () {
                       menuController.close();
 
-                      while (GoRouter.of(
-                            context,
-                          ).location?.startsWith("/queue") ??
-                          true) {
-                        GoRouter.of(context).pop();
+                      while (context.read<AppRouter>().currentPath().startsWith(
+                        "/queue",
+                      )) {
+                        context.read<AppRouter>().pop();
                       }
 
-                      while (GoRouter.of(
-                            context,
-                          ).location?.startsWith("/player") ??
-                          true) {
-                        GoRouter.of(context).pop();
+                      while (context.read<AppRouter>().currentPath().startsWith(
+                        "/player",
+                      )) {
+                        context.read<AppRouter>().pop();
                       }
 
-                      GoRouter.of(context).push("/artist/${artist.id}");
+                      context.read<AppRouter>().push("/artist/${artist.id}");
                     },
                   );
                 }).toList(),

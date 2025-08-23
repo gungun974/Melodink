@@ -2,7 +2,7 @@ import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
@@ -50,7 +50,7 @@ class MobileCurrentTrackInfo extends StatelessWidget {
 
             return GestureDetector(
               onTap: () {
-                GoRouter.of(context).push("/player");
+                context.read<AppRouter>().push("/player");
               },
               child: Container(
                 color: Colors.black,

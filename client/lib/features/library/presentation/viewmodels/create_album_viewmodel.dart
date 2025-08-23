@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/event_bus/event_bus.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/features/library/data/repository/album_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/album.dart';
@@ -8,6 +8,7 @@ import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/library/domain/events/album_events.dart';
 import 'package:melodink_client/features/library/presentation/modals/select_artists_modal.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
 class CreateAlbumViewModel extends ChangeNotifier {
   final EventBus eventBus;
@@ -102,7 +103,7 @@ class CreateAlbumViewModel extends ChangeNotifier {
       Navigator.of(context, rootNavigator: true).pop(newAlbum);
 
       if (pushRouteToNewAlbum) {
-        GoRouter.of(context).push("/album/${newAlbum.id}");
+        context.read<AppRouter>().push("/album/${newAlbum.id}");
       }
 
       AppNotificationManager.of(context).notify(

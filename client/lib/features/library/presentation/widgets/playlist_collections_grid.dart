@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/presentation/widgets/playlist_context_menu.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
+import 'package:provider/provider.dart';
 
 class PlaylistCollectionsGrid extends StatelessWidget {
   final List<Playlist> playlists;
 
-  const PlaylistCollectionsGrid({
-    super.key,
-    required this.playlists,
-  });
+  const PlaylistCollectionsGrid({super.key, required this.playlists});
 
   @override
   Widget build(BuildContext context) {
@@ -44,11 +42,11 @@ class PlaylistCollectionsGrid extends StatelessWidget {
             childAspectRatio: childAspectRatio,
             mainAxisSpacing: crossAxisSpacing,
           ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final playlist = playlists[index];
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final playlist = playlists[index];
 
-              return HookBuilder(builder: (context) {
+            return HookBuilder(
+              builder: (context) {
                 final playlistContextMenuKey = useMemoized(() => GlobalKey());
 
                 final playlistContextMenuController = useMemoized(
@@ -61,7 +59,9 @@ class PlaylistCollectionsGrid extends StatelessWidget {
                   playlist: playlist,
                   child: InkWell(
                     onTap: () {
-                      GoRouter.of(context).push("/playlist/${playlist.id}");
+                      context.read<AppRouter>().push(
+                        "/playlist/${playlist.id}",
+                      );
                     },
                     onSecondaryTapDown: (TapDownDetails details) {
                       playlistContextMenuController.open(
@@ -124,10 +124,9 @@ class PlaylistCollectionsGrid extends StatelessWidget {
                     ),
                   ),
                 );
-              });
-            },
-            childCount: playlists.length,
-          ),
+              },
+            );
+          }, childCount: playlists.length),
         );
       },
     );

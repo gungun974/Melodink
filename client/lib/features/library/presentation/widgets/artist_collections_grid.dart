@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/library/domain/entities/artist.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
+import 'package:provider/provider.dart';
 
 class ArtistCollectionsGrid extends StatelessWidget {
   final List<Artist> artists;
 
-  const ArtistCollectionsGrid({
-    super.key,
-    required this.artists,
-  });
+  const ArtistCollectionsGrid({super.key, required this.artists});
 
   @override
   Widget build(BuildContext context) {
@@ -41,53 +39,50 @@ class ArtistCollectionsGrid extends StatelessWidget {
             childAspectRatio: childAspectRatio,
             mainAxisSpacing: crossAxisSpacing,
           ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              final artist = artists[index];
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final artist = artists[index];
 
-              return InkWell(
-                onTap: () {
-                  GoRouter.of(context).push("/artist/${artist.id}");
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.all(Radius.circular(20)),
-                      child: AuthCachedNetworkImage(
-                        imageUrl: artist.getCompressedCoverUrl(
-                          TrackCompressedCoverQuality.medium,
-                        ),
-                        placeholder: (context, url) => Image.asset(
+            return InkWell(
+              onTap: () {
+                context.read<AppRouter>().push("/artist/${artist.id}");
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.all(Radius.circular(20)),
+                    child: AuthCachedNetworkImage(
+                      imageUrl: artist.getCompressedCoverUrl(
+                        TrackCompressedCoverQuality.medium,
+                      ),
+                      placeholder: (context, url) => Image.asset(
+                        "assets/melodink_track_cover_not_found.png",
+                      ),
+                      errorWidget: (context, url, error) {
+                        return Image.asset(
                           "assets/melodink_track_cover_not_found.png",
-                        ),
-                        errorWidget: (context, url, error) {
-                          return Image.asset(
-                            "assets/melodink_track_cover_not_found.png",
-                          );
-                        },
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Tooltip(
+                    message: artist.name,
+                    waitDuration: const Duration(milliseconds: 800),
+                    child: Text(
+                      artist.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Tooltip(
-                      message: artist.name,
-                      waitDuration: const Duration(milliseconds: 800),
-                      child: Text(
-                        artist.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-            childCount: artists.length,
-          ),
+                  ),
+                ],
+              ),
+            );
+          }, childCount: artists.length),
         );
       },
     );

@@ -1,20 +1,18 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_icon_button.dart';
 import 'package:provider/provider.dart';
 
-class OpenQueueControl extends HookWidget {
+class OpenQueueControl extends StatelessWidget {
   final bool largeControlButton;
 
   const OpenQueueControl({super.key, this.largeControlButton = false});
 
   @override
   Widget build(BuildContext context) {
-    final currentUrl = useValueListenable(
-      context.read<AppRouter>().currentUrlNotifier,
+    final currentUrl = context.select<AppRouter, String>(
+      (router) => router.currentPath(),
     );
 
     return AppIconButton(
@@ -26,10 +24,10 @@ class OpenQueueControl extends HookWidget {
           : Colors.white,
       onPressed: () async {
         if (currentUrl == "/queue") {
-          GoRouter.of(context).pop();
+          context.read<AppRouter>().pop();
           return;
         }
-        GoRouter.of(context).push("/queue");
+        context.read<AppRouter>().push("/queue");
       },
     );
   }

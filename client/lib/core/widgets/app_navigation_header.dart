@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
+import 'package:melodink_client/core/routes/router.dart';
+import 'package:provider/provider.dart';
 
 class AppNavigationHeader extends HookWidget {
   const AppNavigationHeader({
@@ -22,7 +23,7 @@ class AppNavigationHeader extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canPop = useState(GoRouter.of(context).canPop());
+    final canPop = useState(context.read<AppRouter>().canPop());
 
     return Column(
       children: [
@@ -48,9 +49,7 @@ class AppNavigationHeader extends HookWidget {
             title: title,
             actions: actions,
           ),
-        Expanded(
-          child: child,
-        ),
+        Expanded(child: child),
       ],
     );
   }

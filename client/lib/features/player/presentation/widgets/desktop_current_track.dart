@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/player_error_overlay.dart';
@@ -70,7 +70,7 @@ class DesktopCurrentTrack extends HookWidget {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          GoRouter.of(context).push("/player");
+                          context.read<AppRouter>().push("/player");
                         },
                         child: MouseRegion(
                           cursor: SystemMouseCursors.click,

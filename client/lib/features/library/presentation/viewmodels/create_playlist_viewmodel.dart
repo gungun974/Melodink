@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/event_bus/event_bus.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/events/playlist_events.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
+import 'package:provider/provider.dart';
 
 class CreatePlaylistViewModel extends ChangeNotifier {
   final EventBus eventBus;
@@ -92,7 +93,7 @@ class CreatePlaylistViewModel extends ChangeNotifier {
       Navigator.of(context, rootNavigator: true).pop(newPlaylist);
 
       if (pushRouteToNewPlaylist) {
-        GoRouter.of(context).push("/playlist/${newPlaylist.id}");
+        context.read<AppRouter>().push("/playlist/${newPlaylist.id}");
       }
 
       AppNotificationManager.of(context).notify(

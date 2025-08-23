@@ -93,7 +93,7 @@ class MyApp extends StatelessWidget {
               prevRef.value = nextValue;
 
               if (prevValue && !nextValue) {
-                appRouter.router.refresh();
+                appRouter.refresh();
               }
             });
 
@@ -138,7 +138,8 @@ class MyApp extends StatelessWidget {
                       ),
                       fontFamily: "Roboto",
                     ),
-                    routerConfig: appRouter.router,
+                    routerDelegate: appRouter.delegate,
+                    routeInformationParser: appRouter.routeInformationParser,
                   ),
                   RepaintBoundary(
                     child: AppNotificationManager(

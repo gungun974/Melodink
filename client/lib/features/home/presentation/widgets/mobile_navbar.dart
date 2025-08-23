@@ -1,18 +1,16 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
-class MobileNavbar extends HookWidget {
+class MobileNavbar extends StatelessWidget {
   const MobileNavbar({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final currentUrl = useValueListenable(
-      context.read<AppRouter>().currentUrlNotifier,
+    final currentUrl = context.select<AppRouter, String>(
+      (router) => router.currentPath(),
     );
 
     return BottomAppBar(
@@ -24,7 +22,7 @@ class MobileNavbar extends HookWidget {
             label: t.general.tracks,
             icon: const AdwaitaIcon(AdwaitaIcons.music_note_single, size: 24),
             onTap: () {
-              GoRouter.of(context).go("/track");
+              context.read<AppRouter>().go("/track");
             },
             active: currentUrl == "/track",
           ),
@@ -32,7 +30,7 @@ class MobileNavbar extends HookWidget {
             label: t.general.playlists,
             icon: const AdwaitaIcon(AdwaitaIcons.playlist2, size: 24),
             onTap: () {
-              GoRouter.of(context).go("/playlist");
+              context.read<AppRouter>().go("/playlist");
             },
             active: currentUrl == "/playlist",
           ),
@@ -40,7 +38,7 @@ class MobileNavbar extends HookWidget {
             label: t.general.albums,
             icon: const AdwaitaIcon(AdwaitaIcons.media_optical, size: 24),
             onTap: () {
-              GoRouter.of(context).go("/album");
+              context.read<AppRouter>().go("/album");
             },
             active: currentUrl == "/album",
           ),
@@ -48,7 +46,7 @@ class MobileNavbar extends HookWidget {
             label: t.general.artists,
             icon: const AdwaitaIcon(AdwaitaIcons.music_artist2, size: 24),
             onTap: () {
-              GoRouter.of(context).go("/artist");
+              context.read<AppRouter>().go("/artist");
             },
             active: currentUrl == "/artist",
           ),
@@ -56,7 +54,7 @@ class MobileNavbar extends HookWidget {
             label: t.general.settings,
             icon: const AdwaitaIcon(AdwaitaIcons.gear, size: 24),
             onTap: () {
-              GoRouter.of(context).go("/settings");
+              context.read<AppRouter>().go("/settings");
             },
             active: currentUrl == "/settings",
           ),

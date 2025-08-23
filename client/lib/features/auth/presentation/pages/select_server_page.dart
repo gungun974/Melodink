@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:go_router/go_router.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_button.dart';
 import 'package:melodink_client/core/widgets/app_error_box.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
@@ -38,7 +38,7 @@ class SelectServerPage extends HookWidget {
         const GradientBackground(),
         Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: GoRouter.of(context).canPop()
+          appBar: context.read<AppRouter>().canPop()
               ? AppBar(
                   leading: IconButton(
                     icon: SvgPicture.asset(
@@ -80,7 +80,7 @@ class SelectServerPage extends HookWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (!GoRouter.of(context).canPop())
+                        if (!context.read<AppRouter>().canPop())
                           const Padding(
                             padding: EdgeInsets.only(top: 16.0),
                             child: Image(
@@ -146,7 +146,7 @@ class SelectServerPage extends HookWidget {
                               return;
                             }
 
-                            GoRouter.of(context).go("/");
+                            context.read<AppRouter>().go("/");
                           },
                         ),
                         if (serverSetup is ServerSetupError)

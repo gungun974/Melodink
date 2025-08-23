@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/hoverable_text.dart';
+import 'package:provider/provider.dart';
 
 class AlbumLinkText extends StatelessWidget {
   const AlbumLinkText({
@@ -52,33 +52,37 @@ class AlbumLinkText extends StatelessWidget {
                     return;
                   }
 
-                  while (GoRouter.of(context).location?.startsWith("/queue") ??
-                      true) {
-                    GoRouter.of(context).pop();
+                  while (context.read<AppRouter>().currentPath().startsWith(
+                    "/queue",
+                  )) {
+                    context.read<AppRouter>().pop();
                   }
 
-                  while (GoRouter.of(context).location?.startsWith("/player") ??
-                      true) {
-                    GoRouter.of(context).pop();
+                  while (context.read<AppRouter>().currentPath().startsWith(
+                    "/player",
+                  )) {
+                    context.read<AppRouter>().pop();
                   }
 
-                  if (GoRouter.of(context).location == "/album/$albumId") {
+                  if (context.read<AppRouter>().currentPath() ==
+                      "/album/$albumId") {
                     return;
                   }
 
-                  GoRouter.of(context).push("/album/$albumId", extra: {
-                    "openWithScrollOnSpecificTrackId":
-                        openWithScrollOnSpecificTrackId,
-                  });
+                  context.read<AppRouter>().push(
+                    "/album/$albumId",
+                    extra: {
+                      "openWithScrollOnSpecificTrackId":
+                          openWithScrollOnSpecificTrackId,
+                    },
+                  );
                 },
           child: HoverableText(
             text: text,
             style: style,
             hoverStyle: noInteraction
                 ? null
-                : style.copyWith(
-                    decoration: TextDecoration.underline,
-                  ),
+                : style.copyWith(decoration: TextDecoration.underline),
             textAlign: textAlign,
             maxLines: maxLines,
             overflow: overflow,

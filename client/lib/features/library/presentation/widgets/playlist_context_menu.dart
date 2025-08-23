@@ -1,10 +1,10 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/app_confirm.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
 import 'package:melodink_client/core/network/network_info.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/core/widgets/app_notification_manager.dart';
 import 'package:melodink_client/core/widgets/app_page_loader.dart';
 import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
@@ -117,7 +117,9 @@ class PlaylistContextMenu extends StatelessWidget {
                     return;
                   }
 
-                  GoRouter.of(context).push("/playlist/${playlist.id}/edit");
+                  context.read<AppRouter>().push(
+                    "/playlist/${playlist.id}/edit",
+                  );
                 },
               ),
               MenuItemButton(
@@ -173,9 +175,9 @@ class PlaylistContextMenu extends StatelessWidget {
                       return;
                     }
 
-                    GoRouter.of(
-                      context,
-                    ).pushReplacement("/playlist/${newPlaylist.id}");
+                    context.read<AppRouter>().pushReplacement(
+                      "/playlist/${newPlaylist.id}",
+                    );
 
                     AppNotificationManager.of(context).notify(
                       context,

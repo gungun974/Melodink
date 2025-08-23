@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
-import 'package:go_router/go_router.dart';
+import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:provider/provider.dart';
 
 class LoginViewModel extends ChangeNotifier {
   final AuthViewModel authViewModel;
@@ -48,6 +49,6 @@ class LoginViewModel extends ChangeNotifier {
       return;
     }
 
-    GoRouter.of(context).go("/");
+    context.read<AppRouter>().go("/");
   }
 }
