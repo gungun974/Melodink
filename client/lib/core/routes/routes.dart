@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:melodink_client/core/routes/animation.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/features/auth/presentation/pages/login_page.dart';
