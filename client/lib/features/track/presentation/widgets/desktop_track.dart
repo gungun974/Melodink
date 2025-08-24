@@ -1,4 +1,5 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -48,7 +49,7 @@ enum DesktopTrackModule {
   });
 }
 
-class DesktopTrackModuleLayout extends StatelessWidget {
+class DesktopTrackModuleLayout extends StatefulWidget {
   final List<DesktopTrackModule> modules;
 
   final Widget Function(
@@ -64,63 +65,105 @@ class DesktopTrackModuleLayout extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  State<DesktopTrackModuleLayout> createState() =>
+      _DesktopTrackModuleLayoutState();
+}
+
+class _DesktopTrackModuleLayoutState extends State<DesktopTrackModuleLayout>
+    with WidgetsBindingObserver {
+  final dispatcher = WidgetsBinding.instance.platformDispatcher;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      updateModules();
+    });
+  }
+
+  @override
+  void didChangeMetrics() {
+    updateModules();
+  }
+
+  List<DesktopTrackModule> currentModules = [];
+
+  void updateModules() {
+    final renderBox = context.findRenderObject();
+    if (renderBox is! RenderBox) {
+      return;
+    }
+
+    final maxWidth = renderBox.size.width;
+
     final scoringSystem = context
-        .watch<SettingsViewModel>()
+        .read<SettingsViewModel>()
         .currentScoringSystem();
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final newModules = modules.toList();
+    final newModules = widget.modules.toList();
 
-        if (scoringSystem == AppSettingScoringSystem.none) {
-          newModules.remove(DesktopTrackModule.score);
+    if (scoringSystem == AppSettingScoringSystem.none) {
+      newModules.remove(DesktopTrackModule.score);
+    }
+
+    double calculateRemainingSpace() {
+      double totalWidth = 0;
+      int flex = 0;
+
+      for (final module in newModules) {
+        totalWidth += module.width + module.leftPadding + module.rightPadding;
+
+        if (module == DesktopTrackModule.title ||
+            module == DesktopTrackModule.album) {
+          flex += 1;
         }
 
-        double calculateRemainingSpace() {
-          double totalWidth = 0;
-          int flex = 0;
-
-          for (final module in newModules) {
-            totalWidth +=
-                module.width + module.leftPadding + module.rightPadding;
-
-            if (module == DesktopTrackModule.title ||
-                module == DesktopTrackModule.album) {
-              flex += 1;
-            }
-
-            if (module == DesktopTrackModule.score) {
-              totalWidth += TrackScore.getSize(scoringSystem);
-            }
-          }
-
-          final remainingSpace = constraints.maxWidth - totalWidth;
-
-          if (flex == 0) {
-            return remainingSpace;
-          }
-
-          return remainingSpace / flex;
+        if (module == DesktopTrackModule.score) {
+          totalWidth += TrackScore.getSize(scoringSystem);
         }
+      }
 
-        const minimumRequiredSpace = 180;
+      final remainingSpace = maxWidth - totalWidth;
 
-        for (final removableModule in [
-          DesktopTrackModule.quality,
-          DesktopTrackModule.dateAdded,
-          DesktopTrackModule.lastPlayed,
-        ]) {
-          if (calculateRemainingSpace() >= minimumRequiredSpace) {
-            break;
-          }
+      if (flex == 0) {
+        return remainingSpace;
+      }
 
-          newModules.remove(removableModule);
-        }
+      return remainingSpace / flex;
+    }
 
-        return builder(context, newModules);
-      },
-    );
+    const minimumRequiredSpace = 180;
+
+    for (final removableModule in [
+      DesktopTrackModule.quality,
+      DesktopTrackModule.dateAdded,
+      DesktopTrackModule.lastPlayed,
+    ]) {
+      if (calculateRemainingSpace() >= minimumRequiredSpace) {
+        break;
+      }
+
+      newModules.remove(removableModule);
+    }
+
+    if (listEquals(newModules, currentModules)) {
+      return;
+    }
+    setState(() {
+      currentModules = newModules;
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.builder(context, currentModules);
   }
 }
 

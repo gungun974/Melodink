@@ -242,20 +242,14 @@ class StickyDesktopTrackHeader extends StatelessWidget {
                       child: RepaintBoundary(
                         child: SizedBox(
                           height: 40,
-                          child: LayoutBuilder(
-                            builder: (context, layout) {
-                              return ClipRRect(
-                                borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(8),
-                                ),
-                                child: OverflowBox(
-                                  alignment: Alignment.topCenter,
-                                  maxWidth: layout.maxWidth * 5,
-                                  maxHeight: layout.maxHeight * 50,
-                                  child: GradientBackground(),
-                                ),
-                              );
-                            },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(8),
+                            ),
+                            child: GradientBackground(
+                              widthMul: 5,
+                              heightTopMul: 50,
+                            ),
                           ),
                         ),
                       ),

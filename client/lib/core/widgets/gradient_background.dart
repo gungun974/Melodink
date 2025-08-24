@@ -38,16 +38,29 @@ const cyanTheme = [
 ];
 
 class GradientBackground extends HookWidget {
-  const GradientBackground({super.key});
+  final double widthMul;
+  final double heightTopMul;
 
-  AlignmentGeometry gradientEndPoint(double angle) {
+  const GradientBackground({
+    super.key,
+    this.widthMul = 1.0,
+    this.heightTopMul = 1.0,
+  });
+
+  Alignment gradientEndPoint(double angle) {
     double angleRad = (angle - 90) * (pi / 180);
-    return Alignment(cos(angleRad), sin(angleRad));
+    return Alignment(
+      cos(angleRad) * widthMul,
+      ((sin(angleRad) + 1) * heightTopMul) - 1,
+    );
   }
 
-  AlignmentGeometry gradientStartPoint(double angle) {
+  Alignment gradientStartPoint(double angle) {
     double angleRad = (angle + 90) * (pi / 180);
-    return Alignment(cos(angleRad), sin(angleRad));
+    return Alignment(
+      cos(angleRad) * widthMul,
+      ((sin(angleRad) + 1) * heightTopMul) - 1,
+    );
   }
 
   Color adjustColorLightness(
@@ -119,86 +132,88 @@ class GradientBackground extends HookWidget {
       appliedTheme = greyTheme;
     }
 
-    return Stack(
-      children: [
-        Container(color: Colors.grey[850]),
-        Container(color: Colors.black87),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOutQuad,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: gradientStartPoint(127),
-              end: gradientEndPoint(127),
-              stops: const [0.0, 0.9],
-              colors: [
-                Color.fromRGBO(
-                  appliedTheme[0].red,
-                  appliedTheme[0].green,
-                  appliedTheme[0].blue,
-                  0.55,
-                ),
-                Color.fromRGBO(
-                  appliedTheme[0].red,
-                  appliedTheme[0].green,
-                  appliedTheme[0].blue,
-                  0,
-                ),
-              ],
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          Container(color: Colors.grey[850]),
+          Container(color: Colors.black87),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOutQuad,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: gradientStartPoint(127),
+                end: gradientEndPoint(127),
+                stops: const [0.0, 0.9],
+                colors: [
+                  Color.fromRGBO(
+                    appliedTheme[0].red,
+                    appliedTheme[0].green,
+                    appliedTheme[0].blue,
+                    0.55,
+                  ),
+                  Color.fromRGBO(
+                    appliedTheme[0].red,
+                    appliedTheme[0].green,
+                    appliedTheme[0].blue,
+                    0,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 450),
-          curve: Curves.easeInOutQuad,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: gradientStartPoint(217),
-              end: gradientEndPoint(217),
-              stops: const [0.0, 0.8],
-              colors: [
-                Color.fromRGBO(
-                  appliedTheme[1].red,
-                  appliedTheme[1].green,
-                  appliedTheme[1].blue,
-                  0.55,
-                ),
-                Color.fromRGBO(
-                  appliedTheme[1].red,
-                  appliedTheme[1].green,
-                  appliedTheme[1].blue,
-                  0.10,
-                ),
-              ],
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 450),
+            curve: Curves.easeInOutQuad,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: gradientStartPoint(217),
+                end: gradientEndPoint(217),
+                stops: const [0.0, 0.8],
+                colors: [
+                  Color.fromRGBO(
+                    appliedTheme[1].red,
+                    appliedTheme[1].green,
+                    appliedTheme[1].blue,
+                    0.55,
+                  ),
+                  Color.fromRGBO(
+                    appliedTheme[1].red,
+                    appliedTheme[1].green,
+                    appliedTheme[1].blue,
+                    0.10,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOutQuad,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: gradientStartPoint(336),
-              end: gradientEndPoint(336),
-              stops: const [0.0, 1],
-              colors: [
-                Color.fromRGBO(
-                  appliedTheme[2].red,
-                  appliedTheme[2].green,
-                  appliedTheme[2].blue,
-                  0.55,
-                ),
-                Color.fromRGBO(
-                  appliedTheme[2].red,
-                  appliedTheme[2].green,
-                  appliedTheme[2].blue,
-                  0.05,
-                ),
-              ],
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOutQuad,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: gradientStartPoint(336),
+                end: gradientEndPoint(336),
+                stops: const [0.0, 1],
+                colors: [
+                  Color.fromRGBO(
+                    appliedTheme[2].red,
+                    appliedTheme[2].green,
+                    appliedTheme[2].blue,
+                    0.55,
+                  ),
+                  Color.fromRGBO(
+                    appliedTheme[2].red,
+                    appliedTheme[2].green,
+                    appliedTheme[2].blue,
+                    0.05,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

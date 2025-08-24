@@ -68,7 +68,13 @@ void main() async {
     await ImageCacheManager.initCache();
   } catch (_) {}
 
-  runApp(MainProviderScope(child: TranslationProvider(child: const MyApp())));
+  runApp(
+    MainProviderScope(
+      child: TranslationProvider(
+        child: AppScreenTypeProvider(child: const MyApp()),
+      ),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -77,8 +83,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _DynamicSystemUIMode(
-      child: MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
+      child: MediaQuery.withNoTextScaling(
         child: HookBuilder(
           builder: (context) {
             final appRouter = context.read<AppRouter>();
