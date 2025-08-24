@@ -282,62 +282,86 @@ class AppRouterDelegate implements RouterDelegate<List<AppRouteData>> {
     return Navigator(
       key: navigatorKey,
       pages: [
-        if (sideBarPages.isNotEmpty)
+        if (playerBarPages.isNotEmpty || sideBarPages.isNotEmpty)
           MaterialPage(
             key: ValueKey("FullPage"),
-            child: Stack(
-              children: [
-                const GradientBackground(),
-                Scaffold(
-                  resizeToAvoidBottomInset: false,
-                  backgroundColor: Colors.transparent,
-                  body: SafeArea(
-                    child:
-                        NotificationListener<OverscrollIndicatorNotification>(
-                          onNotification:
-                              (OverscrollIndicatorNotification overscroll) {
-                                overscroll.disallowIndicator();
-                                return true;
-                              },
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: Stack(
-                                  children: [
-                                    if (sideBarPages.isNotEmpty)
-                                      Navigator(
-                                        pages: sideBarPages,
-                                        // ignore: deprecated_member_use
-                                        onPopPage: (_, _) {
-                                          Future(() {
-                                            router.pop();
-                                          });
-                                          return false;
+            child: SafeArea(
+              top: false,
+              bottom: true,
+              child: Navigator(
+                pages: [
+                  if (sideBarPages.isNotEmpty)
+                    MaterialPage(
+                      key: ValueKey("PlayerBarView"),
+                      child: Stack(
+                        children: [
+                          const GradientBackground(),
+                          Scaffold(
+                            resizeToAvoidBottomInset: false,
+                            backgroundColor: Colors.transparent,
+                            body: SafeArea(
+                              child:
+                                  NotificationListener<
+                                    OverscrollIndicatorNotification
+                                  >(
+                                    onNotification:
+                                        (
+                                          OverscrollIndicatorNotification
+                                          overscroll,
+                                        ) {
+                                          overscroll.disallowIndicator();
+                                          return true;
                                         },
-                                      ),
-                                    const Align(
-                                      alignment: Alignment.bottomRight,
-                                      child: CurrentDownloadInfo(),
+                                    child: Column(
+                                      children: [
+                                        Expanded(
+                                          child: Stack(
+                                            children: [
+                                              Navigator(
+                                                pages: sideBarPages,
+                                                // ignore: deprecated_member_use
+                                                onPopPage: (_, _) {
+                                                  Future(() {
+                                                    router.pop();
+                                                  });
+                                                  return false;
+                                                },
+                                              ),
+                                              const Align(
+                                                alignment:
+                                                    Alignment.bottomRight,
+                                                child: CurrentDownloadInfo(),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const MobileCurrentTrackInfo(),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                              const MobileCurrentTrackInfo(),
-                            ],
+                                  ),
+                            ),
+                            bottomNavigationBar: Theme(
+                              data: Theme.of(
+                                context,
+                              ).copyWith(splashColor: Colors.transparent),
+                              child: const MobileNavbar(),
+                            ),
                           ),
-                        ),
-                  ),
-                  bottomNavigationBar: Theme(
-                    data: Theme.of(
-                      context,
-                    ).copyWith(splashColor: Colors.transparent),
-                    child: const MobileNavbar(),
-                  ),
-                ),
-              ],
+                        ],
+                      ),
+                    ),
+                  ...playerBarPages,
+                ],
+                // ignore: deprecated_member_use
+                onPopPage: (_, _) {
+                  Future(() {
+                    router.pop();
+                  });
+                  return false;
+                },
+              ),
             ),
           ),
-        ...playerBarPages,
         ...fullPages,
       ],
       // ignore: deprecated_member_use
