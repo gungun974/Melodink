@@ -17,6 +17,7 @@ import 'package:melodink_client/features/track/presentation/hooks/use_get_downlo
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 
 class MobileTrack extends HookWidget {
   final Track track;
@@ -87,9 +88,10 @@ class MobileTrack extends HookWidget {
     final isCurrentTrack =
         useStream(
           useMemoized(
-            () => audioController.currentTrack.stream.map(
-              (currentTrack) => currentTrack?.id == track.id,
-            ),
+            () => audioController.currentTrack.stream
+                .startWith(audioController.currentTrack.valueOrNull)
+                .map((currentTrack) => currentTrack?.id == track.id),
+            [track.id],
           ),
         ).data ??
         false;

@@ -24,6 +24,7 @@ import 'package:melodink_client/features/track/presentation/widgets/track_contex
 import 'package:melodink_client/features/track/presentation/widgets/track_score.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 
 enum DesktopTrackModule {
   title(width: 28 + 24, rightPadding: 24),
@@ -236,9 +237,10 @@ class DesktopTrack extends HookWidget {
     final isCurrentTrack =
         useStream(
           useMemoized(
-            () => audioController.currentTrack.stream.map(
-              (currentTrack) => currentTrack?.id == track.id,
-            ),
+            () => audioController.currentTrack.stream
+                .startWith(audioController.currentTrack.valueOrNull)
+                .map((currentTrack) => currentTrack?.id == track.id),
+            [track.id],
           ),
         ).data ??
         false;
