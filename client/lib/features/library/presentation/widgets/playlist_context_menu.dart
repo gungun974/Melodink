@@ -1,17 +1,8 @@
 import 'package:adwaita_icons/adwaita_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:melodink_client/core/event_bus/event_bus.dart';
-import 'package:melodink_client/core/helpers/app_confirm.dart';
 import 'package:melodink_client/core/helpers/auto_close_context_menu_on_scroll.dart';
-import 'package:melodink_client/core/network/network_info.dart';
-import 'package:melodink_client/core/routes/router.dart';
-import 'package:melodink_client/core/widgets/app_notification_manager.dart';
-import 'package:melodink_client/core/widgets/app_page_loader.dart';
-import 'package:melodink_client/features/library/data/repository/playlist_repository.dart';
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
-import 'package:melodink_client/features/library/domain/events/playlist_events.dart';
-import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
-import 'package:melodink_client/features/track/domain/entities/track.dart';
+import 'package:melodink_client/features/library/presentation/viewmodels/playlist_context_menu_viewmodel.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
@@ -39,172 +30,92 @@ class PlaylistContextMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final eventBus = context.read<EventBus>();
-    final audioController = context.read<AudioController>();
-    final playlistRepository = context.read<PlaylistRepository>();
+    return ChangeNotifierProvider(
+      create: (context) => PlaylistContextMenuViewModel(
+        eventBus: context.read(),
+        audioController: context.read(),
+        playlistRepository: context.read(),
+      )..loadPlaylist(playlist),
+      child: Builder(
+        builder: (providerContext) {
+          return AutoCloseContextMenuOnScroll(
+            menuController: menuController,
+            child: Stack(
+              children: [
+                MenuAnchor(
+                  clipBehavior: Clip.antiAlias,
+                  menuChildren: [
+                    MenuItemButton(
+                      leadingIcon: const AdwaitaIcon(
+                        AdwaitaIcons.playlist,
+                        size: 20,
+                      ),
+                      child: Text(t.actions.addToQueue),
+                      onPressed: () {
+                        providerContext
+                            .read<PlaylistContextMenuViewModel>()
+                            .addToQueue(providerContext);
 
-    return AutoCloseContextMenuOnScroll(
-      menuController: menuController,
-      child: Stack(
-        children: [
-          MenuAnchor(
-            clipBehavior: Clip.antiAlias,
-            menuChildren: [
-              MenuItemButton(
-                leadingIcon: const AdwaitaIcon(AdwaitaIcons.playlist, size: 20),
-                child: Text(t.actions.addToQueue),
-                onPressed: () async {
-                  menuController.close();
-
-                  audioController.addTracksToQueue(playlist.tracks);
-
-                  if (!context.mounted) {
-                    return;
-                  }
-
-                  AppNotificationManager.of(context).notify(
-                    context,
-                    message: t.notifications.haveBeenAddedToQueue.message(
-                      n: playlist.tracks.length,
+                        menuController.close();
+                      },
                     ),
-                  );
-                },
-              ),
-              MenuItemButton(
-                leadingIcon: const AdwaitaIcon(
-                  AdwaitaIcons.media_playlist_shuffle,
-                  size: 20,
-                ),
-                child: Text(t.actions.randomAddToQueue),
-                onPressed: () async {
-                  menuController.close();
+                    MenuItemButton(
+                      leadingIcon: const AdwaitaIcon(
+                        AdwaitaIcons.media_playlist_shuffle,
+                        size: 20,
+                      ),
+                      child: Text(t.actions.randomAddToQueue),
+                      onPressed: () {
+                        providerContext
+                            .read<PlaylistContextMenuViewModel>()
+                            .addToQueueRandomly(providerContext);
 
-                  final List<Track> tracks = List.from(playlist.tracks);
-
-                  tracks.shuffle();
-
-                  audioController.addTracksToQueue(tracks);
-
-                  if (!context.mounted) {
-                    return;
-                  }
-
-                  AppNotificationManager.of(context).notify(
-                    context,
-                    message: t.notifications.haveBeenAddedToQueue.message(
-                      n: tracks.length,
+                        menuController.close();
+                      },
                     ),
-                  );
-                },
-              ),
-              const Divider(height: 8),
-              MenuItemButton(
-                leadingIcon: const Padding(
-                  padding: EdgeInsets.all(2.0),
-                  child: AdwaitaIcon(AdwaitaIcons.edit, size: 16),
-                ),
-                child: Text(t.general.edit),
-                onPressed: () {
-                  menuController.close();
+                    const Divider(height: 8),
+                    MenuItemButton(
+                      leadingIcon: const Padding(
+                        padding: EdgeInsets.all(2.0),
+                        child: AdwaitaIcon(AdwaitaIcons.edit, size: 16),
+                      ),
+                      child: Text(t.general.edit),
+                      onPressed: () {
+                        providerContext
+                            .read<PlaylistContextMenuViewModel>()
+                            .editPlaylist(providerContext);
 
-                  if (!NetworkInfo().isServerRecheable()) {
-                    AppNotificationManager.of(context).notify(
-                      context,
-                      title: t.notifications.offline.title,
-                      message: t.notifications.offline.message,
-                      type: AppNotificationType.danger,
-                    );
-                    return;
-                  }
+                        menuController.close();
+                      },
+                    ),
+                    MenuItemButton(
+                      leadingIcon: const Padding(
+                        padding: EdgeInsets.all(2.0),
+                        child: AdwaitaIcon(AdwaitaIcons.edit_copy, size: 16),
+                      ),
+                      child: Text(t.general.duplicate),
+                      onPressed: () {
+                        providerContext
+                            .read<PlaylistContextMenuViewModel>()
+                            .duplicatePlaylist(providerContext);
 
-                  context.read<AppRouter>().push(
-                    "/playlist/${playlist.id}/edit",
-                  );
-                },
-              ),
-              MenuItemButton(
-                leadingIcon: const Padding(
-                  padding: EdgeInsets.all(2.0),
-                  child: AdwaitaIcon(AdwaitaIcons.edit_copy, size: 16),
-                ),
-                child: Text(t.general.duplicate),
-                onPressed: () async {
-                  menuController.close();
-
-                  if (!NetworkInfo().isServerRecheable()) {
-                    AppNotificationManager.of(context).notify(
-                      context,
-                      title: t.notifications.offline.title,
-                      message: t.notifications.offline.message,
-                      type: AppNotificationType.danger,
-                    );
-                    return;
-                  }
-
-                  if (!await appConfirm(
-                    context,
-                    title: t.confirms.title,
-                    content: t.confirms.duplicatePlaylist,
-                    textOK: t.confirms.confirm,
-                  )) {
-                    return;
-                  }
-
-                  final loadingWidget = OverlayEntry(
-                    builder: (context) => AppPageLoader(),
-                  );
-
-                  if (context.mounted) {
-                    Overlay.of(
-                      context,
-                      rootOverlay: true,
-                    ).insert(loadingWidget);
-                  }
-
-                  try {
-                    final newPlaylist = await playlistRepository
-                        .duplicatePlaylist(playlist.id);
-
-                    eventBus.fire(
-                      CreatePlaylistEvent(createdPlaylist: newPlaylist),
-                    );
-
-                    loadingWidget.remove();
-
-                    if (!context.mounted) {
-                      return;
-                    }
-
-                    context.read<AppRouter>().pushReplacement(
-                      "/playlist/${newPlaylist.id}",
-                    );
-
-                    AppNotificationManager.of(context).notify(
-                      context,
-                      message: t.notifications.playlistHaveBeenDuplicated
-                          .message(name: playlist.name),
-                    );
-                  } catch (_) {
-                    if (context.mounted) {
-                      AppNotificationManager.of(context).notify(
+                        menuController.close();
+                      },
+                    ),
+                    if (customActionsBuilder != null)
+                      ...customActionsBuilder!(
                         context,
-                        title: t.notifications.somethingWentWrong.title,
-                        message: t.notifications.somethingWentWrong.message,
-                        type: AppNotificationType.danger,
-                      );
-                    }
-
-                    loadingWidget.remove();
-                  }
-                },
-              ),
-              if (customActionsBuilder != null)
-                ...customActionsBuilder!(context, menuController, playlist),
-            ],
-            controller: menuController,
-          ),
-          child,
-        ],
+                        menuController,
+                        playlist,
+                      ),
+                  ],
+                  controller: menuController,
+                ),
+                child,
+              ],
+            ),
+          );
+        },
       ),
     );
   }
