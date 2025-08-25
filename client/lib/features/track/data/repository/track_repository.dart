@@ -418,6 +418,8 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
+      await syncRepository.performSync();
+
       return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
     } on DioException catch (e) {
       final response = e.response;
