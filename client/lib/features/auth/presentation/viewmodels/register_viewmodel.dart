@@ -1,12 +1,17 @@
 import 'package:flutter/widgets.dart';
 import 'package:melodink_client/core/routes/router.dart';
 import 'package:melodink_client/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:provider/provider.dart';
 
 class RegisterViewModel extends ChangeNotifier {
   final AuthViewModel authViewModel;
+  final SettingsViewModel settingsViewModel;
 
-  RegisterViewModel({required this.authViewModel});
+  RegisterViewModel({
+    required this.authViewModel,
+    required this.settingsViewModel,
+  });
 
   final formKey = GlobalKey<FormState>();
 
@@ -48,6 +53,8 @@ class RegisterViewModel extends ChangeNotifier {
     if (!success) {
       return;
     }
+
+    settingsViewModel.loadSettings();
 
     if (!context.mounted) {
       return;

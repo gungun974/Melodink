@@ -18,7 +18,10 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => LoginViewModel(authViewModel: context.read()),
+      create: (context) => LoginViewModel(
+        authViewModel: context.read(),
+        settingsViewModel: context.read(),
+      ),
       child: Stack(
         children: [
           const GradientBackground(),

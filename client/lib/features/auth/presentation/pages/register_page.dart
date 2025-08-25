@@ -18,7 +18,10 @@ class RegisterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => RegisterViewModel(authViewModel: context.read()),
+      create: (_) => RegisterViewModel(
+        authViewModel: context.read(),
+        settingsViewModel: context.read(),
+      ),
       child: Stack(
         children: [
           const GradientBackground(),
