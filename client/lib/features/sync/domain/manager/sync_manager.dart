@@ -9,13 +9,11 @@ class SyncManager {
 
   final SyncRepository syncRepository;
 
-  SyncManager({
-    required this.syncRepository,
-  }) {
+  SyncManager({required this.syncRepository}) {
     _scheduleSync();
   }
 
-  _scheduleSync() async {
+  Future<void> _scheduleSync() async {
     await _execute();
 
     _timer = Timer(const Duration(seconds: 120), () async {
@@ -29,7 +27,7 @@ class SyncManager {
     });
   }
 
-  _execute() async {
+  Future<void> _execute() async {
     // Is Ready to sync
     try {
       await getMelodinkInstanceSupportDirectory();
