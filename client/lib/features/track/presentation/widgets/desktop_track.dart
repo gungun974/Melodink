@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_reorderable_list/flutter_reorderable_list.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/core/helpers/duration_to_time.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/helpers/timeago.dart';
@@ -22,6 +23,8 @@ import 'package:melodink_client/features/track/presentation/widgets/album_link_t
 import 'package:melodink_client/features/track/presentation/widgets/artists_links_text.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_context_menu.dart';
 import 'package:melodink_client/features/track/presentation/widgets/track_score.dart';
+import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
+import 'package:melodink_client/features/tracker/domain/events/history_events.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
@@ -228,6 +231,9 @@ class DesktopTrack extends HookWidget {
   Widget build(BuildContext context) {
     final currentTheme = context.watch<SettingsViewModel>().currentAppTheme();
 
+    final eventBus = context.read<EventBus>();
+    final playedTrackRepository = context.read<PlayedTrackRepository>();
+
     final audioController = context.read<AudioController>();
 
     final isServerReachable = context.select<NetworkInfo, bool>(
@@ -244,6 +250,23 @@ class DesktopTrack extends HookWidget {
           ),
         ).data ??
         false;
+
+    final historyInfoNotifier = useState(track.historyInfo);
+
+    useOnStreamChange(
+      useMemoized(
+        () => eventBus.on<NewPlayedTrackEvent>().where(
+          (event) => event.newPlayedTrack.trackId == track.id,
+        ),
+        [track.id],
+      ),
+      onData: (_) async {
+        historyInfoNotifier.value = await playedTrackRepository
+            .getTrackHistoryInfo(track.id);
+      },
+    );
+
+    final historyInfo = historyInfoNotifier.value;
 
     final asyncDownloadedTrack = useAsyncGetDownloadTrack(context, track.id);
 
@@ -515,7 +538,7 @@ class DesktopTrack extends HookWidget {
                             ),
                           );
                         case DesktopTrackModule.lastPlayed:
-                          if (track.historyInfo?.computed == false) {
+                          if (historyInfo?.computed == false) {
                             yield SizedBox(
                               width: module.width,
                               child: Text(
@@ -530,7 +553,7 @@ class DesktopTrack extends HookWidget {
                           } else {
                             yield SizedBox(
                               width: module.width,
-                              child: track.historyInfo?.lastPlayedDate == null
+                              child: historyInfo?.lastPlayedDate == null
                                   ? Text(
                                       t.general.never,
                                       style: TextStyle(
@@ -540,7 +563,7 @@ class DesktopTrack extends HookWidget {
                                       ),
                                     )
                                   : FormatTimeago(
-                                      date: track.historyInfo!.lastPlayedDate!,
+                                      date: historyInfo!.lastPlayedDate!,
                                       builder: (context, value) {
                                         return Text(
                                           value,
@@ -555,7 +578,7 @@ class DesktopTrack extends HookWidget {
                             );
                           }
                         case DesktopTrackModule.playedCount:
-                          if (track.historyInfo?.computed == false) {
+                          if (historyInfo?.computed == false) {
                             yield SizedBox(
                               width: module.width,
                               child: Text(
@@ -571,9 +594,9 @@ class DesktopTrack extends HookWidget {
                             yield SizedBox(
                               width: module.width,
                               child: Text(
-                                (track.historyInfo?.playedCount ?? 0) == 0
+                                (historyInfo?.playedCount ?? 0) == 0
                                     ? t.general.never
-                                    : "${track.historyInfo?.playedCount}",
+                                    : "${historyInfo?.playedCount}",
                                 style: TextStyle(
                                   fontSize: 12,
                                   letterSpacing: 14 * 0.03,

@@ -1,20 +1,22 @@
 import 'dart:math';
 
+import 'package:melodink_client/core/event_bus/event_bus.dart';
 import 'package:melodink_client/features/track/domain/entities/track.dart';
-import 'package:rxdart/rxdart.dart';
+import 'package:melodink_client/features/tracker/domain/events/history_events.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
-import 'package:melodink_client/features/tracker/domain/entities/played_track.dart';
 
 class PlayerTrackerManager {
+  final EventBus eventBus;
+
   final PlayedTrackRepository playedTrackRepository;
 
   late Stream<List<PlaybackState>> lastState;
 
-  PlayerTrackerManager({required this.playedTrackRepository});
-
-  final PublishSubject<PlayedTrack> newPlayedTrack =
-      PublishSubject<PlayedTrack>();
+  PlayerTrackerManager({
+    required this.eventBus,
+    required this.playedTrackRepository,
+  });
 
   void watchState(
     PlaybackState lastState,
@@ -150,7 +152,9 @@ class PlayerTrackerManager {
             trackEnded: trackEnded,
             trackDuration: currentTrack.duration,
           )
-          .then(newPlayedTrack.add);
+          .then((playedTrack) {
+            eventBus.fire(NewPlayedTrackEvent(newPlayedTrack: playedTrack));
+          });
 
       if (trackEnded) {
         _resetAntiEndSpam = true;

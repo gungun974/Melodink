@@ -21,7 +21,7 @@ class HistoryPage extends HookWidget {
 
     return ChangeNotifierProvider(
       create: (context) => HistoryViewModel(
-        manager: context.read(),
+        eventBus: context.read(),
         playedTrackRepository: context.read(),
       )..fetchLastHistoryTracks(),
       child: AppScreenTypeLayoutBuilder(

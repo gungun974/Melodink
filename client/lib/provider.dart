@@ -86,8 +86,10 @@ class MainProviderScope extends StatelessWidget {
 
         //! Managers / Services
         Provider(
-          create: (context) =>
-              PlayerTrackerManager(playedTrackRepository: context.read()),
+          create: (context) => PlayerTrackerManager(
+            eventBus: context.read(),
+            playedTrackRepository: context.read(),
+          ),
         ),
         Provider(
           create: (context) => AudioController.setupAudioController(
