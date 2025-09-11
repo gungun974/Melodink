@@ -53,7 +53,7 @@ dependencies:
   popover: ^0.3.1
   omni_datetime_picker: ^2.0.5
   desktop_drop: ^0.6.1
-  file_picker: ^10.3.1
+  file_picker: 10.1.0 
   file_saver: ^0.3.1
   slang: ^4.4.0
   slang_flutter: ^4.4.0

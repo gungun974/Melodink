@@ -383,10 +383,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: e7e16c9d15c36330b94ca0e2ad8cb61f93cd5282d0158c09805aed13b5452f22
+      sha256: "3dc3f3323aba75b20d298198be007d61b589a16e2aa7812ab8761f7c4d386f98"
       url: "https://pub.dev"
     source: hosted
-    version: "10.3.2"
+    version: "10.1.0"
   file_saver:
     dependency: "direct main"
     description:
