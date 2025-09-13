@@ -160,6 +160,20 @@ pub export fn mi_player_get_volume() f64 {
     return player.?.getVolume();
 }
 
+pub const ExternalDebugTrackArray = extern struct {
+    len: usize,
+    ptr: [*c]const PlayerMod.DebugTrack,
+};
+
+pub export fn mi_player_get_debug_tracks() ExternalDebugTrackArray {
+    const debug_tracks = player.?.getDebugTracks();
+
+    return .{
+        .len = debug_tracks.len,
+        .ptr = debug_tracks.ptr,
+    };
+}
+
 test "tests" {
     _ = @import("player.zig");
 }

@@ -605,6 +605,21 @@ class SettingsPage extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 16),
+                          SettingPannel(
+                            title: t.general.debug,
+                            children: [
+                              SettingToggleOption(
+                                text: "${t.settings.showPlayerDebugOverlay} :",
+                                value: settings.showPlayerDebugOverlay,
+                                onToggle: (value) => viewModel.setSettings(
+                                  settings.copyWith(
+                                    showPlayerDebugOverlay: value,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
                           AppButton(
                             text: t.actions.logout,
                             type: AppButtonType.primary,

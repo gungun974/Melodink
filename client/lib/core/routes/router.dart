@@ -13,6 +13,7 @@ import 'package:melodink_client/features/home/presentation/widgets/mobile_navbar
 import 'package:melodink_client/features/player/presentation/widgets/desktop_player_bar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/large_desktop_player_bar.dart';
 import 'package:melodink_client/features/player/presentation/widgets/mobile_current_track.dart';
+import 'package:melodink_client/features/player/presentation/widgets/player_debug_overlay.dart';
 import 'package:melodink_client/features/settings/domain/entities/settings.dart';
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/current_download_info.dart';
@@ -279,87 +280,103 @@ class AppRouterDelegate implements RouterDelegate<List<AppRouteData>> {
 
     final fullPages = createPages(context, viewType: AppRouteViewType.fullPage);
 
+    final showPlayerDebugOverlay = context.select<SettingsViewModel, bool>(
+      (viewModel) => viewModel.getShowPlayerDebugOverlay(),
+    );
+
     return Navigator(
       key: navigatorKey,
       pages: [
         if (playerBarPages.isNotEmpty || sideBarPages.isNotEmpty)
           MaterialPage(
             key: ValueKey("FullPage"),
-            child: SafeArea(
-              top: false,
-              bottom: true,
-              child: Navigator(
-                pages: [
-                  if (sideBarPages.isNotEmpty)
-                    MaterialPage(
-                      key: ValueKey("PlayerBarView"),
-                      child: Stack(
-                        children: [
-                          const GradientBackground(),
-                          Scaffold(
-                            resizeToAvoidBottomInset: false,
-                            backgroundColor: Colors.transparent,
-                            body: SafeArea(
-                              child:
-                                  NotificationListener<
-                                    OverscrollIndicatorNotification
-                                  >(
-                                    onNotification:
-                                        (
-                                          OverscrollIndicatorNotification
-                                          overscroll,
-                                        ) {
-                                          overscroll.disallowIndicator();
-                                          return true;
-                                        },
-                                    child: Column(
-                                      children: [
-                                        Expanded(
-                                          child: Stack(
-                                            children: [
-                                              Navigator(
-                                                pages: sideBarPages,
-                                                // ignore: deprecated_member_use
-                                                onPopPage: (_, _) {
-                                                  Future(() {
-                                                    router.pop();
-                                                  });
-                                                  return false;
-                                                },
+            child: Stack(
+              children: [
+                SafeArea(
+                  top: false,
+                  bottom: true,
+                  child: Navigator(
+                    pages: [
+                      if (sideBarPages.isNotEmpty)
+                        MaterialPage(
+                          key: ValueKey("PlayerBarView"),
+                          child: Stack(
+                            children: [
+                              const GradientBackground(),
+                              Scaffold(
+                                resizeToAvoidBottomInset: false,
+                                backgroundColor: Colors.transparent,
+                                body: SafeArea(
+                                  child:
+                                      NotificationListener<
+                                        OverscrollIndicatorNotification
+                                      >(
+                                        onNotification:
+                                            (
+                                              OverscrollIndicatorNotification
+                                              overscroll,
+                                            ) {
+                                              overscroll.disallowIndicator();
+                                              return true;
+                                            },
+                                        child: Column(
+                                          children: [
+                                            Expanded(
+                                              child: Stack(
+                                                children: [
+                                                  Navigator(
+                                                    pages: sideBarPages,
+                                                    // ignore: deprecated_member_use
+                                                    onPopPage: (_, _) {
+                                                      Future(() {
+                                                        router.pop();
+                                                      });
+                                                      return false;
+                                                    },
+                                                  ),
+                                                  const Align(
+                                                    alignment:
+                                                        Alignment.bottomRight,
+                                                    child:
+                                                        CurrentDownloadInfo(),
+                                                  ),
+                                                ],
                                               ),
-                                              const Align(
-                                                alignment:
-                                                    Alignment.bottomRight,
-                                                child: CurrentDownloadInfo(),
-                                              ),
-                                            ],
-                                          ),
+                                            ),
+                                            const MobileCurrentTrackInfo(),
+                                          ],
                                         ),
-                                        const MobileCurrentTrackInfo(),
-                                      ],
-                                    ),
-                                  ),
-                            ),
-                            bottomNavigationBar: Theme(
-                              data: Theme.of(
-                                context,
-                              ).copyWith(splashColor: Colors.transparent),
-                              child: const MobileNavbar(),
-                            ),
+                                      ),
+                                ),
+                                bottomNavigationBar: Theme(
+                                  data: Theme.of(
+                                    context,
+                                  ).copyWith(splashColor: Colors.transparent),
+                                  child: const MobileNavbar(),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ...playerBarPages,
+                    ],
+                    // ignore: deprecated_member_use
+                    onPopPage: (_, _) {
+                      Future(() {
+                        router.pop();
+                      });
+                      return false;
+                    },
+                  ),
+                ),
+                if (showPlayerDebugOverlay)
+                  IgnorePointer(
+                    child: Scaffold(
+                      body: PlayerDebugOverlay(),
+                      backgroundColor: Colors.transparent,
                     ),
-                  ...playerBarPages,
-                ],
-                // ignore: deprecated_member_use
-                onPopPage: (_, _) {
-                  Future(() {
-                    router.pop();
-                  });
-                  return false;
-                },
-              ),
+                  ),
+              ],
             ),
           ),
         ...fullPages,
@@ -388,8 +405,13 @@ class AppRouterDelegate implements RouterDelegate<List<AppRouteData>> {
     final fullPages = createPages(context, viewType: AppRouteViewType.fullPage);
 
     final currentPlayerBarPosition = context
-        .watch<SettingsViewModel>()
-        .currentPlayerBarPosition();
+        .select<SettingsViewModel, AppSettingPlayerBarPosition>(
+          (viewModel) => viewModel.currentPlayerBarPosition(),
+        );
+
+    final showPlayerDebugOverlay = context.select<SettingsViewModel, bool>(
+      (viewModel) => viewModel.getShowPlayerDebugOverlay(),
+    );
 
     return Navigator(
       key: navigatorKey,
@@ -488,6 +510,7 @@ class AppRouterDelegate implements RouterDelegate<List<AppRouteData>> {
                           alignment: Alignment.bottomRight,
                           child: CurrentDownloadInfo(),
                         ),
+                        if (showPlayerDebugOverlay) PlayerDebugOverlay(),
                       ],
                     ),
                   ),

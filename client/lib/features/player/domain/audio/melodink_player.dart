@@ -38,12 +38,14 @@ enum MelodinkLoopMode {
   all,
 }
 
+enum MelodinkSampleFormat { u8, s16, s32, flt }
+
 typedef NativeInt64Callback = ffi.Void Function(ffi.Int64);
 
-typedef Int64SetCallbackFunction = void Function(
-    ffi.Pointer<ffi.NativeFunction<NativeInt64Callback>>);
-typedef Int64NativeSetCallbackFunction = ffi.Void Function(
-    ffi.Pointer<ffi.NativeFunction<NativeInt64Callback>>);
+typedef Int64SetCallbackFunction =
+    void Function(ffi.Pointer<ffi.NativeFunction<NativeInt64Callback>>);
+typedef Int64NativeSetCallbackFunction =
+    ffi.Void Function(ffi.Pointer<ffi.NativeFunction<NativeInt64Callback>>);
 
 final class MelodinkTrackRequest {
   final int id;
@@ -66,6 +68,68 @@ final class NativeMelodinkTrackRequest extends ffi.Struct {
   external ffi.Pointer<ffi.Char> downloadedPath;
 }
 
+final class MelodinkDebugTrack {
+  final int id;
+  final AppSettingAudioQuality quality;
+  final bool currentTrack;
+  final MelodinkProcessingState status;
+  final double currentPlayback;
+  final double bufferedPlayback;
+  final double cacheHitRatio;
+
+  final MelodinkSampleFormat sampleFormat;
+  final int sampleSize;
+  final int sampleRate;
+  final int channelCount;
+
+  MelodinkDebugTrack({
+    required this.id,
+    required this.quality,
+    required this.currentTrack,
+    required this.status,
+    required this.currentPlayback,
+    required this.bufferedPlayback,
+    required this.cacheHitRatio,
+
+    required this.sampleFormat,
+    required this.sampleSize,
+    required this.sampleRate,
+    required this.channelCount,
+  });
+}
+
+final class NativeMelodinkDebugTrack extends ffi.Struct {
+  @ffi.Uint64()
+  external int id;
+  @ffi.Uint8()
+  external int quality;
+  @ffi.Bool()
+  external bool currentTrack;
+  @ffi.Uint8()
+  external int status;
+  @ffi.Double()
+  external double currentPlayback;
+  @ffi.Double()
+  external double bufferedPlayback;
+  @ffi.Double()
+  external double cacheHitRatio;
+
+  @ffi.Uint8()
+  external int sampleFormat;
+  @ffi.Uint8()
+  external int sampleSize;
+  @ffi.Uint64()
+  external int sampleRate;
+  @ffi.Uint64()
+  external int channelCount;
+}
+
+final class NativeMelodinkDebugTrackArray extends ffi.Struct {
+  @ffi.Size()
+  external int len;
+  external ffi.Pointer<NativeMelodinkDebugTrack> ptr;
+}
+
 class MelodinkPlayer {
   MelodinkPlayer._privateConstructor();
 
@@ -77,21 +141,11 @@ class MelodinkPlayer {
 
   static ffi.DynamicLibrary getLibrary() {
     final names = {
-      'windows': [
-        'melodink_player.dll',
-      ],
-      'linux': [
-        'libmelodink_player.so',
-      ],
-      'macos': [
-        'MelodinkPlayer.framework/MelodinkPlayer',
-      ],
-      'ios': [
-        'MelodinkPlayer.framework/MelodinkPlayer',
-      ],
-      'android': [
-        'libmelodink_player.so',
-      ],
+      'windows': ['melodink_player.dll'],
+      'linux': ['libmelodink_player.so'],
+      'macos': ['MelodinkPlayer.framework/MelodinkPlayer'],
+      'ios': ['MelodinkPlayer.framework/MelodinkPlayer'],
+      'android': ['libmelodink_player.so'],
     }[Platform.operatingSystem];
     if (names != null) {
       // Try to load the dynamic library from the system using [DynamicLibrary.open].
@@ -135,13 +189,17 @@ class MelodinkPlayer {
         .lookup<ffi.NativeFunction<ffi.Void Function()>>('mi_player_init')
         .asFunction();
 
-    final registerEventAudioChangedCallback = lib.lookupFunction<
-        Int64NativeSetCallbackFunction,
-        Int64SetCallbackFunction>('mi_register_event_audio_changed_callback');
+    final registerEventAudioChangedCallback = lib
+        .lookupFunction<
+          Int64NativeSetCallbackFunction,
+          Int64SetCallbackFunction
+        >('mi_register_event_audio_changed_callback');
 
-    final registerEventUpdateStateCallback = lib.lookupFunction<
-        Int64NativeSetCallbackFunction,
-        Int64SetCallbackFunction>('mi_register_event_update_state_callback');
+    final registerEventUpdateStateCallback = lib
+        .lookupFunction<
+          Int64NativeSetCallbackFunction,
+          Int64SetCallbackFunction
+        >('mi_register_event_update_state_callback');
 
     _play = lib
         .lookup<ffi.NativeFunction<ffi.Void Function()>>('mi_player_play')
@@ -151,44 +209,59 @@ class MelodinkPlayer {
         .asFunction();
     _setLoopMode = lib
         .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Uint8)>>(
-            'mi_player_set_loop_mode')
+          'mi_player_set_loop_mode',
+        )
         .asFunction();
     _setQuality = lib
         .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Uint8)>>(
-            'mi_player_set_quality')
+          'mi_player_set_quality',
+        )
         .asFunction();
     _getCurrentPlaying = lib
         .lookup<ffi.NativeFunction<ffi.Uint8 Function()>>(
-            'mi_player_get_current_playing')
+          'mi_player_get_current_playing',
+        )
         .asFunction();
     _getCurrentTrackPos = lib
         .lookup<ffi.NativeFunction<ffi.Uint64 Function()>>(
-            'mi_player_get_current_track_pos')
+          'mi_player_get_current_track_pos',
+        )
         .asFunction();
     _getCurrentPosition = lib
         .lookup<ffi.NativeFunction<ffi.Double Function()>>(
-            'mi_player_get_current_position')
+          'mi_player_get_current_position',
+        )
         .asFunction();
     _getCurrentBufferedPosition = lib
         .lookup<ffi.NativeFunction<ffi.Double Function()>>(
-            'mi_player_get_current_buffered_position')
+          'mi_player_get_current_buffered_position',
+        )
         .asFunction();
     _getCurrentPlayerState = lib
         .lookup<ffi.NativeFunction<ffi.Uint8 Function()>>(
-            'mi_player_get_current_player_state')
+          'mi_player_get_current_player_state',
+        )
         .asFunction();
     _getCurrentLoopMode = lib
         .lookup<ffi.NativeFunction<ffi.Uint8 Function()>>(
-            'mi_player_get_current_loop_mode')
+          'mi_player_get_current_loop_mode',
+        )
         .asFunction();
 
     _setVolume = lib
         .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>(
-            'mi_player_set_volume')
+          'mi_player_set_volume',
+        )
         .asFunction();
     _getVolume = lib
         .lookup<ffi.NativeFunction<ffi.Double Function()>>(
-            'mi_player_get_volume')
+          'mi_player_get_volume',
+        )
+        .asFunction();
+    _getDebugTracks = lib
+        .lookup<ffi.NativeFunction<NativeMelodinkDebugTrackArray Function()>>(
+          'mi_player_get_debug_tracks',
+        )
         .asFunction();
 
     _eventAudioChangedReceivePort.listen(
@@ -202,14 +275,13 @@ class MelodinkPlayer {
     final eventAudioChangedSendPort = _eventAudioChangedReceivePort.sendPort;
 
     final audioChangedSendPortNativeCallback =
-        ffi.NativeCallable<NativeInt64Callback>.listener(
-      (int value) {
-        eventAudioChangedSendPort.send(value);
-      },
-    );
+        ffi.NativeCallable<NativeInt64Callback>.listener((int value) {
+          eventAudioChangedSendPort.send(value);
+        });
 
     registerEventAudioChangedCallback(
-        audioChangedSendPortNativeCallback.nativeFunction);
+      audioChangedSendPortNativeCallback.nativeFunction,
+    );
 
     _eventUpdateStateReceivePort.listen(
       (data) => _eventUpdateStateStreamController.add(
@@ -222,14 +294,13 @@ class MelodinkPlayer {
     final eventUpdateStateSendPort = _eventUpdateStateReceivePort.sendPort;
 
     final updateStateSendPortNativeCallback =
-        ffi.NativeCallable<NativeInt64Callback>.listener(
-      (int value) {
-        eventUpdateStateSendPort.send(value);
-      },
-    );
+        ffi.NativeCallable<NativeInt64Callback>.listener((int value) {
+          eventUpdateStateSendPort.send(value);
+        });
 
     registerEventUpdateStateCallback(
-        updateStateSendPortNativeCallback.nativeFunction);
+      updateStateSendPortNativeCallback.nativeFunction,
+    );
   }
 
   late final void Function() _play;
@@ -250,31 +321,41 @@ class MelodinkPlayer {
 
   final actionMutex = Mutex();
 
+  late final NativeMelodinkDebugTrackArray Function() _getDebugTracks;
+
   void play() => _play();
   void pause() => _pause();
-  Future<void> seek(double position) async =>
-      actionMutex.protect(() => compute((position) {
-            final void Function(double) seek = getLibrary()
-                .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>(
-                    'mi_player_seek')
-                .asFunction();
-            seek(position);
-          }, position));
+  Future<void> seek(double position) async => actionMutex.protect(
+    () => compute((position) {
+      final void Function(double) seek = getLibrary()
+          .lookup<ffi.NativeFunction<ffi.Void Function(ffi.Double)>>(
+            'mi_player_seek',
+          )
+          .asFunction();
+      seek(position);
+    }, position),
+  );
 
-  Future<void> skipToPrevious() async => actionMutex.protect(() => compute((_) {
-        final void Function() skipToPrevious = getLibrary()
-            .lookup<ffi.NativeFunction<ffi.Void Function()>>(
-                'mi_player_skip_to_previous')
-            .asFunction();
-        skipToPrevious();
-      }, null));
-  Future<void> skipToNext() async => actionMutex.protect(() => compute((_) {
-        final void Function() skipToNext = getLibrary()
-            .lookup<ffi.NativeFunction<ffi.Void Function()>>(
-                'mi_player_skip_to_next')
-            .asFunction();
-        skipToNext();
-      }, null));
+  Future<void> skipToPrevious() async => actionMutex.protect(
+    () => compute((_) {
+      final void Function() skipToPrevious = getLibrary()
+          .lookup<ffi.NativeFunction<ffi.Void Function()>>(
+            'mi_player_skip_to_previous',
+          )
+          .asFunction();
+      skipToPrevious();
+    }, null),
+  );
+  Future<void> skipToNext() async => actionMutex.protect(
+    () => compute((_) {
+      final void Function() skipToNext = getLibrary()
+          .lookup<ffi.NativeFunction<ffi.Void Function()>>(
+            'mi_player_skip_to_next',
+          )
+          .asFunction();
+      skipToNext();
+    }, null),
+  );
 
   Future<void> setAudios(
     String serverURL,
@@ -284,50 +365,56 @@ class MelodinkPlayer {
     List<MelodinkTrackRequest> requests,
     String serverAuth,
   ) async {
-    await actionMutex.protect(
-      () async {
-        final requestsPointers =
-            ffi.calloc<NativeMelodinkTrackRequest>(requests.length);
+    await actionMutex.protect(() async {
+      final requestsPointers = ffi.calloc<NativeMelodinkTrackRequest>(
+        requests.length,
+      );
 
-        final serverURLPointer = serverURL.toNativeUtf8().cast<ffi.Char>();
+      final serverURLPointer = serverURL.toNativeUtf8().cast<ffi.Char>();
 
-        final serverAuthPointer = serverAuth.toNativeUtf8().cast<ffi.Char>();
+      final serverAuthPointer = serverAuth.toNativeUtf8().cast<ffi.Char>();
 
-        final cachePathPointer = cachePath.toNativeUtf8().cast<ffi.Char>();
+      final cachePathPointer = cachePath.toNativeUtf8().cast<ffi.Char>();
 
-        try {
-          for (var i = 0; i < requests.length; i++) {
-            requestsPointers[i].serverURL = serverURLPointer;
-            requestsPointers[i].cachePath = cachePathPointer;
-            requestsPointers[i].trackId = requests[i].id;
-            requestsPointers[i].originalAudioHash =
-                requests[i].originalAudioHash.toNativeUtf8().cast<ffi.Char>();
+      try {
+        for (var i = 0; i < requests.length; i++) {
+          requestsPointers[i].serverURL = serverURLPointer;
+          requestsPointers[i].cachePath = cachePathPointer;
+          requestsPointers[i].trackId = requests[i].id;
+          requestsPointers[i].originalAudioHash = requests[i].originalAudioHash
+              .toNativeUtf8()
+              .cast<ffi.Char>();
 
-            if (requests[i].downloadedPath.isNotEmpty) {
-              requestsPointers[i].downloadedPath =
-                  requests[i].downloadedPath.toNativeUtf8().cast<ffi.Char>();
-            } else {
-              requestsPointers[i].downloadedPath = ffi.nullptr;
-            }
+          if (requests[i].downloadedPath.isNotEmpty) {
+            requestsPointers[i].downloadedPath = requests[i].downloadedPath
+                .toNativeUtf8()
+                .cast<ffi.Char>();
+          } else {
+            requestsPointers[i].downloadedPath = ffi.nullptr;
           }
+        }
 
-          await compute((data) {
+        await compute(
+          (data) {
             final void Function(
               int,
               int,
               ffi.Pointer<NativeMelodinkTrackRequest>,
               int,
               ffi.Pointer<ffi.Utf8>,
-            ) setAudios = getLibrary()
+            )
+            setAudios = getLibrary()
                 .lookup<
-                    ffi.NativeFunction<
-                        ffi.Void Function(
-                          ffi.Size,
-                          ffi.Size,
-                          ffi.Pointer<NativeMelodinkTrackRequest>,
-                          ffi.Size,
-                          ffi.Pointer<ffi.Utf8>,
-                        )>>('mi_player_set_audios')
+                  ffi.NativeFunction<
+                    ffi.Void Function(
+                      ffi.Size,
+                      ffi.Size,
+                      ffi.Pointer<NativeMelodinkTrackRequest>,
+                      ffi.Size,
+                      ffi.Pointer<ffi.Utf8>,
+                    )
+                  >
+                >('mi_player_set_audios')
                 .asFunction();
 
             setAudios(
@@ -337,62 +424,63 @@ class MelodinkPlayer {
               data["len"]!,
               ffi.Pointer.fromAddress(data["serverAuth"]!),
             );
-          }, {
+          },
+          {
             'newCurrentTrackIndex': newCurrentTrackIndex,
             'currentRequestIndex': currentRequestIndex,
             'requestsPointers': requestsPointers.address,
             'len': requests.length,
             'serverAuth': serverAuthPointer.address,
-          });
-        } finally {
-          for (var i = 0; i < requests.length; i++) {
-            ffi.calloc.free(requestsPointers[i].originalAudioHash);
-            if (requests[i].downloadedPath.isNotEmpty) {
-              ffi.calloc.free(requestsPointers[i].downloadedPath);
-            }
+          },
+        );
+      } finally {
+        for (var i = 0; i < requests.length; i++) {
+          ffi.calloc.free(requestsPointers[i].originalAudioHash);
+          if (requests[i].downloadedPath.isNotEmpty) {
+            ffi.calloc.free(requestsPointers[i].downloadedPath);
           }
-          ffi.calloc.free(cachePathPointer);
-          ffi.calloc.free(serverURLPointer);
-          ffi.calloc.free(serverAuthPointer);
-          ffi.calloc.free(requestsPointers);
         }
-      },
-    );
+        ffi.calloc.free(cachePathPointer);
+        ffi.calloc.free(serverURLPointer);
+        ffi.calloc.free(serverAuthPointer);
+        ffi.calloc.free(requestsPointers);
+      }
+    });
   }
 
-  Future<void> setEqualizer(
-    bool enable,
-    Map<double, double> bands,
-  ) async {
-    await actionMutex.protect(
-      () async {
-        final frequenciesPointer = ffi.calloc<ffi.Double>(bands.length);
+  Future<void> setEqualizer(bool enable, Map<double, double> bands) async {
+    await actionMutex.protect(() async {
+      final frequenciesPointer = ffi.calloc<ffi.Double>(bands.length);
 
-        final gainsPointer = ffi.calloc<ffi.Double>(bands.length);
+      final gainsPointer = ffi.calloc<ffi.Double>(bands.length);
 
-        try {
-          final keys = bands.keys.toList()..sort();
+      try {
+        final keys = bands.keys.toList()..sort();
 
-          for (int i = 0; i < keys.length; i++) {
-            frequenciesPointer[i] = keys[i];
-            gainsPointer[i] = bands[keys[i]]!;
-          }
+        for (int i = 0; i < keys.length; i++) {
+          frequenciesPointer[i] = keys[i];
+          gainsPointer[i] = bands[keys[i]]!;
+        }
 
-          await compute((data) {
+        await compute(
+          (data) {
             final void Function(
               bool,
               int,
               ffi.Pointer<ffi.Double>,
               ffi.Pointer<ffi.Double>,
-            ) setEqualizer = getLibrary()
+            )
+            setEqualizer = getLibrary()
                 .lookup<
-                    ffi.NativeFunction<
-                        ffi.Void Function(
-                          ffi.Bool,
-                          ffi.Size,
-                          ffi.Pointer<ffi.Double>,
-                          ffi.Pointer<ffi.Double>,
-                        )>>('mi_player_set_equalizer')
+                  ffi.NativeFunction<
+                    ffi.Void Function(
+                      ffi.Bool,
+                      ffi.Size,
+                      ffi.Pointer<ffi.Double>,
+                      ffi.Pointer<ffi.Double>,
+                    )
+                  >
+                >('mi_player_set_equalizer')
                 .asFunction();
 
             setEqualizer(
@@ -401,18 +489,19 @@ class MelodinkPlayer {
               ffi.Pointer.fromAddress(data["frequenciesPointer"]!),
               ffi.Pointer.fromAddress(data["gainsPointer"]!),
             );
-          }, {
+          },
+          {
             'enable': enable ? 1 : 0,
             'len': bands.length,
             'frequenciesPointer': frequenciesPointer.address,
             'gainsPointer': gainsPointer.address,
-          });
-        } finally {
-          ffi.calloc.free(frequenciesPointer);
-          ffi.calloc.free(gainsPointer);
-        }
-      },
-    );
+          },
+        );
+      } finally {
+        ffi.calloc.free(frequenciesPointer);
+        ffi.calloc.free(gainsPointer);
+      }
+    });
   }
 
   void setLoopMode(MelodinkLoopMode loopMode) {
@@ -444,4 +533,27 @@ class MelodinkPlayer {
   void setVolume(double volume) => _setVolume(volume);
 
   double getVolume() => _getVolume();
+
+  List<MelodinkDebugTrack> getDebugTracks() {
+    final array = _getDebugTracks();
+    final List<MelodinkDebugTrack> output = [];
+    for (var i = 0; i < array.len; i++) {
+      output.add(
+        MelodinkDebugTrack(
+          id: array.ptr[i].id,
+          quality: AppSettingAudioQuality.values[array.ptr[i].quality],
+          currentTrack: array.ptr[i].currentTrack,
+          status: MelodinkProcessingState.values[array.ptr[i].status],
+          currentPlayback: array.ptr[i].currentPlayback,
+          bufferedPlayback: array.ptr[i].bufferedPlayback,
+          cacheHitRatio: array.ptr[i].cacheHitRatio,
+          sampleFormat: MelodinkSampleFormat.values[array.ptr[i].sampleFormat],
+          sampleSize: array.ptr[i].sampleSize,
+          sampleRate: array.ptr[i].sampleRate,
+          channelCount: array.ptr[i].channelCount,
+        ),
+      );
+    }
+    return output;
+  }
 }

@@ -104,6 +104,10 @@ class SettingsRepository {
       "showTrackRemainingDuration",
     );
 
+    final showPlayerDebugOverlay = await asyncPrefs.getBool(
+      "showPlayerDebugOverlay",
+    );
+
     return AppSettings(
       theme: theme ?? AppSettingTheme.base,
       dynamicBackgroundColors: dynamicBackgroundColors ?? true,
@@ -125,6 +129,7 @@ class SettingsRepository {
       enableHistoryTracking: enableHistoryTracking ?? true,
       shareAllHistoryTrackingToServer: shareAllHistoryTrackingToServer ?? true,
       showTrackRemainingDuration: showTrackRemainingDuration ?? false,
+      showPlayerDebugOverlay: showPlayerDebugOverlay ?? false,
       equalizer: await getEqualizer(),
     );
   }
@@ -184,6 +189,11 @@ class SettingsRepository {
     await asyncPrefs.setBool(
       "showTrackRemainingDuration",
       settings.showTrackRemainingDuration,
+    );
+
+    await asyncPrefs.setBool(
+      "showPlayerDebugOverlay",
+      settings.showPlayerDebugOverlay,
     );
 
     await saveEqualizer(settings.equalizer);

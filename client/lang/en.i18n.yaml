@@ -128,6 +128,8 @@ general:
   musicBrainzTrackId: "MusicBrainz Track Id"
   musicBrainzRecordingId: "MusicBrainz Recording Id"
 
+  debug: "Debug"
+
 settings:
   dynamicBackgroundColors: "Dynamic background colors based on the current track"
   desktopPlayerBarPosition: "Desktop Player bar position"
@@ -138,6 +140,7 @@ settings:
 
   replaceOnlyEmptyFields: "Replace only Empty Fields"
   scoringSystem: "Scoring system"
+  showPlayerDebugOverlay: "Show player debug overlay"
 
 themes:
   default: "@:general.kDefault"

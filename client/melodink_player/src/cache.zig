@@ -38,6 +38,9 @@ index_file: fs.File = undefined,
 
 cache_directory: []const u8 = undefined,
 
+cache_hits: u64 = 0,
+cache_misses: u64 = 0,
+
 pub const ProtectedOpenedPathsList = struct {
     const Self2 = @This();
 
@@ -95,6 +98,9 @@ pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, source_a
     }
 
     std.debug.assert(fs.path.isAbsolute(cache_path));
+
+    self.cache_hits = 0;
+    self.cache_misses = 0;
 
     self.source_avio_ctx = source_avio_ctx;
 
@@ -154,6 +160,8 @@ pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, source_a
     if (self.file_total_size == 0) {
         try self.index_file.seekTo(0);
 
+        self.cache_misses += 1;
+
         const file_size = c.avio_size(self.source_avio_ctx);
 
         if (file_size < 0) {
@@ -162,6 +170,8 @@ pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, source_a
 
         self.file_total_size = @intCast(file_size);
         _ = try self.index_file.write(std.mem.asBytes(&self.file_total_size));
+    } else {
+        self.cache_hits += 1;
     }
 
     try self.index_map.resize(self.index_size);
@@ -276,8 +286,11 @@ fn markBlockAsCached(self: *Self, block_id: u64) !void {
 
 fn downloadBlock(self: *Self, block_id: u64) !void {
     if (self.isBlockCached(block_id)) {
+        self.cache_hits += 1;
         return;
     }
+
+    self.cache_misses += 1;
 
     var buffer: [BLOCK_SIZE]u8 = [_]u8{0} ** BLOCK_SIZE;
     var offset = block_id * BLOCK_SIZE;

@@ -114,4 +114,14 @@ class SettingsViewModel extends ChangeNotifier {
     state = await SettingsRepository().getSettings();
     notifyListeners();
   }
+
+  bool getShowPlayerDebugOverlay() {
+    final currentSettings = state;
+
+    if (currentSettings == null) {
+      return false;
+    }
+
+    return currentSettings.showPlayerDebugOverlay;
+  }
 }

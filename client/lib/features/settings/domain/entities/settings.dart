@@ -27,6 +27,7 @@ class AppSettings extends Equatable {
   final bool shareAllHistoryTrackingToServer;
 
   final bool showTrackRemainingDuration;
+  final bool showPlayerDebugOverlay;
 
   final AppEqualizer equalizer;
 
@@ -44,6 +45,7 @@ class AppSettings extends Equatable {
     required this.enableHistoryTracking,
     required this.shareAllHistoryTrackingToServer,
     required this.showTrackRemainingDuration,
+    required this.showPlayerDebugOverlay,
     required this.equalizer,
   });
 
@@ -61,6 +63,7 @@ class AppSettings extends Equatable {
     bool? enableHistoryTracking,
     bool? shareAllHistoryTrackingToServer,
     bool? showTrackRemainingDuration,
+    bool? showPlayerDebugOverlay,
     AppEqualizer? equalizer,
   }) {
     return AppSettings(
@@ -87,6 +90,8 @@ class AppSettings extends Equatable {
           this.shareAllHistoryTrackingToServer,
       showTrackRemainingDuration:
           showTrackRemainingDuration ?? this.showTrackRemainingDuration,
+      showPlayerDebugOverlay:
+          showPlayerDebugOverlay ?? this.showPlayerDebugOverlay,
       equalizer: equalizer ?? this.equalizer,
     );
   }
@@ -106,6 +111,7 @@ class AppSettings extends Equatable {
     enableHistoryTracking,
     shareAllHistoryTrackingToServer,
     showTrackRemainingDuration,
+    showPlayerDebugOverlay,
     equalizer,
   ];
 }

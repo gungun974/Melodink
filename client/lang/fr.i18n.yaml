@@ -128,6 +128,8 @@ general:
   musicBrainzTrackId: "Identifiant de piste MusicBrainz"
   musicBrainzRecordingId: "Identifiant d'enregistrement MusicBrainz"
 
+  debug: "Débogage"
+
 settings:
   dynamicBackgroundColors: "Couleurs de fond dynamiques basées sur la piste actuelle"
   desktopPlayerBarPosition: "Position de la barre du lecteur en vue ordinateur"
@@ -138,6 +140,7 @@ settings:
 
   replaceOnlyEmptyFields: "Remplacer uniquement les champs vides"
   scoringSystem: "Système de scorage"
+  showPlayerDebugOverlay: "Afficher l'overlay de debug du lecteur"
 
 themes:
   default: "@:general.kDefault"

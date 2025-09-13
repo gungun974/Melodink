@@ -12,6 +12,27 @@ const Track = TrackMod.Track;
 const TrackQuality = TrackMod.TrackQuality;
 const TrackStatus = TrackMod.TrackStatus;
 
+const DebugTrackFormat = enum(u8) {
+    u8,
+    s16,
+    s32,
+    flt,
+};
+
+pub const DebugTrack = extern struct {
+    id: u64,
+    quality: TrackQuality,
+    current_track: bool,
+    status: TrackStatus,
+    current_playback: f64,
+    buffered_playback: f64,
+    cache_hit_ratio: f64,
+    sample_format: DebugTrackFormat,
+    sample_size: u8,
+    sample_rate: u64,
+    channel_count: u64,
+};
+
 const TrackManager = struct {
     const Self = @This();
 
@@ -285,6 +306,8 @@ pub const Player = struct {
 
     pool_threads: *std.Thread.Pool = undefined,
 
+    debug_tracks: std.ArrayListUnmanaged(DebugTrack) = std.ArrayListUnmanaged(DebugTrack){},
+
     fn sendEventAudioChanged(self: *Self, value: u64) void {
         if (self.send_event_audio_changed == null) {
             return;
@@ -403,6 +426,8 @@ pub const Player = struct {
         self.equalizer.free();
 
         self.allocator.destroy(self.equalizer);
+
+        self.debug_tracks.clearAndFree(self.allocator);
     }
 
     pub fn play(self: *Self) !void {
@@ -994,6 +1019,51 @@ pub const Player = struct {
 
     pub fn getVolume(self: *Self) f64 {
         return self.audio_volume;
+    }
+
+    pub fn getDebugTracks(self: *Self) []DebugTrack {
+        self.tracks_mutex.lock();
+        defer self.tracks_mutex.unlock();
+
+        self.debug_tracks.resize(self.allocator, self.track_manager.manage_tracks_order.items.len) catch {
+            @panic("Couldn't resize debug tracks array");
+        };
+
+        const current_track_index = self.track_manager.getCurrentIndexedTrack();
+
+        for (0.., self.track_manager.manage_tracks_order.items) |i, indexed_track| {
+            const track: *Track = indexed_track.track;
+
+            var cache_hit_ratio: f64 = undefined;
+
+            if (track.downloaded_path != null) {
+                cache_hit_ratio = std.math.nan(f64);
+            } else if (track.cache_avio.cache_hits != 0 or track.cache_avio.cache_misses != 0) {
+                cache_hit_ratio = @as(f64, @floatFromInt(track.cache_avio.cache_hits)) / @as(f64, @floatFromInt(track.cache_avio.cache_hits + track.cache_avio.cache_misses));
+            }
+
+            self.debug_tracks.items[i] = .{
+                .id = track.id,
+                .quality = track.quality,
+                .cache_hit_ratio = cache_hit_ratio,
+                .current_track = current_track_index != null and indexed_track.index == current_track_index.?.index,
+                .status = track.status,
+                .current_playback = track.getCurrentPlaybackTime(),
+                .buffered_playback = track.getBufferedPlaybackTime(),
+                .sample_format = switch (track.getAudioOutputFormat()) {
+                    c.AV_SAMPLE_FMT_U8 => .u8,
+                    c.AV_SAMPLE_FMT_S16 => .s16,
+                    c.AV_SAMPLE_FMT_S32 => .s32,
+                    c.AV_SAMPLE_FMT_FLT => .flt,
+                    else => .flt,
+                },
+                .sample_size = track.getAudioSampleSize(),
+                .sample_rate = track.getAudioSampleRate(),
+                .channel_count = track.getAudioChannelCount(),
+            };
+        }
+
+        return self.debug_tracks.items;
     }
 };
 
