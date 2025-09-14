@@ -12,6 +12,7 @@ const Self = @This();
 const BLOCK_SIZE = 4096;
 const INDEX_FILE = "cache_index.bin";
 const DATA_FILE = "cache_data.bin";
+pub const FETCH_BLOCK_COUNT = 16;
 
 const CACHE_MAX_SIZE_DIRECTORY = 1 * 1024 * 1024 * 1024; // 1 GiB max of audio stored
 
@@ -292,7 +293,7 @@ fn downloadBlock(self: *Self, block_id: u64) !void {
 
     self.cache_misses += 1;
 
-    var buffer: [BLOCK_SIZE]u8 = [_]u8{0} ** BLOCK_SIZE;
+    var buffer: [BLOCK_SIZE * FETCH_BLOCK_COUNT]u8 = [_]u8{0} ** (BLOCK_SIZE * FETCH_BLOCK_COUNT);
     var offset = block_id * BLOCK_SIZE;
     const seek_result = c.avio_seek(self.source_avio_ctx, @intCast(offset), c.SEEK_SET);
 
@@ -303,7 +304,7 @@ fn downloadBlock(self: *Self, block_id: u64) !void {
         return error.CouldNotSeekSourceAVIO;
     }
 
-    var wanted: c_int = BLOCK_SIZE;
+    var wanted: c_int = BLOCK_SIZE * FETCH_BLOCK_COUNT;
 
     while (wanted > 0) {
         const bytes_read = c.avio_read_partial(self.source_avio_ctx, @ptrCast(&buffer), wanted);
@@ -313,7 +314,9 @@ fn downloadBlock(self: *Self, block_id: u64) !void {
                 return error.HTTPReturnATooEarlyEOF;
             }
 
-            try self.markBlockAsCached(block_id);
+            for (0..FETCH_BLOCK_COUNT) |i| {
+                try self.markBlockAsCached(block_id + i);
+            }
 
             return;
         }
@@ -336,7 +339,9 @@ fn downloadBlock(self: *Self, block_id: u64) !void {
         offset += @intCast(bytes_read);
     }
 
-    try self.markBlockAsCached(block_id);
+    for (0..FETCH_BLOCK_COUNT) |i| {
+        try self.markBlockAsCached(block_id + i);
+    }
 }
 
 fn customReadPacket(opaqued: ?*anyopaque, buf: [*c]u8, buf_size: c_int) callconv(.c) c_int {

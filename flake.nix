@@ -270,6 +270,8 @@
               PKG_CONFIG_PATH = "${pkgs.chromaprint}/lib/pkgconfig:${pkgs.fftw.dev}/lib/pkgconfig:${pkgs.vips.dev}/lib/pkgconfig:${pkgs.glib.dev}/lib/pkgconfig";
               CGO_CFLAGS = "-I${pkgs.chromaprint}/include";
               CGO_LDFLAGS = "-L${pkgs.chromaprint}/lib";
+
+              GOROOT = "${pkgs.go_1_25}/share/go";
             };
 
             shellHook = ''

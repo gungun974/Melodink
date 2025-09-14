@@ -6,7 +6,7 @@ const c = @import("c.zig");
 
 const Self = @This();
 
-const BUFFER_SIZE = 4096;
+const BUFFER_SIZE = 4096 * (@import("cache.zig").FETCH_BLOCK_COUNT);
 
 allocator: std.mem.Allocator,
 has_been_open: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
@@ -17,8 +17,11 @@ is_reopen: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
 
 file_url: [:0]const u8 = undefined,
 
+seek_dirty: bool = false,
 current_offset: i64 = 0,
 file_total_size: u64 = 0,
+
+hit_count: u64 = 0,
 
 source_avio_ctx: [*c]c.AVIOContext = undefined,
 avio_ctx: *c.AVIOContext = undefined,
@@ -31,6 +34,8 @@ pub fn init(self: *Self, url: [:0]const u8, new_options: [*c]?*c.AVDictionary) !
     if (self.has_been_open.load(.seq_cst)) {
         return;
     }
+
+    self.hit_count = 0;
 
     self.file_url = try std.fmt.allocPrintZ(self.allocator, "{s}", .{url});
     errdefer self.allocator.free(self.file_url);
@@ -47,6 +52,7 @@ pub fn init(self: *Self, url: [:0]const u8, new_options: [*c]?*c.AVDictionary) !
         return error.CouldNotOpenCustomAVIOContext;
     };
 
+    self.seek_dirty = false;
     self.current_offset = 0;
     self.has_been_open.store(true, .seq_cst);
     self.is_reopen.store(false, .seq_cst);
@@ -166,6 +172,8 @@ fn customReadPacket(opaqued: ?*anyopaque, buf: [*c]u8, buf_size: c_int) callconv
         return c.AVERROR(c.ETIMEDOUT);
     }
 
+    self.hit_count += 1;
+
     self.openHTTP() catch |err| {
         std.log.warn("Could not open HTTP {}", .{err});
         return c.AVERROR(c.ETIMEDOUT);
@@ -214,7 +222,11 @@ fn customSeek(opaqued: ?*anyopaque, offset: i64, whence: c_int) callconv(.c) i64
         return -1;
     }
 
-    self.current_offset = new_offset;
+    if (self.current_offset != new_offset) {
+        self.seek_dirty = true;
+        self.current_offset = new_offset;
+    }
+
     return 0;
 }
 
