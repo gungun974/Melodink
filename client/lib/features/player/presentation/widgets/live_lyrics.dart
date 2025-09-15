@@ -125,46 +125,48 @@ class LiveLyrics extends HookWidget {
 
         return Row(
           children: [
-            HookBuilder(
-              builder: (context) {
-                final isHovering = useState(false);
+            Flexible(
+              child: HookBuilder(
+                builder: (context) {
+                  final isHovering = useState(false);
 
-                return MouseRegion(
-                  cursor: lyric.timed
-                      ? SystemMouseCursors.click
-                      : MouseCursor.defer,
-                  onEnter: (_) {
-                    isHovering.value = true;
-                  },
-                  onExit: (_) {
-                    isHovering.value = false;
-                  },
-                  child: GestureDetector(
-                    onTap: () {
-                      if (!lyric.timed) {
-                        return;
-                      }
-                      audioController.seek(lyric.timestamp);
+                  return MouseRegion(
+                    cursor: lyric.timed
+                        ? SystemMouseCursors.click
+                        : MouseCursor.defer,
+                    onEnter: (_) {
+                      isHovering.value = true;
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Text(
-                        lyric.text,
-                        style: TextStyle(
-                          fontSize: 24,
-                          letterSpacing: 24 * 0.05,
-                          fontWeight: isCurrent
-                              ? FontWeight.w500
-                              : FontWeight.w400,
-                          color: isCurrent || isHovering.value || !lyric.timed
-                              ? Colors.white
-                              : (isNext ? Colors.white70 : Colors.white54),
+                    onExit: (_) {
+                      isHovering.value = false;
+                    },
+                    child: GestureDetector(
+                      onTap: () {
+                        if (!lyric.timed) {
+                          return;
+                        }
+                        audioController.seek(lyric.timestamp);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6.0),
+                        child: Text(
+                          lyric.text,
+                          style: TextStyle(
+                            fontSize: 24,
+                            letterSpacing: 24 * 0.05,
+                            fontWeight: isCurrent
+                                ? FontWeight.w500
+                                : FontWeight.w400,
+                            color: isCurrent || isHovering.value || !lyric.timed
+                                ? Colors.white
+                                : (isNext ? Colors.white70 : Colors.white54),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ],
         );
