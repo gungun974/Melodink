@@ -761,6 +761,31 @@ pub const Track = struct {
 
         self.has_reach_end = false;
 
+        if (new_time == 0 and reset_fifo) {
+            while (true) {
+                var av_packet = self.cached_packet_fifo.readItem() orelse {
+                    break;
+                };
+                defer c.av_packet_free(&av_packet);
+                defer c.av_packet_unref(av_packet);
+            }
+
+            self.last_av_read_frame_response = 0;
+
+            self.audio_frames_consumed_max = 0;
+            self.audio_fifo.clear();
+
+            _ = c.av_seek_frame(self.av_format_ctx, -1, 0, c.AVSEEK_FLAG_BACKWARD);
+            c.avcodec_flush_buffers(self.av_audio_codec_ctx);
+
+            self.audio_time = 0;
+            self.audio_frames_consumed = 0;
+            self.fast_forward_until_time = null;
+
+            self.queue_seek = null;
+            return;
+        }
+
         const current = self.getCurrentPlaybackTime();
 
         const diff = new_time - current;
