@@ -10,6 +10,8 @@ const HttpAVIO = @import("http.zig");
 const ENABLE_CACHE = true;
 const ENABLE_TRACK_OPEN_INFO = false;
 
+pub const FIFO_PRELOAD_DURATION = 90;
+
 pub const TrackStatus = enum(u8) {
     /// There hasn't been any resource loaded yet.
     idle,
@@ -435,7 +437,7 @@ pub const Track = struct {
         self.audio_time = 0;
         self.audio_frames_consumed_max = 0;
 
-        try self.audio_fifo.init(self.audio_format, self.audio_channel_count, self.audio_sample_rate * 90);
+        try self.audio_fifo.init(self.audio_format, self.audio_channel_count, self.audio_sample_rate * FIFO_PRELOAD_DURATION * 2);
         errdefer self.audio_fifo.free();
 
         self.av_audio_frame = c.av_frame_alloc() orelse {

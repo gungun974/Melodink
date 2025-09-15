@@ -690,7 +690,7 @@ pub const Player = struct {
                 return;
             }
 
-            if (!track_to_load.track.haveFinishToLoadEverything()) {
+            if (!Player.isTrackBufferedEnough(track_to_load.track, TrackMod.FIFO_PRELOAD_DURATION - 1)) {
                 return;
             }
 
