@@ -548,20 +548,33 @@ fn addLibraries(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) 
             "-fwrapv",
         } });
     } else if (target.result.abi.isAndroid() and target.result.cpu.arch == .x86) {
-        step.addCSourceFile(.{ .file = miniaudio_c, .flags = &.{ "-DMA_NO_DECODING", "-DMA_NO_ENCODING", "-fwrapv", "-fPIC" } });
+        step.addCSourceFile(.{
+            .file = miniaudio_c,
+            .flags = &.{
+                "-DMA_NO_DECODING", "-DMA_NO_ENCODING", "-fwrapv", "-fPIC", "-DMA_NO_AAUDIO",
+            },
+        });
     } else if (target.result.abi.isAndroid() and target.result.cpu.arch == .arm) {
-        step.addCSourceFile(.{ .file = miniaudio_c, .flags = &.{
-            "-DMA_NO_DECODING",
-            "-DMA_NO_ENCODING",
-            "-fwrapv",
-            "-mfloat-abi=softfp",
-        } });
+        step.addCSourceFile(.{
+            .file = miniaudio_c,
+            .flags = &.{
+                "-DMA_NO_DECODING",
+                "-DMA_NO_ENCODING",
+                "-fwrapv",
+                "-mfloat-abi=softfp",
+                "-DMA_NO_AAUDIO",
+            },
+        });
     } else {
-        step.addCSourceFile(.{ .file = miniaudio_c, .flags = &.{
-            "-DMA_NO_DECODING",
-            "-DMA_NO_ENCODING",
-            "-fwrapv",
-        } });
+        step.addCSourceFile(.{
+            .file = miniaudio_c,
+            .flags = &.{
+                "-DMA_NO_DECODING",
+                "-DMA_NO_ENCODING",
+                "-fwrapv",
+                "-DMA_NO_AAUDIO",
+            },
+        });
     }
 
     const miniaudio_path = prepareMiniaudio(b);
