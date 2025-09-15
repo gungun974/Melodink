@@ -47,6 +47,10 @@ func (u *SyncUsecase) FetchPartialSyncData(
 			return
 		}
 		deletedTracks, errTracks = u.trackRepository.GetAllDeletedTracksSince(since)
+		if errTracks != nil {
+			return
+		}
+		errTracks = u.trackRepository.LoadAllScoresWithTracks(tracks)
 	}()
 
 	go func() {

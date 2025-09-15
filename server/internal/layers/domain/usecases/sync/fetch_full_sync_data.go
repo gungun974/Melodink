@@ -37,6 +37,10 @@ func (u *SyncUsecase) FetchFullSyncData(
 	go func() {
 		defer wg.Done()
 		tracks, errTracks = u.trackRepository.GetAllTracksFromUser(user.Id)
+		if errTracks != nil {
+			return
+		}
+		errTracks = u.trackRepository.LoadAllScoresWithTracks(tracks)
 	}()
 
 	go func() {
