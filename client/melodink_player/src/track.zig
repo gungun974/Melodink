@@ -300,6 +300,7 @@ pub const Track = struct {
             std.log.debug("open url: {s}", .{url});
 
             try self.http_avio.init(url, &open_options);
+            errdefer self.http_avio.deinit();
 
             if (ENABLE_CACHE and self.original_audio_hash != null and self.cache_path != null) {
                 const cache_key = try std.fmt.allocPrint(self.allocator, "{}-{}-{s}", .{ self.id, self.quality, self.original_audio_hash.? });

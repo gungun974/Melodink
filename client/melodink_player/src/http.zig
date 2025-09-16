@@ -106,7 +106,14 @@ fn openHTTP(self: *Self) !void {
         std.log.err("Could not open AVIOContext: {s}\n", .{self.getAVError(response)});
         return error.CouldNotOpenAVIOContext;
     }
-    self.file_total_size = @intCast(c.avio_size(self.source_avio_ctx));
+
+    const file_size = c.avio_size(self.source_avio_ctx);
+
+    if (file_size < 0) {
+        return error.CantGetAVIOFileSize;
+    }
+
+    self.file_total_size = @intCast(file_size);
     self.has_been_open_http.store(true, .seq_cst);
 }
 

@@ -163,7 +163,8 @@ pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, source_a
 
         self.cache_misses += 1;
 
-        const file_size = c.avio_size(self.source_avio_ctx);
+        // We can't trust avio_size for only using AVSEEK_SIZE as source
+        const file_size = c.avio_seek(self.source_avio_ctx, 0, c.AVSEEK_SIZE);
 
         if (file_size < 0) {
             return error.CantGetAVIOFileSize;
