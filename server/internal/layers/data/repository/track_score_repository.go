@@ -40,6 +40,14 @@ func (r *TrackRepository) SetUserTrackScore(
 		return entities.TrackScore{}, err
 	}
 
+	_, err = r.Database.Exec(
+		"UPDATE tracks SET updated_at = STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW') WHERE id = ?",
+		track.Id,
+	)
+	if err != nil {
+		logger.DatabaseLogger.Error(err)
+	}
+
 	return m.ToTrackScore(), nil
 }
 
