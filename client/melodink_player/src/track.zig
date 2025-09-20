@@ -84,6 +84,8 @@ pub const Track = struct {
     audio_channel_count: u64 = 0,
     audio_time_base: c.AVRational = undefined,
 
+    decode_error_until_auto_close: u8 = 0,
+
     av_audio_frame: ?*c.AVFrame = null,
     resampled_audio_frame: ?*c.AVFrame = null,
 
@@ -262,6 +264,8 @@ pub const Track = struct {
             self.debug_test_alloc = try self.allocator.create(u8);
         }
         errdefer if (@import("builtin").mode == .Debug) self.allocator.destroy(self.debug_test_alloc);
+
+        self.decode_error_until_auto_close = 0;
 
         var open_options: ?*c.AVDictionary = null;
 
@@ -603,6 +607,8 @@ pub const Track = struct {
             std.debug.print("Error or end of file happened\n", .{});
             std.debug.print("Exit info: {s}\n", .{self.getAVError(self.last_av_read_frame_response)});
 
+            self.decode_error_until_auto_close = 0;
+
             return;
         }
 
@@ -632,7 +638,11 @@ pub const Track = struct {
                     std.log.warn("Failed to decode packet\n", .{});
                     c.av_packet_unref(av_packet);
                     try self.cache_avio.evictCache();
-                    self.close();
+                    if (self.decode_error_until_auto_close >= 10) {
+                        std.log.err("Too many error, closing track", .{});
+                        self.close();
+                    }
+                    self.decode_error_until_auto_close += 1;
                     return error.ErrorWhileDecodingPacket;
                 }
             }
@@ -643,7 +653,11 @@ pub const Track = struct {
                     if (response != c.AVERROR_EOF and response != c.AVERROR(c.EAGAIN)) {
                         std.log.err("Something went wrong when trying to receive decoded frame", .{});
                         try self.cache_avio.evictCache();
-                        self.close();
+                        if (self.decode_error_until_auto_close >= 10) {
+                            std.log.err("Too many error, closing track", .{});
+                            self.close();
+                        }
+                        self.decode_error_until_auto_close += 1;
                         return error.ErrorWhileDecodingFrame;
                     }
                     break;

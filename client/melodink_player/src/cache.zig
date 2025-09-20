@@ -219,12 +219,21 @@ pub fn evictCache(self: *Self) !void {
         return;
     }
 
-    const cache_directory = try self.allocator.dupe(u8, self.cache_directory);
-    defer self.allocator.free(cache_directory);
+    self.cache_misses += 1;
 
-    self.deinit();
+    // We can't trust avio_size for only using AVSEEK_SIZE as source
+    const file_size = c.avio_seek(self.source_avio_ctx, 0, c.AVSEEK_SIZE);
 
-    try deleteDirectoryRecursive(self.allocator, cache_directory);
+    if (file_size < 0) {
+        return error.CantGetAVIOFileSize;
+    }
+
+    self.file_total_size = @intCast(file_size);
+    try self.index_file.setEndPos(0);
+    try self.data_file.setEndPos(0);
+    _ = try self.index_file.write(std.mem.asBytes(&self.file_total_size));
+    self.index_size = 0;
+    try self.index_map.resize(0);
 }
 
 pub fn resetAVIOError(self: *Self) void {
