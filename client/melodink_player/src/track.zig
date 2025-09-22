@@ -276,10 +276,6 @@ pub const Track = struct {
 
         _ = c.av_dict_set(&open_options, "reconnect", "0", 0);
 
-        _ = c.av_dict_set(&open_options, "seekable", "1", 0);
-
-        _ = c.av_dict_set(&open_options, "multiple_requests", "1", 0);
-
         _ = c.av_dict_set(&open_options, "rw_timeout", std.fmt.comptimePrint("{}", .{5000 * std.time.us_per_ms}), 0);
 
         self.av_format_ctx = c.avformat_alloc_context() orelse {
@@ -306,6 +302,10 @@ pub const Track = struct {
             defer self.allocator.free(url);
 
             std.log.debug("open url: {s}", .{url});
+
+            _ = c.av_dict_set(&open_options, "seekable", "1", 0);
+
+            _ = c.av_dict_set(&open_options, "multiple_requests", "1", 0);
 
             try self.http_avio.init(url, &open_options);
             errdefer self.http_avio.deinit();
