@@ -276,7 +276,11 @@ pub const Track = struct {
 
         _ = c.av_dict_set(&open_options, "reconnect", "0", 0);
 
-        _ = c.av_dict_set(&open_options, "rw_timeout", std.fmt.comptimePrint("{}", .{450 * std.time.us_per_ms}), 0);
+        _ = c.av_dict_set(&open_options, "seekable", "1", 0);
+
+        _ = c.av_dict_set(&open_options, "multiple_requests", "1", 0);
+
+        _ = c.av_dict_set(&open_options, "rw_timeout", std.fmt.comptimePrint("{}", .{5000 * std.time.us_per_ms}), 0);
 
         self.av_format_ctx = c.avformat_alloc_context() orelse {
             std.log.err("Could not allocate AVFormatContext", .{});
