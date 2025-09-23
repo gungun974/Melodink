@@ -712,7 +712,7 @@ pub const Player = struct {
         if (track.getStatus() == .idle) {
             try track.open(self.pool_threads);
         }
-        try track.process();
+        try track.process(self.pool_threads);
     }
 
     fn initMiniaudio(self: *Self) !void {

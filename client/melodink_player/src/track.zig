@@ -100,6 +100,7 @@ pub const Track = struct {
     debug_test_alloc: (if (@import("builtin").mode == .Debug) *u8 else void) = undefined,
 
     open_thread: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
+    process_thread: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
     queue_seek: ?QueueSeek = null,
 
     const FrameData = extern struct {
@@ -220,19 +221,19 @@ pub const Track = struct {
         while (true) {
             std.time.sleep(std.time.ns_per_ms * 10);
 
-            if (self.open_thread.load(.seq_cst)) {
+            if (self.open_thread.load(.seq_cst) or self.process_thread.load(.seq_cst)) {
                 continue;
             }
 
             std.time.sleep(std.time.ns_per_ms * 10);
 
-            if (self.open_thread.load(.seq_cst)) {
+            if (self.open_thread.load(.seq_cst) or self.process_thread.load(.seq_cst)) {
                 continue;
             }
 
             std.time.sleep(std.time.ns_per_ms * 10);
 
-            if (self.open_thread.load(.seq_cst)) {
+            if (self.open_thread.load(.seq_cst) or self.process_thread.load(.seq_cst)) {
                 continue;
             }
 
@@ -517,7 +518,35 @@ pub const Track = struct {
         std.log.info("----------------------", .{});
     }
 
-    pub fn process(self: *Self) !void {
+    pub fn process(self: *Self, pool: *std.Thread.Pool) !void {
+        if (self.process_thread.load(.seq_cst)) {
+            return;
+        }
+
+        if (self.getStatus() == .idle or
+            self.getStatus() == .loading)
+        {
+            return;
+        }
+
+        if (self.open_thread.load(.seq_cst)) {
+            return;
+        }
+
+        self.process_thread.store(true, .seq_cst);
+        errdefer self.process_thread.store(false, .seq_cst);
+        try pool.spawn(processThreadHandler, .{self});
+    }
+
+    fn processThreadHandler(self: *Self) void {
+        defer self.process_thread.store(false, .seq_cst);
+
+        self.processAndWait() catch |err| {
+            std.log.warn("Failed to process track {}", .{err});
+        };
+    }
+
+    pub fn processAndWait(self: *Self) !void {
         if (self.getStatus() == .idle or
             self.getStatus() == .loading)
         {
