@@ -253,6 +253,11 @@ class DesktopTrack extends HookWidget {
 
     final historyInfoNotifier = useState(track.historyInfo);
 
+    useEffect(() {
+      historyInfoNotifier.value = track.historyInfo;
+      return null;
+    }, [track.historyInfo]);
+
     useOnStreamChange(
       useMemoized(
         () => eventBus.on<NewPlayedTrackEvent>().where(
