@@ -271,7 +271,7 @@ class EditAlbumViewModel extends ChangeNotifier {
         return;
       }
 
-      context.read<AppRouter>().pop();
+      Navigator.of(context, rootNavigator: true).pop();
 
       AppNotificationManager.of(context).notify(
         context,
