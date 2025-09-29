@@ -11,6 +11,7 @@ import 'package:melodink_client/features/library/data/repository/playlist_reposi
 import 'package:melodink_client/features/library/domain/entities/playlist.dart';
 import 'package:melodink_client/features/library/domain/events/playlist_events.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/track/domain/events/track_events.dart';
 import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
@@ -23,6 +24,8 @@ class PlaylistViewModel extends ChangeNotifier {
   final DownloadPlaylistRepository downloadPlaylistRepository;
 
   StreamSubscription? _editPlaylistStream;
+  StreamSubscription? _editTrackStream;
+  StreamSubscription? _deleteTrackStream;
 
   PlaylistViewModel({
     required this.eventBus,
@@ -42,11 +45,54 @@ class PlaylistViewModel extends ChangeNotifier {
 
       notifyListeners();
     });
+
+    _editTrackStream = eventBus.on<EditTrackEvent>().listen((event) {
+      final playlist = this.playlist;
+
+      if (playlist == null) {
+        return;
+      }
+      final index = playlist.tracks.indexWhere(
+        (track) => track.id == event.updatedTrack.id,
+      );
+
+      if (index < 0) {
+        return;
+      }
+
+      this.playlist = playlist.copyWith(
+        tracks: [
+          ...playlist.tracks.sublist(0, index),
+          event.updatedTrack,
+          ...playlist.tracks.sublist(index + 1),
+        ],
+      );
+
+      notifyListeners();
+    });
+
+    _deleteTrackStream = eventBus.on<DeleteTrackEvent>().listen((event) {
+      final playlist = this.playlist;
+
+      if (playlist == null) {
+        return;
+      }
+
+      this.playlist = playlist.copyWith(
+        tracks: playlist.tracks
+            .where((track) => track.id != event.deletedTrack.id)
+            .toList(),
+      );
+
+      notifyListeners();
+    });
   }
 
   @override
   void dispose() {
     _editPlaylistStream?.cancel();
+    _editTrackStream?.cancel();
+    _deleteTrackStream?.cancel();
 
     super.dispose();
   }

@@ -11,6 +11,7 @@ import 'package:melodink_client/features/library/data/repository/album_repositor
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/domain/events/album_events.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/track/domain/events/track_events.dart';
 import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
@@ -23,6 +24,8 @@ class AlbumViewModel extends ChangeNotifier {
   final DownloadAlbumRepository downloadAlbumRepository;
 
   StreamSubscription? _editAlbumStream;
+  StreamSubscription? _editTrackStream;
+  StreamSubscription? _deleteTrackStream;
 
   AlbumViewModel({
     required this.eventBus,
@@ -42,11 +45,54 @@ class AlbumViewModel extends ChangeNotifier {
 
       notifyListeners();
     });
+
+    _editTrackStream = eventBus.on<EditTrackEvent>().listen((event) {
+      final album = this.album;
+
+      if (album == null) {
+        return;
+      }
+      final index = album.tracks.indexWhere(
+        (track) => track.id == event.updatedTrack.id,
+      );
+
+      if (index < 0) {
+        return;
+      }
+
+      this.album = album.copyWith(
+        tracks: [
+          ...album.tracks.sublist(0, index),
+          event.updatedTrack,
+          ...album.tracks.sublist(index + 1),
+        ],
+      );
+
+      notifyListeners();
+    });
+
+    _deleteTrackStream = eventBus.on<DeleteTrackEvent>().listen((event) {
+      final album = this.album;
+
+      if (album == null) {
+        return;
+      }
+
+      this.album = album.copyWith(
+        tracks: album.tracks
+            .where((track) => track.id != event.deletedTrack.id)
+            .toList(),
+      );
+
+      notifyListeners();
+    });
   }
 
   @override
   void dispose() {
     _editAlbumStream?.cancel();
+    _editTrackStream?.cancel();
+    _deleteTrackStream?.cancel();
 
     super.dispose();
   }
