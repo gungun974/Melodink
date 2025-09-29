@@ -647,7 +647,18 @@ class TrackRepository {
       final applicationSupportDirectory =
           (await getMelodinkInstanceSupportDirectory()).path;
 
-      return decodeOnlineTrack(db, applicationSupportDirectory, response.data);
+      final info = await playedTrackRepository.getTrackHistoryInfo(id);
+
+      final track = decodeOnlineTrack(
+        db,
+        applicationSupportDirectory,
+        response.data,
+      );
+
+      loadTrackAlbums(db, applicationSupportDirectory, track);
+      loadTrackArtists(db, track);
+
+      return track.copyWith(historyInfo: () => info);
     } on DioException catch (e) {
       final response = e.response;
       if (response == null) {
