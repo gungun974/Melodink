@@ -33,7 +33,11 @@ class LiveLyrics extends HookWidget {
 
     final lyrics = context.watch<List<LyricLine>?>();
 
+    final autoScroll = useState(autoScrollToLyric);
+
     useEffect(() {
+      autoScroll.value = autoScrollToLyric;
+
       if (!autoScrollToLyric) {
         currentAutoScrollIndex.value = null;
       }
@@ -56,7 +60,7 @@ class LiveLyrics extends HookWidget {
     useOnStreamChange(
       audioController.getPositionData().stream,
       onData: (newPositionData) {
-        if (!autoScrollToLyric) {
+        if (!autoScroll.value) {
           return;
         }
 
