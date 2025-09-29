@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:melodink_client/core/helpers/is_touch_device.dart';
 import 'package:melodink_client/core/widgets/auth_cached_network_image.dart';
 import 'package:melodink_client/core/widgets/context_menu_button.dart';
+import 'package:melodink_client/core/widgets/dismissible_page.dart';
 import 'package:melodink_client/core/widgets/gradient_background.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
 import 'package:melodink_client/features/player/presentation/widgets/controls/like_track_control.dart';
@@ -37,219 +38,223 @@ class MobilePlayerPage extends HookWidget {
     final scrollController = useScrollController();
     final liveLyricsKey = useMemoized(() => GlobalKey());
 
-    return Dismissible(
-      direction: isTouchDevice(context)
-          ? DismissDirection.down
-          : DismissDirection.none,
+    return DismissiblePage(
       key: const Key('DesktopPlayerPageDown'),
-      onDismissed: (_) => Navigator.of(context).pop(),
-      child: Stack(
-        children: [
-          const GradientBackground(),
-          Scaffold(
-            backgroundColor: Colors.transparent,
-            appBar: AppBar(
-              leading: IconButton(
-                icon: SvgPicture.asset(
-                  "assets/icons/arrow-down.svg",
-                  width: 24,
-                  height: 24,
-                  colorFilter: const ColorFilter.mode(
-                    Colors.white,
-                    BlendMode.srcIn,
-                  ),
-                ),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              actions: [
-                ContextMenuButton(
-                  contextMenuKey: trackContextMenuKey,
-                  menuController: trackContextMenuController,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                ),
-              ],
-              title: StreamBuilder<String?>(
-                stream: audioController.playerTracksFrom.stream,
-                builder: (context, snapshot) {
-                  final source = snapshot.data;
-                  if (source == null) {
-                    return const SizedBox.shrink();
-                  }
-                  return Text(
-                    source,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      letterSpacing: 20 * 0.03,
-                      fontWeight: FontWeight.w400,
+      active: isTouchDevice(context),
+      onDismissed: () => Navigator.of(context).pop(),
+      builder: (context, isDismissActive) {
+        return Stack(
+          children: [
+            const GradientBackground(),
+            Scaffold(
+              backgroundColor: Colors.transparent,
+              appBar: AppBar(
+                leading: IconButton(
+                  icon: SvgPicture.asset(
+                    "assets/icons/arrow-down.svg",
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      Colors.white,
+                      BlendMode.srcIn,
                     ),
-                  );
-                },
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                actions: [
+                  ContextMenuButton(
+                    contextMenuKey: trackContextMenuKey,
+                    menuController: trackContextMenuController,
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                  ),
+                ],
+                title: StreamBuilder<String?>(
+                  stream: audioController.playerTracksFrom.stream,
+                  builder: (context, snapshot) {
+                    final source = snapshot.data;
+                    if (source == null) {
+                      return const SizedBox.shrink();
+                    }
+                    return Text(
+                      source,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        letterSpacing: 20 * 0.03,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    );
+                  },
+                ),
+                centerTitle: true,
+                backgroundColor: const Color.fromRGBO(0, 0, 0, 0.08),
+                shadowColor: Colors.transparent,
               ),
-              centerTitle: true,
-              backgroundColor: const Color.fromRGBO(0, 0, 0, 0.08),
-              shadowColor: Colors.transparent,
-            ),
-            body: LayoutBuilder(
-              builder: (context, layout) {
-                return LiveLyricsController(
-                  startWithAutoLyrics: false,
-                  liveLyricsKey: liveLyricsKey,
-                  scrollController: scrollController,
-                  builder: (_, autoScrollToLyric, setShouldDisableAutoScrollOnScroll) {
-                    return CustomScrollView(
-                      controller: scrollController,
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: IntrinsicHeight(
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minHeight: layout.maxHeight,
-                              ),
-                              child: Column(
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16.0,
-                                        vertical: 8.0,
+              body: LayoutBuilder(
+                builder: (context, layout) {
+                  return LiveLyricsController(
+                    startWithAutoLyrics: false,
+                    liveLyricsKey: liveLyricsKey,
+                    scrollController: scrollController,
+                    builder: (_, autoScrollToLyric, setShouldDisableAutoScrollOnScroll) {
+                      return CustomScrollView(
+                        controller: scrollController,
+                        physics: isDismissActive
+                            ? const NeverScrollableScrollPhysics()
+                            : const ScrollPhysics(),
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: IntrinsicHeight(
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: layout.maxHeight,
+                                ),
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16.0,
+                                          vertical: 8.0,
+                                        ),
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 512,
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            StreamBuilder(
+                                              stream: audioController
+                                                  .currentTrack
+                                                  .stream,
+                                              builder: (context, snapshot) {
+                                                audioController
+                                                    .previousTracks
+                                                    .valueOrNull
+                                                    ?.take(5)
+                                                    .forEach((track) {
+                                                      ImageCacheManager.preCache(
+                                                        track.getCompressedCoverUri(
+                                                          TrackCompressedCoverQuality
+                                                              .high,
+                                                        ),
+                                                        context,
+                                                      );
+                                                    });
+
+                                                audioController
+                                                    .nextTracks
+                                                    .valueOrNull
+                                                    ?.take(5)
+                                                    .forEach((track) {
+                                                      ImageCacheManager.preCache(
+                                                        track.getCompressedCoverUri(
+                                                          TrackCompressedCoverQuality
+                                                              .high,
+                                                        ),
+                                                        context,
+                                                      );
+                                                    });
+
+                                                return _MobilePlayerInfo(
+                                                  trackContextMenuKey:
+                                                      trackContextMenuKey,
+                                                  trackContextMenuController:
+                                                      trackContextMenuController,
+                                                  snapshot: snapshot,
+                                                );
+                                              },
+                                            ),
+                                            const SizedBox(height: 16),
+                                            const Column(
+                                              children: [
+                                                LargePlayerSeeker(
+                                                  displayDurationsInBottom:
+                                                      true,
+                                                  large: true,
+                                                ),
+                                                PlayerControls(
+                                                  largeControlsButton: true,
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      constraints: const BoxConstraints(
-                                        maxWidth: 512,
+                                    ),
+                                    const Padding(
+                                      padding: EdgeInsets.only(
+                                        right: 16.0,
+                                        bottom: 16.0,
                                       ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
+                                      child: Row(
                                         children: [
-                                          StreamBuilder(
-                                            stream: audioController
-                                                .currentTrack
-                                                .stream,
-                                            builder: (context, snapshot) {
-                                              audioController
-                                                  .previousTracks
-                                                  .valueOrNull
-                                                  ?.take(5)
-                                                  .forEach((track) {
-                                                    ImageCacheManager.preCache(
-                                                      track.getCompressedCoverUri(
-                                                        TrackCompressedCoverQuality
-                                                            .high,
-                                                      ),
-                                                      context,
-                                                    );
-                                                  });
-
-                                              audioController
-                                                  .nextTracks
-                                                  .valueOrNull
-                                                  ?.take(5)
-                                                  .forEach((track) {
-                                                    ImageCacheManager.preCache(
-                                                      track.getCompressedCoverUri(
-                                                        TrackCompressedCoverQuality
-                                                            .high,
-                                                      ),
-                                                      context,
-                                                    );
-                                                  });
-
-                                              return _MobilePlayerInfo(
-                                                trackContextMenuKey:
-                                                    trackContextMenuKey,
-                                                trackContextMenuController:
-                                                    trackContextMenuController,
-                                                snapshot: snapshot,
-                                              );
-                                            },
-                                          ),
-                                          const SizedBox(height: 16),
-                                          const Column(
-                                            children: [
-                                              LargePlayerSeeker(
-                                                displayDurationsInBottom: true,
-                                                large: true,
-                                              ),
-                                              PlayerControls(
-                                                largeControlsButton: true,
-                                              ),
-                                            ],
+                                          Spacer(),
+                                          OpenQueueControl(
+                                            largeControlButton: true,
                                           ),
                                         ],
                                       ),
                                     ),
-                                  ),
-                                  const Padding(
-                                    padding: EdgeInsets.only(
-                                      right: 16.0,
-                                      bottom: 16.0,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Spacer(),
-                                        OpenQueueControl(
-                                          largeControlButton: true,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        Consumer<List<LyricLine>?>(
-                          builder: (context, viewModel, _) {
-                            if (viewModel == null) {
-                              return SliverToBoxAdapter();
-                            }
-                            return SliverToBoxAdapter(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                  vertical: 8.0,
-                                ),
-                                child: Text(
-                                  t.general.lyrics,
-                                  style: const TextStyle(
-                                    fontSize: 40,
-                                    letterSpacing: 40 * 0.03,
-                                    fontWeight: FontWeight.w600,
+                          Consumer<List<LyricLine>?>(
+                            builder: (context, viewModel, _) {
+                              if (viewModel == null) {
+                                return SliverToBoxAdapter();
+                              }
+                              return SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0,
+                                    vertical: 8.0,
+                                  ),
+                                  child: Text(
+                                    t.general.lyrics,
+                                    style: const TextStyle(
+                                      fontSize: 40,
+                                      letterSpacing: 40 * 0.03,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                        Consumer<List<LyricLine>?>(
-                          builder: (context, viewModel, _) {
-                            if (viewModel == null) {
-                              return SliverToBoxAdapter();
-                            }
-                            return SliverPadding(
-                              padding: const EdgeInsets.only(
-                                left: 16.0,
-                                right: 16.0,
-                                bottom: 16.0,
-                              ),
-                              sliver: LiveLyrics(
-                                key: liveLyricsKey,
-                                autoScrollToLyric: autoScrollToLyric,
-                                scrollController: scrollController,
-                                setShouldDisableAutoScrollOnScroll:
-                                    setShouldDisableAutoScrollOnScroll,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
+                              );
+                            },
+                          ),
+                          Consumer<List<LyricLine>?>(
+                            builder: (context, viewModel, _) {
+                              if (viewModel == null) {
+                                return SliverToBoxAdapter();
+                              }
+                              return SliverPadding(
+                                padding: const EdgeInsets.only(
+                                  left: 16.0,
+                                  right: 16.0,
+                                  bottom: 16.0,
+                                ),
+                                sliver: LiveLyrics(
+                                  key: liveLyricsKey,
+                                  autoScrollToLyric: autoScrollToLyric,
+                                  scrollController: scrollController,
+                                  setShouldDisableAutoScrollOnScroll:
+                                      setShouldDisableAutoScrollOnScroll,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 }
