@@ -8,9 +8,12 @@ import 'package:melodink_client/features/player/presentation/widgets/controls/pl
 class PlayerControls extends StatelessWidget {
   final bool largeControlsButton;
 
+  final CrossAxisAlignment crossAxisAlignment;
+
   const PlayerControls({
     super.key,
     this.largeControlsButton = false,
+    this.crossAxisAlignment = CrossAxisAlignment.center,
   });
 
   @override
@@ -19,23 +22,13 @@ class PlayerControls extends StatelessWidget {
       mainAxisAlignment: largeControlsButton
           ? MainAxisAlignment.spaceBetween
           : MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: crossAxisAlignment,
       children: [
-        PlayerShuffleControl(
-          largeControlButton: largeControlsButton,
-        ),
-        PlayerSkipToPreviousControl(
-          largeControlButton: largeControlsButton,
-        ),
-        PlayerPlayPauseControl(
-          largeControlButton: largeControlsButton,
-        ),
-        PlayerSkipToNextControl(
-          largeControlButton: largeControlsButton,
-        ),
-        PlayerRepeatControl(
-          largeControlButton: largeControlsButton,
-        ),
+        PlayerShuffleControl(largeControlButton: largeControlsButton),
+        PlayerSkipToPreviousControl(largeControlButton: largeControlsButton),
+        PlayerPlayPauseControl(largeControlButton: largeControlsButton),
+        PlayerSkipToNextControl(largeControlButton: largeControlsButton),
+        PlayerRepeatControl(largeControlButton: largeControlsButton),
       ],
     );
   }

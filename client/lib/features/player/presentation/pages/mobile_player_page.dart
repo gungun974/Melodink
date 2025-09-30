@@ -173,8 +173,14 @@ class MobilePlayerPage extends HookWidget {
                                                       true,
                                                   large: true,
                                                 ),
-                                                PlayerControls(
-                                                  largeControlsButton: true,
+                                                SizedBox(
+                                                  height: 80,
+                                                  child: PlayerControls(
+                                                    largeControlsButton: true,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .stretch,
+                                                  ),
                                                 ),
                                               ],
                                             ),
