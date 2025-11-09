@@ -148,7 +148,7 @@
           buildInputs = [
             pkgs.copyDesktopItems
             pkgs.which
-            pkgs.wrapGAppsHook
+            pkgs.wrapGAppsHook3
             ffmpeg.dev
             pkgs.pulseaudio.dev
             pkgs.zenity
@@ -234,7 +234,7 @@
             '';
 
             buildInputs = [
-              (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo125Module;})
+              pkgs.golangci-lint
               pkgs.go_1_25
               air-pkgs.air
               flutter-sdk
@@ -279,7 +279,7 @@
             '';
 
             packages = [
-              (pkgs.golangci-lint.override {buildGoModule = pkgs.buildGo125Module;})
+              pkgs.golangci-lint
               pkgs.go_1_25
               air-pkgs.air
               pkgs.cocoapods
