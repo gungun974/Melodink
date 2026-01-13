@@ -38,7 +38,7 @@ class SharedPlayedTrackerManager {
     try {
       await getMelodinkInstanceSupportDirectory();
     } catch (_) {
-      return await _scheduleSync();
+      return;
     }
 
     try {

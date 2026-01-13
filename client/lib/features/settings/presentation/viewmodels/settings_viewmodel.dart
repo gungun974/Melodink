@@ -16,6 +16,7 @@ class SettingsViewModel extends ChangeNotifier {
     try {
       state = await SettingsRepository().getSettings();
       _deviceId = await SettingsRepository().getDeviceId();
+    } catch (_) {
     } finally {
       notifyListeners();
     }

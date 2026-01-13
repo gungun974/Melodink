@@ -16,8 +16,6 @@ build: prebuild
 	$(GO) build $(GOFLAGS) -o ${DEST}$(SERVER_BINARY) ./cmd/api/.
 
 debug: prebuild
-	rm -rf ./build/public
-	ln -s ../public/ ./build/public
 	$(GO) build -tags debug -o ${DEST}$(SERVER_BINARY) ./cmd/api/.
 
 run: build
