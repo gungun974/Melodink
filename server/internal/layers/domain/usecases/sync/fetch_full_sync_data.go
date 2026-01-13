@@ -22,17 +22,19 @@ func (u *SyncUsecase) FetchFullSyncData(
 	var albums []entities.Album
 	var artists []entities.Artist
 	var playlists []entities.Playlist
+	var sharedPlayedTracks []entities.SharedPlayedTrack
 
 	var errTracks error
 	var errAlbums error
 	var errArtists error
 	var errPlaylists error
+	var errSharedPlayedTracks error
 
 	now := time.Now()
 
 	var wg sync.WaitGroup
 
-	wg.Add(4)
+	wg.Add(5)
 
 	go func() {
 		defer wg.Done()
@@ -74,6 +76,11 @@ func (u *SyncUsecase) FetchFullSyncData(
 		}
 	}()
 
+	go func() {
+		defer wg.Done()
+		sharedPlayedTracks, errSharedPlayedTracks = u.sharedPlayedTrackRepository.GetAllSharedPlayedTracksFromUser(user.Id)
+	}()
+
 	wg.Wait()
 
 	if errTracks != nil {
@@ -92,5 +99,9 @@ func (u *SyncUsecase) FetchFullSyncData(
 		return nil, entities.NewInternalError(errPlaylists)
 	}
 
-	return u.syncPresenter.ShowFullSync(ctx, tracks, albums, artists, playlists, now), nil
+	if errSharedPlayedTracks != nil {
+		return nil, entities.NewInternalError(errSharedPlayedTracks)
+	}
+
+	return u.syncPresenter.ShowFullSync(ctx, tracks, albums, artists, playlists, sharedPlayedTracks, now), nil
 }

@@ -126,6 +126,7 @@ func NewContainer(db *sqlx.DB) Container {
 		albumRepository,
 		artistRepository,
 		playlistRepository,
+		sharedPlayedTrackRepository,
 		coverStorage,
 		syncPresenter,
 	)

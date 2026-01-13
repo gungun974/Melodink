@@ -158,6 +158,10 @@ class SettingsPage extends StatelessWidget {
                                                       fullSync: true,
                                                     );
 
+                                                context
+                                                    .read<SyncRepository>()
+                                                    .uploadPlayedTracks();
+
                                                 if (!context.mounted) {
                                                   return;
                                                 }

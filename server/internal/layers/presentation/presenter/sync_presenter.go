@@ -27,17 +27,19 @@ type PartialSyncViewModel struct {
 }
 
 type SyncViewModel struct {
-	Tracks    []view_models.TrackViewModel    `json:"tracks"`
-	Albums    []view_models.AlbumViewModel    `json:"albums"`
-	Artists   []view_models.ArtistViewModel   `json:"artists"`
-	Playlists []view_models.PlaylistViewModel `json:"playlists"`
+	Tracks             []view_models.TrackViewModel             `json:"tracks"`
+	Albums             []view_models.AlbumViewModel             `json:"albums"`
+	Artists            []view_models.ArtistViewModel            `json:"artists"`
+	Playlists          []view_models.PlaylistViewModel          `json:"playlists"`
+	SharedPlayedTracks []view_models.SharedPlayedTrackViewModel `json:"shared_played_tracks"`
 }
 
 type SyncDeleteViewModel struct {
-	Tracks    []int `json:"tracks"`
-	Albums    []int `json:"albums"`
-	Artists   []int `json:"artists"`
-	Playlists []int `json:"playlists"`
+	Tracks             []int `json:"tracks"`
+	Albums             []int `json:"albums"`
+	Artists            []int `json:"artists"`
+	Playlists          []int `json:"playlists"`
+	SharedPlayedTracks []int `json:"shared_played_tracks"`
 }
 
 func (p *SyncPresenter) ShowFullSync(
@@ -46,16 +48,18 @@ func (p *SyncPresenter) ShowFullSync(
 	albums []entities.Album,
 	artists []entities.Artist,
 	playlists []entities.Playlist,
+	sharedPlayedTracks []entities.SharedPlayedTrack,
 
 	date time.Time,
 ) models.APIResponse {
 	return models.JsonAPIResponse{
 		Data: FullSyncViewModel{
 			SyncViewModel: SyncViewModel{
-				Tracks:    view_models.ConvertToTrackViewModels(ctx, tracks),
-				Albums:    view_models.ConvertToAlbumsViewModel(ctx, albums),
-				Artists:   view_models.ConvertToArtistsViewModel(ctx, artists),
-				Playlists: view_models.ConvertToPlaylistViewModels(ctx, playlists),
+				Tracks:             view_models.ConvertToTrackViewModels(ctx, tracks),
+				Albums:             view_models.ConvertToAlbumsViewModel(ctx, albums),
+				Artists:            view_models.ConvertToArtistsViewModel(ctx, artists),
+				Playlists:          view_models.ConvertToPlaylistViewModels(ctx, playlists),
+				SharedPlayedTracks: view_models.ConvertToSharedPlayedTracksViewModel(sharedPlayedTracks),
 			},
 			Date: date.Format(time.RFC3339),
 		},
@@ -68,27 +72,31 @@ func (p *SyncPresenter) ShowPartialSync(
 	albums []entities.Album,
 	artists []entities.Artist,
 	playlists []entities.Playlist,
+	sharedPlayedTracks []entities.SharedPlayedTrack,
 
 	deletedTracks []int,
 	deletedAlbums []int,
 	deletedArtists []int,
 	deletedPlaylists []int,
+	deletedSharedPlayedTracks []int,
 
 	date time.Time,
 ) models.APIResponse {
 	return models.JsonAPIResponse{
 		Data: PartialSyncViewModel{
 			New: SyncViewModel{
-				Tracks:    view_models.ConvertToTrackViewModels(ctx, tracks),
-				Albums:    view_models.ConvertToAlbumsViewModel(ctx, albums),
-				Artists:   view_models.ConvertToArtistsViewModel(ctx, artists),
-				Playlists: view_models.ConvertToPlaylistViewModels(ctx, playlists),
+				Tracks:             view_models.ConvertToTrackViewModels(ctx, tracks),
+				Albums:             view_models.ConvertToAlbumsViewModel(ctx, albums),
+				Artists:            view_models.ConvertToArtistsViewModel(ctx, artists),
+				Playlists:          view_models.ConvertToPlaylistViewModels(ctx, playlists),
+				SharedPlayedTracks: view_models.ConvertToSharedPlayedTracksViewModel(sharedPlayedTracks),
 			},
 			Del: SyncDeleteViewModel{
-				Tracks:    deletedTracks,
-				Albums:    deletedAlbums,
-				Artists:   deletedArtists,
-				Playlists: deletedPlaylists,
+				Tracks:             deletedTracks,
+				Albums:             deletedAlbums,
+				Artists:            deletedArtists,
+				Playlists:          deletedPlaylists,
+				SharedPlayedTracks: deletedSharedPlayedTracks,
 			},
 			Date: date.Format(time.RFC3339),
 		},

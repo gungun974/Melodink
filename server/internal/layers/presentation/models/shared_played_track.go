@@ -30,6 +30,18 @@ type SharedPlayedTrackViewModel struct {
 	SharedAt string `json:"shared_at"`
 }
 
+func ConvertToSharedPlayedTracksViewModel(
+	playedTracks []entities.SharedPlayedTrack,
+) []SharedPlayedTrackViewModel {
+	playedTracksViewModels := make([]SharedPlayedTrackViewModel, len(playedTracks))
+
+	for i, playedTrack := range playedTracks {
+		playedTracksViewModels[i] = ConvertToSharedPlayedTrackViewModel(playedTrack)
+	}
+
+	return playedTracksViewModels
+}
+
 func ConvertToSharedPlayedTrackViewModel(
 	playedTrack entities.SharedPlayedTrack,
 ) SharedPlayedTrackViewModel {

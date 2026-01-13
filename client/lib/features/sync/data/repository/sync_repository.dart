@@ -7,11 +7,14 @@ import 'package:melodink_client/core/database/database.dart';
 import 'package:melodink_client/core/error/exceptions.dart';
 import 'package:melodink_client/core/logger/logger.dart';
 import 'package:melodink_client/core/network/network_info.dart';
+import 'package:melodink_client/features/settings/data/repository/settings_repository.dart';
 import 'package:melodink_client/features/sync/data/models/album_model.dart';
 import 'package:melodink_client/features/sync/data/models/artist_model.dart';
 import 'package:melodink_client/features/sync/data/models/playlist_model.dart';
 import 'package:melodink_client/features/sync/data/models/sync_modal.dart';
 import 'package:melodink_client/features/sync/data/models/track_model.dart';
+import 'package:melodink_client/features/tracker/data/models/shared_played_track.dart';
+import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:mutex/mutex.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -404,6 +407,111 @@ class SyncRepository {
     delete.dispose();
   }
 
+  //! Played Tracks
+
+  void _createOrUpdatePlayedTracks(
+    Database db,
+    List<SharedPlayedTrackModel> playedTracks,
+    String deviceId,
+  ) {
+    final updateNullServerId = db.prepare('''
+    UPDATE played_tracks SET
+      server_id = ?,
+      device_id = ?,
+      track_id = ?,
+      start_at = ?,
+      finish_at = ?,
+      begin_at = ?,
+      ended_at = ?,
+      shuffle = ?,
+      track_ended = ?,
+      track_duration = ?,
+      shared_at = ?
+    WHERE server_id IS NULL AND internal_id = ?
+  ''');
+
+    final insert = db.prepare('''
+    INSERT INTO played_tracks (
+      server_id,
+      device_id,
+      track_id,
+      start_at,
+      finish_at,
+      begin_at,
+      ended_at,
+      shuffle,
+      track_ended,
+      track_duration,
+      shared_at
+    ) VALUES (
+      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    )
+    ON CONFLICT(server_id) DO UPDATE SET
+      device_id = excluded.device_id,
+      track_id = excluded.track_id,
+      start_at = excluded.start_at,
+      finish_at = excluded.finish_at,
+      begin_at = excluded.begin_at,
+      ended_at = excluded.ended_at,
+      shuffle = excluded.shuffle,
+      track_ended = excluded.track_ended,
+      track_duration = excluded.track_duration,
+      shared_at = excluded.shared_at;
+  ''');
+
+    for (var playedTrack in playedTracks) {
+      final values = [
+        playedTrack.id,
+        playedTrack.deviceId,
+        playedTrack.trackId,
+        playedTrack.startAt.millisecondsSinceEpoch,
+        playedTrack.finishAt.millisecondsSinceEpoch,
+        playedTrack.beginAt.inMilliseconds,
+        playedTrack.endedAt.inMilliseconds,
+        playedTrack.shuffle ? 1 : 0,
+        playedTrack.trackEnded ? 1 : 0,
+        playedTrack.trackDuration.inMilliseconds,
+        playedTrack.sharedAt.toIso8601String(),
+      ];
+
+      updateNullServerId.execute([...values, playedTrack.internalDeviceId]);
+
+      if (db.updatedRows == 0) {
+        insert.execute(values);
+      }
+    }
+
+    updateNullServerId.dispose();
+    insert.dispose();
+  }
+
+  void _deleteExtraPlayedTracks(
+    Database db,
+    List<SharedPlayedTrackModel> playedTracks,
+  ) {
+    final placeholders = List.filled(playedTracks.length, '?').join(', ');
+
+    final delete = db.prepare(
+      "DELETE FROM played_tracks WHERE (server_id IS NOT NULL) AND (server_id NOT IN ($placeholders))",
+    );
+
+    delete.execute(playedTracks.map((playedTrack) => playedTrack.id).toList());
+
+    delete.dispose();
+  }
+
+  void _deletePlayedTracks(Database db, List<int> playedTracks) {
+    final placeholders = List.filled(playedTracks.length, '?').join(', ');
+
+    final delete = db.prepare(
+      "DELETE FROM played_tracks WHERE (server_id IS NOT NULL) AND (server_id IN ($placeholders))",
+    );
+
+    delete.execute(playedTracks);
+
+    delete.dispose();
+  }
+
   //! Sync
 
   DateTime? _getLastSyncDate(Database db) {
@@ -442,6 +550,8 @@ class SyncRepository {
   Future<void> _performFullSync(Database db) async {
     final data = await _getFullData();
 
+    final deviceId = await SettingsRepository().getDeviceId();
+
     db.execute('BEGIN;');
 
     try {
@@ -456,6 +566,9 @@ class SyncRepository {
 
       _createOrUpdatePlaylists(db, data.playlists);
       _deleteExtraPlaylists(db, data.playlists);
+
+      _createOrUpdatePlayedTracks(db, data.sharedPlayedTracks, deviceId);
+      _deleteExtraPlayedTracks(db, data.sharedPlayedTracks);
 
       for (final track in data.tracks) {
         _setTrackAlbums(db, track);
@@ -498,6 +611,8 @@ class SyncRepository {
   Future<void> _performPartialSync(Database db, DateTime since) async {
     final data = await _getPartialData(since);
 
+    final deviceId = await SettingsRepository().getDeviceId();
+
     db.execute('BEGIN;');
 
     try {
@@ -512,6 +627,9 @@ class SyncRepository {
 
       _createOrUpdatePlaylists(db, data.newPlaylists);
       _deletePlaylists(db, data.deletedPlaylists);
+
+      _createOrUpdatePlayedTracks(db, data.newSharedPlayedTracks, deviceId);
+      _deletePlayedTracks(db, data.deletedSharedPlayedTracks);
 
       for (final track in data.newTracks) {
         _setTrackAlbums(db, track);
@@ -545,6 +663,69 @@ class SyncRepository {
         await _performFullSync(db);
         syncLogger.i("Finish full sync in ${DateTime.now().difference(start)}");
         return;
+      }
+
+      final start = DateTime.now();
+      syncLogger.i("Start partial sync");
+      await _performPartialSync(db, date);
+      syncLogger.i(
+        "Finish partial sync in ${DateTime.now().difference(start)}",
+      );
+    });
+  }
+
+  Future<void> uploadPlayedTracks() async {
+    await _mutex.protect(() async {
+      final db = await DatabaseService.getDatabase();
+
+      final date = _getLastSyncDate(db);
+
+      if (date == null) {
+        return;
+      }
+
+      final deviceId = await SettingsRepository().getDeviceId();
+
+      final data = db.select(
+        "SELECT * FROM played_tracks WHERE server_id IS NULL",
+        [],
+      );
+
+      if (data.isEmpty) {
+        return;
+      }
+
+      final playedTracks = data
+          .map(PlayedTrackRepository.decodePlayedTrack)
+          .toList();
+
+      for (var playedTrack in playedTracks) {
+        try {
+          await AppApi().dio.post(
+            "/sharedPlayedTrack/upload",
+            data: {
+              "internal_device_id": playedTrack.id,
+              "track_id": playedTrack.trackId,
+              "device_id": deviceId,
+              "start_at": playedTrack.startAt.toUtc().toIso8601String(),
+              "finish_at": playedTrack.finishAt.toUtc().toIso8601String(),
+              "begin_at": playedTrack.beginAt.inMilliseconds,
+              "ended_at": playedTrack.endedAt.inMilliseconds,
+              "track_duration": playedTrack.trackDuration.inMilliseconds,
+              "shuffle": playedTrack.shuffle,
+              "track_ended": playedTrack.trackEnded,
+            },
+          );
+        } on DioException catch (e) {
+          final response = e.response;
+          if (response == null) {
+            throw ServerTimeoutException();
+          }
+
+          throw ServerUnknownException();
+        } catch (e) {
+          rethrow;
+        }
       }
 
       final start = DateTime.now();

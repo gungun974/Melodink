@@ -23,22 +23,25 @@ func (u *SyncUsecase) FetchPartialSyncData(
 	var albums []entities.Album
 	var artists []entities.Artist
 	var playlists []entities.Playlist
+	var sharedPlayedTracks []entities.SharedPlayedTrack
 
 	var deletedTracks []int
 	var deletedAlbums []int
 	var deletedArtists []int
 	var deletedPlaylists []int
+	var deletedSharedPlayedTracks []int
 
 	var errTracks error
 	var errAlbums error
 	var errArtists error
 	var errPlaylists error
+	var errSharedPlayedTracks error
 
 	now := time.Now()
 
 	var wg sync.WaitGroup
 
-	wg.Add(4)
+	wg.Add(5)
 
 	go func() {
 		defer wg.Done()
@@ -90,6 +93,15 @@ func (u *SyncUsecase) FetchPartialSyncData(
 		deletedPlaylists, errPlaylists = u.playlistRepository.GetAllDeletedPlaylistsSince(since)
 	}()
 
+	go func() {
+		defer wg.Done()
+		sharedPlayedTracks, errSharedPlayedTracks = u.sharedPlayedTrackRepository.GetAllSharedPlayedTracksFromUserSince(user.Id, since)
+		if errSharedPlayedTracks != nil {
+			return
+		}
+		deletedSharedPlayedTracks, errSharedPlayedTracks = u.sharedPlayedTrackRepository.GetAllDeletedSharedPlayedTracksSince(since)
+	}()
+
 	wg.Wait()
 
 	if errTracks != nil {
@@ -108,16 +120,22 @@ func (u *SyncUsecase) FetchPartialSyncData(
 		return nil, entities.NewInternalError(errPlaylists)
 	}
 
+	if errSharedPlayedTracks != nil {
+		return nil, entities.NewInternalError(errPlaylists)
+	}
+
 	return u.syncPresenter.ShowPartialSync(
 		ctx,
 		tracks,
 		albums,
 		artists,
 		playlists,
+		sharedPlayedTracks,
 		deletedTracks,
 		deletedAlbums,
 		deletedArtists,
 		deletedPlaylists,
+		deletedSharedPlayedTracks,
 		now,
 	), nil
 }

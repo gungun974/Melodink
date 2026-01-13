@@ -23,9 +23,7 @@ import 'package:melodink_client/features/track/data/repository/track_repository.
 import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
 import 'package:melodink_client/features/track/presentation/viewmodels/tracks_viewmodel.dart';
 import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
-import 'package:melodink_client/features/tracker/data/repository/sync_shared_played_track_repository.dart';
 import 'package:melodink_client/features/tracker/domain/manager/player_tracker_manager.dart';
-import 'package:melodink_client/features/tracker/domain/manager/shared_player_tracker_manager.dart';
 import 'package:provider/provider.dart';
 
 class MainProviderScope extends StatelessWidget {
@@ -45,7 +43,6 @@ class MainProviderScope extends StatelessWidget {
         //! Repositories
         Provider(create: (context) => AuthRepository()),
         Provider(create: (context) => PlayedTrackRepository()),
-        Provider(create: (context) => SyncSharedPlayedTrackRepository()),
         Provider(
           create: (context) => SyncRepository(networkInfo: context.read()),
         ),
@@ -115,14 +112,6 @@ class MainProviderScope extends StatelessWidget {
         Provider(
           lazy: false,
           create: (context) => SyncManager(syncRepository: context.read()),
-          dispose: (_, manager) => manager.dispose(),
-        ),
-        Provider(
-          lazy: false,
-          create: (context) => SharedPlayedTrackerManager(
-            playedTrackRepository: context.read(),
-            syncSharedPlayedTrackRepository: context.read(),
-          ),
           dispose: (_, manager) => manager.dispose(),
         ),
 

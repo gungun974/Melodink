@@ -7,10 +7,11 @@ import (
 )
 
 type SyncUsecase struct {
-	trackRepository    repository.TrackRepository
-	albumRepository    repository.AlbumRepository
-	artistRepository   repository.ArtistRepository
-	playlistRepository repository.PlaylistRepository
+	trackRepository             repository.TrackRepository
+	albumRepository             repository.AlbumRepository
+	artistRepository            repository.ArtistRepository
+	playlistRepository          repository.PlaylistRepository
+	sharedPlayedTrackRepository repository.SharedPlayedTrackRepository
 
 	coverStorage storage.CoverStorage
 
@@ -22,6 +23,7 @@ func NewSyncUsecase(
 	albumRepository repository.AlbumRepository,
 	artistRepository repository.ArtistRepository,
 	playlistRepository repository.PlaylistRepository,
+	sharedPlayedTrackRepository repository.SharedPlayedTrackRepository,
 	coverStorage storage.CoverStorage,
 	syncPresenter presenter.SyncPresenter,
 ) SyncUsecase {
@@ -30,6 +32,7 @@ func NewSyncUsecase(
 		albumRepository,
 		artistRepository,
 		playlistRepository,
+		sharedPlayedTrackRepository,
 		coverStorage,
 		syncPresenter,
 	}

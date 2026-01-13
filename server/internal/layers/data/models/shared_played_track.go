@@ -37,10 +37,17 @@ type SharedPlayedTrackModel struct {
 	TrackEnded    bool `db:"track_ended"`
 	TrackDuration int  `db:"track_duration"`
 
-	SharedAt time.Time `db:"shared_at"`
+	CreatedAt time.Time  `db:"created_at"`
+	UpdatedAt *time.Time `db:"updated_at"`
 }
 
 func (m *SharedPlayedTrackModel) ToSharedPlayedTrack() entities.SharedPlayedTrack {
+	sharedAt := m.CreatedAt
+
+	if m.UpdatedAt != nil {
+		sharedAt = *m.UpdatedAt
+	}
+
 	return entities.SharedPlayedTrack{
 		Id:               m.Id,
 		InternalDeviceId: m.InternalDeviceId,
@@ -60,6 +67,6 @@ func (m *SharedPlayedTrackModel) ToSharedPlayedTrack() entities.SharedPlayedTrac
 		TrackEnded:    m.TrackEnded,
 		TrackDuration: m.TrackDuration,
 
-		SharedAt: m.SharedAt,
+		SharedAt: sharedAt,
 	}
 }
