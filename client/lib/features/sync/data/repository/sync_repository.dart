@@ -431,14 +431,14 @@ class SyncRepository {
       existingTracks[row['server_id'] as int] = row;
     }
 
-    final nullServerIdInternals = <String, Map<String, Object?>>{};
+    final nullServerIdInternals = <int, Map<String, Object?>>{};
     for (final row in db.select('''
     SELECT internal_id, device_id, track_id, start_at, finish_at,
            begin_at, ended_at, shuffle, track_ended, track_duration, shared_at
     FROM played_tracks
     WHERE server_id IS NULL
   ''')) {
-      nullServerIdInternals[row['internal_id'] as String] = row;
+      nullServerIdInternals[row['internal_id'] as int] = row;
     }
 
     final updateNullServerId = db.prepare('''
@@ -831,8 +831,6 @@ class SyncRepository {
           rethrow;
         }
       }
-
-      print(date);
 
       final start = DateTime.now();
       syncLogger.i("Start partial sync");

@@ -153,14 +153,14 @@ class SettingsPage extends StatelessWidget {
                                               );
 
                                               try {
-                                                context
-                                                    .read<SyncRepository>()
+                                                final syncRepository = context
+                                                    .read<SyncRepository>();
+
+                                                await syncRepository
                                                     .performSync(
                                                       fullSync: true,
                                                     );
-
-                                                context
-                                                    .read<SyncRepository>()
+                                                await syncRepository
                                                     .syncPlayedTracks();
 
                                                 if (!context.mounted) {
