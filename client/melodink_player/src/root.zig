@@ -1,6 +1,7 @@
 const std = @import("std");
 
-const c = @import("c.zig");
+const c = @import("c.zig").c;
+const cc = @import("c.zig");
 
 const PlayerMod = @import("player.zig");
 const Player = PlayerMod.Player;
@@ -45,11 +46,11 @@ pub export fn mi_player_free() void {
     player = null;
 }
 
-pub export fn mi_register_event_audio_changed_callback(callback: c.IntCallback) void {
+pub export fn mi_register_event_audio_changed_callback(callback: cc.IntCallback) void {
     player.?.send_event_audio_changed = callback;
 }
 
-pub export fn mi_register_event_update_state_callback(callback: c.IntCallback) void {
+pub export fn mi_register_event_update_state_callback(callback: cc.IntCallback) void {
     player.?.send_event_update_state = callback;
 }
 

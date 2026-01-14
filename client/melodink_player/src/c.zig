@@ -1,4 +1,4 @@
-pub usingnamespace @cImport({
+pub const c = @cImport({
     @cDefine("MKTAG(a, b, c, d)", " ((a) | ((b) << 8) | ((c) << 16) | ((uint64_t)(d) << 24))");
 
     @cInclude("libavcodec/avcodec.h");

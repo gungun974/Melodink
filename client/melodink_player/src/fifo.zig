@@ -2,7 +2,7 @@ const std = @import("std");
 
 const Thread = std.Thread;
 
-const c = @import("c.zig");
+const c = @import("c.zig").c;
 
 const Self = @This();
 

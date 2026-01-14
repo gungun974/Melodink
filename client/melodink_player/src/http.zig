@@ -2,7 +2,7 @@ const builtin = @import("builtin");
 
 const std = @import("std");
 
-const c = @import("c.zig");
+const c = @import("c.zig").c;
 
 const Self = @This();
 
@@ -37,7 +37,7 @@ pub fn init(self: *Self, url: [:0]const u8, new_options: [*c]?*c.AVDictionary) !
 
     self.hit_count = 0;
 
-    self.file_url = try std.fmt.allocPrintZ(self.allocator, "{s}", .{url});
+    self.file_url = try std.fmt.allocPrintSentinel(self.allocator, "{s}", .{url}, 0);
     errdefer self.allocator.free(self.file_url);
 
     _ = c.av_dict_copy(&self.options, new_options.*, 0);
@@ -137,7 +137,7 @@ fn reopenHTTP(self: *Self) void {
 
         self.openHTTP() catch |err| {
             std.log.warn("Could not reopen HTTP {}", .{err});
-            std.time.sleep(std.time.ns_per_s);
+            std.Thread.sleep(std.time.ns_per_s);
             continue;
         };
         break;
