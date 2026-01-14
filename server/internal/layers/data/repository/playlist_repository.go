@@ -345,7 +345,7 @@ func (r *PlaylistRepository) DeletePlaylist(playlist *entities.Playlist) error {
 
 func (r *PlaylistRepository) GetAllDeletedPlaylistsSince(since time.Time) ([]int, error) {
 	rows, err := r.Database.Query(`
-    SELECT id FROM deleted_playlists WHERE deleted_at >= ?
+    SELECT id FROM deleted_playlists WHERE deleted_at >= datetime(?)
   `, since.UTC())
 	if err != nil {
 		logger.DatabaseLogger.Error(err)

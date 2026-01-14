@@ -861,7 +861,7 @@ func (r *TrackRepository) DeleteTrack(track *entities.Track) error {
 
 func (r *TrackRepository) GetAllDeletedTracksSince(since time.Time) ([]int, error) {
 	rows, err := r.Database.Query(`
-    SELECT id FROM deleted_tracks WHERE deleted_at >= ?
+    SELECT id FROM deleted_tracks WHERE deleted_at >= datetime(?)
   `, since.UTC())
 	if err != nil {
 		logger.DatabaseLogger.Error(err)

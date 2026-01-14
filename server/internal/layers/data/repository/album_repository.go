@@ -611,7 +611,7 @@ func (r *AlbumRepository) DeleteAlbum(album *entities.Album) error {
 
 func (r *AlbumRepository) GetAllDeletedAlbumsSince(since time.Time) ([]int, error) {
 	rows, err := r.Database.Query(`
-    SELECT id FROM deleted_albums WHERE deleted_at >= ?
+    SELECT id FROM deleted_albums WHERE deleted_at >= datetime(?)
   `, since.UTC())
 	if err != nil {
 		logger.DatabaseLogger.Error(err)

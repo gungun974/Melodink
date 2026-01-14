@@ -222,7 +222,7 @@ func (r *SharedPlayedTrackRepository) DeleteSharedPlayedTrack(playedTrack *entit
 
 func (r *SharedPlayedTrackRepository) GetAllDeletedSharedPlayedTracksSince(since time.Time) ([]int, error) {
 	rows, err := r.Database.Query(`
-    SELECT id FROM deleted_shared_played_tracks WHERE deleted_at >= ?
+    SELECT id FROM deleted_shared_played_tracks WHERE deleted_at >= datetime(?)
   `, since.UTC())
 	if err != nil {
 		logger.DatabaseLogger.Error(err)
