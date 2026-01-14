@@ -18,6 +18,8 @@ import 'package:melodink_client/features/tracker/data/repository/played_track_re
 import 'package:mutex/mutex.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+const int _sqliteBatchSize = 500;
+
 class SyncRepository {
   final NetworkInfo networkInfo;
 
@@ -419,6 +421,26 @@ class SyncRepository {
         .map((row) => row['id'] as int)
         .toSet();
 
+    final existingTracks = <int, Map<String, Object?>>{};
+    for (final row in db.select('''
+    SELECT server_id, device_id, track_id, start_at, finish_at, 
+           begin_at, ended_at, shuffle, track_ended, track_duration, shared_at
+    FROM played_tracks 
+    WHERE server_id IS NOT NULL
+  ''')) {
+      existingTracks[row['server_id'] as int] = row;
+    }
+
+    final nullServerIdInternals = <String, Map<String, Object?>>{};
+    for (final row in db.select('''
+    SELECT internal_id, device_id, track_id, start_at, finish_at,
+           begin_at, ended_at, shuffle, track_ended, track_duration, shared_at
+    FROM played_tracks
+    WHERE server_id IS NULL
+  ''')) {
+      nullServerIdInternals[row['internal_id'] as String] = row;
+    }
+
     final updateNullServerId = db.prepare('''
     UPDATE played_tracks SET
       server_id = ?,
@@ -437,20 +459,9 @@ class SyncRepository {
 
     final insert = db.prepare('''
     INSERT INTO played_tracks (
-      server_id,
-      device_id,
-      track_id,
-      start_at,
-      finish_at,
-      begin_at,
-      ended_at,
-      shuffle,
-      track_ended,
-      track_duration,
-      shared_at
-    ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-    )
+      server_id, device_id, track_id, start_at, finish_at,
+      begin_at, ended_at, shuffle, track_ended, track_duration, shared_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(server_id) DO UPDATE SET
       device_id = excluded.device_id,
       track_id = excluded.track_id,
@@ -461,7 +472,7 @@ class SyncRepository {
       shuffle = excluded.shuffle,
       track_ended = excluded.track_ended,
       track_duration = excluded.track_duration,
-      shared_at = excluded.shared_at;
+      shared_at = excluded.shared_at
   ''');
 
     for (var playedTrack in playedTracks) {
@@ -469,23 +480,53 @@ class SyncRepository {
         continue;
       }
 
+      final startAt = playedTrack.startAt.millisecondsSinceEpoch;
+      final finishAt = playedTrack.finishAt.millisecondsSinceEpoch;
+      final beginAt = playedTrack.beginAt.inMilliseconds;
+      final endedAt = playedTrack.endedAt.inMilliseconds;
+      final shuffle = playedTrack.shuffle ? 1 : 0;
+      final trackEnded = playedTrack.trackEnded ? 1 : 0;
+      final trackDuration = playedTrack.trackDuration.inMilliseconds;
+      final sharedAt = playedTrack.sharedAt.toIso8601String();
+
+      final existing = existingTracks[playedTrack.id];
+      if (existing != null) {
+        if (existing['device_id'] == playedTrack.deviceId &&
+            existing['track_id'] == playedTrack.trackId &&
+            existing['start_at'] == startAt &&
+            existing['finish_at'] == finishAt &&
+            existing['begin_at'] == beginAt &&
+            existing['ended_at'] == endedAt &&
+            existing['shuffle'] == shuffle &&
+            existing['track_ended'] == trackEnded &&
+            existing['track_duration'] == trackDuration &&
+            existing['shared_at'] == sharedAt) {
+          continue;
+        }
+      }
+
       final values = [
         playedTrack.id,
         playedTrack.deviceId,
         playedTrack.trackId,
-        playedTrack.startAt.millisecondsSinceEpoch,
-        playedTrack.finishAt.millisecondsSinceEpoch,
-        playedTrack.beginAt.inMilliseconds,
-        playedTrack.endedAt.inMilliseconds,
-        playedTrack.shuffle ? 1 : 0,
-        playedTrack.trackEnded ? 1 : 0,
-        playedTrack.trackDuration.inMilliseconds,
-        playedTrack.sharedAt.toIso8601String(),
+        startAt,
+        finishAt,
+        beginAt,
+        endedAt,
+        shuffle,
+        trackEnded,
+        trackDuration,
+        sharedAt,
       ];
 
-      updateNullServerId.execute([...values, playedTrack.internalDeviceId]);
-
-      if (db.updatedRows == 0) {
+      final internalId = playedTrack.internalDeviceId;
+      final nullEntry = nullServerIdInternals[internalId];
+      if (nullEntry != null) {
+        updateNullServerId.execute([...values, internalId]);
+        nullServerIdInternals.remove(internalId);
+      } else if (existing == null) {
+        insert.execute(values);
+      } else {
         insert.execute(values);
       }
     }
@@ -498,38 +539,59 @@ class SyncRepository {
     Database db,
     List<SharedPlayedTrackModel> playedTracks,
   ) {
-    final placeholders = List.filled(playedTracks.length, '?').join(', ');
+    if (playedTracks.isEmpty) {
+      db.execute("DELETE FROM deleted_played_tracks");
+      db.execute("DELETE FROM played_tracks WHERE server_id IS NOT NULL");
+      return;
+    }
+
     final serverIds = playedTracks.map((pt) => pt.id).toList();
 
-    final deleteFromDeleted = db.prepare(
-      "DELETE FROM deleted_played_tracks WHERE id NOT IN ($placeholders)",
+    db.execute(
+      "CREATE TEMP TABLE IF NOT EXISTS temp_keep_ids (id INTEGER PRIMARY KEY)",
     );
-    deleteFromDeleted.execute(serverIds);
-    deleteFromDeleted.dispose();
+    db.execute("DELETE FROM temp_keep_ids");
 
-    final delete = db.prepare(
-      "DELETE FROM played_tracks WHERE server_id IS NOT NULL AND server_id NOT IN ($placeholders)",
+    for (var i = 0; i < serverIds.length; i += _sqliteBatchSize) {
+      final batch = serverIds.skip(i).take(_sqliteBatchSize).toList();
+      final placeholders = List.filled(batch.length, '(?)').join(', ');
+
+      final insert = db.prepare(
+        "INSERT INTO temp_keep_ids (id) VALUES $placeholders",
+      );
+      insert.execute(batch);
+      insert.dispose();
+    }
+
+    db.execute(
+      "DELETE FROM deleted_played_tracks WHERE id NOT IN (SELECT id FROM temp_keep_ids)",
     );
-    delete.execute(serverIds);
-    delete.dispose();
+    db.execute(
+      "DELETE FROM played_tracks WHERE server_id IS NOT NULL AND server_id NOT IN (SELECT id FROM temp_keep_ids)",
+    );
+
+    db.execute("DROP TABLE temp_keep_ids");
   }
 
   void _deletePlayedTracks(Database db, List<int> playedTracks) {
     if (playedTracks.isEmpty) return;
 
-    final placeholders = List.filled(playedTracks.length, '?').join(', ');
+    for (var i = 0; i < playedTracks.length; i += _sqliteBatchSize) {
+      final batch = playedTracks.skip(i).take(_sqliteBatchSize).toList();
+      final placeholders = List.filled(batch.length, '?').join(', ');
 
-    final deleteFromDeleted = db.prepare(
-      "DELETE FROM deleted_played_tracks WHERE id IN ($placeholders)",
-    );
-    deleteFromDeleted.execute(playedTracks);
-    deleteFromDeleted.dispose();
+      final deleteFromDeleted = db.prepare(
+        "DELETE FROM deleted_played_tracks WHERE id IN ($placeholders)",
+      );
+      deleteFromDeleted.execute(batch);
+      deleteFromDeleted.dispose();
 
-    final delete = db.prepare(
-      "DELETE FROM played_tracks WHERE server_id IS NOT NULL AND server_id IN ($placeholders)",
-    );
-    delete.execute(playedTracks);
-    delete.dispose();
+      final delete = db.prepare(
+        "DELETE FROM played_tracks WHERE server_id IS NOT NULL AND server_id IN ($placeholders)",
+      );
+      delete.execute(batch);
+      delete.dispose();
+    }
   }
 
   //! Sync
