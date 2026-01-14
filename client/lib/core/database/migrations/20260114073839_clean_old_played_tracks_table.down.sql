@@ -1,0 +1,2 @@
+-- This migration is irreversible
+-- Deleted data cannot be restored
