@@ -414,6 +414,11 @@ class SyncRepository {
     List<SharedPlayedTrackModel> playedTracks,
     String deviceId,
   ) {
+    final deletedIds = db
+        .select('SELECT id FROM deleted_played_tracks')
+        .map((row) => row['id'] as int)
+        .toSet();
+
     final updateNullServerId = db.prepare('''
     UPDATE played_tracks SET
       server_id = ?,
@@ -460,6 +465,10 @@ class SyncRepository {
   ''');
 
     for (var playedTrack in playedTracks) {
+      if (deletedIds.contains(playedTrack.id)) {
+        continue;
+      }
+
       final values = [
         playedTrack.id,
         playedTrack.deviceId,
@@ -490,25 +499,36 @@ class SyncRepository {
     List<SharedPlayedTrackModel> playedTracks,
   ) {
     final placeholders = List.filled(playedTracks.length, '?').join(', ');
+    final serverIds = playedTracks.map((pt) => pt.id).toList();
+
+    final deleteFromDeleted = db.prepare(
+      "DELETE FROM deleted_played_tracks WHERE id NOT IN ($placeholders)",
+    );
+    deleteFromDeleted.execute(serverIds);
+    deleteFromDeleted.dispose();
 
     final delete = db.prepare(
-      "DELETE FROM played_tracks WHERE (server_id IS NOT NULL) AND (server_id NOT IN ($placeholders))",
+      "DELETE FROM played_tracks WHERE server_id IS NOT NULL AND server_id NOT IN ($placeholders)",
     );
-
-    delete.execute(playedTracks.map((playedTrack) => playedTrack.id).toList());
-
+    delete.execute(serverIds);
     delete.dispose();
   }
 
   void _deletePlayedTracks(Database db, List<int> playedTracks) {
+    if (playedTracks.isEmpty) return;
+
     final placeholders = List.filled(playedTracks.length, '?').join(', ');
 
-    final delete = db.prepare(
-      "DELETE FROM played_tracks WHERE (server_id IS NOT NULL) AND (server_id IN ($placeholders))",
+    final deleteFromDeleted = db.prepare(
+      "DELETE FROM deleted_played_tracks WHERE id IN ($placeholders)",
     );
+    deleteFromDeleted.execute(playedTracks);
+    deleteFromDeleted.dispose();
 
+    final delete = db.prepare(
+      "DELETE FROM played_tracks WHERE server_id IS NOT NULL AND server_id IN ($placeholders)",
+    );
     delete.execute(playedTracks);
-
     delete.dispose();
   }
 
@@ -674,7 +694,7 @@ class SyncRepository {
     });
   }
 
-  Future<void> uploadPlayedTracks() async {
+  Future<void> syncPlayedTracks() async {
     await _mutex.protect(() async {
       final db = await DatabaseService.getDatabase();
 
@@ -691,7 +711,12 @@ class SyncRepository {
         [],
       );
 
-      if (data.isEmpty) {
+      final deletedIds = db
+          .select('SELECT id FROM deleted_played_tracks')
+          .map((row) => row['id'] as int)
+          .toList();
+
+      if (data.isEmpty && deletedIds.isEmpty) {
         return;
       }
 
@@ -704,7 +729,7 @@ class SyncRepository {
           await AppApi().dio.post(
             "/sharedPlayedTrack/upload",
             data: {
-              "internal_device_id": playedTrack.id,
+              "internal_device_id": playedTrack.internalId,
               "track_id": playedTrack.trackId,
               "device_id": deviceId,
               "start_at": playedTrack.startAt.toUtc().toIso8601String(),
@@ -727,6 +752,25 @@ class SyncRepository {
           rethrow;
         }
       }
+
+      for (var deletedId in deletedIds) {
+        try {
+          await AppApi().dio.delete("/sharedPlayedTrack/$deletedId");
+        } on DioException catch (e) {
+          final response = e.response;
+          if (response == null) {
+            throw ServerTimeoutException();
+          }
+
+          if (response.statusCode != 404) {
+            throw ServerUnknownException();
+          }
+        } catch (e) {
+          rethrow;
+        }
+      }
+
+      print(date);
 
       final start = DateTime.now();
       syncLogger.i("Start partial sync");

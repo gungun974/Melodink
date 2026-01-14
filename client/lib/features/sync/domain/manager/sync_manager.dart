@@ -40,7 +40,7 @@ class SyncManager {
     }
 
     await syncRepository.performSync();
-    await syncRepository.uploadPlayedTracks();
+    await syncRepository.syncPlayedTracks();
   }
 
   void dispose() {

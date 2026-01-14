@@ -21,6 +21,7 @@ import 'package:melodink_client/features/settings/presentation/widgets/setting_t
 import 'package:melodink_client/features/sync/data/repository/sync_repository.dart';
 import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
 import 'package:melodink_client/features/track/presentation/modals/import_tracks_modal.dart';
+import 'package:melodink_client/features/tracker/data/repository/played_track_repository.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
 import 'package:provider/provider.dart';
 
@@ -160,7 +161,7 @@ class SettingsPage extends StatelessWidget {
 
                                                 context
                                                     .read<SyncRepository>()
-                                                    .uploadPlayedTracks();
+                                                    .syncPlayedTracks();
 
                                                 if (!context.mounted) {
                                                   return;

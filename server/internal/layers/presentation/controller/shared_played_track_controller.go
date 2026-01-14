@@ -176,3 +176,20 @@ func (c *SharedPlayedTrackController) UploadPlayedTrack(
 		},
 	)
 }
+
+func (c *SharedPlayedTrackController) DeletePlayedTrack(
+	ctx context.Context,
+	rawId string,
+) (models.APIResponse, error) {
+	id, err := validator.CoerceAndValidateInt(
+		rawId,
+		validator.IntValidators{
+			validator.IntMinValidator{Min: 0},
+		},
+	)
+	if err != nil {
+		return nil, entities.NewValidationError(err.Error())
+	}
+
+	return c.sharedPlayedTrackUsecase.DeletePlayedTrack(ctx, id)
+}

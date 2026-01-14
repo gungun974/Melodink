@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"database/sql"
+	"errors"
 	"time"
 
 	data_models "github.com/gungun974/Melodink/server/internal/layers/data/models"
@@ -8,6 +10,8 @@ import (
 	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/jmoiron/sqlx"
 )
+
+var PlayedTrackNotFoundError = errors.New("PlayedTrack is not found")
 
 func NewSharedPlayedTrackRepository(db *sqlx.DB) SharedPlayedTrackRepository {
 	return SharedPlayedTrackRepository{
@@ -67,6 +71,27 @@ func (r *SharedPlayedTrackRepository) GetAllSharedPlayedTracksFromUserSince(
 	}
 
 	return m.ToSharedPlayedTracks(), nil
+}
+
+func (r *SharedPlayedTrackRepository) GetPlayedTrackById(id int) (*entities.SharedPlayedTrack, error) {
+	m := data_models.SharedPlayedTrackModel{}
+
+	err := r.Database.Get(&m, `
+    SELECT *
+    FROM shared_played_tracks
+    WHERE id = ?
+  `, id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, PlayedTrackNotFoundError
+		}
+		logger.DatabaseLogger.Error(err)
+		return nil, err
+	}
+
+	playedTrack := m.ToSharedPlayedTrack()
+
+	return &playedTrack, nil
 }
 
 func (r *SharedPlayedTrackRepository) AddSharedPlayedTrack(

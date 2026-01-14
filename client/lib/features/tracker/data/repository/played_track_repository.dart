@@ -10,7 +10,8 @@ import 'package:melodink_client/features/tracker/domain/entities/track_history_i
 class PlayedTrackRepository {
   static PlayedTrack decodePlayedTrack(Map<String, Object?> data) {
     return PlayedTrack(
-      id: data["internal_id"] as int,
+      internalId: data["internal_id"] as int,
+      serverId: data["server_id"] as int?,
       trackId: data["track_id"] as int,
       startAt: DateTime.fromMillisecondsSinceEpoch(data["start_at"] as int),
       finishAt: DateTime.fromMillisecondsSinceEpoch(data["finish_at"] as int),
@@ -166,6 +167,35 @@ class PlayedTrackRepository {
     final id = db.lastInsertRowId;
 
     return getPlayedTrackById(id);
+  }
+
+  Future<void> removePlayedTrack(PlayedTrack playedTrack) async {
+    final db = await DatabaseService.getDatabase();
+
+    db.execute('BEGIN;');
+
+    try {
+      final data = db.select(
+        "DELETE FROM played_tracks WHERE internal_id = ? RETURNING *",
+        [playedTrack.internalId],
+      );
+
+      if (data.isNotEmpty) {
+        PlayedTrack deletedPlayedTrack = decodePlayedTrack(data.first);
+
+        if (deletedPlayedTrack.serverId != null) {
+          db.execute(
+            'INSERT OR REPLACE INTO deleted_played_tracks (id) VALUES (?)',
+            [deletedPlayedTrack.serverId],
+          );
+        }
+      }
+
+      db.execute('COMMIT;');
+    } catch (_) {
+      db.execute("ROLLBACK;");
+      rethrow;
+    }
   }
 
   Future<List<TrackHistoryInfo>> getMultipleTracksHistoryInfo(

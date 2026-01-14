@@ -1,7 +1,8 @@
 import 'package:equatable/equatable.dart';
 
 class PlayedTrack extends Equatable {
-  final int id;
+  final int internalId;
+  final int? serverId;
 
   final int trackId;
   final DateTime startAt;
@@ -17,7 +18,8 @@ class PlayedTrack extends Equatable {
   final Duration trackDuration;
 
   const PlayedTrack({
-    required this.id,
+    required this.internalId,
+    required this.serverId,
     required this.trackId,
     required this.startAt,
     required this.finishAt,
@@ -29,15 +31,16 @@ class PlayedTrack extends Equatable {
   });
 
   @override
-  List<Object> get props => [
-        id,
-        trackId,
-        startAt,
-        finishAt,
-        beginAt,
-        endedAt,
-        shuffle,
-        trackEnded,
-        trackDuration,
-      ];
+  List<Object?> get props => [
+    internalId,
+    serverId,
+    trackId,
+    startAt,
+    finishAt,
+    beginAt,
+    endedAt,
+    shuffle,
+    trackEnded,
+    trackDuration,
+  ];
 }

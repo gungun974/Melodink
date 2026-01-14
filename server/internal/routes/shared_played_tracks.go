@@ -44,5 +44,17 @@ func SharedPlayedTrackRouter(c internal.Container) http.Handler {
 		response.WriteResponse(w, r)
 	})
 
+	router.Delete("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		response, err := c.SharedPlayedTrackController.DeletePlayedTrack(r.Context(), id)
+		if err != nil {
+			handleHTTPError(err, w)
+			return
+		}
+
+		response.WriteResponse(w, r)
+	})
+
 	return router
 }
