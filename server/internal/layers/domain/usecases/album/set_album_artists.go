@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/gungun974/Melodink/server/internal/models"
@@ -27,7 +27,7 @@ func (u *AlbumUsecase) SetAlbumArtists(
 
 	album, err := u.albumRepository.GetAlbumById(params.Id)
 	if err != nil {
-		if errors.Is(err, repository.AlbumNotFoundError) {
+		if errors.Is(err, repositories.AlbumNotFoundError) {
 			return nil, entities.NewNotFoundError("Album not found")
 		}
 		return nil, entities.NewInternalError(err)
@@ -42,7 +42,7 @@ func (u *AlbumUsecase) SetAlbumArtists(
 	for i, trackId := range params.ArtistIds {
 		artist, err := u.artistRepository.GetArtistById(trackId)
 		if err != nil {
-			if errors.Is(err, repository.ArtistNotFoundError) {
+			if errors.Is(err, repositories.ArtistNotFoundError) {
 				return nil, entities.NewNotFoundError("Artist not found")
 			}
 			return nil, entities.NewInternalError(err)

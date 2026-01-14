@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/gungun974/Melodink/server/internal/models"
@@ -52,7 +52,7 @@ func (u *TrackUsecase) EditTrack(
 
 	track, err := u.trackRepository.GetTrack(params.Id)
 	if err != nil {
-		if errors.Is(err, repository.TrackNotFoundError) {
+		if errors.Is(err, repositories.TrackNotFoundError) {
 			return nil, entities.NewNotFoundError("Track not found")
 		}
 		return nil, entities.NewInternalError(err)

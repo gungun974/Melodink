@@ -2,7 +2,7 @@ package track_usecase
 
 import (
 	"github.com/gungun974/Melodink/server/internal/helpers"
-	"github.com/gungun974/Melodink/server/internal/layers/data/scanner"
+	"github.com/gungun974/Melodink/server/internal/layers/data/scanners"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 )
 
@@ -25,7 +25,7 @@ func (u *TrackUsecase) advancedScanTrack(
 		return newTrack, nil
 	}
 
-	var musicBrainzScanResult scanner.MusicBrainzScanResult
+	var musicBrainzScanResult scanners.MusicBrainzScanResult
 
 	musicBrainzScanResult, err = u.musicBrainzScanner.FetchRecordingInfoFromRelease(
 		newTrack.Metadata.MusicBrainzReleaseId,

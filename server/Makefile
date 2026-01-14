@@ -18,11 +18,32 @@ build: prebuild
 debug: prebuild
 	$(GO) build -tags debug -o ${DEST}$(SERVER_BINARY) ./cmd/api/.
 
+debug-run: debug
+	${DEST}$(SERVER_BINARY)
+
 run: build
 	@cd ${DEST}; ./$(SERVER_BINARY)
 
 dev:
-	@air
+	gonova watchexec \
+    -i "assets" \
+    -i "build" \
+    -i "vendor" \
+    -i "/data" \
+    -i "storage" \
+    -i "mails" \
+    -i "node_modules" \
+    -i "resources/scripts" \
+    -i "resources/mails/.react-email" \
+    -i "resources/mails/out" \
+    -i "resources/mails/node_modules" \
+    -i "*_templ.go" \
+    -e go \
+    -e tpl \
+    -e tmpl \
+    -e html \
+	${MAKE} debug-run
+
 
 clean:
 	$(GO) clean
@@ -35,26 +56,18 @@ lint:
 	golangci-lint run ./...
 
 migrate: 
-	migrate -database $(DATABASE_URL) \
-		-path ./internal/database/migrations up
+	gonova migrate up
 
 migrate-down: 
-	migrate -database $(DATABASE_URL) \
-		-path ./internal/database/migrations down 1
+	gonova migrate down --force
 
 migrate-create: 
-	@echo -n "Name for migration to create : "
-	@read name; \
-	migrate create -ext sql -dir ./internal/database/migrations -tz UTC $$name
+	gonova migrate create
 
 migrate-force: 
-	@echo -n "Version to migrate force : "
-	@read version; \
-	migrate -database $(DATABASE_URL) \
-		-path ./internal/database/migrations force $$version
+	gonova migrate force --force
 
 migrate-drop: 
-	migrate -database $(DATABASE_URL) \
-		-path ./internal/database/migrations drop
+	gonova migrate drop --force
 
-.PHONY: all clean prebuild build run watch lint migrate migrate-down migrate-create migrate-force migrate-drop
+.PHONY: all clean prebuild build run watch lint migrate migrate-down migrate-create migrate-force migrate-drop debug debug-run

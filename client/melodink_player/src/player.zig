@@ -2,7 +2,8 @@ const std = @import("std");
 
 const Thread = std.Thread;
 
-const c = @import("c.zig");
+const c = @import("c.zig").c;
+const cc = @import("c.zig");
 
 const TrackMod = @import("track.zig");
 
@@ -98,7 +99,7 @@ const TrackManager = struct {
         return .{
             .allocator = allocator,
 
-            .manage_tracks_order = TrackArrayList.init(allocator),
+            .manage_tracks_order = .empty,
             .manage_loaded_tracks = TrackAutoHashMap.init(allocator),
 
             .protected_opened_cache_paths = CacheAVIO.ProtectedOpenedPathsList.init(allocator),
@@ -112,7 +113,7 @@ const TrackManager = struct {
             track.value_ptr.*.free();
         }
 
-        self.manage_tracks_order.deinit();
+        self.manage_tracks_order.deinit(self.allocator);
         self.manage_loaded_tracks.deinit();
 
         self.protected_opened_cache_paths.deinit();
@@ -132,12 +133,12 @@ const TrackManager = struct {
 
     pub fn loads(self: *Self, play_request_index: usize, requests: []const MelodinkTrackRequest, quality: TrackQuality, server_auth: []const u8, pool: *std.Thread.Pool) !void {
         if (self.current_track_index != null) {}
-        try self.manage_tracks_order.resize(requests.len);
+        try self.manage_tracks_order.resize(self.allocator, requests.len);
 
         // unload old tracks
         var iterator = self.manage_loaded_tracks.iterator();
-        var tracksToRemove = std.ArrayList(u64).init(self.allocator);
-        defer tracksToRemove.deinit();
+        var tracksToRemove: std.ArrayList(u64) = .empty;
+        defer tracksToRemove.deinit(self.allocator);
 
         while (iterator.next()) |track| {
             var keep = false;
@@ -159,7 +160,7 @@ const TrackManager = struct {
             }
 
             if (!keep) {
-                try tracksToRemove.append(track.value_ptr.*.id);
+                try tracksToRemove.append(self.allocator, track.value_ptr.*.id);
             }
         }
 
@@ -299,8 +300,8 @@ pub const Player = struct {
 
     allocator: std.mem.Allocator,
 
-    send_event_audio_changed: ?c.IntCallback = null,
-    send_event_update_state: ?c.IntCallback = null,
+    send_event_audio_changed: ?cc.IntCallback = null,
+    send_event_update_state: ?cc.IntCallback = null,
 
     last_sendend_event_update_state: ?TrackStatus = null,
 
@@ -388,7 +389,7 @@ pub const Player = struct {
             self.process() catch |err| {
                 std.log.err("Error in the internal processing thread {}", .{err});
             };
-            std.time.sleep(std.time.ns_per_ms);
+            std.Thread.sleep(std.time.ns_per_ms);
         }
     }
 
@@ -458,7 +459,7 @@ pub const Player = struct {
             return;
         }
 
-        std.time.sleep(std.time.ns_per_ms * 5);
+        std.Thread.sleep(std.time.ns_per_ms * 5);
 
         const current_track = self.track_manager.getCurrentIndexedTrack();
 
@@ -482,7 +483,7 @@ pub const Player = struct {
 
         self.has_init_ma_device = true;
 
-        std.time.sleep(std.time.ns_per_ms * 5);
+        std.Thread.sleep(std.time.ns_per_ms * 5);
 
         if (c.ma_device_start(self.ma_device) != c.MA_SUCCESS) {
             return error.CantStartMiniaudio;

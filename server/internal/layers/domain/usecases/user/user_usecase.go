@@ -1,20 +1,20 @@
 package user_usecase
 
 import (
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
-	"github.com/gungun974/Melodink/server/internal/layers/presentation/presenter"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
+	"github.com/gungun974/Melodink/server/internal/layers/presentation/presenters"
 )
 
 type UserUsecase struct {
-	userRepository   repository.UserRepository
-	configRepository repository.ConfigRepository
-	userPresenter    presenter.UserPresenter
+	userRepository   repositories.UserRepository
+	configRepository repositories.ConfigRepository
+	userPresenter    presenters.UserPresenter
 }
 
 func NewUserUsecase(
-	userRepository repository.UserRepository,
-	configRepository repository.ConfigRepository,
-	userPresenter presenter.UserPresenter,
+	userRepository repositories.UserRepository,
+	configRepository repositories.ConfigRepository,
+	userPresenter presenters.UserPresenter,
 ) UserUsecase {
 	return UserUsecase{
 		userRepository,

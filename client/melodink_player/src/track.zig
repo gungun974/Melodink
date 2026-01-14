@@ -1,6 +1,8 @@
 const std = @import("std");
 
-const c = @import("c.zig");
+const c = @import("c.zig").c;
+
+const Deque = @import("deque.zig").Deque;
 
 const Fifo = @import("fifo.zig");
 
@@ -40,7 +42,7 @@ const TrackInfo = struct {
     stream_index: usize,
 };
 
-const AVPacketFifo = std.fifo.LinearFifo(?*c.AVPacket, .Dynamic);
+const AVPacketFifo = Deque(?*c.AVPacket);
 
 pub const Track = struct {
     const Self = @This();
@@ -153,7 +155,7 @@ pub const Track = struct {
 
         cache_avio.* = .{
             .allocator = allocator,
-            .index_map = std.ArrayList(u8).init(allocator),
+            .index_map = .empty,
             .protected_opened_cache_paths = protected_opened_cache_paths,
         };
 
@@ -173,14 +175,14 @@ pub const Track = struct {
             .http_avio = http_avio,
 
             .cache_avio = cache_avio,
-            .cached_packet_fifo = AVPacketFifo.init(allocator),
+            .cached_packet_fifo = .empty,
         };
     }
 
     pub fn free(self: *Self) void {
         self.close();
 
-        self.cached_packet_fifo.deinit();
+        self.cached_packet_fifo.deinit(self.allocator);
 
         self.allocator.free(self.server_url);
         self.allocator.free(self.server_auth);
@@ -189,7 +191,7 @@ pub const Track = struct {
             self.allocator.free(self.downloaded_path.?);
         }
 
-        self.cache_avio.index_map.deinit();
+        self.cache_avio.index_map.deinit(self.allocator);
 
         if (self.original_audio_hash != null) {
             self.allocator.free(self.original_audio_hash.?);
@@ -219,19 +221,19 @@ pub const Track = struct {
 
     pub fn waitThreadHandlerIsStop(self: *Self) void {
         while (true) {
-            std.time.sleep(std.time.ns_per_ms * 10);
+            std.Thread.sleep(std.time.ns_per_ms * 10);
 
             if (self.open_thread.load(.seq_cst) or self.process_thread.load(.seq_cst)) {
                 continue;
             }
 
-            std.time.sleep(std.time.ns_per_ms * 10);
+            std.Thread.sleep(std.time.ns_per_ms * 10);
 
             if (self.open_thread.load(.seq_cst) or self.process_thread.load(.seq_cst)) {
                 continue;
             }
 
-            std.time.sleep(std.time.ns_per_ms * 10);
+            std.Thread.sleep(std.time.ns_per_ms * 10);
 
             if (self.open_thread.load(.seq_cst) or self.process_thread.load(.seq_cst)) {
                 continue;
@@ -270,7 +272,7 @@ pub const Track = struct {
 
         var open_options: ?*c.AVDictionary = null;
 
-        const headers = try std.fmt.allocPrintZ(self.allocator, "Cookie: {s}\r\nUser-Agent: Melodink-Player\r\nMelodink-Signature: {s}\r\n", .{ self.server_auth, if (self.original_audio_hash == null) "" else self.original_audio_hash.? });
+        const headers = try std.fmt.allocPrintSentinel(self.allocator, "Cookie: {s}\r\nUser-Agent: Melodink-Player\r\nMelodink-Signature: {s}\r\n", .{ self.server_auth, if (self.original_audio_hash == null) "" else self.original_audio_hash.? }, 0);
         defer self.allocator.free(headers);
 
         _ = c.av_dict_set(&open_options, "headers", headers.ptr, 0);
@@ -290,14 +292,14 @@ pub const Track = struct {
         if (self.downloaded_path == null) {
             var url: [:0]u8 = undefined;
             if (self.quality == .lossless) {
-                url = try std.fmt.allocPrintZ(self.allocator, "{s}track/{}/audio", .{ self.server_url, self.id });
+                url = try std.fmt.allocPrintSentinel(self.allocator, "{s}track/{}/audio", .{ self.server_url, self.id }, 0);
             } else {
-                url = try std.fmt.allocPrintZ(self.allocator, "{s}track/{}/audio/{s}/transcode", .{ self.server_url, self.id, switch (self.quality) {
+                url = try std.fmt.allocPrintSentinel(self.allocator, "{s}track/{}/audio/{s}/transcode", .{ self.server_url, self.id, switch (self.quality) {
                     .low => "low",
                     .medium => "medium",
                     .high => "high",
                     .lossless => unreachable,
-                } });
+                } }, 0);
             }
 
             defer self.allocator.free(url);
@@ -328,7 +330,7 @@ pub const Track = struct {
                 response = c.avformat_open_input(&self.av_format_ctx, null, null, null);
             }
         } else {
-            const path = try std.fmt.allocPrintZ(self.allocator, "{s}", .{self.downloaded_path.?});
+            const path = try std.fmt.allocPrintSentinel(self.allocator, "{s}", .{self.downloaded_path.?}, 0);
             defer self.allocator.free(path);
 
             std.log.debug("open file: {s}", .{path});
@@ -568,7 +570,7 @@ pub const Track = struct {
             }
         }
 
-        if (self.has_reach_end and self.cached_packet_fifo.count == 0) {
+        if (self.has_reach_end and self.cached_packet_fifo.len == 0) {
             if (self.infinite_loop) {
                 try self.loop();
                 return;
@@ -604,7 +606,7 @@ pub const Track = struct {
             // Return if error or end of file was encountered
 
             if (self.last_av_read_frame_response >= 0) {
-                try self.cached_packet_fifo.writeItem(new_av_packet);
+                try self.cached_packet_fifo.pushBack(self.allocator, new_av_packet);
             } else {
                 defer c.av_packet_free(&new_av_packet);
                 defer c.av_packet_unref(new_av_packet);
@@ -617,7 +619,7 @@ pub const Track = struct {
             return;
         }
 
-        if (self.last_av_read_frame_response < 0 and self.cached_packet_fifo.count == 0) {
+        if (self.last_av_read_frame_response < 0 and self.cached_packet_fifo.len == 0) {
             defer self.last_av_read_frame_response = 0;
 
             if (self.last_av_read_frame_response == c.AVERROR(c.ETIMEDOUT)) {
@@ -645,7 +647,7 @@ pub const Track = struct {
             return;
         }
 
-        var av_packet = self.cached_packet_fifo.readItem() orelse {
+        var av_packet = self.cached_packet_fifo.popFront() orelse {
             return;
         };
         defer c.av_packet_free(&av_packet);
@@ -811,7 +813,7 @@ pub const Track = struct {
 
         if (new_time == 0 and reset_fifo) {
             while (true) {
-                var av_packet = self.cached_packet_fifo.readItem() orelse {
+                var av_packet = self.cached_packet_fifo.popFront() orelse {
                     break;
                 };
                 defer c.av_packet_free(&av_packet);
@@ -859,7 +861,7 @@ pub const Track = struct {
         if (response >= 0 or (response == -1 and self.http_avio.is_reopen.load(.seq_cst))) {
             if (reset_fifo) {
                 while (true) {
-                    var av_packet = self.cached_packet_fifo.readItem() orelse {
+                    var av_packet = self.cached_packet_fifo.popFront() orelse {
                         break;
                     };
                     defer c.av_packet_free(&av_packet);
@@ -982,7 +984,7 @@ pub const Track = struct {
         }
 
         while (true) {
-            var av_packet = self.cached_packet_fifo.readItem() orelse {
+            var av_packet = self.cached_packet_fifo.popFront() orelse {
                 break;
             };
             defer c.av_packet_free(&av_packet);

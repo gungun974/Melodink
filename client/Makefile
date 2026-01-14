@@ -42,11 +42,6 @@ debug-build-melodink-player:
 	cp melodink_player/zig-out/lib/libmelodink_player.so build/linux/x64/release/bundle/lib/libmelodink_player.so
 	build/linux/x64/release/bundle/melodink_client
 
-migrate-create: 
-	@echo -n "Name for migration to create : "
-	@read name; \
-	migrate create -ext sql -dir ./lib/core/database/migrations -tz UTC $$name
-
 clean:
 	flutter clean
 ifeq ($(UNAME_S),Darwin)

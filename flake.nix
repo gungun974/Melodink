@@ -5,8 +5,6 @@
     # Nixpkgs
     nixpkgs.url = "github:nixos/nixpkgs";
 
-    air-nixpkgs.url = "github:nixos/nixpkgs?rev=c1ce56e9c606b4cd31f0950768911b1171b8db51";
-
     flake-utils.url = "github:numtide/flake-utils";
 
     gitignore = {
@@ -15,17 +13,16 @@
     };
 
     android-nixpkgs = {
-      url = "github:tadfisher/android-nixpkgs?rev=5a052c62cdb51b210bc0717177d5bd014cba3df1";
+      url = "github:tadfisher/android-nixpkgs";
     };
 
     zig-overlay.url = "github:mitchellh/zig-overlay";
     # Keep in sync with zigVersion below.
-    zls-overlay.url = "github:gungun974/zls/fix-0.14.0-nix";
+    zls-overlay.url = "github:zigtools/zls/0.15.1";
   };
 
   outputs = {
     nixpkgs,
-    air-nixpkgs,
     gitignore,
     flake-utils,
     android-nixpkgs,
@@ -41,28 +38,14 @@
         };
         overlays = [
           (final: prev: {
-            zigpkgs = zig-overlay.packages.${prev.system};
+            zigpkgs = zig-overlay.packages.${prev.stdenv.hostPlatform.system};
           })
         ];
       };
 
-      zig = pkgs.zigpkgs."0.14.1";
+      zig = pkgs.zigpkgs."0.15.2";
       zls = zls-overlay.packages.${system}.zls.overrideAttrs (old: {
         nativeBuildInputs = [zig];
-      });
-
-      air-pkgs = import air-nixpkgs {
-        inherit system;
-      };
-
-      ffmpeg = pkgs.ffmpeg.overrideAttrs (oldAttrs: {
-        patches =
-          (oldAttrs.patches or [])
-          ++ [
-            ./nix/ffmpeg/0001-hls-seek-patch-1.patch
-            ./nix/ffmpeg/0002-hls-seek-patch-2.patch
-            ./nix/ffmpeg/0003-return-eio-for-prematurely-broken-connection.patch
-          ];
       });
 
       flutter-sdk = pkgs.flutter;
@@ -70,16 +53,20 @@
         with sdkPkgs; [
           build-tools-33-0-1
           build-tools-34-0-0
+          build-tools-35-0-0
           cmdline-tools-latest
           emulator
           platform-tools
+          platforms-android-36
+          platforms-android-35
           platforms-android-34
           platforms-android-33
           platforms-android-32
           platforms-android-31
           platforms-android-28
           system-images-android-34-google-apis-playstore-x86-64
-          ndk-23-1-7779620
+          ndk-28-2-13676358
+          cmake-3-22-1
         ]);
       pinnedJDK = pkgs.jdk17;
 
@@ -149,7 +136,7 @@
             pkgs.copyDesktopItems
             pkgs.which
             pkgs.wrapGAppsHook3
-            ffmpeg.dev
+            pkgs.ffmpeg.dev
             pkgs.pulseaudio.dev
             pkgs.zenity
             zig
@@ -236,18 +223,14 @@
             buildInputs = [
               pkgs.golangci-lint
               pkgs.go_1_25
-              air-pkgs.air
               flutter-sdk
               pinnedJDK
               sdk
-              (pkgs.go-migrate.overrideAttrs (finalAttrs: previousAttrs: {
-                tags = ["sqlite3" "sqlite"];
-              }))
               pkgs.sqlite
 
               pkgs.pkg-config
               pkgs.gtk3
-              ffmpeg.dev
+              pkgs.ffmpeg.dev
               pkgs.pulseaudio.dev
 
               pkgs.chromaprint
@@ -281,15 +264,11 @@
             packages = [
               pkgs.golangci-lint
               pkgs.go_1_25
-              air-pkgs.air
               pkgs.cocoapods
-              (pkgs.go-migrate.overrideAttrs (finalAttrs: previousAttrs: {
-                tags = ["sqlite3" "sqlite"];
-              }))
               pkgs.sqlite
 
-              ffmpeg.dev
-              ffmpeg
+              pkgs.ffmpeg.dev
+              pkgs.ffmpeg
 
               pkgs.chromaprint
               pkgs.fftw

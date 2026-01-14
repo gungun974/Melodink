@@ -5,7 +5,7 @@ const std = @import("std");
 const fs = std.fs;
 const os = std.os;
 
-const c = @import("c.zig");
+const c = @import("c.zig").c;
 
 const Self = @This();
 
@@ -52,20 +52,20 @@ pub const ProtectedOpenedPathsList = struct {
     pub fn init(
         allocator: std.mem.Allocator,
     ) Self2 {
-        return .{ .data = std.ArrayList([]const u8).init(allocator), .allocator = allocator };
+        return .{ .data = .empty, .allocator = allocator };
     }
 
     pub fn deinit(
         self: *Self2,
     ) void {
-        self.data.deinit();
+        self.data.deinit(self.allocator);
     }
 
     pub fn protectPath(self: *Self2, path: []const u8) !void {
         self.mutex.lock();
         defer self.mutex.unlock();
 
-        try self.data.append(path);
+        try self.data.append(self.allocator, path);
     }
 
     pub fn unprotectPath(self: *Self2, path: []const u8) void {
@@ -176,7 +176,7 @@ pub fn init(self: *Self, cache_path: []const u8, cache_key: []const u8, source_a
         self.cache_hits += 1;
     }
 
-    try self.index_map.resize(self.index_size);
+    try self.index_map.resize(self.allocator, self.index_size);
     const bytes_read = try self.index_file.readAll(self.index_map.items);
     @memset(self.index_map.items[bytes_read..], 0);
 
@@ -233,7 +233,7 @@ pub fn evictCache(self: *Self) !void {
     try self.data_file.setEndPos(0);
     _ = try self.index_file.write(std.mem.asBytes(&self.file_total_size));
     self.index_size = 0;
-    try self.index_map.resize(0);
+    try self.index_map.resize(self.allocator, 0);
 }
 
 pub fn resetAVIOError(self: *Self) void {
@@ -271,7 +271,7 @@ fn markBlockAsCached(self: *Self, block_id: u64) !void {
 
     if (byte_index >= self.index_size) {
         const old_len = self.index_map.items.len;
-        try self.index_map.resize(@intCast(byte_index + 1));
+        try self.index_map.resize(self.allocator, @intCast(byte_index + 1));
         @memset(self.index_map.items[old_len..], 0);
         self.index_size = self.index_map.items.len;
     }

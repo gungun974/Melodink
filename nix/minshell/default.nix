@@ -18,7 +18,7 @@ pkgs: ({
 in
   builtins.derivation ({
       name = name;
-      system = pkgs.hostPlatform.system;
+      system = pkgs.stdenv.hostPlatform.system;
       builder = "${pkgs.bash}/bin/bash";
       outputs = ["out"];
       # The args are ignored in `nix develop`, but we need to create an output

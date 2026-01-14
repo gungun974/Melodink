@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	config_key "github.com/gungun974/Melodink/server/internal/config"
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
 	"github.com/gungun974/Melodink/server/internal/logger"
 )
 
@@ -19,7 +19,7 @@ func (u *ConfigUsecase) SetupServerUUID(
 		return
 	}
 
-	if !errors.Is(err, repository.ConfigKeyNotFoundError) {
+	if !errors.Is(err, repositories.ConfigKeyNotFoundError) {
 		logger.MainLogger.Fatalf("Can't verify Server UUID Key exist or not %v", err)
 		return
 	}

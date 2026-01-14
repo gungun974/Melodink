@@ -1,10 +1,10 @@
 package internal
 
 import (
-	"github.com/gungun974/Melodink/server/internal/layers/data/processor"
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
-	"github.com/gungun974/Melodink/server/internal/layers/data/scanner"
-	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
+	"github.com/gungun974/Melodink/server/internal/layers/data/processors"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
+	"github.com/gungun974/Melodink/server/internal/layers/data/scanners"
+	"github.com/gungun974/Melodink/server/internal/layers/data/storages"
 	album_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/album"
 	artist_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/artist"
 	config_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/config"
@@ -13,22 +13,22 @@ import (
 	sync_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/sync"
 	track_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/track"
 	user_usecase "github.com/gungun974/Melodink/server/internal/layers/domain/usecases/user"
-	"github.com/gungun974/Melodink/server/internal/layers/presentation/controller"
-	"github.com/gungun974/Melodink/server/internal/layers/presentation/presenter"
+	"github.com/gungun974/Melodink/server/internal/layers/presentation/controllers"
+	"github.com/gungun974/Melodink/server/internal/layers/presentation/presenters"
 	"github.com/jmoiron/sqlx"
 )
 
 type Container struct {
-	ConfigRepository repository.ConfigRepository
+	ConfigRepository repositories.ConfigRepository
 
-	ConfigController            controller.ConfigController
-	UserController              controller.UserController
-	TrackController             controller.TrackController
-	PlaylistController          controller.PlaylistController
-	AlbumController             controller.AlbumController
-	ArtistController            controller.ArtistController
-	SharedPlayedTrackController controller.SharedPlayedTrackController
-	SyncController              controller.SyncController
+	ConfigController            controllers.ConfigController
+	UserController              controllers.UserController
+	TrackController             controllers.TrackController
+	PlaylistController          controllers.PlaylistController
+	AlbumController             controllers.AlbumController
+	ArtistController            controllers.ArtistController
+	SharedPlayedTrackController controllers.SharedPlayedTrackController
+	SyncController              controllers.SyncController
 }
 
 func NewContainer(db *sqlx.DB) Container {
@@ -36,39 +36,39 @@ func NewContainer(db *sqlx.DB) Container {
 
 	//! Repository
 
-	container.ConfigRepository = repository.NewConfigRepository(db)
+	container.ConfigRepository = repositories.NewConfigRepository(db)
 
-	userRepository := repository.NewUserRepository(db)
-	albumRepository := repository.NewAlbumRepository(db)
-	trackRepository := repository.NewTrackRepository(db)
-	playlistRepository := repository.NewPlaylistRepository(db, trackRepository)
-	artistRepository := repository.NewArtistRepository(db, trackRepository, albumRepository)
-	sharedPlayedTrackRepository := repository.NewSharedPlayedTrackRepository(db)
+	userRepository := repositories.NewUserRepository(db)
+	albumRepository := repositories.NewAlbumRepository(db)
+	trackRepository := repositories.NewTrackRepository(db)
+	playlistRepository := repositories.NewPlaylistRepository(db, trackRepository)
+	artistRepository := repositories.NewArtistRepository(db, trackRepository, albumRepository)
+	sharedPlayedTrackRepository := repositories.NewSharedPlayedTrackRepository(db)
 
 	//! Storage
 
-	trackStorage := storage.NewTrackStorage()
-	coverStorage := storage.NewCoverStorage()
-	transcodeStorage := storage.NewTranscodeStorage()
+	trackStorage := storages.NewTrackStorage()
+	coverStorage := storages.NewCoverStorage()
+	transcodeStorage := storages.NewTranscodeStorage()
 
 	//! Scanner
 
-	acoustIdScanner := scanner.NewAcoustIdScanner()
-	musicBrainzScanner := scanner.NewMusicBrainzScanner()
+	acoustIdScanner := scanners.NewAcoustIdScanner()
+	musicBrainzScanner := scanners.NewMusicBrainzScanner()
 
 	//! Processor
 
-	transcodeProcessor := processor.NewTranscodeProcessor()
+	transcodeProcessor := processors.NewTranscodeProcessor()
 
 	//! Presenter
 
-	userPresenter := presenter.NewUserPresenter()
-	trackPresenter := presenter.NewTrackPresenter()
-	playlistPresenter := presenter.NewPlaylistPresenter()
-	albumPresenter := presenter.NewAlbumPresenter()
-	artistPresenter := presenter.NewArtistPresenter()
-	sharedPlayedTrackPresenter := presenter.NewSharedPlayedTrackPresenter()
-	syncPresenter := presenter.NewSyncPresenter()
+	userPresenter := presenters.NewUserPresenter()
+	trackPresenter := presenters.NewTrackPresenter()
+	playlistPresenter := presenters.NewPlaylistPresenter()
+	albumPresenter := presenters.NewAlbumPresenter()
+	artistPresenter := presenters.NewArtistPresenter()
+	sharedPlayedTrackPresenter := presenters.NewSharedPlayedTrackPresenter()
+	syncPresenter := presenters.NewSyncPresenter()
 
 	//! Usecase
 
@@ -133,16 +133,16 @@ func NewContainer(db *sqlx.DB) Container {
 
 	//! Controller
 
-	container.ConfigController = controller.NewConfigController(configUsecase)
-	container.UserController = controller.NewUserController(userUsecase)
-	container.TrackController = controller.NewTrackController(trackUsecase)
-	container.PlaylistController = controller.NewPlaylistController(playlistUsecase)
-	container.AlbumController = controller.NewAlbumController(albumUsecase)
-	container.ArtistController = controller.NewArtistController(artistUsecase)
-	container.SharedPlayedTrackController = controller.NewSharedPlayedTrackController(
+	container.ConfigController = controllers.NewConfigController(configUsecase)
+	container.UserController = controllers.NewUserController(userUsecase)
+	container.TrackController = controllers.NewTrackController(trackUsecase)
+	container.PlaylistController = controllers.NewPlaylistController(playlistUsecase)
+	container.AlbumController = controllers.NewAlbumController(albumUsecase)
+	container.ArtistController = controllers.NewArtistController(artistUsecase)
+	container.SharedPlayedTrackController = controllers.NewSharedPlayedTrackController(
 		sharedPlayedTrackUsecase,
 	)
-	container.SyncController = controller.NewSyncController(syncUsecase)
+	container.SyncController = controllers.NewSyncController(syncUsecase)
 
 	return container
 }

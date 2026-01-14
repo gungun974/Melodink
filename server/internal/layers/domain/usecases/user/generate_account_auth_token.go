@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	config_key "github.com/gungun974/Melodink/server/internal/config"
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/logger"
 )
@@ -23,7 +23,7 @@ func (u *UserUsecase) GenerateUserAuthToken(
 
 	user, err := u.userRepository.GetUser(userId)
 	if err != nil {
-		if errors.Is(err, repository.UserNotFoundError) {
+		if errors.Is(err, repositories.UserNotFoundError) {
 			return "", time.Time{}, entities.NewNotFoundError("User was not found")
 		}
 

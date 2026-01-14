@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/gungun974/Melodink/server/internal/models"
@@ -22,7 +22,7 @@ func (u *SharedPlayedTrackUsecase) DeletePlayedTrack(
 
 	playedTrack, err := u.sharedPlayedTrackRepository.GetPlayedTrackById(playedTrackId)
 	if err != nil {
-		if errors.Is(err, repository.PlayedTrackNotFoundError) {
+		if errors.Is(err, repositories.PlayedTrackNotFoundError) {
 			return nil, entities.NewNotFoundError("PlayedTrack not found")
 		}
 		return nil, entities.NewInternalError(err)

@@ -1,31 +1,31 @@
 package sync_usecase
 
 import (
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
-	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
-	"github.com/gungun974/Melodink/server/internal/layers/presentation/presenter"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
+	"github.com/gungun974/Melodink/server/internal/layers/data/storages"
+	"github.com/gungun974/Melodink/server/internal/layers/presentation/presenters"
 )
 
 type SyncUsecase struct {
-	trackRepository             repository.TrackRepository
-	albumRepository             repository.AlbumRepository
-	artistRepository            repository.ArtistRepository
-	playlistRepository          repository.PlaylistRepository
-	sharedPlayedTrackRepository repository.SharedPlayedTrackRepository
+	trackRepository             repositories.TrackRepository
+	albumRepository             repositories.AlbumRepository
+	artistRepository            repositories.ArtistRepository
+	playlistRepository          repositories.PlaylistRepository
+	sharedPlayedTrackRepository repositories.SharedPlayedTrackRepository
 
-	coverStorage storage.CoverStorage
+	coverStorage storages.CoverStorage
 
-	syncPresenter presenter.SyncPresenter
+	syncPresenter presenters.SyncPresenter
 }
 
 func NewSyncUsecase(
-	trackRepository repository.TrackRepository,
-	albumRepository repository.AlbumRepository,
-	artistRepository repository.ArtistRepository,
-	playlistRepository repository.PlaylistRepository,
-	sharedPlayedTrackRepository repository.SharedPlayedTrackRepository,
-	coverStorage storage.CoverStorage,
-	syncPresenter presenter.SyncPresenter,
+	trackRepository repositories.TrackRepository,
+	albumRepository repositories.AlbumRepository,
+	artistRepository repositories.ArtistRepository,
+	playlistRepository repositories.PlaylistRepository,
+	sharedPlayedTrackRepository repositories.SharedPlayedTrackRepository,
+	coverStorage storages.CoverStorage,
+	syncPresenter presenters.SyncPresenter,
 ) SyncUsecase {
 	return SyncUsecase{
 		trackRepository,

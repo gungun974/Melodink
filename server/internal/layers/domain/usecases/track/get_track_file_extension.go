@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/models"
 )
@@ -16,7 +16,7 @@ func (u *TrackUsecase) GetTrackFileExtension(
 ) (models.APIResponse, error) {
 	track, err := u.trackRepository.GetTrack(trackId)
 	if err != nil {
-		if errors.Is(err, repository.TrackNotFoundError) {
+		if errors.Is(err, repositories.TrackNotFoundError) {
 			return nil, entities.NewNotFoundError("Track not found")
 		}
 		return nil, entities.NewInternalError(err)

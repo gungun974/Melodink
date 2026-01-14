@@ -6,7 +6,7 @@ import (
 	"time"
 
 	config_key "github.com/gungun974/Melodink/server/internal/config"
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/logger"
 	"golang.org/x/crypto/bcrypt"
@@ -29,7 +29,7 @@ func (u *UserUsecase) AuthenticateUser(
 
 	user, err := u.userRepository.GetUserWithPasswordByEmail(email)
 	if err != nil {
-		if errors.Is(err, repository.UserNotFoundError) {
+		if errors.Is(err, repositories.UserNotFoundError) {
 			return "", time.Time{}, entities.NewUnauthorizedError()
 		}
 

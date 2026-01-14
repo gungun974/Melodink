@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/gungun974/Melodink/server/internal/helpers"
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/logger"
 	"github.com/gungun974/Melodink/server/internal/models"
@@ -27,7 +27,7 @@ func (u *TrackUsecase) SetTrackArtists(
 
 	track, err := u.trackRepository.GetTrack(params.Id)
 	if err != nil {
-		if errors.Is(err, repository.TrackNotFoundError) {
+		if errors.Is(err, repositories.TrackNotFoundError) {
 			return nil, entities.NewNotFoundError("Track not found")
 		}
 		return nil, entities.NewInternalError(err)
@@ -42,7 +42,7 @@ func (u *TrackUsecase) SetTrackArtists(
 	for i, trackId := range params.ArtistIds {
 		artist, err := u.artistRepository.GetArtistById(trackId)
 		if err != nil {
-			if errors.Is(err, repository.ArtistNotFoundError) {
+			if errors.Is(err, repositories.ArtistNotFoundError) {
 				return nil, entities.NewNotFoundError("Artist not found")
 			}
 			return nil, entities.NewInternalError(err)

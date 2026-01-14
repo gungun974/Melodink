@@ -1,21 +1,21 @@
 package artist_usecase
 
 import (
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
-	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
-	"github.com/gungun974/Melodink/server/internal/layers/presentation/presenter"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
+	"github.com/gungun974/Melodink/server/internal/layers/data/storages"
+	"github.com/gungun974/Melodink/server/internal/layers/presentation/presenters"
 )
 
 type ArtistUsecase struct {
-	artistRepository repository.ArtistRepository
-	coverStorage     storage.CoverStorage
-	artistPresenter  presenter.ArtistPresenter
+	artistRepository repositories.ArtistRepository
+	coverStorage     storages.CoverStorage
+	artistPresenter  presenters.ArtistPresenter
 }
 
 func NewArtistUsecase(
-	artistRepository repository.ArtistRepository,
-	coverStorage storage.CoverStorage,
-	artistPresenter presenter.ArtistPresenter,
+	artistRepository repositories.ArtistRepository,
+	coverStorage storages.CoverStorage,
+	artistPresenter presenters.ArtistPresenter,
 ) ArtistUsecase {
 	return ArtistUsecase{
 		artistRepository,

@@ -7,8 +7,8 @@ import (
 	"path"
 	"sync"
 
-	"github.com/gungun974/Melodink/server/internal/layers/data/processor"
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
+	"github.com/gungun974/Melodink/server/internal/layers/data/processors"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
 	"github.com/gungun974/Melodink/server/internal/layers/domain/entities"
 	"github.com/gungun974/Melodink/server/internal/logger"
 )
@@ -43,7 +43,7 @@ func (u *TrackUsecase) TranscodeTrack(
 ) error {
 	track, err := u.trackRepository.GetTrack(trackId)
 	if err != nil {
-		if errors.Is(err, repository.TrackNotFoundError) {
+		if errors.Is(err, repositories.TrackNotFoundError) {
 			return entities.NewNotFoundError("Track not found")
 		}
 		return entities.NewInternalError(err)
@@ -67,7 +67,7 @@ func (u *TrackUsecase) TranscodeTrack(
 		}
 
 		if err := u.transcodeProcessor.TranscodeHigh(track.Path, path.Join(transcodingDirectory, "high.ogg")); err != nil &&
-			!errors.Is(err, processor.TranscoderKilledError) {
+			!errors.Is(err, processors.TranscoderKilledError) {
 			return entities.NewInternalError(err)
 		}
 
@@ -80,7 +80,7 @@ func (u *TrackUsecase) TranscodeTrack(
 		}
 
 		if err := u.transcodeProcessor.TranscodeMedium(track.Path, path.Join(transcodingDirectory, "medium.ogg")); err != nil &&
-			!errors.Is(err, processor.TranscoderKilledError) {
+			!errors.Is(err, processors.TranscoderKilledError) {
 			return entities.NewInternalError(err)
 		}
 
@@ -93,7 +93,7 @@ func (u *TrackUsecase) TranscodeTrack(
 		}
 
 		if err := u.transcodeProcessor.TranscodeLow(track.Path, path.Join(transcodingDirectory, "low.ogg")); err != nil &&
-			!errors.Is(err, processor.TranscoderKilledError) {
+			!errors.Is(err, processors.TranscoderKilledError) {
 			return entities.NewInternalError(err)
 		}
 

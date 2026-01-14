@@ -1,48 +1,55 @@
----
+version: "2"
 run:
-  deadline: "5m"
   tests: true
-
-issues:
-  exclude-dirs:
-    - "build"
-    - "mocks"
-  exclude-files:
-    - ".*_templ.go$"
-
-output:
-  formats: "colored-line-number"
-
 linters:
-  disable-all: true
+  default: none
   enable:
-    # Visit https://golangci-lint.run/usage/linters/
-    
-    # Default linters
-    - "errcheck"  # Detect unchecked errors
-    - "gosimple"  # Suggest code simplifications
-    - "govet"  # Reports suspicious constructs
-    - "ineffassign"  # Detects unused variable assignments
-    - "staticcheck"  # go vet on steroids
-    - "unused"  # Detect unused constants, variables, functions and types
-
-    - "gocyclo"  # or "cyclop", # Detect cyclomatic complexity
-    - "gofumpt"  # Or "gofmt", # Enforce standard formatting
-    - "goimports"  # Ensure standard import formatting/ordering
-    - "revive"  # General purpose linter    
-    - "unconvert"  # Detect unnecessary type conversions
-    - "unparam"  # Detect unused function parameters
-
-    - "bodyclose"  # Check whether HTTP response bodies are closed
-    - "errorlint"  # Find code that will cause problems with Go's error wrapping scheme 
-    - "nakedret"  # Detect naked returns
-    - "sqlclosecheck"  # Ensure sql.Rows and sql.Stmt are closed
-
-
-linters-settings:
-  gocyclo:
-    min-complexity: 30
-  revive:
-    rules:
-      - name: var-naming
-        disabled: true
+    - bodyclose
+    - errcheck
+    - errorlint
+    - gocyclo
+    - govet
+    - ineffassign
+    - nakedret
+    - revive
+    - sqlclosecheck
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+  settings:
+    gocyclo:
+      min-complexity: 30
+    revive:
+      rules:
+        - name: var-naming
+          disabled: true
+    staticcheck:
+      checks: ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022", "-ST1005", "-ST1012"]
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - .*_templ.go$
+      - build
+      - mocks
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - .*_templ.go$
+      - build
+      - mocks
+      - third_party$
+      - builtin$
+      - examples$

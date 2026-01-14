@@ -6,7 +6,7 @@ const auto_detect = @import("build/auto-detect.zig");
 const ANDROID_TARGET_API_VERSION = "21";
 const ANDROID_MIN_API_VERSION = "21";
 const ANDROID_BUILD_TOOLS_VERSION = "34.0.0";
-const ANDROID_NDK_VERSION = "23.1.7779620";
+const ANDROID_NDK_VERSION = "28.2.13676358";
 
 pub fn build(b: *std.Build) void {
     // Build
@@ -381,7 +381,7 @@ fn buildLibrary(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.b
 
 fn addSystemCompilePaths(b: *std.Build, target: std.Build.ResolvedTarget, step: anytype) !void {
     if (target.result.os.tag == .ios or target.result.os.tag == .macos) {
-        const sysroot = std.zig.system.darwin.getSdk(b.allocator, target.result) orelse b.sysroot;
+        const sysroot = std.zig.system.darwin.getSdk(b.allocator, &target.result) orelse b.sysroot;
         step.addLibraryPath(.{ .cwd_relative = b.pathJoin(&.{ sysroot orelse "", "/usr/lib" }) });
         step.addIncludePath(.{ .cwd_relative = b.pathJoin(&.{ sysroot orelse "", "/usr/include" }) });
         step.addFrameworkPath(.{ .cwd_relative = b.pathJoin(&.{ sysroot orelse "", "/System/Library/Frameworks" }) });
@@ -401,8 +401,8 @@ fn addSystemCompilePaths(b: *std.Build, target: std.Build.ResolvedTarget, step: 
             .ndk_version = ANDROID_NDK_VERSION,
         });
 
-        var libcData = std.ArrayList(u8).init(b.allocator);
-        const writer = libcData.writer();
+        var libcData = std.io.Writer.Allocating.init(b.allocator);
+        const writer = &libcData.writer;
         (std.zig.LibCInstallation{
             .include_dir = android_sdk.android_ndk_include,
             .sys_include_dir = android_sdk.android_ndk_sysroot,

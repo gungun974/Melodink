@@ -1,25 +1,25 @@
 package album_usecase
 
 import (
-	"github.com/gungun974/Melodink/server/internal/layers/data/repository"
-	"github.com/gungun974/Melodink/server/internal/layers/data/storage"
-	"github.com/gungun974/Melodink/server/internal/layers/presentation/presenter"
+	"github.com/gungun974/Melodink/server/internal/layers/data/repositories"
+	"github.com/gungun974/Melodink/server/internal/layers/data/storages"
+	"github.com/gungun974/Melodink/server/internal/layers/presentation/presenters"
 )
 
 type AlbumUsecase struct {
-	albumRepository  repository.AlbumRepository
-	trackRepository  repository.TrackRepository
-	artistRepository repository.ArtistRepository
-	coverStorage     storage.CoverStorage
-	albumPresenter   presenter.AlbumPresenter
+	albumRepository  repositories.AlbumRepository
+	trackRepository  repositories.TrackRepository
+	artistRepository repositories.ArtistRepository
+	coverStorage     storages.CoverStorage
+	albumPresenter   presenters.AlbumPresenter
 }
 
 func NewAlbumUsecase(
-	albumRepository repository.AlbumRepository,
-	trackRepository repository.TrackRepository,
-	artistRepository repository.ArtistRepository,
-	coverStorage storage.CoverStorage,
-	albumPresenter presenter.AlbumPresenter,
+	albumRepository repositories.AlbumRepository,
+	trackRepository repositories.TrackRepository,
+	artistRepository repositories.ArtistRepository,
+	coverStorage storages.CoverStorage,
+	albumPresenter presenters.AlbumPresenter,
 ) AlbumUsecase {
 	return AlbumUsecase{
 		albumRepository,
