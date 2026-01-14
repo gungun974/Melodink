@@ -164,7 +164,7 @@ class AuthViewModel extends ChangeNotifier {
     await authRepository.logout();
 
     try {
-      await DatabaseService.disconnectDatabase();
+      DatabaseService.disconnectDatabase();
     } catch (_) {}
 
     state = const AuthLoaded(status: AuthStatus.unauthenticated);

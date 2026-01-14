@@ -14,17 +14,21 @@ class SyncManager {
   }
 
   Future<void> _scheduleSync() async {
-    await _execute();
-
-    _timer = Timer(const Duration(seconds: 120), () async {
-      if (_shouldStop) {
-        return;
-      }
-
+    try {
       await _execute();
+    } finally {
+      _timer = Timer(const Duration(seconds: 120), () async {
+        if (_shouldStop) {
+          return;
+        }
 
-      _scheduleSync();
-    });
+        try {
+          await _execute();
+        } finally {
+          _scheduleSync();
+        }
+      });
+    }
   }
 
   Future<void> _execute() async {

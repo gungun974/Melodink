@@ -6,7 +6,6 @@ import 'package:melodink_client/features/track/data/repository/track_repository.
 import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/tracker/domain/entities/played_track.dart';
 import 'package:melodink_client/features/tracker/domain/entities/track_history_info.dart';
-import 'package:mutex/mutex.dart';
 
 class PlayedTrackRepository {
   static PlayedTrack decodePlayedTrack(Map<String, Object?> data) {
@@ -44,18 +43,12 @@ class PlayedTrackRepository {
         SELECT t.*
         FROM tracks AS t
         JOIN (
-          SELECT track_id, finish_at
-          FROM (
-            SELECT track_id,
-                  finish_at,
-                  LAG(track_id) OVER (ORDER BY finish_at ASC) AS prev_track_id
-            FROM played_tracks
-          )
-          WHERE prev_track_id IS NULL OR track_id != prev_track_id
+          SELECT track_id, MAX(finish_at) as finish_at
+          FROM validated_plays
+          GROUP BY track_id
           ORDER BY finish_at DESC
           LIMIT 100
-        ) AS r
-          ON t.id = r.track_id
+        ) AS r ON t.id = r.track_id
         ORDER BY r.finish_at DESC;
       """);
 
@@ -74,53 +67,26 @@ class PlayedTrackRepository {
 
   Future<PlayedTrack?> getLastFinishedPlayedTrackByTrackId(int trackId) async {
     final db = await DatabaseService.getDatabase();
-
     final deviceId = await SettingsRepository().getDeviceId();
 
     try {
       final data = db.select(
         """
-        WITH SegmentedTracks AS (SELECT *,
-                                        CASE
-                                            WHEN LEAD(begin_at, 1, begin_at)
-                                                      OVER (PARTITION BY track_id, effective_device_id ORDER BY finish_at) >=
-                                                MIN(track_duration * 0.2, 5000.0) AND
-                                                LEAD(track_id, 1, track_id)
-                                                      OVER (PARTITION BY track_id, effective_device_id ORDER BY finish_at) == track_id
-                                                THEN 0
-                                            ELSE 1
-                                            END AS is_new_segment
-                                FROM (
-                                  SELECT *, COALESCE(device_id, ?) AS effective_device_id
-                                  FROM played_tracks
-                                  WHERE track_id = ?
-                                )),
-            NumberedTracks AS (SELECT *,
-                                      SUM(is_new_segment) OVER (PARTITION BY track_id, effective_device_id ORDER BY finish_at DESC) AS segment_number
-                                FROM SegmentedTracks)
-        SELECT internal_id,
-              track_id,
-              start_at,
-              finish_at,
-              begin_at,
-              ended_at,
-              shuffle,
-              track_ended,
-              track_duration
-        FROM NumberedTracks
-        GROUP BY track_id, effective_device_id, segment_number
-        HAVING SUM(ended_at - begin_at) > MIN(track_duration * 0.4, 30000.0)
-        ORDER BY finish_at DESC
+        SELECT pt.*
+        FROM played_tracks pt
+        INNER JOIN validated_plays vp 
+          ON pt.track_id = vp.track_id 
+          AND pt.finish_at = vp.finish_at
+        WHERE vp.track_id = ?
+          AND vp.device_id = ?
+        ORDER BY vp.finish_at DESC
         LIMIT 1
-        """,
-        [deviceId, trackId],
+      """,
+        [trackId, deviceId],
       );
 
-      if (data.firstOrNull == null) {
-        return null;
-      }
-
-      return PlayedTrackRepository.decodePlayedTrack(data.first);
+      if (data.isEmpty) return null;
+      return decodePlayedTrack(data.first);
     } catch (e) {
       databaseLogger.e(e);
       throw ServerUnknownException();
@@ -130,48 +96,14 @@ class PlayedTrackRepository {
   Future<int> getTrackPlayedCountByTrackId(int trackId) async {
     final db = await DatabaseService.getDatabase();
 
-    final deviceId = await SettingsRepository().getDeviceId();
-
     try {
       final data = db.select(
-        """
-        WITH SegmentedTracks AS (SELECT *,
-                                        CASE
-                                            WHEN LEAD(begin_at, 1, begin_at)
-                                                      OVER (PARTITION BY track_id, effective_device_id ORDER BY finish_at) >=
-                                                MIN(track_duration * 0.2, 5000.0) AND
-                                                LEAD(track_id, 1, track_id)
-                                                      OVER (PARTITION BY track_id, effective_device_id ORDER BY finish_at) == track_id
-                                                THEN 0
-                                            ELSE 1
-                                            END AS is_new_segment
-                                FROM (
-                                  SELECT *, COALESCE(device_id, ?) AS effective_device_id
-                                  FROM played_tracks
-                                  WHERE track_id = ?
-                                )),
-            NumberedTracks AS (SELECT *,
-                                      SUM(is_new_segment) OVER (PARTITION BY track_id, effective_device_id ORDER BY finish_at DESC) AS segment_number
-                                FROM SegmentedTracks),
-            FilteredTracks AS (SELECT track_id,
-                                      effective_device_id,
-                                      segment_number,
-                                      finish_at,
-                                      SUM(ended_at - begin_at)
-                                FROM NumberedTracks
-                                GROUP BY track_id, effective_device_id, segment_number
-                                HAVING SUM(ended_at - begin_at) > MIN(track_duration * 0.4, 30000.0))
-        SELECT COUNT(*)
-        FROM FilteredTracks order by finish_at desc;
-        """,
-        [deviceId, trackId],
+        "SELECT played_count FROM track_history_info WHERE track_id = ?",
+        [trackId],
       );
 
-      if (data.firstOrNull == null) {
-        return 0;
-      }
-
-      return data.first["COUNT(*)"] as int;
+      if (data.isEmpty) return 0;
+      return data.first["played_count"] as int;
     } catch (e) {
       databaseLogger.e(e);
       throw ServerUnknownException();
@@ -187,7 +119,7 @@ class PlayedTrackRepository {
     );
 
     try {
-      return PlayedTrackRepository.decodePlayedTrack(data.first);
+      return decodePlayedTrack(data.first);
     } catch (e) {
       databaseLogger.e(e);
       throw ServerUnknownException();
@@ -208,17 +140,17 @@ class PlayedTrackRepository {
 
     db.execute(
       '''
-    INSERT INTO played_tracks (
-      track_id,
-      start_at,
-      finish_at,
-      begin_at,
-      ended_at,
-      shuffle,
-      track_ended,
-      track_duration
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''',
+      INSERT INTO played_tracks (
+        track_id,
+        start_at,
+        finish_at,
+        begin_at,
+        ended_at,
+        shuffle,
+        track_ended,
+        track_duration
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ''',
       [
         trackId,
         startAt.millisecondsSinceEpoch,
@@ -233,146 +165,71 @@ class PlayedTrackRepository {
 
     final id = db.lastInsertRowId;
 
-    await updateTrackHistoryInfoCache(trackId);
-
     return getPlayedTrackById(id);
   }
 
   Future<List<TrackHistoryInfo>> getMultipleTracksHistoryInfo(
     List<int> trackIds,
   ) async {
+    if (trackIds.isEmpty) return [];
+
     final db = await DatabaseService.getDatabase();
 
     final data = db.select(
-      'SELECT * FROM track_history_info_cache '
+      'SELECT * FROM track_history_info '
       'WHERE track_id IN (${List.filled(trackIds.length, '?').join(',')})',
       trackIds,
     );
 
-    final List<TrackHistoryInfo> results = [];
+    final results = <TrackHistoryInfo>[];
 
     try {
       for (final row in data) {
-        results.add(PlayedTrackRepository.decodeTrackHistoryInfo(row));
+        results.add(decodeTrackHistoryInfo(row));
       }
     } catch (e) {
       databaseLogger.e(e);
       throw ServerUnknownException();
     }
 
-    if (results.length != trackIds.length) {
-      for (final trackId in trackIds) {
-        final isResultMissing = !results.any(
-          (result) => result.trackId == trackId,
+    for (final trackId in trackIds) {
+      if (!results.any((r) => r.trackId == trackId)) {
+        results.add(
+          TrackHistoryInfo(
+            trackId: trackId,
+            lastPlayedDate: null,
+            playedCount: 0,
+            computed: true,
+          ),
         );
-
-        if (isResultMissing) {
-          results.add(
-            TrackHistoryInfo(
-              trackId: trackId,
-              lastPlayedDate: null,
-              playedCount: -1,
-              computed: false,
-            ),
-          );
-
-          updateTrackHistoryInfoCacheMutex.protect(() async {
-            final data2 = db.select(
-              'SELECT * FROM track_history_info_cache '
-              'WHERE track_id = ?',
-              [trackId],
-            );
-
-            if (data2.isEmpty) {
-              await updateTrackHistoryInfoCache(trackId);
-            }
-          });
-        }
       }
     }
 
     return results;
   }
 
-  final updateTrackHistoryInfoCacheMutex = Mutex();
-
   Future<TrackHistoryInfo> getTrackHistoryInfo(int trackId) async {
     final db = await DatabaseService.getDatabase();
 
     final data = db.select(
-      "SELECT * FROM track_history_info_cache WHERE track_id = ?",
+      "SELECT * FROM track_history_info WHERE track_id = ?",
       [trackId],
     );
 
     if (data.isEmpty) {
-      return updateTrackHistoryInfoCache(trackId);
-    }
-
-    try {
-      return PlayedTrackRepository.decodeTrackHistoryInfo(data.first);
-    } catch (e) {
-      databaseLogger.e(e);
-      throw ServerUnknownException();
-    }
-  }
-
-  Future<TrackHistoryInfo> updateTrackHistoryInfoCache(int trackId) async {
-    final db = await DatabaseService.getDatabase();
-
-    final info = TrackHistoryInfo(
-      trackId: trackId,
-      lastPlayedDate: (await getLastFinishedPlayedTrackByTrackId(
-        trackId,
-      ))?.finishAt,
-      playedCount: await getTrackPlayedCountByTrackId(trackId),
-      computed: true,
-    );
-
-    try {
-      db.execute(
-        '''
-    INSERT OR REPLACE INTO track_history_info_cache (
-      track_id,
-      last_finished,
-      played_count,
-      updated_at
-    ) VALUES (?, ?, ?, ?)
-    ''',
-        [
-          trackId,
-          info.lastPlayedDate?.millisecondsSinceEpoch,
-          info.playedCount,
-          DateTime.now().millisecondsSinceEpoch,
-        ],
+      return TrackHistoryInfo(
+        trackId: trackId,
+        lastPlayedDate: null,
+        playedCount: 0,
+        computed: true,
       );
+    }
+
+    try {
+      return decodeTrackHistoryInfo(data.first);
     } catch (e) {
       databaseLogger.e(e);
       throw ServerUnknownException();
-    }
-
-    await Future.delayed(Duration(milliseconds: 1));
-
-    return info;
-  }
-
-  Future<void> checkAndUpdateAllTrackHistoryCache() async {
-    final db = await DatabaseService.getDatabase();
-
-    final data = db.select("""
-      SELECT track_history_info_cache.track_id
-      FROM track_history_info_cache
-              INNER JOIN (
-          SELECT track_id, MAX(shared_at) as last_created
-          FROM played_tracks
-          GROUP BY track_id
-      ) combined ON track_history_info_cache.track_id = combined.track_id
-      WHERE track_history_info_cache.updated_at < combined.last_created OR track_history_info_cache.updated_at IS NULL;
-      """);
-
-    for (final row in data) {
-      final trackId = row["track_id"] as int;
-
-      await updateTrackHistoryInfoCache(trackId);
     }
   }
 

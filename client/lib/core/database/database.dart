@@ -11,10 +11,7 @@ class DatabaseMigrationFile {
   final int version;
   final String path;
 
-  DatabaseMigrationFile({
-    required this.version,
-    required this.path,
-  });
+  DatabaseMigrationFile({required this.version, required this.path});
 }
 
 class DatabaseService {
@@ -39,8 +36,9 @@ class DatabaseService {
           await dir.create(recursive: true);
         }
       } catch (_) {
-        databaseLogger
-            .w("Database can't be open when no instance is available");
+        databaseLogger.w(
+          "Database can't be open when no instance is available",
+        );
 
         rethrow;
       }
@@ -48,9 +46,7 @@ class DatabaseService {
       databasePath = "melodink-web.db";
     }
 
-    final database = sqlite3.open(
-      databasePath,
-    );
+    final database = sqlite3.open(databasePath);
 
     database.execute('''
       CREATE TABLE IF NOT EXISTS schema_migrations(
@@ -72,7 +68,7 @@ class DatabaseService {
     return database;
   }
 
-  static disconnectDatabase() {
+  static void disconnectDatabase() {
     if (_database == null) {
       return;
     }
@@ -88,36 +84,30 @@ class DatabaseService {
 
     return manifest
         .listAssets()
-        .where((path) =>
-            path.startsWith("lib/core/database/migrations/") &&
-            path.endsWith(".up.sql"))
-        .fold<List<DatabaseMigrationFile>>([], (acc, path) {
-      final rawVersion = basename(path).split("_").first;
-
-      final version = int.tryParse(rawVersion);
-
-      if (version == null) {
-        return acc;
-      }
-
-      return [
-        ...acc,
-        DatabaseMigrationFile(
-          version: version,
-          path: path,
+        .where(
+          (path) =>
+              path.startsWith("lib/core/database/migrations/") &&
+              path.endsWith(".up.sql"),
         )
-      ];
-    }).toList()
-      ..sort(
-        (a, b) => a.version.compareTo(
-          b.version,
-        ),
-      );
+        .fold<List<DatabaseMigrationFile>>([], (acc, path) {
+          final rawVersion = basename(path).split("_").first;
+
+          final version = int.tryParse(rawVersion);
+
+          if (version == null) {
+            return acc;
+          }
+
+          return [...acc, DatabaseMigrationFile(version: version, path: path)];
+        })
+        .toList()
+      ..sort((a, b) => a.version.compareTo(b.version));
   }
 
   static int _getDatabaseVersion(Database database) {
-    final result =
-        database.select("SELECT version FROM schema_migrations LIMIT 1");
+    final result = database.select(
+      "SELECT version FROM schema_migrations LIMIT 1",
+    );
 
     if (result.isNotEmpty) {
       return result.first["version"] as int;
@@ -126,18 +116,58 @@ class DatabaseService {
     return -1;
   }
 
-  static _setDatabaseVersion(Database database, int version) {
+  static void _setDatabaseVersion(Database database, int version) {
     database.execute('DELETE FROM schema_migrations');
 
-    database.execute(
-      'INSERT INTO schema_migrations (version) VALUES (?)',
-      [version],
-    );
+    database.execute('INSERT INTO schema_migrations (version) VALUES (?)', [
+      version,
+    ]);
 
     databaseLogger.i("Database is now at version $version");
   }
 
-  static _migrateDatabase(Database database) async {
+  static List<String> _parseSqlStatements(String sqlContent) {
+    final List<String> statements = [];
+    final List<String> lines = sqlContent.split('\n');
+    final StringBuffer currentStatement = StringBuffer();
+    int beginEndDepth = 0;
+
+    for (String line in lines) {
+      String trimmedLine = line.trim();
+
+      if (trimmedLine.isEmpty || trimmedLine.startsWith('--')) {
+        continue;
+      }
+
+      String upperLine = trimmedLine.toUpperCase();
+      if (upperLine == 'BEGIN' || upperLine.startsWith('BEGIN ')) {
+        beginEndDepth++;
+      }
+      if (upperLine == 'END;' || upperLine == 'END') {
+        beginEndDepth--;
+      }
+
+      currentStatement.write(line);
+      currentStatement.write('\n');
+
+      if (trimmedLine.endsWith(';') && beginEndDepth == 0) {
+        String statement = currentStatement.toString().trim();
+        if (statement.isNotEmpty) {
+          statements.add(statement);
+        }
+        currentStatement.clear();
+      }
+    }
+
+    String remaining = currentStatement.toString().trim();
+    if (remaining.isNotEmpty) {
+      statements.add(remaining);
+    }
+
+    return statements;
+  }
+
+  static Future<void> _migrateDatabase(Database database) async {
     final migrationsFiles = await _getUpMigrationsFiles();
 
     int currentVersion = _getDatabaseVersion(database);
@@ -147,19 +177,16 @@ class DatabaseService {
     for (final migrationFile in migrationsFiles) {
       if (currentVersion < migrationFile.version) {
         if (!hasStartedMigration) {
-          databaseLogger
-              .i("Database is starting migration from version $currentVersion");
+          databaseLogger.i(
+            "Database is starting migration from version $currentVersion",
+          );
         }
 
         hasStartedMigration = true;
         try {
           final rawQueries = await rootBundle.loadString(migrationFile.path);
 
-          List<String> queries = rawQueries
-              .split(';')
-              .map((q) => q.trim())
-              .where((q) => q.isNotEmpty)
-              .toList();
+          List<String> queries = _parseSqlStatements(rawQueries);
 
           database.execute('BEGIN TRANSACTION;');
 
@@ -172,8 +199,9 @@ class DatabaseService {
           database.execute('COMMIT;');
         } catch (e) {
           database.execute("ROLLBACK;");
-          databaseLogger
-              .e("Failed to apply database migration ${migrationFile.version}");
+          databaseLogger.e(
+            "Failed to apply database migration ${migrationFile.version}",
+          );
           databaseLogger.e(e);
           rethrow;
         }
