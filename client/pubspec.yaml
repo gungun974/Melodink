@@ -10,7 +10,7 @@ environment:
 hooks:
   user_defines:
     sqlite3:
-      source: process
+      source: system
 
 dependencies:
   flutter:
