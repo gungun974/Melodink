@@ -50,6 +50,7 @@ allocator: std.mem.Allocator,
 bands: std.ArrayListUnmanaged(Biquad) = std.ArrayListUnmanaged(Biquad){},
 
 enable: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
+ready: bool = false,
 frequencies: std.ArrayListUnmanaged(f64) = std.ArrayListUnmanaged(f64){},
 gains: std.ArrayListUnmanaged(f64) = std.ArrayListUnmanaged(f64){},
 
@@ -84,11 +85,15 @@ pub fn init(self: *Self, channel_count: u64, sample_rate: u64) !void {
 
         self.bands.items[i].calcBellRLC(self.frequencies.items[i], q, self.gains.items[i], sample_rate);
     }
+
+    self.ready = true;
 }
 
 pub fn deinit(self: *Self) void {
     self.mutex.lock();
     defer self.mutex.unlock();
+
+    self.ready = false;
 
     for (0..self.bands.items.len) |i| {
         self.allocator.free(self.bands.items[i].channels);
@@ -116,6 +121,10 @@ fn processF64(self: *Self, input: f64, ch: usize) f64 {
 pub fn process(self: *Self, input: anytype, ch: usize) @TypeOf(input) {
     self.mutex.lock();
     defer self.mutex.unlock();
+
+    if (!self.ready) {
+        return input;
+    }
 
     return switch (@TypeOf(input)) {
         f64 => self.processF64(input, ch),
