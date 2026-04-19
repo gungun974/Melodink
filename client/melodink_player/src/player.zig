@@ -766,13 +766,13 @@ pub const Player = struct {
 
         self.has_init_ma_device = true;
 
+        _ = c.ma_device_set_master_volume(self.ma_device, @floatCast(self.audio_volume));
+
         if (!self.paused) {
             self.tracks_mutex.unlock();
             try self.device_start();
             self.tracks_mutex.lock();
         }
-
-        _ = c.ma_device_set_master_volume(self.ma_device, @floatCast(self.audio_volume));
     }
 
     fn isTrackMatchDevice(self: *Self, track: *Track) bool {
