@@ -69,7 +69,7 @@ class SettingEqualizer extends HookWidget {
                   AppSwitch(
                     value: settings.equalizer.enabled,
                     onToggle: (value) async {
-                      viewModel.setSettings(
+                      await viewModel.setSettings(
                         settings.copyWith(
                           equalizer: AppEqualizer(
                             enabled: value,
@@ -114,7 +114,7 @@ class SettingEqualizer extends HookWidget {
                                       bands[entry.$1].value = value;
                                     },
                                     onChangeEnd: (_) async {
-                                      viewModel.setSettings(
+                                      await viewModel.setSettings(
                                         settings.copyWith(
                                           equalizer: AppEqualizer(
                                             enabled: settings.equalizer.enabled,
