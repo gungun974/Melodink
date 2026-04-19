@@ -416,29 +416,49 @@ class SyncRepository {
     List<SharedPlayedTrackModel> playedTracks,
     String deviceId,
   ) {
-    final deletedIds = db
-        .select('SELECT id FROM deleted_played_tracks')
-        .map((row) => row['id'] as int)
-        .toSet();
+    if (playedTracks.isEmpty) return;
+
+    final serverIds = playedTracks.map((pt) => pt.id).toList();
+    final internalIds = playedTracks.map((pt) => pt.internalDeviceId).toList();
+
+    final deletedIds = <int>{};
+    for (var i = 0; i < serverIds.length; i += _sqliteBatchSize) {
+      final batch = serverIds.skip(i).take(_sqliteBatchSize).toList();
+      final placeholders = List.filled(batch.length, '?').join(', ');
+      for (final row in db.select(
+        'SELECT id FROM deleted_played_tracks WHERE id IN ($placeholders)',
+        batch,
+      )) {
+        deletedIds.add(row['id'] as int);
+      }
+    }
 
     final existingTracks = <int, Map<String, Object?>>{};
-    for (final row in db.select('''
-    SELECT server_id, device_id, track_id, start_at, finish_at, 
-           begin_at, ended_at, shuffle, track_ended, track_duration, shared_at
-    FROM played_tracks 
-    WHERE server_id IS NOT NULL
-  ''')) {
-      existingTracks[row['server_id'] as int] = row;
+    for (var i = 0; i < serverIds.length; i += _sqliteBatchSize) {
+      final batch = serverIds.skip(i).take(_sqliteBatchSize).toList();
+      final placeholders = List.filled(batch.length, '?').join(', ');
+      for (final row in db.select('''
+        SELECT server_id, device_id, track_id, start_at, finish_at,
+               begin_at, ended_at, shuffle, track_ended, track_duration, shared_at
+        FROM played_tracks
+        WHERE server_id IN ($placeholders)
+      ''', batch)) {
+        existingTracks[row['server_id'] as int] = row;
+      }
     }
 
     final nullServerIdInternals = <int, Map<String, Object?>>{};
-    for (final row in db.select('''
-    SELECT internal_id, device_id, track_id, start_at, finish_at,
-           begin_at, ended_at, shuffle, track_ended, track_duration, shared_at
-    FROM played_tracks
-    WHERE server_id IS NULL
-  ''')) {
-      nullServerIdInternals[row['internal_id'] as int] = row;
+    for (var i = 0; i < internalIds.length; i += _sqliteBatchSize) {
+      final batch = internalIds.skip(i).take(_sqliteBatchSize).toList();
+      final placeholders = List.filled(batch.length, '?').join(', ');
+      for (final row in db.select('''
+        SELECT internal_id, device_id, track_id, start_at, finish_at,
+               begin_at, ended_at, shuffle, track_ended, track_duration, shared_at
+        FROM played_tracks
+        WHERE server_id IS NULL AND internal_id IN ($placeholders)
+      ''', batch)) {
+        nullServerIdInternals[row['internal_id'] as int] = row;
+      }
     }
 
     final updateNullServerId = db.prepare('''
