@@ -71,7 +71,7 @@
       pinnedJDK = pkgs.jdk17;
 
       mkMinShell = (import ./nix/minshell) pkgs;
-    in {
+    in rec {
       packages = rec {
         melodink-server = pkgs.buildGo125Module rec {
           name = "melodink-server";
@@ -202,6 +202,15 @@
             flutter_rating_bar = "sha256-BejegYGpBtAkpL9cPxg1+iLoPO1VuFVzIto+HMZRymg=";
           };
         };
+      };
+
+      apps = rec {
+        melodink-client = {
+          type = "app";
+          program = "${packages.melodink-client}/bin/melodink_client";
+        };
+
+        default = melodink-client;
       };
 
       devShell =
