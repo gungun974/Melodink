@@ -7,6 +7,7 @@ import 'package:melodink_client/core/widgets/app_screen_type_layout.dart';
 import 'package:melodink_client/core/widgets/form/app_search_form_field.dart';
 import 'package:melodink_client/core/widgets/sliver_container.dart';
 import 'package:melodink_client/features/settings/presentation/viewmodels/settings_viewmodel.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/presentation/viewmodels/tracks_viewmodel.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
@@ -69,20 +70,43 @@ class TracksPage extends HookWidget {
                             left: padding,
                             right: padding,
                           ),
-                          sliver: StickyDesktopTrackHeader(
-                            modules: [
-                              DesktopTrackModule.title,
-                              DesktopTrackModule.album,
-                              DesktopTrackModule.lastPlayed,
-                              DesktopTrackModule.playedCount,
-                              DesktopTrackModule.dateAdded,
-                              DesktopTrackModule.quality,
-                              DesktopTrackModule.duration,
-                              DesktopTrackModule.score,
-                              DesktopTrackModule.moreActions,
-                            ],
-                            scrollController: scrollController,
-                            scrollViewKey: scrollViewKey,
+                          sliver: Consumer<TracksViewModel>(
+                            builder: (context, viewModel, _) {
+                              return StickyDesktopTrackHeader(
+                                modules: [
+                                  DesktopTrackModule.title,
+                                  DesktopTrackModule.album,
+                                  DesktopTrackModule.lastPlayed,
+                                  DesktopTrackModule.playedCount,
+                                  DesktopTrackModule.dateAdded,
+                                  DesktopTrackModule.quality,
+                                  DesktopTrackModule.duration,
+                                  DesktopTrackModule.score,
+                                  DesktopTrackModule.moreActions,
+                                ],
+                                scrollController: scrollController,
+                                scrollViewKey: scrollViewKey,
+                                currentSort: viewModel.trackSorting,
+                                onSort: (field) {
+                                  final current = viewModel.trackSorting;
+                                  if (current?.field == field) {
+                                    if (current!.direction ==
+                                        SortDirection.asc) {
+                                      viewModel.setSort(
+                                        TrackSort(
+                                          field: field,
+                                          direction: SortDirection.desc,
+                                        ),
+                                      );
+                                    } else {
+                                      viewModel.setSort(null);
+                                    }
+                                  } else {
+                                    viewModel.setSort(TrackSort(field: field));
+                                  }
+                                },
+                              );
+                            },
                           ),
                         ),
                         SliverContainer(

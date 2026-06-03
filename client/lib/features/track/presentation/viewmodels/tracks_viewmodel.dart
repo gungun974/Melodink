@@ -17,6 +17,8 @@ class TracksViewModel extends ChangeNotifier {
 
   List<Track> searchTracks = [];
 
+  TrackSort? trackSorting;
+
   final TextEditingController searchTextController = TextEditingController();
 
   final EventBus eventBus;
@@ -114,35 +116,15 @@ class TracksViewModel extends ChangeNotifier {
     );
   }
 
+  void setSort(TrackSort? sort) {
+    trackSorting = sort;
+    _sortTracks();
+    _computeSearchTracks();
+    notifyListeners();
+  }
+
   void _sortTracks() {
-    tracks.sort((a, b) {
-      int dateCompare = b.dateAdded.compareTo(a.dateAdded);
-      if (dateCompare != 0) {
-        return dateCompare;
-      }
-
-      int albumCompare = a.albums
-          .map((album) => album.name + album.id.toString())
-          .join(",")
-          .compareTo(
-            b.albums.map((album) => album.name + album.id.toString()).join(","),
-          );
-      if (albumCompare != 0) {
-        return albumCompare;
-      }
-
-      int discCompare = a.discNumber.compareTo(b.discNumber);
-      if (discCompare != 0) {
-        return discCompare;
-      }
-
-      int trackCompare = a.trackNumber.compareTo(b.trackNumber);
-      if (trackCompare != 0) {
-        return trackCompare;
-      }
-
-      return a.title.compareTo(b.title);
-    });
+    tracks.sort((a, b) => compareTracks(a, b, trackSorting));
   }
 
   void _computeSearchTracks() {

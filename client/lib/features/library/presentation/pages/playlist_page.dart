@@ -11,6 +11,7 @@ import 'package:melodink_client/features/library/presentation/widgets/desktop_pl
 import 'package:melodink_client/features/library/presentation/widgets/mobile_playlist_header.dart';
 import 'package:melodink_client/features/library/presentation/widgets/playlist_context_menu.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/entities/track_compressed_cover_quality.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track.dart';
 import 'package:melodink_client/features/track/presentation/widgets/desktop_track_header.dart';
@@ -225,6 +226,24 @@ class PlaylistPage extends HookWidget {
                               ],
                               scrollController: scrollController,
                               scrollViewKey: scrollViewKey,
+                              currentSort: viewModel.trackSorting,
+                              onSort: (field) {
+                                final current = viewModel.trackSorting;
+                                if (current?.field == field) {
+                                  if (current!.direction == SortDirection.asc) {
+                                    viewModel.setSort(
+                                      TrackSort(
+                                        field: field,
+                                        direction: SortDirection.desc,
+                                      ),
+                                    );
+                                  } else {
+                                    viewModel.setSort(null);
+                                  }
+                                } else {
+                                  viewModel.setSort(TrackSort(field: field));
+                                }
+                              },
                             );
                           },
                         ),
@@ -241,7 +260,7 @@ class PlaylistPage extends HookWidget {
                             }
 
                             return TrackList(
-                              tracks: playlist.tracks,
+                              tracks: viewModel.sortedTracks,
                               size: size,
                               showTrackIndex: false,
                               modules: const [

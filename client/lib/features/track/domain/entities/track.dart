@@ -102,25 +102,25 @@ class Track extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        title,
-        duration,
-        tagsFormat,
-        fileType,
-        fileSignature,
-        coverSignature,
-        albums,
-        artists,
-        trackNumber,
-        discNumber,
-        metadata,
-        sampleRate,
-        bitRate,
-        bitsPerRawSample,
-        dateAdded,
-        score,
-        historyInfo,
-      ];
+    id,
+    title,
+    duration,
+    tagsFormat,
+    fileType,
+    fileSignature,
+    coverSignature,
+    albums,
+    artists,
+    trackNumber,
+    discNumber,
+    metadata,
+    sampleRate,
+    bitRate,
+    bitsPerRawSample,
+    dateAdded,
+    score,
+    historyInfo,
+  ];
 
   String getUrl(AppSettingAudioQuality quality) {
     switch (quality) {
@@ -250,17 +250,133 @@ class TrackMetadata extends Equatable {
 
   @override
   List<Object?> get props => [
-        totalTracks,
-        totalDiscs,
-        date,
-        year,
-        genres,
-        lyrics,
-        comment,
-        acoustId,
-        musicBrainzReleaseId,
-        musicBrainzTrackId,
-        musicBrainzRecordingId,
-        composer,
-      ];
+    totalTracks,
+    totalDiscs,
+    date,
+    year,
+    genres,
+    lyrics,
+    comment,
+    acoustId,
+    musicBrainzReleaseId,
+    musicBrainzTrackId,
+    musicBrainzRecordingId,
+    composer,
+  ];
+}
+
+enum TrackSortField {
+  pos,
+  title,
+  album,
+  lastPlayed,
+  count,
+  dateAdded,
+  duration,
+  quality,
+  score,
+}
+
+enum SortDirection { asc, desc }
+
+class TrackSort {
+  final TrackSortField field;
+  final SortDirection direction;
+
+  const TrackSort({required this.field, this.direction = SortDirection.asc});
+}
+
+int compareTracks(Track a, Track b, TrackSort? sort) {
+  if (sort == null) {
+    return _defaultCompare(a, b);
+  }
+
+  int result;
+
+  switch (sort.field) {
+    case TrackSortField.pos:
+      result = _positionCompare(a, b);
+      break;
+    case TrackSortField.title:
+      result = a.title.toLowerCase().compareTo(b.title.toLowerCase());
+      break;
+    case TrackSortField.album:
+      result = _albumKey(a).compareTo(_albumKey(b));
+      break;
+    case TrackSortField.dateAdded:
+      result = a.dateAdded.compareTo(b.dateAdded);
+      break;
+    case TrackSortField.duration:
+      result = a.duration.compareTo(b.duration);
+      break;
+    case TrackSortField.quality:
+      result = _qualityScore(a).compareTo(_qualityScore(b));
+      break;
+    case TrackSortField.lastPlayed:
+      result = _nullableCompare(
+        a.historyInfo?.lastPlayedDate,
+        b.historyInfo?.lastPlayedDate,
+      );
+      break;
+    case TrackSortField.count:
+      result = (a.historyInfo?.playedCount ?? 0).compareTo(
+        b.historyInfo?.playedCount ?? 0,
+      );
+      break;
+    case TrackSortField.score:
+      result = a.score.compareTo(b.score);
+      break;
+  }
+
+  if (result == 0) {
+    result = _defaultCompare(a, b);
+  }
+
+  return sort.direction == SortDirection.desc ? -result : result;
+}
+
+int _defaultCompare(Track a, Track b) {
+  int dateCompare = b.dateAdded.compareTo(a.dateAdded);
+  if (dateCompare != 0) return dateCompare;
+
+  int albumCompare = _albumKey(a).compareTo(_albumKey(b));
+  if (albumCompare != 0) return albumCompare;
+
+  int discCompare = a.discNumber.compareTo(b.discNumber);
+  if (discCompare != 0) return discCompare;
+
+  int trackCompare = a.trackNumber.compareTo(b.trackNumber);
+  if (trackCompare != 0) return trackCompare;
+
+  return a.title.compareTo(b.title);
+}
+
+int _positionCompare(Track a, Track b) {
+  int albumCompare = _albumKey(a).compareTo(_albumKey(b));
+  if (albumCompare != 0) return albumCompare;
+
+  int discCompare = a.discNumber.compareTo(b.discNumber);
+  if (discCompare != 0) return discCompare;
+
+  return a.trackNumber.compareTo(b.trackNumber);
+}
+
+String _albumKey(Track t) =>
+    t.albums.map((album) => album.name + album.id.toString()).join(",");
+
+num _qualityScore(Track t) {
+  if (t.bitsPerRawSample != null) {
+    return 2000000000 + t.bitsPerRawSample! * 1000000 + t.sampleRate;
+  }
+  if (t.bitRate != null) {
+    return t.bitRate!.toDouble();
+  }
+  return 0;
+}
+
+int _nullableCompare<T extends Comparable>(T? a, T? b) {
+  if (a == null && b == null) return 0;
+  if (a == null) return -1;
+  if (b == null) return 1;
+  return a.compareTo(b);
 }

@@ -11,6 +11,7 @@ import 'package:melodink_client/features/library/data/repository/album_repositor
 import 'package:melodink_client/features/library/domain/entities/album.dart';
 import 'package:melodink_client/features/library/domain/events/album_events.dart';
 import 'package:melodink_client/features/player/domain/audio/audio_controller.dart';
+import 'package:melodink_client/features/track/domain/entities/track.dart';
 import 'package:melodink_client/features/track/domain/events/track_events.dart';
 import 'package:melodink_client/features/track/domain/manager/download_manager.dart';
 import 'package:melodink_client/generated/i18n/translations.g.dart';
@@ -102,6 +103,21 @@ class AlbumViewModel extends ChangeNotifier {
   bool downloaded = false;
 
   Album? album;
+
+  TrackSort? trackSorting;
+
+  List<Track> get sortedTracks {
+    final tracks = album?.tracks ?? [];
+    if (trackSorting == null) return tracks;
+    final copy = List<Track>.from(tracks);
+    copy.sort((a, b) => compareTracks(a, b, trackSorting));
+    return copy;
+  }
+
+  void setSort(TrackSort? sort) {
+    trackSorting = sort;
+    notifyListeners();
+  }
 
   Future<void> loadAlbum(int id) async {
     isLoading = true;
@@ -283,7 +299,7 @@ class AlbumViewModel extends ChangeNotifier {
     }
 
     if (!isSameSource) {
-      await audioController.loadTracks(album.tracks, source: source);
+      await audioController.loadTracks(sortedTracks, source: source);
       return;
     }
 
