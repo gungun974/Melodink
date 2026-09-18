@@ -27,20 +27,22 @@ func AuthMiddleware(c internal.Container) func(next http.Handler) http.Handler {
 				logger.MainLogger.Fatalf("Can't find config JWT key %v", err)
 			}
 
-			auth, err := r.Cookie("access_token")
-			if err != nil {
+			tokenString, isFromCookie, ok := extractAuthToken(r)
+			if !ok {
 				handleNotLogged(next, w, r)
 				return
 			}
 
-			token, err := parseToken(auth.Value, jwtKey)
+			token, err := parseToken(tokenString, jwtKey)
 			if err != nil {
 				handleNotLogged(next, w, r)
 				return
 			}
 
 			if isRefreshExpired(*token) {
-				RemoveAuthCookie(w)
+				if isFromCookie {
+					RemoveAuthCookie(w)
+				}
 
 				handleNotLogged(next, w, r)
 				return
@@ -54,7 +56,7 @@ func AuthMiddleware(c internal.Container) func(next http.Handler) http.Handler {
 				return
 			}
 
-			if isExpired(*token) {
+			if isFromCookie && isExpired(*token) {
 				key, exp, err := c.UserController.GenerateAuthToken(r.Context(), user.Id)
 				if err != nil {
 					RemoveAuthCookie(w)
@@ -80,6 +82,20 @@ func AuthMiddleware(c internal.Container) func(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+const bearerPrefix = "Bearer "
+
+func extractAuthToken(r *http.Request) (token string, isFromCookie bool, ok bool) {
+	if cookie, err := r.Cookie("access_token"); err == nil {
+		return cookie.Value, true, true
+	}
+
+	if header := r.Header.Get("Authorization"); strings.HasPrefix(header, bearerPrefix) {
+		return strings.TrimPrefix(header, bearerPrefix), false, true
+	}
+
+	return "", false, false
 }
 
 func RemoveAuthCookie(w http.ResponseWriter) {

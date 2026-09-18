@@ -3,10 +3,13 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/gungun974/Melodink/server/internal"
 	"github.com/gungun974/Melodink/server/internal/auth"
+	view_models "github.com/gungun974/Melodink/server/internal/layers/presentation/models"
+	"github.com/gungun974/Melodink/server/internal/models"
 )
 
 func UserRouter(c internal.Container, router *chi.Mux) {
@@ -19,9 +22,19 @@ func UserRouter(c internal.Container, router *chi.Mux) {
 			return
 		}
 
-		key, exp, err := c.UserController.Authenticate(r.Context(), bodyData)
+		user, key, exp, err := c.UserController.Authenticate(r.Context(), bodyData)
 		if err != nil {
 			handleHTTPError(err, w)
+			return
+		}
+
+		if strings.EqualFold(r.Header.Get("X-Auth-Mode"), "bearer") {
+			models.JsonAPIResponse{
+				Data: view_models.LoginViewModel{
+					User:        view_models.ConvertToUserViewModel(user),
+					AccessToken: key,
+				},
+			}.WriteResponse(w, r)
 			return
 		}
 

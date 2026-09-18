@@ -21,7 +21,7 @@ func (u *UserUsecase) AuthenticateUser(
 	ctx context.Context,
 	email string,
 	password string,
-) (string, time.Time, error) {
+) (entities.User, string, time.Time, error) {
 	jwtKey, err := u.configRepository.GetString(config_key.CONFIG_KEY_JWT)
 	if err != nil {
 		logger.MainLogger.Fatalf("Can't find config JWT key %v", err)
@@ -30,17 +30,22 @@ func (u *UserUsecase) AuthenticateUser(
 	user, err := u.userRepository.GetUserWithPasswordByEmail(email)
 	if err != nil {
 		if errors.Is(err, repositories.UserNotFoundError) {
-			return "", time.Time{}, entities.NewUnauthorizedError()
+			return entities.User{}, "", time.Time{}, entities.NewUnauthorizedError()
 		}
 
 		logger.HTTPLogger.Errorf("Unknown error has occurred : %v", err)
 
-		return "", time.Time{}, entities.NewUnauthorizedError()
+		return entities.User{}, "", time.Time{}, entities.NewUnauthorizedError()
 	}
 
 	if !CheckPasswordHash(password, user.Password) {
-		return "", time.Time{}, entities.NewUnauthorizedError()
+		return entities.User{}, "", time.Time{}, entities.NewUnauthorizedError()
 	}
 
-	return generateAuthToken(*user, jwtKey)
+	key, exp, err := generateAuthToken(*user, jwtKey)
+	if err != nil {
+		return entities.User{}, "", time.Time{}, err
+	}
+
+	return *user, key, exp, nil
 }

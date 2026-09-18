@@ -25,7 +25,7 @@ func NewUserController(
 func (c *UserController) Authenticate(
 	ctx context.Context,
 	bodyData map[string]any,
-) (string, time.Time, error) {
+) (entities.User, string, time.Time, error) {
 	email, err := validator.ValidateMapString(
 		"email",
 		bodyData,
@@ -36,7 +36,7 @@ func (c *UserController) Authenticate(
 		},
 	)
 	if err != nil {
-		return "", time.Time{}, entities.NewValidationError(err.Error())
+		return entities.User{}, "", time.Time{}, entities.NewValidationError(err.Error())
 	}
 
 	password, err := validator.ValidateMapString(
@@ -48,7 +48,7 @@ func (c *UserController) Authenticate(
 		},
 	)
 	if err != nil {
-		return "", time.Time{}, entities.NewValidationError(err.Error())
+		return entities.User{}, "", time.Time{}, entities.NewValidationError(err.Error())
 	}
 
 	return c.userUsecase.AuthenticateUser(ctx, email, password)

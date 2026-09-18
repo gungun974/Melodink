@@ -19,3 +19,9 @@ func ConvertToUserViewModel(
 		Email: user.Email,
 	}
 }
+
+type LoginViewModel struct {
+	User UserViewModel `json:"user"`
+
+	AccessToken string `json:"access_token"`
+}
