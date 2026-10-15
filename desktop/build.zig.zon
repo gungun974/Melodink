@@ -1,0 +1,26 @@
+.{
+    .name = .desktop,
+
+    .version = "0.0.0",
+
+    .fingerprint = 0x96105a45d4a4d2e,
+
+    .minimum_zig_version = "0.17.0",
+
+    .dependencies = .{
+        .macos_sdk = .{
+            .url = "https://github.com/joseluisq/macosx-sdks/releases/download/15.5/MacOSX15.5.sdk.tar.xz",
+            .hash = "N-V-__8AAEg0c2TYnl45ERm8qt0B6b-Rretjyf62AnCDkFMl",
+            .lazy = true,
+        },
+        .webview = .{
+            .url = "git+https://github.com/happystraw/zig-webview#fee55f395528b66338fa496c8131c1466b76c768",
+            .hash = "webview-0.1.0-mgPxHGBfKQDfUGh2sTdiuIOVrBHRtvNZE4-B8NXoEWxA",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

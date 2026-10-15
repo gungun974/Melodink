@@ -1,4 +1,0 @@
-CREATE TABLE deleted_played_tracks (
-    id INTEGER PRIMARY KEY,
-    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);

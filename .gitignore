@@ -1,3 +1,15 @@
 .direnv
-.idea
-/result
+
+desktop/.zig-cache
+desktop/zig-out
+desktop/zig-pkg
+desktop/src/dist
+
+client/*.beam
+client/*.ez
+client/build
+client/erl_crash.dump
+client/.lustre
+client/dist
+client/.dev-cert.pem
+client/.dev-cert-key.pem

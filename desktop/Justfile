@@ -1,0 +1,6 @@
+dev:
+  zig build run
+
+build:
+  zig build --release=fast
+
