@@ -1,11 +1,88 @@
 @import "tailwindcss";
 
+@property --app-gradient-base {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --app-gradient-a-from {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --app-gradient-a-to {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --app-gradient-b-from {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --app-gradient-b-to {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --app-gradient-c-from {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --app-gradient-c-to {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
 html {
   box-sizing: border-box;
 }
 
+.app-background,
+body {
+  background:
+    linear-gradient(
+      var(--app-gradient-c-angle),
+      var(--app-gradient-c-from) var(--app-gradient-c-start),
+      var(--app-gradient-c-to) var(--app-gradient-c-end)
+    ),
+    linear-gradient(
+      var(--app-gradient-b-angle),
+      var(--app-gradient-b-from) var(--app-gradient-b-start),
+      var(--app-gradient-b-to) var(--app-gradient-b-end)
+    ),
+    linear-gradient(
+      var(--app-gradient-a-angle),
+      var(--app-gradient-a-from) var(--app-gradient-a-start),
+      var(--app-gradient-a-to) var(--app-gradient-a-end)
+    ),
+    var(--app-gradient-base);
+    
+  background-attachment: fixed;
+}
 
-html, body {
+body.animated .app-background,
+body.animated {
+  transition:
+    --app-gradient-base 400ms cubic-bezier(0.45, 0, 0.55, 1),
+    --app-gradient-a-from 400ms cubic-bezier(0.45, 0, 0.55, 1),
+    --app-gradient-a-to 400ms cubic-bezier(0.45, 0, 0.55, 1),
+    --app-gradient-b-from 400ms cubic-bezier(0.45, 0, 0.55, 1),
+    --app-gradient-b-to 400ms cubic-bezier(0.45, 0, 0.55, 1),
+    --app-gradient-c-from 400ms cubic-bezier(0.45, 0, 0.55, 1),
+    --app-gradient-c-to 400ms cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+html,
+body {
   height: 100%;
   margin: 0;
 }

@@ -1,13 +1,17 @@
+import client/theme
 import gleam/option.{type Option, None, Some}
 import lustre
 import lustre/attribute
 import lustre/effect.{type Effect}
 import lustre/element.{type Element}
 import lustre/element/html
+import lustre/event
 
 //! MAIN ------------------------------------------------------------------------
 
 pub fn main() {
+  theme.apply(theme.cyan)
+
   let app = lustre.application(init, update, view)
 
   let assert Ok(_) = lustre.start(app, "#app", Nil)
@@ -18,20 +22,25 @@ pub fn main() {
 //! MODEL -----------------------------------------------------------------------
 
 type Model {
-  Model(reply: Option(String))
+  Model
 }
 
 fn init(_) -> #(Model, Effect(Msg)) {
-  #(Model(reply: None), effect.none())
+  #(Model, effect.none())
 }
 
 //! UPDATE ----------------------------------------------------------------------
 
-type Msg
+type Msg {
+  UserClickedLogo
+}
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
   case msg {
-    _ -> #(model, effect.none())
+    UserClickedLogo -> #(
+      model,
+      effect.from(fn(_) { theme.apply(theme.purple) }),
+    )
   }
 }
 
@@ -49,14 +58,8 @@ fn view(model: Model) -> Element(Msg) {
         html.img([
           attribute.class("p-24"),
           attribute.src("/melodink_fulllogo.png"),
+          event.on_click(UserClickedLogo),
         ]),
-        case model.reply {
-          Some(reply) ->
-            html.p([attribute.class("text-xl text-white")], [
-              element.text(reply),
-            ])
-          None -> element.none()
-        },
       ],
     ),
   ])
